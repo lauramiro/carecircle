@@ -33,7 +33,7 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         // TODO CC-36: navigate to dashboard once session persistence is set up
-        console.log('Login successful — navigate to dashboard');
+        window.location.href = '/';
       }
     } catch (err: any) {
       setFormError(mapErrorMessage(err.message ?? ''));

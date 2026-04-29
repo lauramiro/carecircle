@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../utils/helper';
 
 function mapErrorMessage(message: string): string {
   if (message.includes('Invalid login credentials')) return "That email and password don't match. Please try again.";
@@ -35,8 +36,8 @@ export default function LoginPage() {
         // TODO CC-36: navigate to dashboard once session persistence is set up
         window.location.href = '/';
       }
-    } catch (err: any) {
-      setFormError(mapErrorMessage(err.message ?? ''));
+    } catch (err: unknown) {
+      setFormError(mapErrorMessage(getErrorMessage(err)));
     }
     setLoading(false);
   };

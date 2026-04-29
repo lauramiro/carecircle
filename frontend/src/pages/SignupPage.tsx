@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../utils/helper';
 
 function validateEmail(email: string): string | null {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,8 +41,8 @@ export default function SignupPage() {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
       setSubmitted(true);
-    } catch (err: any) {
-      if (err.message?.includes('already registered')) {
+    } catch (err: unknown) {
+      if (getErrorMessage(err).includes('already registered')) {
         setEmailError('An account with this email already exists.');
       } else {
         setFormError('Something went wrong. Please check your connection and try again.');
@@ -61,7 +62,7 @@ export default function SignupPage() {
       const { error } = await supabase.auth.signInWithOtp({ email });
       if (error) throw error;
       setSubmitted(true);
-    } catch (err: any) {
+    } catch {
       setFormError('Could not send magic link. Please try again.');
     }
     setLoading(false);

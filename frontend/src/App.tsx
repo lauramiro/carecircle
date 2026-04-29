@@ -2,6 +2,8 @@ import { useAuth } from './contexts/AuthContext';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import InvitePage from './pages/InvitePage';
+import GroupPage from './pages/GroupPage';
 
 function App() {
   const { session, loading } = useAuth();
@@ -22,11 +24,16 @@ function App() {
     );
   }
 
+  const path = window.location.pathname;
+  if (path === '/invite') return <InvitePage />;
+
+  const groupMatch = path.match(/^\/group\/([^/]+)$/);
+  if (groupMatch) return <GroupPage groupId={decodeURIComponent(groupMatch[1])} />;
+
   // If logged in, show dashboard
   if (session) return <DashboardPage />;
 
   // Check URL path for login vs signup
-  const path = window.location.pathname;
   if (path === '/login') return <LoginPage />;
   return <SignupPage />;
 }

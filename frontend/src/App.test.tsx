@@ -25,6 +25,14 @@ vi.mock('./pages/DashboardPage', () => ({
   default: () => <div>Dashboard page</div>,
 }));
 
+vi.mock('./pages/InvitePage', () => ({
+  default: () => <div>Invite page</div>,
+}));
+
+vi.mock('./pages/GroupPage', () => ({
+  default: ({ groupId }: { groupId: string }) => <div>Group page {groupId}</div>,
+}));
+
 function setPath(path: string) {
   window.history.pushState({}, '', path);
 }
@@ -44,6 +52,7 @@ describe('App', () => {
     expect(screen.queryByText('Signup page')).not.toBeInTheDocument();
     expect(screen.queryByText('Login page')).not.toBeInTheDocument();
     expect(screen.queryByText('Dashboard page')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invite page')).not.toBeInTheDocument();
   });
 
   it('renders signup by default when unauthenticated', () => {
@@ -77,5 +86,22 @@ describe('App', () => {
     expect(screen.getByText('Dashboard page')).toBeInTheDocument();
     expect(screen.queryByText('Login page')).not.toBeInTheDocument();
     expect(screen.queryByText('Signup page')).not.toBeInTheDocument();
+  });
+
+  it('renders invite route before generic auth routing', () => {
+    setPath('/invite?email=user@example.com&inviteId=invite-123');
+    authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
+
+    render(<App />);
+
+    expect(screen.getByText('Invite page')).toBeInTheDocument();
+  });
+
+  it('renders group route with the route group id', () => {
+    setPath('/group/group-demo');
+
+    render(<App />);
+
+    expect(screen.getByText('Group page group-demo')).toBeInTheDocument();
   });
 });

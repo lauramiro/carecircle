@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getErrorMessage } from '../utils/helper';
+import { buildInviteConfirmationPath, getPendingInvite } from '../utils/inviteStorage';
 
 function validateEmail(email: string): string | null {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,6 +41,11 @@ export default function SignupPage() {
     try {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
+      const pendingInvite = getPendingInvite();
+      if (pendingInvite && pendingInvite.email.toLowerCase() === email.toLowerCase()) {
+        window.location.href = buildInviteConfirmationPath(pendingInvite);
+        return;
+      }
       setSubmitted(true);
     } catch (err: unknown) {
       if (getErrorMessage(err).includes('already registered')) {

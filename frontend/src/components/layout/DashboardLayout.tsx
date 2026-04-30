@@ -5,7 +5,9 @@ import { Bell, ChevronDown, CircleUserRound, HeartPulse, LogOut } from 'lucide-r
 import { useAuth } from '../../contexts/AuthContext';
 import { dashboardNavItems } from '../../config/nav.config';
 import {
+  DROPDOWN_VARIANTS,
   PAGE_VARIANTS,
+  STATIC_DROPDOWN_VARIANTS,
   STATIC_PAGE_VARIANTS,
   TRANSITIONS,
 } from '../../lib/animation.constants';
@@ -25,12 +27,44 @@ function getNavLinkStyle(isActive: boolean): CSSProperties {
     padding: '0 12px',
     borderRadius: '8px',
     color: isActive ? '#FFFFFF' : 'var(--color-text-secondary)',
-    backgroundColor: isActive ? 'var(--color-primary)' : 'transparent',
+    backgroundColor: 'transparent',
     fontSize: '13px',
+    fontWeight: 600,
+    textDecoration: 'none',
+    position: 'relative',
+    overflow: 'hidden',
+    transition: 'background-color 160ms ease, color 160ms ease',
+  };
+}
+
+function getChildNavLinkStyle(isActive: boolean): CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    height: '34px',
+    padding: '0 10px',
+    borderRadius: '8px',
+    color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+    backgroundColor: isActive ? 'var(--color-primary-light)' : 'transparent',
+    fontSize: '12px',
     fontWeight: 600,
     textDecoration: 'none',
     transition: 'background-color 160ms ease, color 160ms ease',
   };
+}
+
+function ActiveNavPill({ active }: { active: boolean }) {
+  if (!active) return null;
+
+  return (
+    <motion.span
+      layoutId="dashboard-active-nav"
+      className="absolute inset-0 rounded-lg"
+      style={{ backgroundColor: 'var(--color-primary)' }}
+      transition={TRANSITIONS.card}
+    />
+  );
 }
 
 export default function DashboardLayout() {
@@ -91,6 +125,7 @@ export default function DashboardLayout() {
             <div className="space-y-2">
               {dashboardNavItems.map((item) => {
                 const Icon = item.icon;
+                const groupsActive = location.pathname.startsWith('/groups');
 
                 if (item.children) {
                   return (
@@ -105,18 +140,21 @@ export default function DashboardLayout() {
                         aria-controls="groups-nav-menu"
                         className="w-full"
                         style={{
-                          ...getNavLinkStyle(false),
+                          ...getNavLinkStyle(groupsActive),
                           justifyContent: 'space-between',
                           border: 'none',
                           cursor: 'pointer',
                           fontFamily: 'Plus Jakarta Sans, sans-serif',
                         }}
                       >
-                        <span className="flex items-center gap-2">
+                        {/* The shared pill makes active nav changes feel continuous. */}
+                        <ActiveNavPill active={groupsActive} />
+                        <span className="relative z-10 flex items-center gap-2">
                           <Icon size={17} strokeWidth={1.9} />
                           {item.label}
                         </span>
                         <ChevronDown
+                          className="relative z-10"
                           size={16}
                           strokeWidth={1.9}
                           style={{
@@ -126,29 +164,45 @@ export default function DashboardLayout() {
                         />
                       </button>
 
-                      {groupsOpen && (
-                        <div
-                          id="groups-nav-menu"
-                          className="ml-4 mt-2 space-y-1 border-l pl-3"
-                          style={{ borderColor: 'var(--color-border)' }}
-                        >
-                          {item.children.map((child) => {
-                            const ChildIcon = child.icon;
+                      <AnimatePresence initial={false}>
+                        {groupsOpen && (
+                          // Height animation keeps nested destinations discoverable without a jump.
+                          <motion.div
+                            id="groups-nav-menu"
+                            className="overflow-hidden"
+                            variants={
+                              shouldReduceMotion
+                                ? STATIC_DROPDOWN_VARIANTS
+                                : DROPDOWN_VARIANTS
+                            }
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={TRANSITIONS.dropdown}
+                          >
+                            <div
+                              className="ml-4 mt-2 space-y-1 border-l pl-3"
+                              style={{ borderColor: 'var(--color-border)' }}
+                            >
+                              {item.children.map((child) => {
+                                const ChildIcon = child.icon;
 
-                            return (
-                              <NavLink
-                                key={child.path}
-                                to={child.path}
-                                onClick={() => setGroupsOpen(false)}
-                                style={({ isActive }) => getNavLinkStyle(isActive)}
-                              >
-                                <ChildIcon size={16} strokeWidth={1.8} />
-                                {child.label}
-                              </NavLink>
-                            );
-                          })}
-                        </div>
-                      )}
+                                return (
+                                  <NavLink
+                                    key={child.path}
+                                    to={child.path}
+                                    onClick={() => setGroupsOpen(false)}
+                                    style={({ isActive }) => getChildNavLinkStyle(isActive)}
+                                  >
+                                    <ChildIcon size={16} strokeWidth={1.8} />
+                                    {child.label}
+                                  </NavLink>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   );
                 }
@@ -159,8 +213,16 @@ export default function DashboardLayout() {
                     to={item.path ?? '/dashboard'}
                     style={({ isActive }) => getNavLinkStyle(isActive)}
                   >
-                    <Icon size={17} strokeWidth={1.9} />
-                    {item.label}
+                    {({ isActive }) => (
+                      <>
+                        {/* The shared pill makes active nav changes feel continuous. */}
+                        <ActiveNavPill active={isActive} />
+                        <span className="relative z-10 flex">
+                          <Icon size={17} strokeWidth={1.9} />
+                        </span>
+                        <span className="relative z-10">{item.label}</span>
+                      </>
+                    )}
                   </NavLink>
                 );
               })}

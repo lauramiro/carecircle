@@ -8,9 +8,9 @@ const mockGroups: Group[] = [
     role: 'Admin',
     createdAt: '2025-05-12T09:00:00.000Z',
     members: [
-      { id: 'member-1', name: 'Sarah Cole', email: 'sarah@example.com', role: 'Admin' },
-      { id: 'member-2', name: 'John Smith', email: 'john@example.com', role: 'Member' },
-      { id: 'member-3', name: 'Mike Cole', email: 'mike@example.com', role: 'Member' },
+      { id: 'member-1', name: 'Sarah Cole', email: 'sarah@example.com', role: 'Admin', joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' },
+      { id: 'member-2', name: 'John Smith', email: 'john@example.com', role: 'Member', joinedAt: '2025-05-13T10:20:00.000Z', status: 'Active' },
+      { id: 'member-3', name: 'Mike Cole', email: 'mike@example.com', role: 'Member', joinedAt: '2025-05-15T15:45:00.000Z', status: 'Suspended' },
     ],
   },
   {
@@ -20,10 +20,10 @@ const mockGroups: Group[] = [
     role: 'Member',
     createdAt: '2025-04-28T13:30:00.000Z',
     members: [
-      { id: 'member-4', name: 'Amara Benson', email: 'amara@example.com', role: 'Admin' },
-      { id: 'member-5', name: 'Sarah Cole', email: 'sarah@example.com', role: 'Member' },
-      { id: 'member-6', name: 'Grace Benson', email: 'grace@example.com', role: 'Member' },
-      { id: 'member-7', name: 'Eve Benson', email: 'eve@example.com', role: 'Member' },
+      { id: 'member-4', name: 'Amara Benson', email: 'amara@example.com', role: 'Admin', joinedAt: '2025-04-28T13:30:00.000Z', status: 'Active' },
+      { id: 'member-5', name: 'Sarah Cole', email: 'sarah@example.com', role: 'Member', joinedAt: '2025-04-29T09:15:00.000Z', status: 'Active' },
+      { id: 'member-6', name: 'Grace Benson', email: 'grace@example.com', role: 'Member', joinedAt: '2025-04-30T14:10:00.000Z', status: 'Active' },
+      { id: 'member-7', name: 'Eve Benson', email: 'eve@example.com', role: 'Member', joinedAt: '2025-05-01T08:40:00.000Z', status: 'Active' },
     ],
   },
   {
@@ -33,8 +33,8 @@ const mockGroups: Group[] = [
     role: 'Admin',
     createdAt: '2025-03-19T11:45:00.000Z',
     members: [
-      { id: 'member-8', name: 'Sarah Cole', email: 'sarah@example.com', role: 'Admin' },
-      { id: 'member-9', name: 'Daniel Cole', email: 'daniel@example.com', role: 'Member' },
+      { id: 'member-8', name: 'Sarah Cole', email: 'sarah@example.com', role: 'Admin', joinedAt: '2025-03-19T11:45:00.000Z', status: 'Active' },
+      { id: 'member-9', name: 'Daniel Cole', email: 'daniel@example.com', role: 'Member', joinedAt: '2025-03-20T12:30:00.000Z', status: 'Active' },
     ],
   },
   {
@@ -44,11 +44,11 @@ const mockGroups: Group[] = [
     role: 'Member',
     createdAt: '2025-02-05T08:15:00.000Z',
     members: [
-      { id: 'member-10', name: 'May Johnson', email: 'may@example.com', role: 'Admin' },
-      { id: 'member-11', name: 'Sarah Cole', email: 'sarah@example.com', role: 'Member' },
-      { id: 'member-12', name: 'Tina Johnson', email: 'tina@example.com', role: 'Member' },
-      { id: 'member-13', name: 'Paul Johnson', email: 'paul@example.com', role: 'Member' },
-      { id: 'member-14', name: 'Helen Johnson', email: 'helen@example.com', role: 'Member' },
+      { id: 'member-10', name: 'May Johnson', email: 'may@example.com', role: 'Admin', joinedAt: '2025-02-05T08:15:00.000Z', status: 'Active' },
+      { id: 'member-11', name: 'Sarah Cole', email: 'sarah@example.com', role: 'Member', joinedAt: '2025-02-06T11:15:00.000Z', status: 'Active' },
+      { id: 'member-12', name: 'Tina Johnson', email: 'tina@example.com', role: 'Member', joinedAt: '2025-02-07T13:25:00.000Z', status: 'Active' },
+      { id: 'member-13', name: 'Paul Johnson', email: 'paul@example.com', role: 'Member', joinedAt: '2025-02-08T16:50:00.000Z', status: 'Active' },
+      { id: 'member-14', name: 'Helen Johnson', email: 'helen@example.com', role: 'Member', joinedAt: '2025-02-09T10:05:00.000Z', status: 'Suspended' },
     ],
   },
   {
@@ -58,14 +58,14 @@ const mockGroups: Group[] = [
     role: 'Admin',
     createdAt: '2025-01-21T16:10:00.000Z',
     members: [
-      { id: 'member-15', name: 'Sarah Cole', email: 'sarah@example.com', role: 'Admin' },
-      { id: 'member-16', name: 'Nora Cole', email: 'nora@example.com', role: 'Member' },
-      { id: 'member-17', name: 'Ivy Cole', email: 'ivy@example.com', role: 'Member' },
-      { id: 'member-18', name: 'Leo Cole', email: 'leo@example.com', role: 'Member' },
-      { id: 'member-19', name: 'Zoe Cole', email: 'zoe@example.com', role: 'Member' },
-      { id: 'member-20', name: 'Adam Cole', email: 'adam@example.com', role: 'Member' },
-      { id: 'member-21', name: 'Rose Cole', email: 'rose@example.com', role: 'Member' },
-      { id: 'member-22', name: 'Ben Cole', email: 'ben@example.com', role: 'Member' },
+      { id: 'member-15', name: 'Sarah Cole', email: 'sarah@example.com', role: 'Admin', joinedAt: '2025-01-21T16:10:00.000Z', status: 'Active' },
+      { id: 'member-16', name: 'Nora Cole', email: 'nora@example.com', role: 'Member', joinedAt: '2025-01-22T09:00:00.000Z', status: 'Active' },
+      { id: 'member-17', name: 'Ivy Cole', email: 'ivy@example.com', role: 'Member', joinedAt: '2025-01-23T09:00:00.000Z', status: 'Active' },
+      { id: 'member-18', name: 'Leo Cole', email: 'leo@example.com', role: 'Member', joinedAt: '2025-01-24T09:00:00.000Z', status: 'Active' },
+      { id: 'member-19', name: 'Zoe Cole', email: 'zoe@example.com', role: 'Member', joinedAt: '2025-01-25T09:00:00.000Z', status: 'Active' },
+      { id: 'member-20', name: 'Adam Cole', email: 'adam@example.com', role: 'Member', joinedAt: '2025-01-26T09:00:00.000Z', status: 'Active' },
+      { id: 'member-21', name: 'Rose Cole', email: 'rose@example.com', role: 'Member', joinedAt: '2025-01-27T09:00:00.000Z', status: 'Active' },
+      { id: 'member-22', name: 'Ben Cole', email: 'ben@example.com', role: 'Member', joinedAt: '2025-01-28T09:00:00.000Z', status: 'Active' },
     ],
   },
 ];

@@ -1,15 +1,31 @@
 import { useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { CalendarDays, Hash, Users } from 'lucide-react';
+import { toast } from 'react-toastify';
+import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
+import GroupMembersTable from '../../components/groups/GroupMembersTable';
 import GroupRoleBadge from '../../components/groups/GroupRoleBadge';
 import InviteMemberModal from '../../components/groups/InviteMemberModal';
+import MemberActionConfirmationModal from '../../components/groups/MemberActionConfirmationModal';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { formatDate } from '../../utils/formatters';
+
+type PendingMemberAction =
+  | { type: 'remove'; member: GroupMember }
+  | { type: 'role'; member: GroupMember; role: GroupRole }
+  | { type: 'status'; member: GroupMember; status: GroupMember['status'] };
 
 export default function GroupDetailPage() {
   const { groupId } = useParams();
   const { group, loading, error } = useGroupDetail(groupId);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [managedMembers, setManagedMembers] = useState<{
+    groupId: string;
+    members: GroupMember[];
+  } | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingMemberAction | null>(
+    null,
+  );
 
   if (!groupId) return <Navigate to="/groups/list" replace />;
 
@@ -48,7 +64,88 @@ export default function GroupDetailPage() {
     );
   }
 
-  const canInvite = group.members.length < 8;
+  const currentGroup = group;
+  const members =
+    managedMembers?.groupId === currentGroup.id
+      ? managedMembers.members
+      : currentGroup.members;
+  const canInvite = members.length < 8;
+  const canManageMembers = currentGroup.role === 'Admin';
+
+  function getConfirmationCopy(action: PendingMemberAction | null) {
+    if (!action) {
+      return { title: '', message: '', confirmLabel: '' };
+    }
+
+    if (action.type === 'remove') {
+      return {
+        title: 'Remove member?',
+        message: `${action.member.name} will lose access to this group and will need a new invite to join again.`,
+        confirmLabel: 'Remove',
+      };
+    }
+
+    if (action.type === 'role') {
+      return {
+        title: 'Change member role?',
+        message: `${action.member.name} will be assigned the ${action.role} role in this group.`,
+        confirmLabel: 'Change Role',
+      };
+    }
+
+    return {
+      title: action.status === 'Suspended' ? 'Suspend member?' : 'Reactivate member?',
+      message:
+        action.status === 'Suspended'
+          ? `${action.member.name} will be suspended from this group until an admin reactivates them.`
+          : `${action.member.name} will regain access to this group.`,
+      confirmLabel: action.status === 'Suspended' ? 'Suspend' : 'Reactivate',
+    };
+  }
+
+  function confirmPendingAction() {
+    if (!pendingAction) return;
+
+    if (pendingAction.type === 'remove') {
+      setManagedMembers({
+        groupId: currentGroup.id,
+        members: members.filter((member) => member.id !== pendingAction.member.id),
+      });
+      toast.success(`${pendingAction.member.name} removed from group`);
+    }
+
+    if (pendingAction.type === 'role') {
+      setManagedMembers({
+        groupId: currentGroup.id,
+        members: members.map((member) =>
+          member.id === pendingAction.member.id
+            ? { ...member, role: pendingAction.role }
+            : member,
+        ),
+      });
+      toast.success(`${pendingAction.member.name} is now ${pendingAction.role}`);
+    }
+
+    if (pendingAction.type === 'status') {
+      setManagedMembers({
+        groupId: currentGroup.id,
+        members: members.map((member) =>
+          member.id === pendingAction.member.id
+            ? { ...member, status: pendingAction.status }
+            : member,
+        ),
+      });
+      toast.success(
+        pendingAction.status === 'Suspended'
+          ? `${pendingAction.member.name} suspended`
+          : `${pendingAction.member.name} reactivated`,
+      );
+    }
+
+    setPendingAction(null);
+  }
+
+  const confirmationCopy = getConfirmationCopy(pendingAction);
 
   return (
     <section>
@@ -63,10 +160,10 @@ export default function GroupDetailPage() {
               margin: 0,
             }}
           >
-            {group.name}
+            {currentGroup.name}
           </h1>
           <p className="mt-2 max-w-2xl text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            {group.description}
+            {currentGroup.description}
           </p>
         </div>
 
@@ -91,7 +188,7 @@ export default function GroupDetailPage() {
           <p className="mt-3 text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
             Group ID
           </p>
-          <p className="mt-1 font-mono text-sm">{group.id}</p>
+          <p className="mt-1 font-mono text-sm">{currentGroup.id}</p>
         </article>
 
         <article
@@ -102,7 +199,7 @@ export default function GroupDetailPage() {
           <p className="mt-3 text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
             Created
           </p>
-          <p className="mt-1 text-sm font-bold">{formatDate(group.createdAt)}</p>
+          <p className="mt-1 text-sm font-bold">{formatDate(currentGroup.createdAt)}</p>
         </article>
 
         <article
@@ -113,7 +210,7 @@ export default function GroupDetailPage() {
           <p className="mt-3 text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
             Members
           </p>
-          <p className="mt-1 text-sm font-bold">{group.members.length}</p>
+          <p className="mt-1 text-sm font-bold">{members.length}</p>
         </article>
 
         <article
@@ -124,13 +221,34 @@ export default function GroupDetailPage() {
             Your Role
           </p>
           <div className="mt-3">
-            <GroupRoleBadge role={group.role} />
+            <GroupRoleBadge role={currentGroup.role} />
           </div>
         </article>
       </div>
 
+      <GroupMembersTable
+        members={members}
+        canManageMembers={canManageMembers}
+        onRemoveMember={(member) => setPendingAction({ type: 'remove', member })}
+        onRoleChange={(member, role) =>
+          setPendingAction({ type: 'role', member, role })
+        }
+        onStatusChange={(member, status) =>
+          setPendingAction({ type: 'status', member, status })
+        }
+      />
+
+      <MemberActionConfirmationModal
+        open={Boolean(pendingAction)}
+        title={confirmationCopy.title}
+        message={confirmationCopy.message}
+        confirmLabel={confirmationCopy.confirmLabel}
+        onCancel={() => setPendingAction(null)}
+        onConfirm={confirmPendingAction}
+      />
+
       <InviteMemberModal
-        groupId={group.id}
+        groupId={currentGroup.id}
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
       />

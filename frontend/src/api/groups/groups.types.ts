@@ -1,10 +1,13 @@
 export type GroupRole = 'Admin' | 'Member';
+export type GroupMemberStatus = 'Active' | 'Suspended';
 
 export interface GroupMember {
   id: string;
   name: string;
   email: string;
   role: GroupRole;
+  joinedAt: string;
+  status: GroupMemberStatus;
 }
 
 export interface Group {

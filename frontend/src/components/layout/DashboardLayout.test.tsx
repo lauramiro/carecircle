@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -60,7 +60,9 @@ describe('DashboardLayout', () => {
 
     await user.click(document.body);
 
-    expect(screen.queryByRole('link', { name: /create group/i })).not.toBeInTheDocument();
+    await waitForElementToBeRemoved(() =>
+      screen.queryByRole('link', { name: /create group/i }),
+    );
   });
 
   it('closes the groups dropdown with escape', async () => {
@@ -71,6 +73,8 @@ describe('DashboardLayout', () => {
     await user.click(groupsButton);
     await user.keyboard('{Escape}');
 
-    expect(screen.queryByRole('link', { name: /list groups/i })).not.toBeInTheDocument();
+    await waitForElementToBeRemoved(() =>
+      screen.queryByRole('link', { name: /list groups/i }),
+    );
   });
 });

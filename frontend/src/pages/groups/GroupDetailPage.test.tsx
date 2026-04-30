@@ -1,4 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
+import {
+  render,
+  screen,
+  waitForElementToBeRemoved,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -132,6 +137,7 @@ describe('GroupDetailPage', () => {
 
     await user.click(within(roleDialog).getByRole('button', { name: /change role/i }));
 
+    await waitForElementToBeRemoved(() => screen.queryByRole('dialog'));
     expect(screen.getByLabelText(/change role for john/i)).toHaveValue('Admin');
     expect(toastMock.success).toHaveBeenCalledWith('John is now Admin');
   });
@@ -143,7 +149,7 @@ describe('GroupDetailPage', () => {
     await user.selectOptions(screen.getByLabelText(/change role for john/i), 'Admin');
     await user.click(screen.getByRole('button', { name: /cancel/i }));
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await waitForElementToBeRemoved(() => screen.queryByRole('dialog'));
     expect(screen.getByLabelText(/change role for john/i)).toHaveValue('Member');
     expect(toastMock.success).not.toHaveBeenCalled();
   });
@@ -156,6 +162,7 @@ describe('GroupDetailPage', () => {
     const reactivateDialog = screen.getByRole('dialog', { name: /reactivate member/i });
     expect(reactivateDialog).toBeInTheDocument();
     await user.click(within(reactivateDialog).getByRole('button', { name: /^reactivate$/i }));
+    await waitForElementToBeRemoved(() => screen.queryByRole('dialog'));
     expect(screen.getAllByText('Active')).toHaveLength(2);
     expect(toastMock.success).toHaveBeenCalledWith('John reactivated');
 
@@ -163,6 +170,7 @@ describe('GroupDetailPage', () => {
     const suspendDialog = screen.getByRole('dialog', { name: /suspend member/i });
     expect(suspendDialog).toBeInTheDocument();
     await user.click(within(suspendDialog).getByRole('button', { name: /^suspend$/i }));
+    await waitForElementToBeRemoved(() => screen.queryByRole('dialog'));
     expect(screen.getByText('Suspended')).toBeInTheDocument();
     expect(toastMock.success).toHaveBeenCalledWith('Sarah suspended');
 
@@ -170,6 +178,7 @@ describe('GroupDetailPage', () => {
     const removeDialog = screen.getByRole('dialog', { name: /remove member/i });
     expect(removeDialog).toBeInTheDocument();
     await user.click(within(removeDialog).getByRole('button', { name: /^remove$/i }));
+    await waitForElementToBeRemoved(() => screen.queryByRole('dialog'));
     expect(screen.queryByText('John')).not.toBeInTheDocument();
     expect(toastMock.success).toHaveBeenCalledWith('John removed from group');
   });
@@ -181,6 +190,7 @@ describe('GroupDetailPage', () => {
     await user.click(screen.getByRole('button', { name: /reactivate/i }));
     await user.click(screen.getByRole('button', { name: /cancel/i }));
 
+    await waitForElementToBeRemoved(() => screen.queryByRole('dialog'));
     expect(screen.getByText('Suspended')).toBeInTheDocument();
     expect(toastMock.success).not.toHaveBeenCalled();
   });

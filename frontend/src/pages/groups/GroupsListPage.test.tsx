@@ -88,7 +88,7 @@ describe('GroupsListPage', () => {
 
     renderPage();
 
-    expect(screen.getByText('Loading groups...')).toBeInTheDocument();
+    expect(screen.getByLabelText('Loading groups')).toBeInTheDocument();
   });
 
   it('handles empty state', () => {

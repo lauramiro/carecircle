@@ -55,7 +55,7 @@ export default function DashboardLayout() {
         fontFamily: 'Plus Jakarta Sans, sans-serif',
       }}
     >
-      <div className="mx-auto flex min-h-screen max-w-7xl p-4">
+      <div className="flex min-h-screen w-full p-3 sm:p-4">
         <aside
           className="flex w-64 shrink-0 flex-col rounded-l-2xl border bg-white"
           style={{ borderColor: 'var(--color-border)' }}

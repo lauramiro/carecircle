@@ -1,6 +1,38 @@
+import { animated, useSpring } from '@react-spring/web';
+import { motion } from 'framer-motion';
 import { CalendarDays, HeartPulse, Users } from 'lucide-react';
+import {
+  CARD_VARIANTS,
+  STATIC_CARD_VARIANTS,
+  STAGGER_CONTAINER_VARIANTS,
+  TRANSITIONS,
+} from '../lib/animation.constants';
+import { useReducedMotion } from '../hooks/useReducedMotion';
+
+interface AnimatedStatValueProps {
+  value: number;
+  shouldReduceMotion: boolean;
+}
+
+function AnimatedStatValue({ value, shouldReduceMotion }: AnimatedStatValueProps) {
+  const { number } = useSpring({
+    from: { number: shouldReduceMotion ? value : 0 },
+    to: { number: value },
+    immediate: shouldReduceMotion,
+    config: { tension: 120, friction: 18 },
+  });
+
+  return (
+    <animated.p className="text-2xl font-bold">
+      {number.to((currentValue) => Math.round(currentValue).toString())}
+    </animated.p>
+  );
+}
 
 export default function DashboardPage() {
+  const shouldReduceMotion = useReducedMotion();
+  const cardVariants = shouldReduceMotion ? STATIC_CARD_VARIANTS : CARD_VARIANTS;
+
   return (
     <section>
       <div className="mb-6 flex items-center justify-between">
@@ -31,19 +63,27 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* Stagger draws attention to each stat individually after the page settles. */}
+      <motion.div
+        className="grid gap-4 md:grid-cols-3"
+        variants={STAGGER_CONTAINER_VARIANTS}
+        initial="initial"
+        animate="animate"
+      >
         {[
-          { label: 'Active groups', value: '4', icon: Users },
-          { label: 'Pending invites', value: '2', icon: HeartPulse },
-          { label: "Today's events", value: '3', icon: CalendarDays },
+          { label: 'Active groups', value: 4, icon: Users },
+          { label: 'Pending invites', value: 2, icon: HeartPulse },
+          { label: "Today's events", value: 3, icon: CalendarDays },
         ].map((item) => {
           const Icon = item.icon;
 
           return (
-            <article
+            <motion.article
               key={item.label}
               className="rounded-xl border bg-white p-5"
               style={{ borderColor: 'var(--color-border)' }}
+              variants={cardVariants}
+              transition={TRANSITIONS.card}
             >
               <div className="flex items-center gap-3">
                 <span
@@ -56,16 +96,19 @@ export default function DashboardPage() {
                   <Icon size={20} strokeWidth={1.9} />
                 </span>
                 <div>
-                  <p className="text-2xl font-bold">{item.value}</p>
+                  <AnimatedStatValue
+                    value={item.value}
+                    shouldReduceMotion={shouldReduceMotion}
+                  />
                   <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                     {item.label}
                   </p>
                 </div>
               </div>
-            </article>
+            </motion.article>
           );
         })}
-      </div>
+      </motion.div>
     </section>
   );
 }

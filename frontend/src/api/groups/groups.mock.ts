@@ -1,4 +1,10 @@
-import type { Group, GroupSummary, InvitePayload, InviteResult } from './groups.types';
+import type {
+  GPContact,
+  Group,
+  GroupSummary,
+  InvitePayload,
+  InviteResult,
+} from './groups.types';
 
 const mockGroups: Group[] = [
   {
@@ -130,4 +136,56 @@ export async function inviteMember(payload: InvitePayload): Promise<InviteResult
     groupId: payload.groupId,
     email: payload.email,
   });
+}
+
+function findMockGroup(groupId: string): Group {
+  const group = mockGroups.find((currentGroup) => currentGroup.id === groupId);
+
+  if (!group) {
+    throw new Error('Group not found');
+  }
+
+  return group;
+}
+
+export async function addGPContact(
+  groupId: string,
+  data: Omit<GPContact, 'id'>,
+): Promise<GPContact> {
+  const group = findMockGroup(groupId);
+  const contact: GPContact = {
+    id: `gp-${groupId}-${Date.now()}`,
+    ...data,
+  };
+
+  group.gpContacts = [...group.gpContacts, contact];
+
+  return delay(contact);
+}
+
+export async function updateGPContact(
+  groupId: string,
+  gpId: string,
+  data: Omit<GPContact, 'id'>,
+): Promise<GPContact> {
+  const group = findMockGroup(groupId);
+  const contact = group.gpContacts.find((gpContact) => gpContact.id === gpId);
+
+  if (!contact) {
+    throw new Error('GP contact not found');
+  }
+
+  const updatedContact: GPContact = { id: gpId, ...data };
+  group.gpContacts = group.gpContacts.map((gpContact) =>
+    gpContact.id === gpId ? updatedContact : gpContact,
+  );
+
+  return delay(updatedContact);
+}
+
+export async function removeGPContact(groupId: string, gpId: string): Promise<void> {
+  const group = findMockGroup(groupId);
+  group.gpContacts = group.gpContacts.filter((gpContact) => gpContact.id !== gpId);
+
+  return delay(undefined);
 }

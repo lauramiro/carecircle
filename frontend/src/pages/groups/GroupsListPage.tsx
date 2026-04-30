@@ -76,13 +76,13 @@ export default function GroupsListPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {groups.map((group) => (
             <button
               key={group.id}
               type="button"
               onClick={() => navigate(`/groups/${group.id}`)}
-              className="rounded-xl border bg-white p-5 text-left transition hover:-translate-y-0.5 hover:shadow-sm"
+              className="rounded-xl border bg-white p-4 text-left transition hover:-translate-y-0.5 hover:shadow-sm"
               style={{
                 borderColor: 'var(--color-border)',
                 cursor: 'pointer',
@@ -91,7 +91,7 @@ export default function GroupsListPage() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-lg font-extrabold">{group.name}</h2>
+                  <h2 className="text-base font-extrabold">{group.name}</h2>
                   <p
                     className="mt-1 font-mono text-xs"
                     style={{ color: 'var(--color-text-hint)' }}
@@ -102,12 +102,12 @@ export default function GroupsListPage() {
                 <GroupRoleBadge role={group.role} />
               </div>
 
-              <p className="mt-4 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="mt-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                 {truncateText(group.description, 30)}
               </p>
 
               <div
-                className="mt-5 flex items-center justify-between border-t pt-4 text-xs font-semibold"
+                className="mt-4 flex items-center justify-between border-t pt-3 text-xs font-semibold"
                 style={{
                   borderColor: 'var(--color-border)',
                   color: 'var(--color-text-secondary)',

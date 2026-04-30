@@ -4,11 +4,13 @@ import { Navigate, useParams } from 'react-router-dom';
 import { CalendarDays, Hash, Users } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
+import GPContactSection from '../../components/groups/GPContactSection';
 import GroupMembersTable from '../../components/groups/GroupMembersTable';
 import GroupRoleBadge from '../../components/groups/GroupRoleBadge';
 import InviteMemberModal from '../../components/groups/InviteMemberModal';
 import MemberActionConfirmationModal from '../../components/groups/MemberActionConfirmationModal';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
+import { useGPContacts } from '../../hooks/groups/useGPContacts';
 import { formatDate } from '../../utils/formatters';
 import {
   CTA_ATTENTION_ANIMATION,
@@ -25,6 +27,13 @@ type PendingMemberAction =
 export default function GroupDetailPage() {
   const { groupId } = useParams();
   const { group, loading, error } = useGroupDetail(groupId);
+  const {
+    contacts: gpContacts,
+    isSubmitting: gpContactSubmitting,
+    addGP,
+    updateGP,
+    removeGP,
+  } = useGPContacts(groupId ?? '', group?.gpContacts ?? []);
   const shouldReduceMotion = useReducedMotion();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [managedMembers, setManagedMembers] = useState<{
@@ -241,6 +250,16 @@ export default function GroupDetailPage() {
           </div>
         </article>
       </div>
+
+      <GPContactSection
+        groupId={currentGroup.id}
+        gpContacts={gpContacts}
+        userRole={currentGroup.role}
+        isSubmitting={gpContactSubmitting}
+        onAddGP={addGP}
+        onUpdateGP={updateGP}
+        onRemoveGP={removeGP}
+      />
 
       <GroupMembersTable
         members={members}

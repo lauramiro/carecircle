@@ -24,8 +24,8 @@ interface GPContactSectionProps {
   gpContacts: GPContact[];
   userRole: GroupRole;
   isSubmitting: GPContactSubmittingState;
-  onAddGP: (data: Omit<GPContact, 'id'>) => Promise<void>;
-  onUpdateGP: (gpId: string, data: Omit<GPContact, 'id'>) => Promise<void>;
+  onAddGP: (data: Omit<GPContact, 'id'>) => Promise<unknown>;
+  onUpdateGP: (gpId: string, data: Omit<GPContact, 'id'>) => Promise<unknown>;
   onRemoveGP: (gpId: string) => Promise<void>;
 }
 

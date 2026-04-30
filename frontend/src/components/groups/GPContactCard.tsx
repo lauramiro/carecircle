@@ -17,7 +17,7 @@ interface GPContactCardProps {
   canManage: boolean;
   isUpdating: boolean;
   isRemoving: boolean;
-  onUpdate: (gpId: string, data: Omit<GPContact, 'id'>) => Promise<void>;
+  onUpdate: (gpId: string, data: Omit<GPContact, 'id'>) => Promise<unknown>;
   onRemove: (gpId: string) => Promise<void>;
 }
 

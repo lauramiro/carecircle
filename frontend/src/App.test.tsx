@@ -25,6 +25,18 @@ vi.mock('./pages/DashboardPage', () => ({
   default: () => <div>Dashboard page</div>,
 }));
 
+vi.mock('./pages/groups/CreateGroupPage', () => ({
+  default: () => <div>Create group page</div>,
+}));
+
+vi.mock('./pages/groups/GroupsListPage', () => ({
+  default: () => <div>Groups list page</div>,
+}));
+
+vi.mock('./pages/groups/GroupDetailPage', () => ({
+  default: () => <div>Group detail page</div>,
+}));
+
 function setPath(path: string) {
   window.history.pushState({}, '', path);
 }
@@ -68,7 +80,18 @@ describe('App', () => {
     expect(screen.getByText('Signup page')).toBeInTheDocument();
   });
 
-  it('renders dashboard for authenticated users regardless of path', () => {
+  it('renders dashboard for authenticated users on /dashboard', () => {
+    setPath('/dashboard');
+    authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
+
+    render(<App />);
+
+    expect(screen.getByText('Dashboard page')).toBeInTheDocument();
+    expect(screen.queryByText('Login page')).not.toBeInTheDocument();
+    expect(screen.queryByText('Signup page')).not.toBeInTheDocument();
+  });
+
+  it('redirects authenticated users from login to dashboard', () => {
     setPath('/login');
     authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
 

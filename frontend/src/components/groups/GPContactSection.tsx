@@ -74,7 +74,7 @@ export default function GPContactSection({
         {canManageGPContacts && (
           <motion.button
             type="button"
-            aria-label={`Add GP contact to ${groupId}`}
+            data-group-id={groupId}
             onClick={() => setAddingContact(true)}
             className="h-9 rounded-lg px-4 text-xs font-bold text-white"
             style={{ backgroundColor: 'var(--color-primary)' }}

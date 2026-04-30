@@ -9,7 +9,7 @@ export interface GPContactFormValues {
 
 export type GPContactFormPayload = Omit<GPContact, 'id'>;
 
-const phoneNumberPattern = /^[0-9 +\-]*$/;
+const phoneNumberPattern = /^[-0-9 +]*$/;
 const phoneNumberError =
   'Phone number can only contain digits, spaces, +, and -';
 

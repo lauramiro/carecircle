@@ -24,6 +24,7 @@ function GroupsListSkeleton() {
       transition={{ duration: shouldReduceMotion ? 0 : 0.16, delay: 0.15 }}
       aria-label="Loading groups"
     >
+      <span className="sr-only">Loading groups...</span>
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}

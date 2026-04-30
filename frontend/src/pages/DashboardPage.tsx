@@ -1,62 +1,71 @@
-import { useAuth } from '../contexts/AuthContext';
-import { Heart, LogOut } from 'lucide-react';
+import { CalendarDays, HeartPulse, Users } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { session, signOut } = useAuth();
-
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ backgroundColor: 'var(--color-bg-page)' }}
-    >
-      <div className="w-full max-w-md text-center">
-
-        <div
-          className="flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4"
-          style={{ backgroundColor: 'var(--color-blue-light)' }}
-        >
-          <Heart size={24} strokeWidth={1.75} style={{ color: 'var(--color-blue)' }} />
+    <section>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1
+            style={{
+              color: 'var(--color-text-primary)',
+              fontSize: '26px',
+              fontWeight: 800,
+              letterSpacing: '-0.03em',
+              margin: 0,
+            }}
+          >
+            Good morning, Caregiver
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            Here&apos;s an overview of your care circles today.
+          </p>
         </div>
-
-        <h1 style={{
-          fontFamily: 'Lora, serif', fontSize: '26px', fontWeight: 600,
-          color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0
-        }}>
-          Welcome to CareCircle
-        </h1>
-
-        <p className="mt-2" style={{
-          fontSize: '15px', color: 'var(--color-text-secondary)', lineHeight: 1.7
-        }}>
-          Signed in as <strong>{session?.user?.email}</strong>
-        </p>
-
-        <button
-          onClick={signOut}
-          className="flex items-center gap-2 mx-auto mt-6"
+        <div
+          className="rounded-lg border bg-white px-4 py-3 text-sm font-semibold"
           style={{
-            height: '40px', padding: '0 20px',
-            backgroundColor: 'var(--color-bg-subtle)',
-            color: 'var(--color-text-secondary)',
             border: '1px solid var(--color-border)',
-            borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-            fontFamily: 'Plus Jakarta Sans, sans-serif',
-            cursor: 'pointer',
+            color: 'var(--color-text-secondary)',
           }}
         >
-          <LogOut size={16} strokeWidth={1.75} />
-          Sign out
-        </button>
-
-        <p className="mt-8" style={{
-          fontSize: '11px', color: 'var(--color-text-hint)',
-          fontFamily: 'Plus Jakarta Sans, sans-serif', lineHeight: 1.6
-        }}>
-          CareCircle is a coordination tool, not a medical device.<br />
-          Always consult a doctor for medical decisions.
-        </p>
-
+          Apr 30, 2026
+        </div>
       </div>
-    </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {[
+          { label: 'Active groups', value: '4', icon: Users },
+          { label: 'Pending invites', value: '2', icon: HeartPulse },
+          { label: "Today's events", value: '3', icon: CalendarDays },
+        ].map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <article
+              key={item.label}
+              className="rounded-xl border bg-white p-5"
+              style={{ borderColor: 'var(--color-border)' }}
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  className="flex h-10 w-10 items-center justify-center rounded-lg"
+                  style={{
+                    backgroundColor: 'var(--color-primary-light)',
+                    color: 'var(--color-primary)',
+                  }}
+                >
+                  <Icon size={20} strokeWidth={1.9} />
+                </span>
+                <div>
+                  <p className="text-2xl font-bold">{item.value}</p>
+                  <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                    {item.label}
+                  </p>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }

@@ -291,7 +291,7 @@ export default function LoginPage() {
             fontFamily: 'Plus Jakarta Sans, sans-serif'
           }}>
             Don't have an account?{' '}
-            <a href="/" style={{
+            <a href="/signup" style={{
               color: 'var(--color-primary)', fontWeight: 500, textDecoration: 'none'
             }}>
               Create one

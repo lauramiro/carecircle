@@ -1,7 +1,15 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useInviteMember } from '../../hooks/groups/useInviteMember';
+import {
+  MODAL_BACKDROP_VARIANTS,
+  MODAL_PANEL_VARIANTS,
+  STATIC_MODAL_VARIANTS,
+  TRANSITIONS,
+} from '../../lib/animation.constants';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 interface InviteMemberModalProps {
   groupId: string;
@@ -26,8 +34,8 @@ export default function InviteMemberModal({
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const { inviting, sendInvite } = useInviteMember(groupId);
-
-  if (!open) return null;
+  const shouldReduceMotion = useReducedMotion();
+  const modalVariants = shouldReduceMotion ? STATIC_MODAL_VARIANTS : MODAL_PANEL_VARIANTS;
 
   async function handleSubmit() {
     const validationError = validateEmail(email);
@@ -51,17 +59,31 @@ export default function InviteMemberModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4"
-      role="presentation"
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="invite-member-title"
-        className="w-full max-w-md rounded-2xl border bg-white p-6 shadow-xl"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
+    <AnimatePresence>
+      {open && (
+        // Backdrop fade helps focus attention on the modal task.
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4"
+          role="presentation"
+          variants={shouldReduceMotion ? STATIC_MODAL_VARIANTS : MODAL_BACKDROP_VARIANTS}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={TRANSITIONS.modal}
+        >
+          {/* Panel motion makes modal appearance feel intentional without being flashy. */}
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="invite-member-title"
+            className="w-full max-w-md rounded-2xl border bg-white p-6 shadow-xl"
+            style={{ borderColor: 'var(--color-border)' }}
+            variants={modalVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={TRANSITIONS.modal}
+          >
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id="invite-member-title" className="text-xl font-extrabold">
@@ -71,7 +93,7 @@ export default function InviteMemberModal({
               Send an invitation to join this care circle.
             </p>
           </div>
-          <button
+          <motion.button
             type="button"
             aria-label="Close invite modal"
             onClick={handleCancel}
@@ -80,9 +102,10 @@ export default function InviteMemberModal({
               border: '1px solid var(--color-border)',
               color: 'var(--color-text-secondary)',
             }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
           >
             <X size={16} strokeWidth={1.9} />
-          </button>
+          </motion.button>
         </div>
 
         <div className="mt-6">
@@ -118,7 +141,7 @@ export default function InviteMemberModal({
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
-          <button
+          <motion.button
             type="button"
             onClick={handleCancel}
             className="h-10 rounded-lg border px-4 text-sm font-bold"
@@ -126,20 +149,24 @@ export default function InviteMemberModal({
               borderColor: 'var(--color-border)',
               color: 'var(--color-text-secondary)',
             }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
           >
             Cancel
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             type="button"
             onClick={() => void handleSubmit()}
             disabled={inviting}
             className="h-10 rounded-lg px-4 text-sm font-bold text-white disabled:opacity-60"
             style={{ backgroundColor: 'var(--color-primary)' }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
           >
             {inviting ? 'Sending...' : 'Send Invite'}
-          </button>
+          </motion.button>
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

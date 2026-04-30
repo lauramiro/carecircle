@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Navigate, useParams } from 'react-router-dom';
 import { CalendarDays, Hash, Users } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -9,6 +10,12 @@ import InviteMemberModal from '../../components/groups/InviteMemberModal';
 import MemberActionConfirmationModal from '../../components/groups/MemberActionConfirmationModal';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { formatDate } from '../../utils/formatters';
+import {
+  CTA_ATTENTION_ANIMATION,
+  STATIC_CTA_ATTENTION_ANIMATION,
+  TRANSITIONS,
+} from '../../lib/animation.constants';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 type PendingMemberAction =
   | { type: 'remove'; member: GroupMember }
@@ -18,6 +25,7 @@ type PendingMemberAction =
 export default function GroupDetailPage() {
   const { groupId } = useParams();
   const { group, loading, error } = useGroupDetail(groupId);
+  const shouldReduceMotion = useReducedMotion();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [managedMembers, setManagedMembers] = useState<{
     groupId: string;
@@ -168,14 +176,22 @@ export default function GroupDetailPage() {
         </div>
 
         {canInvite && (
-          <button
+          // A one-shot cue draws attention to the primary next action without looping.
+          <motion.button
             type="button"
             onClick={() => setInviteOpen(true)}
             className="h-10 rounded-lg px-4 text-sm font-bold text-white"
             style={{ backgroundColor: 'var(--color-primary)' }}
+            animate={
+              shouldReduceMotion
+                ? STATIC_CTA_ATTENTION_ANIMATION
+                : CTA_ATTENTION_ANIMATION
+            }
+            transition={{ ...TRANSITIONS.modal, delay: 0.35 }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
           >
             Invite Member
-          </button>
+          </motion.button>
         )}
       </div>
 

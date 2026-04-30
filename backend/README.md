@@ -135,6 +135,88 @@ transform: true
 
 This means DTOs should explicitly define accepted fields, unknown fields are rejected, and payload values are transformed into DTO types where possible.
 
+### Structured Logging
+
+Application logs are emitted as structured JSON through the global logger module. Each log entry includes:
+
+- `timestamp`
+- `level`
+- `context`
+- `message`
+- `traceId`
+- any extra metadata passed by the caller
+
+Use a context-specific logger token in services and controllers:
+
+```ts
+import { Inject } from '@nestjs/common';
+import { LoggerService } from './logger/logger.service';
+
+constructor(
+  @Inject(AppController.name)
+  private readonly logger: LoggerService,
+) {}
+
+someMethod() {
+  this.logger.log('Doing something', { userId: '123' });
+}
+```
+
+Example output:
+
+```json
+{
+  "timestamp": "2026-04-30T11:00:00.000Z",
+  "level": "info",
+  "context": "AppController",
+  "traceId": "3f3e2c66-3772-40b0-8ef9-7afcd1f3f3e2",
+  "message": "Doing something",
+  "userId": "123"
+}
+```
+
+### Distributed Tracing
+
+Each request gets a trace ID stored in `AsyncLocalStorage` for the lifetime of the request.
+
+Incoming request header priority:
+
+1. `x-trace-id`
+2. `x-request-id`
+3. generated UUID v4 fallback
+
+The backend always echoes the active trace ID in the response:
+
+```text
+x-trace-id: <trace-id>
+```
+
+`TraceContextService` is exported from `TraceContextModule` and can be injected wherever a trace ID is needed, such as outbound HTTP clients:
+
+```ts
+const traceId = this.traceContextService.getTraceId();
+```
+
+Callers do not need to pass `traceId` into the logger manually. `LoggerService` reads it from async context internally.
+
+### Request And Error Logging
+
+Every HTTP request is logged globally with:
+
+- `method`
+- `url`
+- `statusCode`
+- `durationMs`
+- `traceId`
+
+Unhandled exceptions and HTTP exceptions are logged globally with:
+
+- `statusCode`
+- `path`
+- `message`
+- `traceId`
+- `stack` in non-production environments
+
 ## Useful Scripts
 
 ```bash

@@ -12,6 +12,20 @@ const mockGroups: Group[] = [
       { id: 'member-2', name: 'John Smith', email: 'john@example.com', role: 'Member', joinedAt: '2025-05-13T10:20:00.000Z', status: 'Active' },
       { id: 'member-3', name: 'Mike Cole', email: 'mike@example.com', role: 'Member', joinedAt: '2025-05-15T15:45:00.000Z', status: 'Suspended' },
     ],
+    gpContacts: [
+      {
+        id: 'gp-001',
+        gpName: 'Dr. Helen Carter',
+        phoneNumber: '+44 20 7946 0123',
+        practiceName: 'Northside Family Practice',
+      },
+      {
+        id: 'gp-002',
+        gpName: 'Dr. Samuel Patel',
+        phoneNumber: '020 7946 0188',
+        practiceName: 'Carewell Medical Centre',
+      },
+    ],
   },
   {
     id: 'group-care-002',
@@ -25,6 +39,14 @@ const mockGroups: Group[] = [
       { id: 'member-6', name: 'Grace Benson', email: 'grace@example.com', role: 'Member', joinedAt: '2025-04-30T14:10:00.000Z', status: 'Active' },
       { id: 'member-7', name: 'Eve Benson', email: 'eve@example.com', role: 'Member', joinedAt: '2025-05-01T08:40:00.000Z', status: 'Active' },
     ],
+    gpContacts: [
+      {
+        id: 'gp-003',
+        gpName: 'Dr. Aisha Morgan',
+        phoneNumber: '+44 161 555 0148',
+        practiceName: 'Riverside Health Clinic',
+      },
+    ],
   },
   {
     id: 'group-care-003',
@@ -36,6 +58,7 @@ const mockGroups: Group[] = [
       { id: 'member-8', name: 'Sarah Cole', email: 'sarah@example.com', role: 'Admin', joinedAt: '2025-03-19T11:45:00.000Z', status: 'Active' },
       { id: 'member-9', name: 'Daniel Cole', email: 'daniel@example.com', role: 'Member', joinedAt: '2025-03-20T12:30:00.000Z', status: 'Active' },
     ],
+    gpContacts: [],
   },
   {
     id: 'group-care-004',
@@ -50,6 +73,7 @@ const mockGroups: Group[] = [
       { id: 'member-13', name: 'Paul Johnson', email: 'paul@example.com', role: 'Member', joinedAt: '2025-02-08T16:50:00.000Z', status: 'Active' },
       { id: 'member-14', name: 'Helen Johnson', email: 'helen@example.com', role: 'Member', joinedAt: '2025-02-09T10:05:00.000Z', status: 'Suspended' },
     ],
+    gpContacts: [],
   },
   {
     id: 'group-care-005',
@@ -67,6 +91,7 @@ const mockGroups: Group[] = [
       { id: 'member-21', name: 'Rose Cole', email: 'rose@example.com', role: 'Member', joinedAt: '2025-01-27T09:00:00.000Z', status: 'Active' },
       { id: 'member-22', name: 'Ben Cole', email: 'ben@example.com', role: 'Member', joinedAt: '2025-01-28T09:00:00.000Z', status: 'Active' },
     ],
+    gpContacts: [],
   },
 ];
 

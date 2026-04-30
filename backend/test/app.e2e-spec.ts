@@ -4,6 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { afterEach, beforeEach, describe, it } from 'vitest';
 import { applyApiPrefix } from './../src/bootstrap/api-prefix';
+import { applyValidationPipe } from './../src/bootstrap/validation-pipe';
 import { AppModule } from './../src/app.module';
 
 describe('AppController (e2e)', () => {
@@ -16,6 +17,7 @@ describe('AppController (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     applyApiPrefix(app);
+    applyValidationPipe(app);
     await app.init();
   });
 

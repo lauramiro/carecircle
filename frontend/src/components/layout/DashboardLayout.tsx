@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Bell, ChevronDown, CircleUserRound, HeartPulse, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dashboardNavItems } from '../../config/nav.config';
+import {
+  PAGE_VARIANTS,
+  STATIC_PAGE_VARIANTS,
+  TRANSITIONS,
+} from '../../lib/animation.constants';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 function getInitials(email?: string): string {
   if (!email) return 'CC';
@@ -28,6 +35,8 @@ function getNavLinkStyle(isActive: boolean): CSSProperties {
 
 export default function DashboardLayout() {
   const { session, signOut } = useAuth();
+  const location = useLocation();
+  const shouldReduceMotion = useReducedMotion();
   const [groupsOpen, setGroupsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const email = session?.user?.email;
@@ -230,7 +239,19 @@ export default function DashboardLayout() {
           </header>
 
           <main className="flex-1 overflow-auto p-8">
-            <Outlet />
+            <AnimatePresence mode="wait">
+              {/* Page transitions orient users after route changes without delaying content. */}
+              <motion.div
+                key={location.pathname}
+                variants={shouldReduceMotion ? STATIC_PAGE_VARIANTS : PAGE_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={TRANSITIONS.page}
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
           </main>
         </div>
       </div>

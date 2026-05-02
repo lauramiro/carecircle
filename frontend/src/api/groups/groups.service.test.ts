@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { getGroupById, getGroups, inviteMember } from './groups.service';
+import {
+  addGPContact,
+  getGroupById,
+  getGroups,
+  inviteMember,
+  removeGPContact,
+  updateGPContact,
+} from './groups.service';
 
 describe('groups service', () => {
   it('returns group summaries', async () => {
@@ -37,5 +44,34 @@ describe('groups service', () => {
       groupId: 'group-care-001',
       email: 'john@example.com',
     });
+  });
+
+  it('adds, updates, and removes GP contacts', async () => {
+    const addedContact = await addGPContact('group-care-003', {
+      gpName: 'Dr. Test GP',
+      phoneNumber: '+44 20 0000 0000',
+      practiceName: 'Test Practice',
+    });
+
+    expect(addedContact).toMatchObject({
+      id: expect.any(String),
+      gpName: 'Dr. Test GP',
+    });
+
+    const updatedContact = await updateGPContact('group-care-003', addedContact.id, {
+      gpName: 'Dr. Updated GP',
+      phoneNumber: '+44 20 0000 9999',
+      practiceName: 'Updated Practice',
+    });
+
+    expect(updatedContact).toMatchObject({
+      id: addedContact.id,
+      gpName: 'Dr. Updated GP',
+      phoneNumber: '+44 20 0000 9999',
+    });
+
+    await expect(
+      removeGPContact('group-care-003', addedContact.id),
+    ).resolves.toBeUndefined();
   });
 });

@@ -1,6 +1,13 @@
 export type GroupRole = 'Admin' | 'Member';
 export type GroupMemberStatus = 'Active' | 'Suspended';
 
+export interface GPContact {
+  id: string;
+  gpName?: string;
+  phoneNumber?: string;
+  practiceName?: string;
+}
+
 export interface GroupMember {
   id: string;
   name: string;
@@ -17,6 +24,7 @@ export interface Group {
   role: GroupRole;
   createdAt: string;
   members: GroupMember[];
+  gpContacts: GPContact[];
 }
 
 export interface GroupSummary {

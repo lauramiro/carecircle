@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Bell, ChevronDown, CircleUserRound, HeartPulse, LogOut } from 'lucide-react';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Bell, ChevronDown, CircleUserRound, HeartPulse, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dashboardNavItems } from '../../config/nav.config';
 import {
@@ -67,9 +67,177 @@ function ActiveNavPill({ active }: { active: boolean }) {
   );
 }
 
+const dashboardNavigationHistoryStorageKey = 'carecircle:dashboard-history';
+
+interface DashboardNavigationHistoryEntry {
+  key: string;
+  url: string;
+}
+
+interface DashboardLocationSnapshot {
+  key: string;
+  url: string;
+}
+
+interface DashboardNavigationHistoryState {
+  entries: DashboardNavigationHistoryEntry[];
+  index: number;
+  currentKey: string;
+  currentUrl: string;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isDashboardNavigationHistoryEntry(
+  value: unknown,
+): value is DashboardNavigationHistoryEntry {
+  return (
+    isRecord(value) &&
+    typeof value.key === 'string' &&
+    typeof value.url === 'string'
+  );
+}
+
+function isDashboardNavigationHistoryState(
+  value: unknown,
+): value is DashboardNavigationHistoryState {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.entries) &&
+    value.entries.every(isDashboardNavigationHistoryEntry) &&
+    typeof value.index === 'number' &&
+    typeof value.currentKey === 'string' &&
+    typeof value.currentUrl === 'string'
+  );
+}
+
+function createDashboardNavigationHistoryState(
+  location: DashboardLocationSnapshot,
+): DashboardNavigationHistoryState {
+  return {
+    entries: [location],
+    index: 0,
+    currentKey: location.key,
+    currentUrl: location.url,
+  };
+}
+
+function restoreDashboardNavigationHistoryState(
+  location: DashboardLocationSnapshot,
+): DashboardNavigationHistoryState {
+  const storedHistory = window.sessionStorage.getItem(
+    dashboardNavigationHistoryStorageKey,
+  );
+
+  if (!storedHistory) {
+    return createDashboardNavigationHistoryState(location);
+  }
+
+  try {
+    const parsedHistory: unknown = JSON.parse(storedHistory);
+
+    if (!isDashboardNavigationHistoryState(parsedHistory)) {
+      return createDashboardNavigationHistoryState(location);
+    }
+
+    const matchingIndex = parsedHistory.entries.findIndex(
+      (entry) => entry.key === location.key || entry.url === location.url,
+    );
+
+    if (matchingIndex < 0) {
+      return createDashboardNavigationHistoryState(location);
+    }
+
+    const entries = parsedHistory.entries.map((entry, index) =>
+      index === matchingIndex ? location : entry,
+    );
+
+    return {
+      entries,
+      index: matchingIndex,
+      currentKey: location.key,
+      currentUrl: location.url,
+    };
+  } catch {
+    return createDashboardNavigationHistoryState(location);
+  }
+}
+
+function dashboardNavigationHistoryReducer(
+  state: DashboardNavigationHistoryState,
+  location: DashboardLocationSnapshot,
+): DashboardNavigationHistoryState {
+  if (state.currentKey === location.key && state.currentUrl === location.url) {
+    return state;
+  }
+
+  const existingIndex = state.entries.findIndex(
+    (entry) => entry.key === location.key || entry.url === location.url,
+  );
+
+  if (existingIndex >= 0) {
+    const entries = state.entries.map((entry, index) =>
+      index === existingIndex ? location : entry,
+    );
+
+    return {
+      ...state,
+      entries,
+      index: existingIndex,
+      currentKey: location.key,
+      currentUrl: location.url,
+    };
+  }
+
+  const entries = [...state.entries.slice(0, state.index + 1), location];
+
+  return {
+    entries,
+    index: entries.length - 1,
+    currentKey: location.key,
+    currentUrl: location.url,
+  };
+}
+
+function useDashboardNavigationHistory(location: DashboardLocationSnapshot) {
+  const [historyState, updateHistoryState] = useReducer(
+    dashboardNavigationHistoryReducer,
+    location,
+    restoreDashboardNavigationHistoryState,
+  );
+
+  useEffect(() => {
+    updateHistoryState(location);
+  }, [location]);
+
+  useEffect(() => {
+    window.sessionStorage.setItem(
+      dashboardNavigationHistoryStorageKey,
+      JSON.stringify(historyState),
+    );
+  }, [historyState]);
+
+  return {
+    canGoBack: historyState.index > 0,
+    canGoForward: historyState.index < historyState.entries.length - 1,
+  };
+}
+
 export default function DashboardLayout() {
   const { session, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const locationSnapshot = useMemo(
+    () => ({
+      key: location.key,
+      url: `${location.pathname}${location.search}${location.hash}`,
+    }),
+    [location.hash, location.key, location.pathname, location.search],
+  );
+  const { canGoBack, canGoForward } =
+    useDashboardNavigationHistory(locationSnapshot);
   const shouldReduceMotion = useReducedMotion();
   const [groupsOpen, setGroupsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -285,6 +453,40 @@ export default function DashboardLayout() {
             className="flex h-16 items-center justify-end gap-4 border-b px-8"
             style={{ borderColor: 'var(--color-border)' }}
           >
+            <div className="flex items-center gap-2" aria-label="Page history controls">
+              <motion.button
+                type="button"
+                aria-label="Go back"
+                onClick={() => navigate(-1)}
+                disabled={!canGoBack}
+                className="flex h-10 w-10 items-center justify-center rounded-full border bg-white"
+                style={{
+                  borderColor: 'var(--color-border)',
+                  color: 'var(--color-text-secondary)',
+                  cursor: canGoBack ? 'pointer' : 'not-allowed',
+                  opacity: canGoBack ? 1 : 0.45,
+                }}
+                whileTap={shouldReduceMotion || !canGoBack ? undefined : { scale: 0.97 }}
+              >
+                <ArrowLeft size={18} strokeWidth={1.8} />
+              </motion.button>
+              <motion.button
+                type="button"
+                aria-label="Go forward"
+                onClick={() => navigate(1)}
+                disabled={!canGoForward}
+                className="flex h-10 w-10 items-center justify-center rounded-full border bg-white"
+                style={{
+                  borderColor: 'var(--color-border)',
+                  color: 'var(--color-text-secondary)',
+                  cursor: canGoForward ? 'pointer' : 'not-allowed',
+                  opacity: canGoForward ? 1 : 0.45,
+                }}
+                whileTap={shouldReduceMotion || !canGoForward ? undefined : { scale: 0.97 }}
+              >
+                <ArrowRight size={18} strokeWidth={1.8} />
+              </motion.button>
+            </div>
             <button
               type="button"
               aria-label="Notifications"

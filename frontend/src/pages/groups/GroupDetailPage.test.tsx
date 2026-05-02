@@ -218,4 +218,36 @@ describe('GroupDetailPage', () => {
     expect(screen.queryByRole('button', { name: /suspend/i })).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/change role/i)).not.toBeInTheDocument();
   });
+
+  it('renders GP contacts from the group detail data', () => {
+    groupHookMock.value = {
+      loading: false,
+      error: null,
+      group: {
+        id: 'group-care-002',
+        name: 'Mum Recovery Team',
+        description: 'Post-surgery care planning and appointment tracking.',
+        role: 'Member',
+        createdAt: '2025-04-28T13:30:00.000Z',
+        members: [
+          { id: 'member-4', name: 'Amara', email: 'amara@example.com', role: 'Admin', joinedAt: '2025-04-28T13:30:00.000Z', status: 'Active' },
+          { id: 'member-5', name: 'Sarah', email: 'sarah@example.com', role: 'Member', joinedAt: '2025-04-29T09:15:00.000Z', status: 'Active' },
+        ],
+        gpContacts: [
+          {
+            id: 'gp-003',
+            gpName: 'Dr. Aisha Morgan',
+            phoneNumber: '+44 161 555 0148',
+            practiceName: 'Riverside Health Clinic',
+          },
+        ],
+      } as Group,
+    };
+
+    renderPage('group-care-002');
+
+    expect(screen.getByText('GP Contacts')).toBeInTheDocument();
+    expect(screen.getByText('Dr. Aisha Morgan')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /\+ add gp contact/i })).not.toBeInTheDocument();
+  });
 });

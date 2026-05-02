@@ -33,6 +33,8 @@ export default function CreateGroupPage() {
           full_name: groupName.trim(),
           date_of_birth: '1990-01-01',
           primary_caregiver_id: user.id,
+          user_id: user.id,
+          email: user.email,
           is_active: true,
         })
         .select('id')

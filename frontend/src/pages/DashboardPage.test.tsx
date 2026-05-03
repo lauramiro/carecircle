@@ -1,45 +1,15 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import DashboardPage from './DashboardPage';
 
-const authMock = vi.hoisted(() => ({
-  signOut: vi.fn(),
-  session: {
-    user: {
-      email: 'user@example.com',
-    },
-  },
-}));
-
-vi.mock('../contexts/AuthContext', () => ({
-  useAuth: () => ({
-    session: authMock.session,
-    signOut: authMock.signOut,
-  }),
-}));
-
 describe('DashboardPage', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('shows the dashboard content for the signed-in user', () => {
+  it('shows the dashboard overview content', () => {
     render(<DashboardPage />);
 
-    expect(screen.getByText('Welcome to CareCircle')).toBeInTheDocument();
-    expect(screen.getByText(/signed in as/i)).toHaveTextContent('user@example.com');
-    expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument();
-    expect(screen.getByText(/carecircle is a coordination tool/i)).toBeInTheDocument();
-  });
-
-  it('calls signOut when the user clicks the sign out button', async () => {
-    const user = userEvent.setup();
-
-    render(<DashboardPage />);
-
-    await user.click(screen.getByRole('button', { name: /sign out/i }));
-
-    expect(authMock.signOut).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Good morning, Caregiver')).toBeInTheDocument();
+    expect(screen.getByText(/overview of your care circles/i)).toBeInTheDocument();
+    expect(screen.getByText('Active groups')).toBeInTheDocument();
+    expect(screen.getByText('Pending invites')).toBeInTheDocument();
+    expect(screen.getByText("Today's events")).toBeInTheDocument();
   });
 });

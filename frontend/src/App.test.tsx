@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { Outlet } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
@@ -25,12 +26,28 @@ vi.mock('./pages/DashboardPage', () => ({
   default: () => <div>Dashboard page</div>,
 }));
 
+vi.mock('./components/layout/DashboardLayout', () => ({
+  default: () => <Outlet />,
+}));
+
 vi.mock('./pages/InvitePage', () => ({
   default: () => <div>Invite page</div>,
 }));
 
 vi.mock('./pages/GroupPage', () => ({
   default: ({ groupId }: { groupId: string }) => <div>Group page {groupId}</div>,
+}));
+
+vi.mock('./pages/groups/CreateGroupPage', () => ({
+  default: () => <div>Create group page</div>,
+}));
+
+vi.mock('./pages/groups/GroupsListPage', () => ({
+  default: () => <div>Groups list page</div>,
+}));
+
+vi.mock('./pages/groups/GroupDetailPage', () => ({
+  default: () => <div>Group detail page</div>,
 }));
 
 function setPath(path: string) {
@@ -77,7 +94,18 @@ describe('App', () => {
     expect(screen.getByText('Signup page')).toBeInTheDocument();
   });
 
-  it('renders dashboard for authenticated users regardless of path', () => {
+  it('renders dashboard for authenticated users on /dashboard', () => {
+    setPath('/dashboard');
+    authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
+
+    render(<App />);
+
+    expect(screen.getByText('Dashboard page')).toBeInTheDocument();
+    expect(screen.queryByText('Login page')).not.toBeInTheDocument();
+    expect(screen.queryByText('Signup page')).not.toBeInTheDocument();
+  });
+
+  it('redirects authenticated users from login to dashboard', () => {
     setPath('/login');
     authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
 
@@ -103,5 +131,32 @@ describe('App', () => {
     render(<App />);
 
     expect(screen.getByText('Group page group-demo')).toBeInTheDocument();
+  });
+
+  it('renders create group route for authenticated users', () => {
+    setPath('/groups/create');
+    authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
+
+    render(<App />);
+
+    expect(screen.getByText('Create group page')).toBeInTheDocument();
+  });
+
+  it('renders groups list route for authenticated users', () => {
+    setPath('/groups/list');
+    authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
+
+    render(<App />);
+
+    expect(screen.getByText('Groups list page')).toBeInTheDocument();
+  });
+
+  it('renders group detail route for authenticated users', () => {
+    setPath('/groups/group-demo');
+    authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
+
+    render(<App />);
+
+    expect(screen.getByText('Group detail page')).toBeInTheDocument();
   });
 });

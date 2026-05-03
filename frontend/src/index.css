@@ -31,3 +31,29 @@ body {
   color: var(--color-text-primary);
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
+
+@keyframes carecircle-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.carecircle-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-accent-soft) 0%,
+    var(--color-primary-light) 45%,
+    var(--color-accent-soft) 100%
+  );
+  background-size: 200% 100%;
+  animation: carecircle-shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carecircle-skeleton {
+    animation: none;
+  }
+}

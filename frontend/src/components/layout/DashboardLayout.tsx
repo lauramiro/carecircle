@@ -499,7 +499,9 @@ export default function DashboardLayout() {
                 style={{ backgroundColor: 'var(--color-status-critical)' }}
               />
             </button>
-            <CircleUserRound size={34} strokeWidth={1.5} color="var(--color-primary)" />
+            <Link to="/profile" aria-label="Your profile">
+              <CircleUserRound size={34} strokeWidth={1.5} color="var(--color-primary)" />
+            </Link>
           </header>
 
           <main className="flex-1 overflow-auto p-8">

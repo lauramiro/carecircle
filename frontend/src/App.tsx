@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import CreateGroupPage from './pages/groups/CreateGroupPage';
 import GroupDetailPage from './pages/groups/GroupDetailPage';
 import GroupsListPage from './pages/groups/GroupsListPage';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   const { session, loading } = useAuth();
@@ -47,6 +48,7 @@ function App() {
           <Route path="groups/create" element={<CreateGroupPage />} />
           <Route path="groups/list" element={<GroupsListPage />} />
           <Route path="groups/:groupId" element={<GroupDetailPage />} />
+          <Route path="profile" element={<ProfilePage />} />
         </Route>
         <Route
           path="*"

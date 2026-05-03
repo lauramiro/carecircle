@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [magicSent, setMagicSent]   = useState(false);
   const [showMagic, setShowMagic]   = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setFormError(null);
 

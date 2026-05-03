@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import CreateGroupPage from './pages/groups/CreateGroupPage';
 import GroupDetailPage from './pages/groups/GroupDetailPage';
 import GroupsListPage from './pages/groups/GroupsListPage';
+import CareRecipientProfilePage from './pages/groups/CareRecipientProfilePage';
 import ProfilePage from './pages/ProfilePage';
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
           <Route path="groups/create" element={<CreateGroupPage />} />
           <Route path="groups/list" element={<GroupsListPage />} />
           <Route path="groups/:groupId" element={<GroupDetailPage />} />
+          <Route path="groups/:groupId/profile" element={<CareRecipientProfilePage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
         <Route

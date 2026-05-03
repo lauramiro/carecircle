@@ -53,7 +53,7 @@ describe('LoginPage', () => {
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /send me a magic link instead/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /create one/i })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: /create one/i })).toHaveAttribute('href', '/signup');
   });
 
   it('requires an email before password login', async () => {

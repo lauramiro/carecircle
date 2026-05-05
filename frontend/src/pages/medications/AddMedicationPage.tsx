@@ -12,7 +12,7 @@ export default function AddMedicationPage() {
   const navigate = useNavigate();
   const { group, loading: groupLoading } = useGroupDetail(groupId);
   const patientId = group?.patientId ?? '';
-  const { medications, loading: medsLoading, isSubmitting, addMedication } =
+  const { medications, loading: medsLoading, isSubmitting, addMedication, pauseMedication, activateMedication, archiveMedication } =
     useMedications(patientId);
 
   if (!groupId) return <Navigate to="/groups/list" replace />;
@@ -44,7 +44,7 @@ export default function AddMedicationPage() {
     navigate(`/groups/${groupId}`);
   }
 
-  const activeMeds = medications.filter((m) => m.status === 'active');
+  const visibleMeds = medications.filter((m) => m.status === 'active' || m.status === 'paused');
 
   return (
     <section>
@@ -96,23 +96,70 @@ export default function AddMedicationPage() {
               <p className="text-xs" style={{ color: 'var(--color-text-hint)' }}>
                 Loading medications...
               </p>
-            ) : activeMeds.length === 0 ? (
+            ) : visibleMeds.length === 0 ? (
               <p className="text-xs" style={{ color: 'var(--color-text-hint)' }}>
                 No medications added yet.
               </p>
             ) : (
               <ul className="space-y-3">
-                {activeMeds.map((med) => (
+                {visibleMeds.map((med) => (
                   <li key={med.id} className="text-sm">
-                    <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                      {med.name}
-                    </p>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>
-                      {med.dose} {med.unit} &middot; {FREQUENCY_LABELS[med.frequency]}
-                    </p>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-hint)' }}>
-                      {med.timeWindows.join(', ')}
-                    </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                            {med.name}
+                          </p>
+                          {med.status === 'paused' && (
+                            <span
+                              className="text-xs rounded px-1.5 py-0.5 font-medium"
+                              style={{ background: '#e5e7eb', color: '#6b7280' }}
+                            >
+                              Paused
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>
+                          {med.dose} {med.unit} &middot; {FREQUENCY_LABELS[med.frequency]}
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-hint)' }}>
+                          {med.timeWindows.join(', ')}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-1 shrink-0">
+                        {med.status === 'active' && (
+                          <button
+                            type="button"
+                            disabled={isSubmitting}
+                            onClick={() => void pauseMedication(med.id)}
+                            className="text-xs px-2 py-0.5 rounded border"
+                            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                          >
+                            Pause
+                          </button>
+                        )}
+                        {med.status === 'paused' && (
+                          <button
+                            type="button"
+                            disabled={isSubmitting}
+                            onClick={() => void activateMedication(med.id)}
+                            className="text-xs px-2 py-0.5 rounded border"
+                            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                          >
+                            Activate
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          disabled={isSubmitting}
+                          onClick={() => void archiveMedication(med.id)}
+                          className="text-xs px-2 py-0.5 rounded border"
+                          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                        >
+                          Archive
+                        </button>
+                      </div>
+                    </div>
                   </li>
                 ))}
               </ul>

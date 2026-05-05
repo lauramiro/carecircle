@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import type { AddMedicationPayload, Medication } from '../../api/medications/medications.types';
 import {
   addMedication as addMedicationService,
+  pauseMedication as pauseMedicationService,
+  activateMedication as activateMedicationService,
+  archiveMedication as archiveMedicationService,
   getMedicationsByPatient,
 } from '../../api/medications/medications.service';
 
@@ -38,5 +41,41 @@ export function useMedications(patientId: string) {
     }
   }
 
-  return { medications, loading, error, isSubmitting, addMedication };
+  async function pauseMedication(id: string): Promise<void> {
+    setIsSubmitting(true);
+    try {
+      const updated = await pauseMedicationService(id);
+      setMedications((current) =>
+        current.map((m) => (m.id === updated.id ? updated : m)),
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function activateMedication(id: string): Promise<void> {
+    setIsSubmitting(true);
+    try {
+      const updated = await activateMedicationService(id);
+      setMedications((current) =>
+        current.map((m) => (m.id === updated.id ? updated : m)),
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function archiveMedication(id: string): Promise<void> {
+    setIsSubmitting(true);
+    try {
+      const updated = await archiveMedicationService(id);
+      setMedications((current) =>
+        current.map((m) => (m.id === updated.id ? updated : m)),
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return { medications, loading, error, isSubmitting, addMedication, pauseMedication, activateMedication, archiveMedication };
 }

@@ -52,6 +52,31 @@ export async function addMedication(payload: AddMedicationPayload): Promise<Medi
   return delay(medication);
 }
 
+export async function pauseMedication(id: string): Promise<Medication> {
+  const med = mockMedications.find((m) => m.id === id);
+  if (!med) throw new Error(`Medication ${id} not found`);
+  med.status = 'paused';
+  return delay({ ...med });
+}
+
+export async function archiveMedication(id: string): Promise<Medication> {
+  const med = mockMedications.find((m) => m.id === id);
+  if (!med) throw new Error(`Medication ${id} not found`);
+  med.status = 'archived';
+  return delay({ ...med });
+}
+
+export async function activateMedication(id: string): Promise<Medication> {
+  const med = mockMedications.find((m) => m.id === id);
+  if (!med) throw new Error(`Medication ${id} not found`);
+  med.status = 'active';
+  return delay({ ...med });
+}
+
+export async function deleteMedication(_id: string): Promise<never> {
+  throw new Error('Hard deletes are not permitted on medications');
+}
+
 export async function checkDuplicateName(
   patientId: string,
   name: string,

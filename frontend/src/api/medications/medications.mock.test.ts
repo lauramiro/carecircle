@@ -4,11 +4,11 @@ import type { AddMedicationPayload } from './medications.types';
 
 const BASE_PAYLOAD: AddMedicationPayload = {
   patientId: 'test-patient',
-  name: 'TestMed',
-  dose: 10,
-  unit: 'mg',
+  medicationName: 'TestMed',
+  dosage: '10 mg',
   frequency: 'once_daily',
-  timeWindows: ['Morning'],
+  timeOfDay: ['Morning'],
+  startDate: '2025-05-01',
 };
 
 async function seedMedication(): Promise<string> {
@@ -69,5 +69,47 @@ describe('medications mock', () => {
     await mock.archiveMedication(med.id);
     const results = await mock.getMedicationsByPatient(patientId);
     expect(results.some((m) => m.id === med.id)).toBe(false);
+  });
+
+  it('editing a medication produces a new row with version = 2 and old row has status superseded', async () => {
+    const patientId = `patient-edit-v2-${Date.now()}`;
+    const original = await mock.addMedication({ ...BASE_PAYLOAD, patientId });
+    expect(original.version).toBe(1);
+
+    const next = await mock.editMedication(original.id, { dosage: '20 mg' });
+    expect(next.version).toBe(2);
+    expect(next.status).toBe('active');
+    expect(next.dosage).toBe('20 mg');
+    expect(next.id).not.toBe(original.id);
+
+    const results = await mock.getMedicationsByPatient(patientId);
+    expect(results.some((m) => m.id === original.id)).toBe(false);
+    expect(results.some((m) => m.id === next.id)).toBe(true);
+  });
+
+  it('editing three times produces three rows total and only version 3 appears in getMedicationsByPatient', async () => {
+    const patientId = `patient-edit-v3-${Date.now()}`;
+    const v1 = await mock.addMedication({ ...BASE_PAYLOAD, patientId });
+    const v2 = await mock.editMedication(v1.id, { dosage: '20 mg' });
+    const v3 = await mock.editMedication(v2.id, { dosage: '30 mg' });
+
+    expect(v3.version).toBe(3);
+    expect(v3.dosage).toBe('30 mg');
+
+    const results = await mock.getMedicationsByPatient(patientId);
+    expect(results).toHaveLength(1);
+    expect(results[0].id).toBe(v3.id);
+    expect(results[0].version).toBe(3);
+  });
+
+  it('superseded rows are not visible in getMedicationsByPatient', async () => {
+    const patientId = `patient-superseded-${Date.now()}`;
+    const v1 = await mock.addMedication({ ...BASE_PAYLOAD, patientId });
+    const v2 = await mock.editMedication(v1.id, { medicationName: 'UpdatedMed' });
+
+    const results = await mock.getMedicationsByPatient(patientId);
+    expect(results.every((m) => m.status !== 'superseded')).toBe(true);
+    expect(results.some((m) => m.id === v1.id)).toBe(false);
+    expect(results.some((m) => m.id === v2.id)).toBe(true);
   });
 });

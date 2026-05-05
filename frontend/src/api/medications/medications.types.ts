@@ -1,4 +1,4 @@
-export type MedicationUnit = 'mg' | 'ml' | 'mcg' | 'units';
+export type MedicationStatus = 'active' | 'paused' | 'archived' | 'superseded';
 export type MedicationFrequency =
   | 'once_daily'
   | 'twice_daily'
@@ -6,21 +6,51 @@ export type MedicationFrequency =
   | 'four_times_daily'
   | 'as_needed';
 export type MedicationTimeWindow = 'Morning' | 'Afternoon' | 'Evening' | 'Night';
-export type MedicationStatus = 'active' | 'paused' | 'archived';
 
 export interface Medication {
   id: string;
   patientId: string;
-  name: string;
-  dose: number;
-  unit: MedicationUnit;
+  medicationName: string;
+  genericName: string | null;
+  dosage: string;
+  form: string | null;
+  prescribedBy: string | null;
+  prescribedDate: string | null;
+  prescriptionNumber: string | null;
   frequency: MedicationFrequency;
-  timeWindows: MedicationTimeWindow[];
+  timeOfDay: MedicationTimeWindow[] | null;
+  specificTimes: string[] | null;
+  instructions: string | null;
+  route: string | null;
+  takeWithFood: boolean | null;
+  startDate: string;
+  endDate: string | null;
   status: MedicationStatus;
+  discontinuedDate: string | null;
+  discontinuedReason: string | null;
+  refillsRemaining: number | null;
+  lastRefillDate: string | null;
+  pharmacy: string | null;
+  pharmacyPhone: string | null;
+  sideEffects: string[] | null;
+  notes: string | null;
+  version: number;
   createdAt: string;
+  updatedAt: string;
 }
 
-export type AddMedicationPayload = Omit<Medication, 'id' | 'status' | 'createdAt'>;
+export type AddMedicationPayload = {
+  patientId: string;
+  medicationName: string;
+  dosage: string;
+  frequency: MedicationFrequency;
+  timeOfDay: MedicationTimeWindow[];
+  startDate: string;
+};
+
+export type EditMedicationPayload = Partial<
+  Pick<Medication, 'medicationName' | 'dosage' | 'frequency' | 'timeOfDay' | 'instructions' | 'notes'>
+>;
 
 export const FREQUENCY_LABELS: Record<MedicationFrequency, string> = {
   once_daily: 'Once daily',

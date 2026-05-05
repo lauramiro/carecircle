@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { AddMedicationPayload, Medication } from '../../api/medications/medications.types';
+import type { AddMedicationPayload, EditMedicationPayload, Medication } from '../../api/medications/medications.types';
 import {
   addMedication as addMedicationService,
+  editMedication as editMedicationService,
   pauseMedication as pauseMedicationService,
   activateMedication as activateMedicationService,
   archiveMedication as archiveMedicationService,
@@ -36,6 +37,18 @@ export function useMedications(patientId: string) {
     try {
       const created = await addMedicationService(payload);
       setMedications((current) => [...current, created]);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function editMedication(id: string, changes: EditMedicationPayload): Promise<void> {
+    setIsSubmitting(true);
+    try {
+      const next = await editMedicationService(id, changes);
+      setMedications((current) =>
+        current.map((m) => (m.id === id ? next : m)),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -77,5 +90,5 @@ export function useMedications(patientId: string) {
     }
   }
 
-  return { medications, loading, error, isSubmitting, addMedication, pauseMedication, activateMedication, archiveMedication };
+  return { medications, loading, error, isSubmitting, addMedication, editMedication, pauseMedication, activateMedication, archiveMedication };
 }

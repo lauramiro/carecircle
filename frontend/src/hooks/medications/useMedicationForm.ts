@@ -5,6 +5,7 @@ import type {
   MedicationTimeWindow,
   MedicationUnit,
 } from '../../api/medications/medications.types';
+// MedicationUnit is used for internal form state only (dose + unit combined into dosage on submit)
 import { TIME_WINDOWS } from '../../api/medications/medications.types';
 
 export interface MedicationFormValues {
@@ -105,11 +106,11 @@ export function useMedicationForm() {
   function toPayload(patientId: string): AddMedicationPayload {
     return {
       patientId,
-      name: values.name.trim(),
-      dose: Number(values.dose),
-      unit: values.unit as MedicationUnit,
+      medicationName: values.name.trim(),
+      dosage: `${values.dose} ${values.unit as MedicationUnit}`,
       frequency: values.frequency as MedicationFrequency,
-      timeWindows: values.timeWindows,
+      timeOfDay: values.timeWindows,
+      startDate: new Date().toISOString().split('T')[0],
     };
   }
 

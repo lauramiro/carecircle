@@ -1,12 +1,14 @@
 import { supabase } from '../../lib/supabaseClient';
+import * as groupsMock from './groups.mock';
 import type {
+  GroupMember,
   GPContact,
   Group,
   GroupSummary,
   InvitePayload,
   InviteResult,
 } from './groups.types';
-import * as groupsMock from './groups.mock';
+
 
 export async function getGroups(): Promise<GroupSummary[]> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -32,20 +34,19 @@ export async function getGroups(): Promise<GroupSummary[]> {
   }
 
   return data.map((item: any) => {
-    const userRole = item.role_in_care === 'Primary Carer' ? 'Admin' : 'Member';
     
     return {
       id: item.patient_id,
       name: `${item.patients.full_name}'s Care Circle`,
       description: item.patients.notes || `Care coordination group for ${item.patients.full_name}`,
-      role: userRole,
+      role: item.role_in_care === 'Primary Carer' ? 'Admin' : 'Member',
       createdAt: item.joined_at || new Date().toISOString(),
       memberCount: 1, 
     };
   });
 }
 
-export async function getGroupById(groupId: string): Promise<Group | null> {
+export async function getUserGroupDetails(patientId: string): Promise<Group | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
@@ -61,7 +62,7 @@ export async function getGroupById(groupId: string): Promise<Group | null> {
         notes
       )
     `)
-    .eq('patient_id', groupId)
+    .eq('patient_id', patientId)
     .eq('caregiver_id', user.id)
     .eq('status', 'active')
     .single();
@@ -85,7 +86,7 @@ export async function getGroupById(groupId: string): Promise<Group | null> {
         full_name
       )
     `)
-    .eq('patient_id', groupId);
+    .eq('patient_id', patientId);
 
   if (membersError) {
     console.error('Error fetching members:', membersError);
@@ -104,8 +105,8 @@ export async function getGroupById(groupId: string): Promise<Group | null> {
 
   return {
     id: userGroupData.patient_id,
-    name: `${userGroupData.patients.full_name}'s Care Circle`,
-    description: userGroupData.patients.notes || `Care coordination group for ${userGroupData.patients.full_name}`,
+    name: `${(userGroupData.patients as any).full_name || (userGroupData.patients as any)[0]?.full_name}'s Care Circle`,
+    description: (userGroupData.patients as any).notes || (userGroupData.patients as any)[0]?.notes || `Care coordination group for ${(userGroupData.patients as any).full_name || (userGroupData.patients as any)[0]?.full_name}`,
     role: userRole as 'Admin' | 'Member',
     createdAt: userGroupData.joined_at || new Date().toISOString(),
     members,

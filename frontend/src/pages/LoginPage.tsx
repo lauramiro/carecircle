@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getErrorMessage } from '../utils/helper';
+import { buildInviteConfirmationPath, getPendingInvite } from '../utils/inviteStorage';
 
 function mapErrorMessage(message: string): string {
   if (message.includes('Invalid login credentials')) return "That email and password don't match. Please try again.";
@@ -17,7 +18,7 @@ export default function LoginPage() {
   const [magicSent, setMagicSent]   = useState(false);
   const [showMagic, setShowMagic]   = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -33,7 +34,11 @@ export default function LoginPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        // TODO CC-36: navigate to dashboard once session persistence is set up
+        const pendingInvite = getPendingInvite();
+        if (pendingInvite && pendingInvite.email.toLowerCase() === email.toLowerCase()) {
+          window.location.href = buildInviteConfirmationPath(pendingInvite);
+          return;
+        }
         window.location.href = '/';
       }
     } catch (err: unknown) {

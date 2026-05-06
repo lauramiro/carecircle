@@ -4,9 +4,11 @@ import { useAuth } from './contexts/AuthContext';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import InvitePage from './pages/InvitePage';
 import CreateGroupPage from './pages/groups/CreateGroupPage';
 import GroupDetailPage from './pages/groups/GroupDetailPage';
 import GroupsListPage from './pages/groups/GroupsListPage';
+import GroupInvite from './pages/GroupInvite';
 
 function App() {
   const { session, loading } = useAuth();
@@ -30,6 +32,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/invite" element={<InvitePage />} />
+        <Route path="/invite/:groupId" element={<GroupInvite />} />
         <Route
           path="/login"
           element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />}

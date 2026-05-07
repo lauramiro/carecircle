@@ -1,69 +1,204 @@
+import { supabase } from '../lib/supabaseClient';
+import { isAbortError } from '../utils/helper';
+
 export interface InviteGroupDetails {
   groupId: string;
+  patientId: string;
   groupName: string;
   description: string;
+  /** Rows in `carer_givers` for this group and the patient from `care_groups`. */
+  totalCarers: number;
 }
 
-const registeredEmailsKey = 'carecircle:mockRegisteredEmails';
-const groupMembershipsKey = 'carecircle:mockGroupMemberships';
+/** `invites.invite_type` value for care-group membership invites. */
+export const INVITE_TYPES = {
+  CARE_GROUP: 'care_group',
+} as const;
 
-function getStoredList(key: string): string[] {
-  const value = localStorage.getItem(key);
-  if (!value) return [];
+/** `invites.status` — only pending invites are shown on the invite landing flow. */
+export const INVITE_STATUS = {
+  PENDING: 'pending',
+  ACCEPTED: 'accepted',
+  REJECTED: 'rejected',
+} as const;
 
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
-  } catch {
-    return [];
+const INVITE_ID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isValidInviteUuid(inviteId: string): boolean {
+  return Boolean(inviteId.trim() && INVITE_ID_RE.test(inviteId));
+}
+
+function assertValidInviteUuid(inviteId: string): void {
+  if (!isValidInviteUuid(inviteId)) {
+    throw new Error('Invalid invitation link.');
   }
 }
 
-function getMembershipKey(groupId: string, email: string): string {
-  return `${groupId}:${email.toLowerCase()}`;
-}
+export async function isEmailRegistered(
+  email: string,
+  options?: { signal?: AbortSignal },
+): Promise<boolean> {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return false;
 
-export async function isEmailRegistered(email: string): Promise<boolean> {
-  const normalizedEmail = email.toLowerCase();
-  const storedEmails = getStoredList(registeredEmailsKey).map((storedEmail) => storedEmail.toLowerCase());
+  try {
+    const builder = supabase.rpc('is_email_registered', { p_email: normalizedEmail });
+    const { data, error } =
+      options?.signal !== undefined ? await builder.abortSignal(options.signal) : await builder;
 
-  return storedEmails.includes(normalizedEmail) || normalizedEmail.includes('registered');
+    if (error) {
+      console.error('isEmailRegistered:', error.message);
+      return false;
+    }
+
+    return data === true;
+  } catch (e) {
+    if (options?.signal?.aborted || isAbortError(e)) {
+      throw e;
+    }
+    console.error('isEmailRegistered:', e);
+    return false;
+  }
 }
 
 export async function fetchInviteGroupDetails(inviteId: string): Promise<InviteGroupDetails> {
-  const suffix = inviteId.slice(0, 8) || 'demo';
+  const expiresAfter = new Date().toISOString();
+
+  const { data: invite, error: inviteError } = await supabase
+    .from('invites')
+    .select('group_id')
+    .eq('id', inviteId)
+    .eq('invite_type', INVITE_TYPES.CARE_GROUP)
+    .eq('status', INVITE_STATUS.PENDING)
+    .gt('expires_at', expiresAfter)
+    .maybeSingle();
+
+  if (inviteError) {
+    throw new Error(inviteError.message);
+  }
+
+  if (!invite) {
+    throw new Error('Invitation not found or no longer valid.');
+  }
+
+  const { data: group, error: groupError } = await supabase
+    .from('care_groups')
+    .select('name, description, patient_id')
+    .eq('id', invite.group_id)
+    .maybeSingle();
+
+  if (groupError) {
+    throw new Error(groupError.message);
+  }
+
+  if (!group?.name || !group.patient_id) {
+    throw new Error('Care group not found.');
+  }
+
+  const { count, error: countError } = await supabase
+    .from('care_givers')
+    .select('*', { count: 'exact', head: true })
+    .eq('group_id', invite.group_id)
+    .eq('patient_id', group.patient_id);
+
+  if (countError) {
+    throw new Error(countError.message);
+  }
 
   return {
-    groupId: `group-${suffix}`,
-    groupName: 'CareCircle Family Group',
-    description: 'A shared space for coordinating care tasks, updates, and support.',
+    groupId: invite.group_id,
+    patientId: group.patient_id,
+    groupName: group.name,
+    description: group.description ?? '',
+    totalCarers: count ?? 0,
   };
 }
 
-export async function isUserInInviteGroup(inviteId: string, email: string): Promise<boolean> {
-  const group = await fetchInviteGroupDetails(inviteId);
-  const memberships = getStoredList(groupMembershipsKey);
+/**
+ * Whether the signed-in user already has a `care_givers` row for this group and patient.
+ * @param careGiverId `auth.users.id` — when absent (logged out), returns false.
+ */
+export async function isUserInInviteGroup(
+  groupId: string,
+  patientId: string,
+  careGiverId: string | undefined,
+): Promise<boolean> {
+  if (!groupId || !patientId || !careGiverId) {
+    return false;
+  }
 
-  return memberships.includes(getMembershipKey(group.groupId, email)) || inviteId.toLowerCase().includes('member');
+  try {
+    const { data, error } = await supabase
+      .from('care_givers')
+      .select('id')
+      .eq('group_id', groupId)
+      .eq('patient_id', patientId)
+      .eq('care_giver_id', careGiverId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('isUserInInviteGroup:', error.message);
+      return false;
+    }
+
+    return data !== null;
+  } catch (e) {
+    console.error('isUserInInviteGroup:', e);
+    return false;
+  }
 }
 
 export async function acceptInvitation(inviteId: string, email: string): Promise<{ groupId: string }> {
-  const group = await fetchInviteGroupDetails(inviteId);
-  const memberships = getStoredList(groupMembershipsKey);
-  const membershipKey = getMembershipKey(group.groupId, email);
+  void email;
+  assertValidInviteUuid(inviteId);
 
-  if (!memberships.includes(membershipKey)) {
-    localStorage.setItem(groupMembershipsKey, JSON.stringify([...memberships, membershipKey]));
+  const { data, error } = await supabase.rpc('accept_group_invite', {
+    p_invite_id: inviteId,
+  });
+
+  if (error) {
+    throw new Error(error.message);
   }
 
-  return { groupId: group.groupId };
+  const groupId = data && typeof data === 'object' ? (data as { group_id?: unknown }).group_id : undefined;
+  if (typeof groupId !== 'string') {
+    throw new Error('Unexpected response from server.');
+  }
+
+  return { groupId };
 }
 
-export async function rejectInvitation(): Promise<void> {
-  return Promise.resolve();
+export async function rejectInvitation(inviteId: string): Promise<void> {
+  assertValidInviteUuid(inviteId);
+
+  const { error } = await supabase.rpc('reject_group_invite', {
+    p_invite_id: inviteId,
+  });
+
+  if (error) {
+    console.error('rejectInvitation:', error.message);
+  }
 }
 
 export async function isUserInGroup(groupId: string, email: string): Promise<boolean> {
-  const memberships = getStoredList(groupMembershipsKey);
-  return memberships.includes(getMembershipKey(groupId, email));
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id || user.email?.trim().toLowerCase() !== email.trim().toLowerCase()) {
+    return false;
+  }
+
+  if (!INVITE_ID_RE.test(groupId)) {
+    return false;
+  }
+
+  const { data, error } = await supabase.rpc('user_member_of_care_group', {
+    p_care_group_id: groupId,
+  });
+
+  if (error) {
+    console.error('isUserInGroup:', error.message);
+    return false;
+  }
+
+  return data === true;
 }

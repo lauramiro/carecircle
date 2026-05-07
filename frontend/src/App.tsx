@@ -32,8 +32,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/invite" element={<InvitePage />} />
-        <Route path="/invite/:groupId" element={<GroupInvite />} />
+        <Route path="/group-invite" element={<InvitePage />} />
+        <Route path="/group-invite/:groupId" element={<GroupInvite />} />
         <Route
           path="/login"
           element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />}

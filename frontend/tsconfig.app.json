@@ -7,6 +7,21 @@
     "types": ["vite/client", "vitest"],
     "skipLibCheck": true,
 
+    "paths": {
+      "@api/*": ["./src/api/*"],
+      "@components/*": ["./src/components/*"],
+      "@config/*": ["./src/config/*"],
+      "@constants/*": ["./src/constants/*"],
+      "@contexts/*": ["./src/contexts/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@lib/*": ["./src/lib/*"],
+      "@pages/*": ["./src/pages/*"],
+      "@services/*": ["./src/services/*"],
+      "@test/*": ["./src/test/*"],
+      "@typings/*": ["./src/types/*"],
+      "@utils/*": ["./src/utils/*"]
+    },
+
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,

@@ -15,17 +15,18 @@ export async function getGroups(): Promise<GroupSummary[]> {
   if (!user) throw new Error('User not authenticated');
 
   const { data, error } = await supabase
-    .from('care_group')
+    .from('care_givers')
     .select(`
-      patient_id,
       role_in_care,
       joined_at,
-      patients!inner(
-        full_name,
-        notes
+      care_group!inner (
+        id,
+        name,
+        description,
+        created_at
       )
     `)
-    .eq('caregiver_id', user.id)
+    .eq('care_giver_id', user.id)
     .eq('status', 'active');
 
   if (error) {
@@ -34,83 +35,83 @@ export async function getGroups(): Promise<GroupSummary[]> {
   }
 
   return data.map((item: any) => {
-    
     return {
-      id: item.patient_id,
-      name: `${item.patients.full_name}'s Care Circle`,
-      description: item.patients.notes || `Care coordination group for ${item.patients.full_name}`,
+      id: item.care_group.id,
+      name: item.care_group.name || 'Care Group',
+      description: item.care_group.description || '',
       role: item.role_in_care === 'Primary Carer' ? 'Admin' : 'Member',
-      createdAt: item.joined_at || new Date().toISOString(),
+      createdAt: item.care_group.created_at || item.joined_at || new Date().toISOString(),
       memberCount: 1, 
     };
   });
 }
 
-export async function getUserGroupDetails(patientId: string): Promise<Group | null> {
+export async function getUserGroupDetails(groupId: string): Promise<Group | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
-  // Verify access and get group info based on the patient
-  const { data: userGroupData, error: groupError } = await supabase
-    .from('care_group')
-    .select(`
-      patient_id,
-      role_in_care,
-      joined_at,
-      patients!inner(
-        full_name,
-        notes
-      )
-    `)
-    .eq('patient_id', patientId)
-    .eq('caregiver_id', user.id)
+  // Verify access 
+  const { data: userMembership, error: membershipError } = await supabase
+    .from('care_givers')
+    .select('role_in_care')
+    .eq('group_id', groupId)
+    .eq('care_giver_id', user.id)
     .eq('status', 'active')
     .single();
 
-  if (groupError || !userGroupData) {
-    if (groupError?.code !== 'PGRST116') {
-      console.error('Error fetching group data:', groupError);
+  if (membershipError || !userMembership) {
+    if (membershipError?.code !== 'PGRST116') {
+      console.error('Error fetching membership data:', membershipError);
     }
     return null;
   }
 
-  // Fetch all members of this care circle
-  const { data: membersData, error: membersError } = await supabase
+  // Fetch group details and all members
+  const { data: groupData, error: groupError } = await supabase
     .from('care_group')
     .select(`
-      caregiver_id,
-      role_in_care,
-      status,
-      joined_at,
-      profiles!inner(
-        full_name
+      id,
+      name,
+      description,
+      created_at,
+      care_givers (
+        care_giver_id,
+        role_in_care,
+        status,
+        joined_at,
+        profiles (
+          full_name,
+          email
+        )
       )
     `)
-    .eq('patient_id', patientId);
+    .eq('id', groupId)
+    .single();
 
-  if (membersError) {
-    console.error('Error fetching members:', membersError);
+  if (groupError || !groupData) {
+    console.error('Error fetching members:', groupError);
+    return null;
   }
 
-  const userRole = userGroupData.role_in_care === 'Primary Carer' ? 'Admin' : 'Member';
+  const userRole = userMembership.role_in_care === 'Primary Carer' ? 'Admin' : 'Member';
 
-  const members: GroupMember[] = (membersData || []).map((m: any) => ({
-    id: m.caregiver_id,
+  const members: GroupMember[] = (groupData.care_givers || []).map((m: any) => ({
+    id: m.care_giver_id,
     name: m.profiles?.full_name || 'Unknown',
-    email: m.profiles?.email || '', // Profiles might or might not have email depending on standard Supabase setup. If not, it'll gracefully be blank
+    email: m.profiles?.email || '', 
     role: m.role_in_care === 'Primary Carer' ? 'Admin' : 'Member',
     joinedAt: m.joined_at || new Date().toISOString(),
     status: m.status === 'active' ? 'Active' : 'Suspended',
   }));
 
   return {
-    id: userGroupData.patient_id,
-    name: `${(userGroupData.patients as any).full_name || (userGroupData.patients as any)[0]?.full_name}'s Care Circle`,
-    description: (userGroupData.patients as any).notes || (userGroupData.patients as any)[0]?.notes || `Care coordination group for ${(userGroupData.patients as any).full_name || (userGroupData.patients as any)[0]?.full_name}`,
+    id: groupData.id,
+    name: groupData.name || 'Care Group',
+    description: groupData.description || '',
     role: userRole as 'Admin' | 'Member',
-    createdAt: userGroupData.joined_at || new Date().toISOString(),
+    createdAt: groupData.created_at || new Date().toISOString(),
     members,
-    gpContacts: [] // Provide empty array as mock since Doctors/GPs relation isn't explicitly in schema yet
+    gpContacts: [] 
   };
 }
 

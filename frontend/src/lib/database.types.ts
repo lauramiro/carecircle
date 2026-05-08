@@ -115,13 +115,6 @@ export type Database = {
             foreignKeyName: "appointments_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
-            referencedRelation: "active_patients_with_caregivers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appointments_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -175,53 +168,96 @@ export type Database = {
           },
         ]
       }
-      care_group: {
+      care_givers: {
         Row: {
           can_communicate: boolean | null
-          can_edit_medical: boolean | null
           can_schedule: boolean | null
           can_view_medical: boolean | null
-          caregiver_id: string
-          created_at: string | null
+          care_giver_id: string
+          group_id: string | null
           id: string
-          invited_at: string | null
-          joined_at: string | null
+          joined_at: string
           patient_id: string
-          relationship: string
           role_in_care: string | null
-          status: string | null
-          updated_at: string | null
+          status: string
+          updated_at: string
         }
         Insert: {
           can_communicate?: boolean | null
-          can_edit_medical?: boolean | null
           can_schedule?: boolean | null
           can_view_medical?: boolean | null
-          caregiver_id: string
-          created_at?: string | null
+          care_giver_id: string
+          group_id?: string | null
           id?: string
-          invited_at?: string | null
-          joined_at?: string | null
+          joined_at?: string
           patient_id: string
-          relationship: string
           role_in_care?: string | null
-          status?: string | null
-          updated_at?: string | null
+          status: string
+          updated_at?: string
         }
         Update: {
           can_communicate?: boolean | null
-          can_edit_medical?: boolean | null
           can_schedule?: boolean | null
           can_view_medical?: boolean | null
+          care_giver_id?: string
+          group_id?: string | null
+          id?: string
+          joined_at?: string
+          patient_id?: string
+          role_in_care?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_givers_care_giver_id_fkey"
+            columns: ["care_giver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_givers_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_group"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_givers_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_group: {
+        Row: {
+          caregiver_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string | null
+          patient_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          caregiver_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string | null
+          patient_id: string
+          updated_at?: string | null
+        }
+        Update: {
           caregiver_id?: string
           created_at?: string | null
+          description?: string | null
           id?: string
-          invited_at?: string | null
-          joined_at?: string | null
+          name?: string | null
           patient_id?: string
-          relationship?: string
-          role_in_care?: string | null
-          status?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -230,13 +266,6 @@ export type Database = {
             columns: ["caregiver_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "care_circle_members_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "active_patients_with_caregivers"
             referencedColumns: ["id"]
           },
           {
@@ -297,13 +326,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "care_plans_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "active_patients_with_caregivers"
             referencedColumns: ["id"]
           },
           {
@@ -416,13 +438,6 @@ export type Database = {
             foreignKeyName: "documents_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
-            referencedRelation: "active_patients_with_caregivers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -505,13 +520,6 @@ export type Database = {
             foreignKeyName: "medical_records_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
-            referencedRelation: "active_patients_with_caregivers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "medical_records_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -581,13 +589,6 @@ export type Database = {
             columns: ["medication_id"]
             isOneToOne: false
             referencedRelation: "medications"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "medication_logs_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "active_patients_with_caregivers"
             referencedColumns: ["id"]
           },
           {
@@ -698,13 +699,6 @@ export type Database = {
             foreignKeyName: "medications_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
-            referencedRelation: "active_patients_with_caregivers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "medications_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -775,13 +769,6 @@ export type Database = {
             columns: ["parent_message_id"]
             isOneToOne: false
             referencedRelation: "messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "active_patients_with_caregivers"
             referencedColumns: ["id"]
           },
           {
@@ -1104,13 +1091,6 @@ export type Database = {
             foreignKeyName: "tasks_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
-            referencedRelation: "active_patients_with_caregivers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -1180,13 +1160,6 @@ export type Database = {
             foreignKeyName: "vital_signs_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
-            referencedRelation: "active_patients_with_caregivers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vital_signs_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -1209,29 +1182,10 @@ export type Database = {
             foreignKeyName: "medications_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
-            referencedRelation: "active_patients_with_caregivers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "medications_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
-      }
-      active_patients_with_caregivers: {
-        Row: {
-          care_level: string | null
-          care_team_size: number | null
-          caregiver_phone: string | null
-          date_of_birth: string | null
-          id: string | null
-          patient_name: string | null
-          primary_caregiver_name: string | null
-        }
-        Relationships: []
       }
       upcoming_appointments: {
         Row: {
@@ -1247,6 +1201,7 @@ export type Database = {
       }
     }
     Functions: {
+      is_email_registered: { Args: { p_email: string }; Returns: boolean }
       verify_profile_trigger: {
         Args: never
         Returns: {

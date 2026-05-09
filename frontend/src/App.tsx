@@ -9,6 +9,7 @@ import CreateGroupPage from './pages/groups/CreateGroupPage';
 import GroupDetailPage from './pages/groups/GroupDetailPage';
 import GroupsListPage from './pages/groups/GroupsListPage';
 import GroupInvite from './pages/GroupInvite';
+import PatientProfilePage from './pages/groups/PatientProfilePage';
 
 function App() {
   const { session, loading } = useAuth();
@@ -51,6 +52,7 @@ function App() {
           <Route path="groups/create" element={<CreateGroupPage />} />
           <Route path="groups/list" element={<GroupsListPage />} />
           <Route path="groups/:groupId" element={<GroupDetailPage />} />
+          <Route path="groups/:groupId/profile" element={<PatientProfilePage />} />
         </Route>
         <Route
           path="*"

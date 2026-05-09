@@ -205,14 +205,20 @@ function ChecklistItemRow({
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [showSkipModal, setShowSkipModal] = useState(false);
-  const proofInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const isTerminal = item.status === 'given' || item.status === 'skipped';
   const isEditable = !isTerminal && !disabled;
   const style = STATUS_STYLES[item.status];
 
-  const handleMarkAsGivenClick = () => {
+  const handleOpenCamera = () => {
     if (!isEditable) return;
-    proofInputRef.current?.click();
+    cameraInputRef.current?.click();
+  };
+
+  const handleOpenGallery = () => {
+    if (!isEditable) return;
+    galleryInputRef.current?.click();
   };
 
   const handleProofSelected = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -271,11 +277,20 @@ function ChecklistItemRow({
 
         <div className="flex items-center gap-2">
           <input
-            ref={proofInputRef}
+            ref={cameraInputRef}
             type="file"
             accept="image/*"
             capture="environment"
             onChange={(event) => void handleProofSelected(event)}
+            data-testid={`camera-input-${item.id}`}
+            className="hidden"
+          />
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            onChange={(event) => void handleProofSelected(event)}
+            data-testid={`gallery-input-${item.id}`}
             className="hidden"
           />
           <span
@@ -287,16 +302,31 @@ function ChecklistItemRow({
 
           {isEditable && (
             <>
-              <motion.button
-                type="button"
-                onClick={handleMarkAsGivenClick}
-                disabled={isLoading}
-                className="h-8 rounded-lg px-3 text-xs font-bold text-white disabled:opacity-60"
-                style={{ backgroundColor: 'var(--color-primary)' }}
-                whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-              >
-                {isLoading ? 'Uploading...' : 'Mark as Given'}
-              </motion.button>
+              <div className="flex flex-col gap-1">
+                <motion.button
+                  type="button"
+                  onClick={handleOpenCamera}
+                  disabled={isLoading}
+                  className="h-8 rounded-lg px-3 text-xs font-bold text-white disabled:opacity-60"
+                  style={{ backgroundColor: 'var(--color-primary)' }}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+                >
+                  {isLoading ? 'Uploading...' : 'Mark as Given'}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={handleOpenGallery}
+                  disabled={isLoading}
+                  className="h-8 rounded-lg border px-3 text-xs font-bold disabled:opacity-60"
+                  style={{
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text-secondary)',
+                  }}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+                >
+                  Choose from gallery
+                </motion.button>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowSkipModal(true)}

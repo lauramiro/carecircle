@@ -118,10 +118,11 @@ describe('MedicationChecklist mark-as-given photo flow', () => {
 
     await waitFor(() => {
       expect(screen.getAllByRole('button', { name: /mark as given/i })).toHaveLength(2);
+      expect(screen.getAllByRole('button', { name: /choose from gallery/i })).toHaveLength(2);
     });
   });
 
-  it('opens picker immediately and does not update status before photo selection', async () => {
+  it('opens camera immediately and does not update status before photo selection', async () => {
     const user = userEvent.setup();
     const clickSpy = vi
       .spyOn(HTMLInputElement.prototype, 'click')
@@ -139,13 +140,33 @@ describe('MedicationChecklist mark-as-given photo flow', () => {
     clickSpy.mockRestore();
   });
 
+  it('opens gallery picker via fallback button', async () => {
+    const user = userEvent.setup();
+    const clickSpy = vi
+      .spyOn(HTMLInputElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+
+    render(<MedicationChecklist checklistId="checklist-gallery" userRole="primary" />);
+
+    const chooseFromGallery = await screen.findByRole('button', {
+      name: /choose from gallery/i,
+    });
+    await user.click(chooseFromGallery);
+
+    expect(clickSpy).toHaveBeenCalled();
+    expect(uploadMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
+
+    clickSpy.mockRestore();
+  });
+
   it('updates status to given only after successful photo upload', async () => {
     render(<MedicationChecklist checklistId="checklist-3" userRole="primary" />);
 
     const markAsGiven = await screen.findByRole('button', { name: /mark as given/i });
     await userEvent.click(markAsGiven);
 
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
+    const fileInput = screen.getByTestId('camera-input-due-1') as HTMLInputElement | null;
     expect(fileInput).not.toBeNull();
 
     const proofPhoto = new File(['proof'], 'proof.jpg', { type: 'image/jpeg' });
@@ -168,5 +189,31 @@ describe('MedicationChecklist mark-as-given photo flow', () => {
       updateMock.mock.invocationCallOrder[0],
     );
     expect(toastMock.success).toHaveBeenCalled();
+  });
+
+  it('uses gallery-selected photo for the same upload and update flow', async () => {
+    render(<MedicationChecklist checklistId="checklist-4" userRole="primary" />);
+
+    const chooseFromGallery = await screen.findByRole('button', {
+      name: /choose from gallery/i,
+    });
+    await userEvent.click(chooseFromGallery);
+
+    const galleryInput = screen.getByTestId('gallery-input-due-1') as HTMLInputElement;
+    const galleryPhoto = new File(['gallery-proof'], 'gallery-proof.jpg', {
+      type: 'image/jpeg',
+    });
+    fireEvent.change(galleryInput, { target: { files: [galleryPhoto] } });
+
+    await waitFor(() => {
+      expect(uploadMock).toHaveBeenCalledTimes(1);
+      expect(updateEqMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'given',
+      }),
+    );
   });
 });

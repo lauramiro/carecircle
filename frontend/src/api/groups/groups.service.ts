@@ -7,9 +7,12 @@ import type {
   GroupSummary,
   InvitePayload,
   InviteResult,
+  GroupRole,
 } from './groups.types';
 
-
+function mapRole(role: string): GroupRole {
+  return role === 'Primary Carer' ? 'Admin' : 'Member';
+}
 export async function getGroups(): Promise<GroupSummary[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
@@ -73,6 +76,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
       id,
       name,
       description,
+      patient_id,
       created_at,
       care_givers (
         care_giver_id,
@@ -93,25 +97,26 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     return null;
   }
 
-  const userRole = userMembership.role_in_care === 'Primary Carer' ? 'Admin' : 'Member';
+  const userRole = mapRole(userMembership.role_in_care);
 
   const members: GroupMember[] = (groupData.care_givers || []).map((m: any) => ({
     id: m.care_giver_id,
-    name: m.profiles?.full_name || 'Unknown',
-    email: m.profiles?.email || '', 
-    role: m.role_in_care === 'Primary Carer' ? 'Admin' : 'Member',
-    joinedAt: m.joined_at || new Date().toISOString(),
+    name: m.profiles.full_name,
+    email: m.profiles.email, 
+    role: mapRole(m.role_in_care),
+    joinedAt: m.joined_at,
     status: m.status === 'active' ? 'Active' : 'Suspended',
   }));
 
   return {
     id: groupData.id,
-    name: groupData.name || 'Care Group',
+    name: groupData.name,
     description: groupData.description || '',
-    role: userRole as 'Admin' | 'Member',
-    createdAt: groupData.created_at || new Date().toISOString(),
+    role: userRole,
+    createdAt: groupData.created_at,
     members,
-    gpContacts: [] 
+    gpContacts: [],
+    patientId: groupData.patient_id,
   };
 }
 

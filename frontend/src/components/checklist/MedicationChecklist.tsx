@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { supabase } from '../../lib/supabaseClient';
-import { summarizeChecklist } from '../../lib/checklist';
-import type { ChecklistItem, MedicationStatus } from '../../lib/checklist';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { useChecklistSubscription } from '../../hooks/checklist/useChecklistSubscription';
-import SkipReasonModal from './SkipReasonModal';
+import { supabase } from '@lib/supabaseClient';
+import { summarizeChecklist } from '@lib/checklist';
+import type { ChecklistItem, MedicationStatus } from '@lib/checklist';
+import { useReducedMotion } from '@hooks/useReducedMotion';
+import { useChecklistSubscription } from '@hooks/checklist/useChecklistSubscription';
+import SkipReasonModal from '@components/checklist/SkipReasonModal';
 
 const STATUS_STYLES: Record<MedicationStatus, { bg: string; color: string; label: string }> = {
   due: { bg: 'var(--color-status-given-bg)', color: 'var(--color-status-given)', label: 'Due' },
@@ -40,6 +40,8 @@ interface MedicationChecklistProps {
   checklistId: string;
   userRole: 'primary' | 'secondary' | 'observer';
 }
+
+const CHECKLIST_PROOF_BUCKET = 'medication-proofs';
 
 export default function MedicationChecklist({ checklistId, userRole }: MedicationChecklistProps) {
   const [initialItems, setInitialItems] = useState<ChecklistItem[]>([]);
@@ -203,15 +205,37 @@ function ChecklistItemRow({
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [showSkipModal, setShowSkipModal] = useState(false);
+  const proofInputRef = useRef<HTMLInputElement | null>(null);
   const isTerminal = item.status === 'given' || item.status === 'skipped';
   const isEditable = !isTerminal && !disabled;
   const style = STATUS_STYLES[item.status];
 
-  const handleGive = async () => {
+  const handleMarkAsGivenClick = () => {
     if (!isEditable) return;
+    proofInputRef.current?.click();
+  };
+
+  const handleProofSelected = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file || !isEditable) return;
+
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      const ext = file.name.split('.').pop() || 'jpg';
+      const objectPath = `checklist-proofs/${item.id}/${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(CHECKLIST_PROOF_BUCKET)
+        .upload(objectPath, file, {
+          upsert: false,
+          contentType: file.type,
+        });
+
+      if (uploadError) throw uploadError;
+
       const { error } = await supabase
         .from('checklist_items')
         .update({
@@ -221,8 +245,10 @@ function ChecklistItemRow({
         })
         .eq('id', item.id);
       if (error) throw error;
+
+      toast.success(`${item.medication_name} marked as given.`);
     } catch {
-      toast.error('Failed to mark as given. Please try again.');
+      toast.error('Could not upload proof photo. Try again.');
     } finally {
       setIsLoading(false);
     }
@@ -244,6 +270,14 @@ function ChecklistItemRow({
         </div>
 
         <div className="flex items-center gap-2">
+          <input
+            ref={proofInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(event) => void handleProofSelected(event)}
+            className="hidden"
+          />
           <span
             className="rounded-full px-3 py-1 text-xs font-bold"
             style={{ backgroundColor: style.bg, color: style.color }}
@@ -255,13 +289,13 @@ function ChecklistItemRow({
             <>
               <motion.button
                 type="button"
-                onClick={handleGive}
+                onClick={handleMarkAsGivenClick}
                 disabled={isLoading}
                 className="h-8 rounded-lg px-3 text-xs font-bold text-white disabled:opacity-60"
                 style={{ backgroundColor: 'var(--color-primary)' }}
                 whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
               >
-                {isLoading ? 'Giving...' : 'Give'}
+                {isLoading ? 'Uploading...' : 'Mark as Given'}
               </motion.button>
               <button
                 type="button"

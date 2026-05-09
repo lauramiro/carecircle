@@ -25,6 +25,7 @@ export interface Group {
   createdAt: string;
   members: GroupMember[];
   gpContacts: GPContact[];
+  patientId: string;
 }
 
 export interface GroupSummary {

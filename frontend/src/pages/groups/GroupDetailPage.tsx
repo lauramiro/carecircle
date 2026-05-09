@@ -185,24 +185,38 @@ export default function GroupDetailPage() {
           </p>
         </div>
 
-        {canInvite && (
-          // A one-shot cue draws attention to the primary next action without looping.
+        <div className="flex gap-2">
           <motion.button
             type="button"
-            onClick={() => setInviteOpen(true)}
-            className="h-10 rounded-lg px-4 text-sm font-bold text-white"
-            style={{ backgroundColor: 'var(--color-primary)' }}
-            animate={
-              shouldReduceMotion
-                ? STATIC_CTA_ATTENTION_ANIMATION
-                : CTA_ATTENTION_ANIMATION
-            }
-            transition={{ ...TRANSITIONS.modal, delay: 0.35 }}
+            onClick={() => navigate(`/groups/${currentGroup.id}/medications/add`)}
+            className="h-10 rounded-lg border px-4 text-sm font-bold"
+            style={{
+              borderColor: 'var(--color-primary)',
+              color: 'var(--color-primary)',
+            }}
             whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
           >
-            Invite Member
+            Add Medication
           </motion.button>
-        )}
+          {canInvite && (
+            // A one-shot cue draws attention to the primary next action without looping.
+            <motion.button
+              type="button"
+              onClick={() => setInviteOpen(true)}
+              className="h-10 rounded-lg px-4 text-sm font-bold text-white"
+              style={{ backgroundColor: 'var(--color-primary)' }}
+              animate={
+                shouldReduceMotion
+                  ? STATIC_CTA_ATTENTION_ANIMATION
+                  : CTA_ATTENTION_ANIMATION
+              }
+              transition={{ ...TRANSITIONS.modal, delay: 0.35 }}
+              whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+            >
+              Invite Member
+            </motion.button>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -276,7 +290,6 @@ export default function GroupDetailPage() {
         <HeartPulse size={15} strokeWidth={1.9} />
         Loved One's Profile
       </button>
-
       <GPContactSection
         groupId={currentGroup.id}
         gpContacts={gpContacts}

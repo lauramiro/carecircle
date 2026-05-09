@@ -37,5 +37,11 @@ export function buildMemberInvitePath(invite: PendingInvite, confirmation: 'true
 }
 
 export function buildInviteConfirmationPath(invite: PendingInvite): string {
-  return buildMemberInvitePath(invite, 'true');
+  const params = new URLSearchParams({
+    email: invite.email,
+    inviteId: invite.inviteId,
+    confirmation: 'true',
+  });
+
+  return `/invite?${params.toString()}`;
 }

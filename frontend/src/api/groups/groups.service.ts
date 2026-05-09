@@ -1,18 +1,118 @@
+import { supabase } from '../../lib/supabaseClient';
+import * as groupsMock from './groups.mock';
 import type {
+  GroupMember,
   GPContact,
   Group,
   GroupSummary,
   InvitePayload,
   InviteResult,
 } from './groups.types';
-import * as groupsMock from './groups.mock';
+
 
 export async function getGroups(): Promise<GroupSummary[]> {
-  return groupsMock.getGroups();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { data, error } = await supabase
+    .from('care_givers')
+    .select(`
+      role_in_care,
+      joined_at,
+      care_group!inner (
+        id,
+        name,
+        description,
+        created_at
+      )
+    `)
+    .eq('care_giver_id', user.id)
+    .eq('status', 'active');
+
+  if (error) {
+    console.error('Error fetching groups:', error);
+    throw new Error('Failed to load groups');
+  }
+
+  return data.map((item: any) => {
+    return {
+      id: item.care_group.id,
+      name: item.care_group.name || 'Care Group',
+      description: item.care_group.description || '',
+      role: item.role_in_care === 'Primary Carer' ? 'Admin' : 'Member',
+      createdAt: item.care_group.created_at || item.joined_at || new Date().toISOString(),
+      memberCount: 1, 
+    };
+  });
 }
 
-export async function getGroupById(groupId: string): Promise<Group | null> {
-  return groupsMock.getGroupById(groupId);
+export async function getUserGroupDetails(groupId: string): Promise<Group | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  // Verify access 
+  const { data: userMembership, error: membershipError } = await supabase
+    .from('care_givers')
+    .select('role_in_care')
+    .eq('group_id', groupId)
+    .eq('care_giver_id', user.id)
+    .eq('status', 'active')
+    .single();
+
+  if (membershipError || !userMembership) {
+    if (membershipError?.code !== 'PGRST116') {
+      console.error('Error fetching membership data:', membershipError);
+    }
+    return null;
+  }
+
+  // Fetch group details and all members
+  const { data: groupData, error: groupError } = await supabase
+    .from('care_group')
+    .select(`
+      id,
+      name,
+      description,
+      created_at,
+      care_givers (
+        care_giver_id,
+        role_in_care,
+        status,
+        joined_at,
+        profiles (
+          full_name,
+          email
+        )
+      )
+    `)
+    .eq('id', groupId)
+    .single();
+
+  if (groupError || !groupData) {
+    console.error('Error fetching members:', groupError);
+    return null;
+  }
+
+  const userRole = userMembership.role_in_care === 'Primary Carer' ? 'Admin' : 'Member';
+
+  const members: GroupMember[] = (groupData.care_givers || []).map((m: any) => ({
+    id: m.care_giver_id,
+    name: m.profiles?.full_name || 'Unknown',
+    email: m.profiles?.email || '', 
+    role: m.role_in_care === 'Primary Carer' ? 'Admin' : 'Member',
+    joinedAt: m.joined_at || new Date().toISOString(),
+    status: m.status === 'active' ? 'Active' : 'Suspended',
+  }));
+
+  return {
+    id: groupData.id,
+    name: groupData.name || 'Care Group',
+    description: groupData.description || '',
+    role: userRole as 'Admin' | 'Member',
+    createdAt: groupData.created_at || new Date().toISOString(),
+    members,
+    gpContacts: [] 
+  };
 }
 
 export async function inviteMember(payload: InvitePayload): Promise<InviteResult> {

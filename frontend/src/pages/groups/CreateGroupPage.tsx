@@ -170,10 +170,15 @@ export default function CreateGroupPage() {
       if (bt) patientInsert.blood_type = bt;
 
       const em = patientEmail.trim();
-      if (em) patientInsert.email = em;
+      patientInsert.email = em || null;
 
       const ph = phone.trim();
-      if (ph) patientInsert.phone = ph;
+      patientInsert.phone = ph || null;
+
+      // Ensure at least one contact method exists to satisfy the check constraint `valid_patient_contact`
+      if (!patientInsert.email && !patientInsert.phone) {
+        throw new Error('A patient must have either an email or a phone number to satisfy the contact constraints.');
+      }
 
       const emergency = pickDefined({
         name: emergencyName,
@@ -228,15 +233,26 @@ export default function CreateGroupPage() {
 
       if (patientError) throw patientError;
 
-      const { error: memberError } = await supabase
+      const { data: group, error: groupError } = await supabase
         .from('care_group')
         .insert({
+          name: groupName.trim(),
           patient_id: patient.id,
           caregiver_id: user.id,
-          relationship,
+        })
+        .select('id')
+        .single();
+
+      if (groupError) throw groupError;
+
+      const { error: memberError } = await supabase
+        .from('care_givers')
+        .insert({
+          patient_id: patient.id,
+          care_giver_id: user.id,
+          group_id: group.id,
           role_in_care: 'Primary Carer',
           can_view_medical: true,
-          can_edit_medical: true,
           can_schedule: true,
           can_communicate: true,
           status: 'active',

@@ -147,7 +147,7 @@ export default function CreateGroupPage() {
           name: groupNameTrimmed,
           ...(descriptionTrimmed ? { description: descriptionTrimmed } : {}),
           patient_id: patient.id,
-          primary_carer_id: user.id,
+          primary_caregiver_id: user.id,
         })
         .select('id')
         .single();

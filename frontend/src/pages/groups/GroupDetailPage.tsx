@@ -290,7 +290,6 @@ export default function GroupDetailPage() {
         <HeartPulse size={15} strokeWidth={1.9} />
         Loved One's Profile
       </button>
-
       <GPContactSection
         groupId={currentGroup.id}
         gpContacts={gpContacts}

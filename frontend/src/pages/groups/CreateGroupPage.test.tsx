@@ -73,7 +73,6 @@ function mockCareGroupInsertSuccess(groupId = 'group-123') {
     }),
   };
 }
-
 // Import after mocks
 import CreateGroupPage from './CreateGroupPage';
 

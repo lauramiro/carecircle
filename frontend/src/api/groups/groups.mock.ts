@@ -122,7 +122,7 @@ export async function getGroups(): Promise<GroupSummary[]> {
   return delay(mockGroups.map(toSummary));
 }
 
-export async function getGroupById(groupId: string): Promise<Group | null> {
+export async function getUserGroupDetails(groupId: string): Promise<Group | null> {
   return delay(mockGroups.find((group) => group.id === groupId) ?? null);
 }
 

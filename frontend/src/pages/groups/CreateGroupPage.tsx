@@ -81,6 +81,10 @@ export default function CreateGroupPage() {
       const ph = data.phone.trim();
       if (ph) patientInsert.phone = ph;
 
+      if (!patientInsert.email && !patientInsert.phone) {
+        throw new Error('A patient must have either an email or a phone number to satisfy the contact constraints.');
+      }
+
       const emergency = pickDefinedStrings({
         name: data.emergencyName,
         phone: data.emergencyPhone,
@@ -138,7 +142,7 @@ export default function CreateGroupPage() {
       const descriptionTrimmed = data.groupDescription.trim();
 
       const { data: careGroup, error: groupError } = await supabase
-        .from('care_groups')
+        .from('care_group')
         .insert({
           name: groupNameTrimmed,
           ...(descriptionTrimmed ? { description: descriptionTrimmed } : {}),

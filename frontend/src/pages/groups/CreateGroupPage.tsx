@@ -81,6 +81,10 @@ export default function CreateGroupPage() {
       const ph = data.phone.trim();
       if (ph) patientInsert.phone = ph;
 
+      if (!patientInsert.email && !patientInsert.phone) {
+        throw new Error('A patient must have either an email or a phone number to satisfy the contact constraints.');
+      }
+
       const emergency = pickDefinedStrings({
         name: data.emergencyName,
         phone: data.emergencyPhone,

@@ -178,6 +178,7 @@ export type Database = {
           id: string
           joined_at: string
           patient_id: string
+          relationship: string | null
           role_in_care: string | null
           status: string
           updated_at: string
@@ -191,6 +192,7 @@ export type Database = {
           id?: string
           joined_at?: string
           patient_id: string
+          relationship?: string | null
           role_in_care?: string | null
           status: string
           updated_at?: string
@@ -204,6 +206,7 @@ export type Database = {
           id?: string
           joined_at?: string
           patient_id?: string
+          relationship?: string | null
           role_in_care?: string | null
           status?: string
           updated_at?: string
@@ -446,6 +449,47 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invites: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          group_id: string
+          id: string
+          invite_type: string
+          status: Database["public"]["Enums"]["invite_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          group_id: string
+          id?: string
+          invite_type: string
+          status?: Database["public"]["Enums"]["invite_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          group_id?: string
+          id?: string
+          invite_type?: string
+          status?: Database["public"]["Enums"]["invite_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invites_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_group"
             referencedColumns: ["id"]
           },
         ]
@@ -1201,7 +1245,27 @@ export type Database = {
       }
     }
     Functions: {
+      create_group_invite: {
+        Args: { p_email: string; p_group_id: string; p_invite_type: string }
+        Returns: {
+          created_at: string
+          email: string
+          expires_at: string
+          group_id: string
+          id: string
+          invite_type: string
+          status: Database["public"]["Enums"]["invite_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "invites"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       is_email_registered: { Args: { p_email: string }; Returns: boolean }
+      is_group_member: { Args: { check_group_id: string }; Returns: boolean }
       verify_profile_trigger: {
         Args: never
         Returns: {
@@ -1213,7 +1277,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      invite_status: "pending" | "accepted" | "rejected" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1340,6 +1404,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      invite_status: ["pending", "accepted", "rejected", "expired"],
+    },
   },
 } as const

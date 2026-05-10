@@ -5,6 +5,7 @@ vi.mock('../../lib/supabaseClient', () => ({
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'mock-user-123' } } }),
     },
+    rpc: vi.fn(),
     from: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -33,6 +34,7 @@ vi.mock('./groups.service', async (importOriginal) => {
   };
 });
 
+import { supabase } from '../../lib/supabaseClient';
 import {
   addGPContact,
   getUserGroupDetails,
@@ -72,11 +74,32 @@ describe('groups service', () => {
   });
 
   it('sends an invite payload', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({
+      data: {
+        id: 'invite-uuid-mock',
+        group_id: 'group-care-001',
+        email: 'john@example.com',
+        created_at: '2026-01-01T00:00:00.000Z',
+        expires_at: '2026-01-03T00:00:00.000Z',
+        invite_type: 'care_group',
+        status: 'pending',
+        updated_at: '2026-01-01T00:00:00.000Z',
+      },
+      error: null,
+    } as unknown as Awaited<ReturnType<typeof supabase.rpc>>);
+
     await expect(
-      inviteMember({ groupId: 'group-care-001', email: 'john@example.com' }),
+      inviteMember({ groupId: 'group-care-001', email: 'John@Example.com' }),
     ).resolves.toMatchObject({
+      inviteId: 'invite-uuid-mock',
       groupId: 'group-care-001',
       email: 'john@example.com',
+    });
+
+    expect(supabase.rpc).toHaveBeenCalledWith('create_group_invite', {
+      p_email: 'john@example.com',
+      p_group_id: 'group-care-001',
+      p_invite_type: 'care_group',
     });
   });
 

@@ -1,10 +1,11 @@
-import { type FormEvent, useId, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { type FormEvent, useId, useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { EditMedicationPayload, Medication, MedicationUnit, MedicationFrequency } from '../../api/medications/medications.types';
 import {
   FREQUENCY_LABELS,
   TIME_WINDOWS,
 } from '../../api/medications/medications.types';
+import { checkDuplicateName } from '../../api/medications/medications.service';
 import { useMedicationForm } from '../../hooks/medications/useMedicationForm';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 
@@ -27,6 +28,8 @@ export default function EditMedicationForm({
   const shouldReduceMotion = useReducedMotion();
   const { values, errors, updateField, toggleTimeWindow, touchField, validateForm } =
     useMedicationForm();
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const [awaitingDuplicateConfirm, setAwaitingDuplicateConfirm] = useState(false);
 
   useEffect(() => {
     const parts = initialValues.dosage.split(' ');
@@ -42,6 +45,15 @@ export default function EditMedicationForm({
     event.preventDefault();
     if (!validateForm()) return;
 
+    if (!awaitingDuplicateConfirm && values.name.trim().toLowerCase() !== initialValues.medicationName.toLowerCase()) {
+      const isDuplicate = await checkDuplicateName(initialValues.patientId, values.name.trim());
+      if (isDuplicate) {
+        setDuplicateWarning(values.name.trim());
+        setAwaitingDuplicateConfirm(true);
+        return;
+      }
+    }
+
     const changes: EditMedicationPayload = {
       medicationName: values.name.trim(),
       dosage: `${values.dose} ${values.unit as MedicationUnit}`,
@@ -50,6 +62,13 @@ export default function EditMedicationForm({
     };
 
     await onSubmit(changes);
+    setDuplicateWarning(null);
+    setAwaitingDuplicateConfirm(false);
+  }
+
+  function handleCancelDuplicate() {
+    setDuplicateWarning(null);
+    setAwaitingDuplicateConfirm(false);
   }
 
   const fieldStyle = (hasError: boolean) => ({
@@ -60,6 +79,48 @@ export default function EditMedicationForm({
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} noValidate className="space-y-5">
+      <AnimatePresence>
+        {duplicateWarning && (
+          <motion.div
+            initial={shouldReduceMotion ? false : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="rounded-lg border p-4 text-sm"
+            style={{
+              borderColor: 'var(--color-status-warning, #f59e0b)',
+              backgroundColor: 'var(--color-status-warning-bg, #fffbeb)',
+              color: 'var(--color-status-warning-text, #92400e)',
+            }}
+            role="alert"
+          >
+            <p className="font-bold">Duplicate medication</p>
+            <p className="mt-1">
+              A medication named <strong>{duplicateWarning}</strong> already exists for
+              this patient. Are you sure you want to save this name?
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={handleCancelDuplicate}
+                className="h-8 rounded-lg border px-3 text-xs font-bold"
+                style={{
+                  borderColor: 'var(--color-border)',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="h-8 rounded-lg px-3 text-xs font-bold text-white"
+                style={{ backgroundColor: 'var(--color-status-warning, #f59e0b)' }}
+              >
+                Save anyway
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="md:col-span-2">
           <label

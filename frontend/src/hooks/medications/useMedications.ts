@@ -7,7 +7,7 @@ import {
   activateMedication as activateMedicationService,
   archiveMedication as archiveMedicationService,
   getMedicationsByPatient,
-} from '../../api/medications/medications.service';
+} from '../../api/medications/medications.mock';
 
 export function useMedications(patientId: string) {
   const [medications, setMedications] = useState<Medication[]>([]);

@@ -9,8 +9,10 @@ import CreateGroupPage from './pages/groups/CreateGroupPage';
 import GroupDetailPage from './pages/groups/GroupDetailPage';
 import GroupsListPage from './pages/groups/GroupsListPage';
 import GroupInvite from './pages/GroupInvite';
+import PatientProfilePage from './pages/groups/PatientProfilePage';
 import AddMedicationPage from './pages/medications/AddMedicationPage';
 import MedicationsSchedulePage from './pages/medications/MedicationsSchedulePage';
+import MedicationChecklistPage from './pages/checklist/MedicationChecklistPage';
 
 function App() {
   const { session, loading } = useAuth();
@@ -34,8 +36,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/invite" element={<InvitePage />} />
-        <Route path="/invite/:groupId" element={<GroupInvite />} />
+        <Route path="/group-invite" element={<InvitePage />} />
+        <Route path="/group-invite/:groupId" element={<GroupInvite />} />
         <Route
           path="/login"
           element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />}
@@ -54,7 +56,9 @@ function App() {
           <Route path="groups/list" element={<GroupsListPage />} />
           <Route path="groups/:groupId" element={<GroupDetailPage />} />
           <Route path="groups/:groupId/medications" element={<MedicationsSchedulePage />} />
+          <Route path="groups/:groupId/profile" element={<PatientProfilePage />} />
           <Route path="groups/:groupId/medications/add" element={<AddMedicationPage />} />
+          <Route path="checklist/:checklistId" element={<MedicationChecklistPage />} />
         </Route>
         <Route
           path="*"

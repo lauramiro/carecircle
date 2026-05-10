@@ -34,8 +34,8 @@ vi.mock('./pages/InvitePage', () => ({
   default: () => <div>Invite page</div>,
 }));
 
-vi.mock('./pages/GroupPage', () => ({
-  default: ({ groupId }: { groupId: string }) => <div>Group page {groupId}</div>,
+vi.mock('./pages/GroupInvite', () => ({
+  default: () => <div>Group invite landing</div>,
 }));
 
 vi.mock('./pages/groups/CreateGroupPage', () => ({
@@ -117,7 +117,7 @@ describe('App', () => {
   });
 
   it('renders invite route before generic auth routing', () => {
-    setPath('/invite?email=user@example.com&inviteId=invite-123');
+    setPath('/group-invite?email=user@example.com&inviteId=invite-123');
     authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
 
     render(<App />);
@@ -125,12 +125,12 @@ describe('App', () => {
     expect(screen.getByText('Invite page')).toBeInTheDocument();
   });
 
-  it('renders group route with the route group id', () => {
-    setPath('/group/group-demo');
+  it('renders group-invite path with group id for GroupInvite', () => {
+    setPath('/group-invite/group-demo');
 
     render(<App />);
 
-    expect(screen.getByText('Group page group-demo')).toBeInTheDocument();
+    expect(screen.getByText('Group invite landing')).toBeInTheDocument();
   });
 
   it('renders create group route for authenticated users', () => {

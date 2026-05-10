@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { CalendarDays, Hash, Users } from 'lucide-react';
+import { CalendarDays, Hash, HeartPulse, Users } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
 import GPContactSection from '../../components/groups/GPContactSection';
@@ -278,6 +278,30 @@ export default function GroupDetailPage() {
         </article>
       </div>
 
+      <button
+        type="button"
+        onClick={() => navigate(`/groups/${currentGroup.id}/profile`)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginTop: '24px',
+          marginBottom: '4px',
+          height: '40px',
+          padding: '0 16px',
+          backgroundColor: 'var(--color-accent-soft)',
+          color: 'var(--color-primary)',
+          border: '1px solid var(--color-border)',
+          borderRadius: '8px',
+          fontSize: '13px',
+          fontWeight: 500,
+          fontFamily: 'Plus Jakarta Sans, sans-serif',
+          cursor: 'pointer',
+        }}
+      >
+        <HeartPulse size={15} strokeWidth={1.9} />
+        Loved One's Profile
+      </button>
       <GPContactSection
         groupId={currentGroup.id}
         gpContacts={gpContacts}

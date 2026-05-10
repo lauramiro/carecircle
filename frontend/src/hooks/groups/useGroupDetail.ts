@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getGroupById } from '../../api/groups/groups.service';
+import { getUserGroupDetails } from '../../api/groups/groups.service';
 import type { Group } from '../../api/groups/groups.types';
 
 interface UseGroupDetailResult {
@@ -27,7 +27,7 @@ export function useGroupDetail(groupId: string | undefined): UseGroupDetailResul
       try {
         setLoading(true);
         setError(null);
-        const result = await getGroupById(groupId);
+        const result = await getUserGroupDetails(groupId);
         if (!active) return;
 
         setGroup(result);

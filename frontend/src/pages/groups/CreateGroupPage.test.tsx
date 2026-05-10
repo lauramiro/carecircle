@@ -48,6 +48,31 @@ async function fillRequiredFormFields(user: ReturnType<typeof userEvent.setup>) 
   await user.selectOptions(screen.getByLabelText(/relationship to the patient/i), 'parent');
 }
 
+function mockPatientInsertSuccess() {
+  return {
+    insert: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({
+          data: { id: 'patient-123' },
+          error: null,
+        }),
+      }),
+    }),
+  };
+}
+
+function mockCareGroupInsertSuccess(groupId = 'group-123') {
+  return {
+    insert: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({
+          data: { id: groupId },
+          error: null,
+        }),
+      }),
+    }),
+  };
+}
 // Import after mocks
 import CreateGroupPage from './CreateGroupPage';
 
@@ -58,16 +83,7 @@ describe('CreateGroupPage', () => {
       data: { user: { id: 'test-user-id' } },
     });
     // Mock the Supabase chained calls
-    supabaseMock.from.mockReturnValue({
-      insert: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: { id: 'patient-123' },
-            error: null,
-          }),
-        }),
-      }),
-    });
+    supabaseMock.from.mockReturnValue(mockPatientInsertSuccess());
   });
 
   it('renders the create group form', () => {
@@ -142,20 +158,12 @@ describe('CreateGroupPage', () => {
 
   it('navigates to groups list and shows success toast on success', async () => {
     const user = userEvent.setup();
-    // Mock second insert (care_circle_members) to succeed
+    const careGiversInsert = vi.fn().mockResolvedValue({ error: null });
     supabaseMock.from
+      .mockReturnValueOnce(mockPatientInsertSuccess())
+      .mockReturnValueOnce(mockCareGroupInsertSuccess())
       .mockReturnValueOnce({
-        insert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: { id: 'patient-123' },
-              error: null,
-            }),
-          }),
-        }),
-      })
-      .mockReturnValueOnce({
-        insert: vi.fn().mockResolvedValue({ error: null }),
+        insert: careGiversInsert,
       });
 
     renderPage();
@@ -166,6 +174,67 @@ describe('CreateGroupPage', () => {
       expect(toastMock.success).toHaveBeenCalledWith('"Mum Care Team" care circle created!');
       expect(navigateMock).toHaveBeenCalledWith('/groups/list');
     });
+
+    const careGroupInsert = supabaseMock.from.mock.results[1].value.insert;
+    expect(careGroupInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Mum Care Team',
+        patient_id: 'patient-123',
+        primary_carer_id: 'test-user-id',
+      }),
+    );
+    expect(careGroupInsert.mock.calls[0][0]).not.toHaveProperty('description');
+
+    expect(careGiversInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        group_id: 'group-123',
+        patient_id: 'patient-123',
+        care_giver_id: 'test-user-id',
+        relationship: 'parent',
+        role_in_care: 'Primary Carer',
+        can_view_medical: true,
+        can_schedule: true,
+        can_communicate: true,
+        status: 'active',
+      }),
+    );
+    expect(typeof careGiversInsert.mock.calls[0][0].joined_at).toBe('string');
+  });
+
+  it('includes description on care_groups when provided', async () => {
+    const user = userEvent.setup();
+    const careGiversInsert = vi.fn().mockResolvedValue({ error: null });
+    supabaseMock.from
+      .mockReturnValueOnce(mockPatientInsertSuccess())
+      .mockReturnValueOnce(mockCareGroupInsertSuccess())
+      .mockReturnValueOnce({
+        insert: careGiversInsert,
+      });
+
+    renderPage();
+    await user.type(screen.getByLabelText(/circle name/i), 'Mum Care Team');
+    await user.type(
+      screen.getByLabelText(/^circle description/i),
+      'Family coordination hub',
+    );
+    await user.type(screen.getByLabelText(/patient full name/i), 'Jane Doe');
+    await user.type(screen.getByLabelText(/date of birth/i), '1955-05-01');
+    await user.selectOptions(screen.getByLabelText(/relationship to the patient/i), 'parent');
+    await user.click(screen.getByRole('button', { name: /create circle/i }));
+
+    await waitFor(() => {
+      expect(careGiversInsert).toHaveBeenCalled();
+    });
+
+    const careGroupInsert = supabaseMock.from.mock.results[1].value.insert;
+    expect(careGroupInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Mum Care Team',
+        description: 'Family coordination hub',
+        patient_id: 'patient-123',
+        primary_carer_id: 'test-user-id',
+      }),
+    );
   });
 
   it('shows error toast when creation fails', async () => {

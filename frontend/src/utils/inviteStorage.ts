@@ -26,6 +26,16 @@ export function clearPendingInvite() {
   localStorage.removeItem(pendingInviteKey);
 }
 
+/** Member invite URL (query params; matches `/group-invite` + `InvitePage`) */
+export function buildMemberInvitePath(invite: PendingInvite, confirmation: 'true' | 'false'): string {
+  const params = new URLSearchParams({
+    inviteId: invite.inviteId,
+    email: invite.email,
+    confirmation,
+  });
+  return `/group-invite?${params.toString()}`;
+}
+
 export function buildInviteConfirmationPath(invite: PendingInvite): string {
   const params = new URLSearchParams({
     email: invite.email,

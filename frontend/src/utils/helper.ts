@@ -1,5 +1,9 @@
 export function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : '';
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+    return (error as { message: string }).message;
+  }
+  return '';
 }
 
 export function isValidEmail(email: string): boolean {
@@ -14,4 +18,10 @@ export function maskEmail(email: string): string {
   const visibleSuffix = localPart.length > 4 ? localPart.slice(-2) : '';
 
   return `${visiblePrefix}******${visibleSuffix}@${domain}`;
+}
+
+export function isAbortError(e: unknown): boolean {
+  return e instanceof DOMException
+    ? e.name === 'AbortError'
+    : e instanceof Error && e.name === 'AbortError';
 }

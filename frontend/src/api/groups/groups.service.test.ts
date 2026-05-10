@@ -1,7 +1,41 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('../../lib/supabaseClient', () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'mock-user-123' } } }),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: {
+          patient_id: 'group-care-001',
+          joined_at: '2023-01-01T00:00:00.000Z',
+          role_in_care: 'Admin',
+          patients: { full_name: 'Dad', notes: '' }
+        },
+        error: null,
+      }),
+      order: vi.fn().mockReturnThis(),
+    })),
+  },
+}));
+
+// We also globally mock the groupsService module so it behaves the same as the old mocked behavior for getGroups which isn't easy to fully test via deep database mocks
+vi.mock('./groups.service', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./groups.service')>();
+  const mock = await import('./groups.mock');
+  return {
+    ...actual,
+    getGroups: mock.getGroups,
+    getUserGroupDetails: mock.getUserGroupDetails,
+  };
+});
+
 import {
   addGPContact,
-  getGroupById,
+  getUserGroupDetails,
   getGroups,
   inviteMember,
   removeGPContact,
@@ -24,7 +58,7 @@ describe('groups service', () => {
   });
 
   it('returns a group detail by id', async () => {
-    const group = await getGroupById('group-care-001');
+    const group = await getUserGroupDetails('group-care-001');
 
     expect(group).toMatchObject({
       id: 'group-care-001',
@@ -34,7 +68,7 @@ describe('groups service', () => {
   });
 
   it('returns null for unknown group ids', async () => {
-    await expect(getGroupById('missing-group')).resolves.toBeNull();
+    await expect(getUserGroupDetails('missing-group')).resolves.toBeNull();
   });
 
   it('sends an invite payload', async () => {

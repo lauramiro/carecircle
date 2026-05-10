@@ -1,223 +1,133 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { supabase } from '../../lib/supabaseClient';
+import * as date from 'date-fns';
+import RequiredMark from '@components/ui/RequiredMark';
+import {
+  BLOOD_TYPE_OPTIONS,
+  CREATE_CARE_CIRCLE_DEFAULT_VALUES,
+  GENDER_OPTIONS,
+  RELATIONSHIP_OPTIONS,
+} from '@constants/createCareCircle.constants';
+import { supabase } from '@lib/supabaseClient';
+import type { CreateCareCircleFormValues } from '@typings/createCareCircle.types';
+import { parseCommaSeparatedList, pickDefinedStrings } from '@utils/createCareCircleForm';
 
-const RELATIONSHIP_OPTIONS = [
-  { value: '', label: 'Select relationship' },
-  { value: 'parent', label: 'Parent' },
-  { value: 'child', label: 'Child' },
-  { value: 'spouse', label: 'Spouse / partner' },
-  { value: 'sibling', label: 'Sibling' },
-  { value: 'friend', label: 'Friend' },
-  { value: 'professional', label: 'Professional carer' },
-  { value: 'primary', label: 'Primary caregiver' },
-  { value: 'other', label: 'Other' },
-] as const;
-
-const GENDER_OPTIONS = [
-  { value: '', label: 'Not specified' },
-  { value: 'female', label: 'Female' },
-  { value: 'male', label: 'Male' },
-  { value: 'non_binary', label: 'Non-binary' },
-  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
-  { value: 'other', label: 'Other' },
-] as const;
-
-const BLOOD_TYPE_OPTIONS = [
-  '',
-  'A+',
-  'A-',
-  'B+',
-  'B-',
-  'AB+',
-  'AB-',
-  'O+',
-  'O-',
-  'unknown',
-] as const;
-
-function parseCommaSeparatedList(raw: string): string[] | undefined {
-  const items = raw
-    .split(/[\n,]+/)
-    .map(s => s.trim())
-    .filter(Boolean);
-  return items.length ? items : undefined;
-}
-
-function pickDefined<T extends Record<string, string>>(obj: T): Record<string, string> | undefined {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(obj)) {
-    const t = v.trim();
-    if (t) out[k] = t;
-  }
-  return Object.keys(out).length ? out : undefined;
-}
-
-function RequiredMark() {
-  return (
-    <span style={{ color: 'var(--color-status-critical)' }} aria-hidden="true">
-      {' '}
-      *
-    </span>
-  );
-}
+export type { CreateCareCircleFormValues } from '@typings/createCareCircle.types';
 
 export default function CreateGroupPage() {
-  const [groupName, setGroupName] = useState('');
-  const [patientFullName, setPatientFullName] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
-  const [userId, setUserId] = useState('');
-  const [gender, setGender] = useState('');
-  const [bloodType, setBloodType] = useState('');
-  const [patientEmail, setPatientEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [emergencyName, setEmergencyName] = useState('');
-  const [emergencyPhone, setEmergencyPhone] = useState('');
-  const [emergencyRelationship, setEmergencyRelationship] = useState('');
-  const [addressLine1, setAddressLine1] = useState('');
-  const [addressLine2, setAddressLine2] = useState('');
-  const [addressCity, setAddressCity] = useState('');
-  const [addressRegion, setAddressRegion] = useState('');
-  const [addressPostal, setAddressPostal] = useState('');
-  const [addressCountry, setAddressCountry] = useState('');
-  const [medicalRecordNumber, setMedicalRecordNumber] = useState('');
-  const [insuranceProvider, setInsuranceProvider] = useState('');
-  const [insurancePolicy, setInsurancePolicy] = useState('');
-  const [insuranceGroup, setInsuranceGroup] = useState('');
-  const [allergiesText, setAllergiesText] = useState('');
-  const [chronicConditionsText, setChronicConditionsText] = useState('');
-  const [currentMedicationsText, setCurrentMedicationsText] = useState('');
-  const [careLevel, setCareLevel] = useState('');
-  const [primaryPhysicianId, setPrimaryPhysicianId] = useState('');
-  const [notes, setNotes] = useState('');
-  const [isActive, setIsActive] = useState(true);
-  const [relationship, setRelationship] = useState('');
-
-  const [groupNameError, setGroupNameError] = useState<string | null>(null);
-  const [patientFullNameError, setPatientFullNameError] = useState<string | null>(null);
-  const [dateOfBirthError, setDateOfBirthError] = useState<string | null>(null);
-  const [relationshipError, setRelationshipError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async () => {
-    setGroupNameError(null);
-    setPatientFullNameError(null);
-    setDateOfBirthError(null);
-    setRelationshipError(null);
+  const {
+    register,
+    handleSubmit,
+    clearErrors,
+    formState: { errors },
+  } = useForm<CreateCareCircleFormValues>({
+    defaultValues: CREATE_CARE_CIRCLE_DEFAULT_VALUES,
+  });
 
-    let hasError = false;
-    if (!groupName.trim()) {
-      setGroupNameError('Group name is required.');
-      hasError = true;
-    } else if (groupName.trim().length < 3) {
-      setGroupNameError('Group name must be at least 3 characters.');
-      hasError = true;
-    }
-
-    if (!patientFullName.trim()) {
-      setPatientFullNameError("Patient's full name is required.");
-      hasError = true;
-    } else if (patientFullName.trim().length < 2) {
-      setPatientFullNameError('Name must be at least 2 characters.');
-      hasError = true;
-    }
-
-    if (!dateOfBirth) {
-      setDateOfBirthError('Date of birth is required.');
-      hasError = true;
-    } else {
-      const dob = new Date(dateOfBirth);
-      if (Number.isNaN(dob.getTime())) {
-        setDateOfBirthError('Enter a valid date of birth.');
-        hasError = true;
-      } else {
-        const today = new Date();
-        today.setHours(23, 59, 59, 999);
-        if (dob > today) {
-          setDateOfBirthError('Date of birth cannot be in the future.');
-          hasError = true;
-        }
+  const groupNameField = register('groupName', {
+    required: 'Group name is required.',
+    minLength: { value: 3, message: 'Group name must be at least 3 characters.' },
+  });
+  const patientFullNameField = register('patientFullName', {
+    required: "Patient's full name is required.",
+    minLength: { value: 2, message: 'Name must be at least 2 characters.' },
+  });
+  const dateOfBirthField = register('dateOfBirth', {
+    required: 'Date of birth is required.',
+    validate: value => {
+      const dob = date.parse(value, 'yyyy-MM-dd', new Date());
+      if (!date.isValid(dob)) {
+        return 'Enter a valid date of birth.';
       }
-    }
+      if (date.isAfter(dob, date.endOfDay(new Date()))) {
+        return 'Date of birth cannot be in the future.';
+      }
+      return true;
+    },
+  });
+  const relationshipField = register('relationship', {
+    validate: v => v !== '' || 'Select your relationship to the patient.',
+  });
 
-    if (!relationship) {
-      setRelationshipError('Select your relationship to the patient.');
-      hasError = true;
-    }
-
-    if (hasError) return;
-
+  const onSubmit = async (data: CreateCareCircleFormValues) => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const patientInsert: Record<string, unknown> = {
-        full_name: patientFullName.trim(),
-        date_of_birth: dateOfBirth,
+        full_name: data.patientFullName.trim(),
+        date_of_birth: data.dateOfBirth,
         primary_caregiver_id: user.id,
-        is_active: isActive,
+        is_active: data.isActive,
       };
 
-      const uid = userId.trim();
+      const uid = data.userId.trim();
       if (uid) patientInsert.user_id = uid;
 
-      if (gender) patientInsert.gender = gender;
+      if (data.gender) patientInsert.gender = data.gender;
 
-      const bt = bloodType.trim();
+      const bt = data.bloodType.trim();
       if (bt) patientInsert.blood_type = bt;
 
-      const em = patientEmail.trim();
+      const em = data.patientEmail.trim();
       if (em) patientInsert.email = em;
 
-      const ph = phone.trim();
+      const ph = data.phone.trim();
       if (ph) patientInsert.phone = ph;
 
-      const emergency = pickDefined({
-        name: emergencyName,
-        phone: emergencyPhone,
-        relationship: emergencyRelationship,
+      if (!patientInsert.email && !patientInsert.phone) {
+        throw new Error('A patient must have either an email or a phone number to satisfy the contact constraints.');
+      }
+
+      const emergency = pickDefinedStrings({
+        name: data.emergencyName,
+        phone: data.emergencyPhone,
+        relationship: data.emergencyRelationship,
       });
       if (emergency) patientInsert.emergency_contact = emergency;
 
-      const address = pickDefined({
-        line1: addressLine1,
-        line2: addressLine2,
-        city: addressCity,
-        region: addressRegion,
-        postal_code: addressPostal,
-        country: addressCountry,
+      const address = pickDefinedStrings({
+        line1: data.addressLine1,
+        line2: data.addressLine2,
+        city: data.addressCity,
+        region: data.addressRegion,
+        postal_code: data.addressPostal,
+        country: data.addressCountry,
       });
       if (address) patientInsert.address = address;
 
-      const mrn = medicalRecordNumber.trim();
+      const mrn = data.medicalRecordNumber.trim();
       if (mrn) patientInsert.medical_record_number = mrn;
 
-      const insurance = pickDefined({
-        provider: insuranceProvider,
-        policy_number: insurancePolicy,
-        group_number: insuranceGroup,
+      const insurance = pickDefinedStrings({
+        provider: data.insuranceProvider,
+        policy_number: data.insurancePolicy,
+        group_number: data.insuranceGroup,
       });
       if (insurance) patientInsert.insurance_info = insurance;
 
-      const allergies = parseCommaSeparatedList(allergiesText);
+      const allergies = parseCommaSeparatedList(data.allergiesText);
       if (allergies) patientInsert.allergies = allergies;
 
-      const chronic = parseCommaSeparatedList(chronicConditionsText);
+      const chronic = parseCommaSeparatedList(data.chronicConditionsText);
       if (chronic) patientInsert.chronic_conditions = chronic;
 
-      const meds = parseCommaSeparatedList(currentMedicationsText);
+      const meds = parseCommaSeparatedList(data.currentMedicationsText);
       if (meds) patientInsert.current_medications = meds;
 
-      const cl = careLevel.trim();
+      const cl = data.careLevel.trim();
       if (cl) patientInsert.care_level = cl;
 
-      const ppi = primaryPhysicianId.trim();
+      const ppi = data.primaryPhysicianId.trim();
       if (ppi) patientInsert.primary_physician_id = ppi;
 
-      const n = notes.trim();
+      const n = data.notes.trim();
       if (n) patientInsert.notes = n;
 
       const { data: patient, error: patientError } = await supabase
@@ -228,24 +138,39 @@ export default function CreateGroupPage() {
 
       if (patientError) throw patientError;
 
-      const { error: memberError } = await supabase
+      const groupNameTrimmed = data.groupName.trim();
+      const descriptionTrimmed = data.groupDescription.trim();
+
+      const { data: careGroup, error: groupError } = await supabase
         .from('care_group')
         .insert({
+          name: groupNameTrimmed,
+          ...(descriptionTrimmed ? { description: descriptionTrimmed } : {}),
           patient_id: patient.id,
-          caregiver_id: user.id,
-          relationship,
-          role_in_care: 'Primary Carer',
-          can_view_medical: true,
-          can_edit_medical: true,
-          can_schedule: true,
-          can_communicate: true,
-          status: 'active',
-          joined_at: new Date().toISOString(),
-        });
+          primary_caregiver_id: user.id,
+        })
+        .select('id')
+        .single();
 
-      if (memberError) throw memberError;
+      if (groupError) throw groupError;
+      if (!careGroup?.id) throw new Error('Care group was not created.');
 
-      toast.success(`"${groupName.trim()}" care circle created!`);
+      const { error: careGiverError } = await supabase.from('care_givers').insert({
+        group_id: careGroup.id,
+        patient_id: patient.id,
+        care_giver_id: user.id,
+        relationship: data.relationship,
+        role_in_care: 'Primary Carer',
+        can_view_medical: true,
+        can_schedule: true,
+        can_communicate: true,
+        status: 'active',
+        joined_at: date.formatISO(new Date()),
+      });
+
+      if (careGiverError) throw careGiverError;
+
+      toast.success(`"${groupNameTrimmed}" care circle created!`);
       navigate('/groups/list');
     } catch (err: unknown) {
       const message =
@@ -257,7 +182,7 @@ export default function CreateGroupPage() {
     setLoading(false);
   };
 
-  const inputBorder = (err: string | null) =>
+  const inputBorder = (err: string | undefined) =>
     err ? 'var(--color-status-critical)' : 'var(--color-border)';
 
   return (
@@ -280,9 +205,11 @@ export default function CreateGroupPage() {
         </p>
       </div>
 
-      <div
+      <form
         className="rounded-xl border bg-white p-6"
         style={{ borderColor: 'var(--color-border)', maxWidth: '640px' }}
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
       >
         <p className="mb-4 text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--color-text-secondary)' }}>
           Care circle
@@ -298,23 +225,42 @@ export default function CreateGroupPage() {
           <input
             id="groupName"
             type="text"
-            value={groupName}
+            autoComplete="off"
+            {...groupNameField}
             onChange={e => {
-              setGroupName(e.target.value);
-              setGroupNameError(null);
+              groupNameField.onChange(e);
+              clearErrors('groupName');
             }}
             placeholder="e.g. Mum's Care Team"
             className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
             style={{
-              borderColor: inputBorder(groupNameError),
+              borderColor: inputBorder(errors.groupName?.message),
               color: 'var(--color-text-primary)',
             }}
           />
-          {groupNameError && (
+          {errors.groupName && (
             <p className="mt-2 text-xs" style={{ color: 'var(--color-status-critical)' }}>
-              {groupNameError}
+              {errors.groupName.message}
             </p>
           )}
+        </div>
+
+        <div className="mb-5">
+          <label
+            htmlFor="groupDescription"
+            className="text-xs font-bold"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            Circle description <span className="font-normal">(optional)</span>
+          </label>
+          <textarea
+            id="groupDescription"
+            {...register('groupDescription')}
+            placeholder="Short note about this care circle, visible to members"
+            rows={3}
+            className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
+            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+          />
         </div>
 
         <p className="mb-4 mt-8 text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--color-text-secondary)' }}>
@@ -333,23 +279,23 @@ export default function CreateGroupPage() {
           <input
             id="patientFullName"
             type="text"
-            value={patientFullName}
+            {...patientFullNameField}
             onChange={e => {
-              setPatientFullName(e.target.value);
-              setPatientFullNameError(null);
+              patientFullNameField.onChange(e);
+              clearErrors('patientFullName');
             }}
             placeholder="Legal name as used for care records"
             autoComplete="name"
             aria-required="true"
             className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
             style={{
-              borderColor: inputBorder(patientFullNameError),
+              borderColor: inputBorder(errors.patientFullName?.message),
               color: 'var(--color-text-primary)',
             }}
           />
-          {patientFullNameError && (
+          {errors.patientFullName && (
             <p className="mt-2 text-xs" style={{ color: 'var(--color-status-critical)' }}>
-              {patientFullNameError}
+              {errors.patientFullName.message}
             </p>
           )}
         </div>
@@ -366,21 +312,21 @@ export default function CreateGroupPage() {
           <input
             id="dateOfBirth"
             type="date"
-            value={dateOfBirth}
+            {...dateOfBirthField}
             onChange={e => {
-              setDateOfBirth(e.target.value);
-              setDateOfBirthError(null);
+              dateOfBirthField.onChange(e);
+              clearErrors('dateOfBirth');
             }}
             aria-required="true"
             className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
             style={{
-              borderColor: inputBorder(dateOfBirthError),
+              borderColor: inputBorder(errors.dateOfBirth?.message),
               color: 'var(--color-text-primary)',
             }}
           />
-          {dateOfBirthError && (
+          {errors.dateOfBirth && (
             <p className="mt-2 text-xs" style={{ color: 'var(--color-status-critical)' }}>
-              {dateOfBirthError}
+              {errors.dateOfBirth.message}
             </p>
           )}
         </div>
@@ -392,8 +338,7 @@ export default function CreateGroupPage() {
           <input
             id="userId"
             type="text"
-            value={userId}
-            onChange={e => setUserId(e.target.value)}
+            {...register('userId')}
             placeholder="Auth user UUID if the patient has an account"
             className="mt-2 h-11 w-full rounded-lg border px-3 font-mono text-sm outline-none"
             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
@@ -407,8 +352,7 @@ export default function CreateGroupPage() {
             </label>
             <select
               id="gender"
-              value={gender}
-              onChange={e => setGender(e.target.value)}
+              {...register('gender')}
               className="mt-2 h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             >
@@ -425,8 +369,7 @@ export default function CreateGroupPage() {
             </label>
             <select
               id="bloodType"
-              value={bloodType}
-              onChange={e => setBloodType(e.target.value)}
+              {...register('bloodType')}
               className="mt-2 h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             >
@@ -447,8 +390,7 @@ export default function CreateGroupPage() {
             <input
               id="patientEmail"
               type="email"
-              value={patientEmail}
-              onChange={e => setPatientEmail(e.target.value)}
+              {...register('patientEmail')}
               placeholder="name@example.com"
               autoComplete="email"
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
@@ -462,8 +404,7 @@ export default function CreateGroupPage() {
             <input
               id="phone"
               type="tel"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
+              {...register('phone')}
               placeholder="Contact number"
               autoComplete="tel"
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
@@ -483,8 +424,7 @@ export default function CreateGroupPage() {
             <input
               id="emergencyName"
               type="text"
-              value={emergencyName}
-              onChange={e => setEmergencyName(e.target.value)}
+              {...register('emergencyName')}
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
@@ -496,8 +436,7 @@ export default function CreateGroupPage() {
             <input
               id="emergencyPhone"
               type="tel"
-              value={emergencyPhone}
-              onChange={e => setEmergencyPhone(e.target.value)}
+              {...register('emergencyPhone')}
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
@@ -509,8 +448,7 @@ export default function CreateGroupPage() {
             <input
               id="emergencyRelationship"
               type="text"
-              value={emergencyRelationship}
-              onChange={e => setEmergencyRelationship(e.target.value)}
+              {...register('emergencyRelationship')}
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
@@ -527,8 +465,7 @@ export default function CreateGroupPage() {
           <input
             id="addressLine1"
             type="text"
-            value={addressLine1}
-            onChange={e => setAddressLine1(e.target.value)}
+            {...register('addressLine1')}
             className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
           />
@@ -540,8 +477,7 @@ export default function CreateGroupPage() {
           <input
             id="addressLine2"
             type="text"
-            value={addressLine2}
-            onChange={e => setAddressLine2(e.target.value)}
+            {...register('addressLine2')}
             className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
           />
@@ -554,8 +490,7 @@ export default function CreateGroupPage() {
             <input
               id="addressCity"
               type="text"
-              value={addressCity}
-              onChange={e => setAddressCity(e.target.value)}
+              {...register('addressCity')}
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
@@ -567,8 +502,7 @@ export default function CreateGroupPage() {
             <input
               id="addressRegion"
               type="text"
-              value={addressRegion}
-              onChange={e => setAddressRegion(e.target.value)}
+              {...register('addressRegion')}
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
@@ -580,8 +514,7 @@ export default function CreateGroupPage() {
             <input
               id="addressPostal"
               type="text"
-              value={addressPostal}
-              onChange={e => setAddressPostal(e.target.value)}
+              {...register('addressPostal')}
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
@@ -593,8 +526,7 @@ export default function CreateGroupPage() {
             <input
               id="addressCountry"
               type="text"
-              value={addressCountry}
-              onChange={e => setAddressCountry(e.target.value)}
+              {...register('addressCountry')}
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
@@ -608,8 +540,7 @@ export default function CreateGroupPage() {
           <input
             id="medicalRecordNumber"
             type="text"
-            value={medicalRecordNumber}
-            onChange={e => setMedicalRecordNumber(e.target.value)}
+            {...register('medicalRecordNumber')}
             className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
           />
@@ -626,8 +557,7 @@ export default function CreateGroupPage() {
             <input
               id="insuranceProvider"
               type="text"
-              value={insuranceProvider}
-              onChange={e => setInsuranceProvider(e.target.value)}
+              {...register('insuranceProvider')}
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
@@ -639,8 +569,7 @@ export default function CreateGroupPage() {
             <input
               id="insurancePolicy"
               type="text"
-              value={insurancePolicy}
-              onChange={e => setInsurancePolicy(e.target.value)}
+              {...register('insurancePolicy')}
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
@@ -652,8 +581,7 @@ export default function CreateGroupPage() {
             <input
               id="insuranceGroup"
               type="text"
-              value={insuranceGroup}
-              onChange={e => setInsuranceGroup(e.target.value)}
+              {...register('insuranceGroup')}
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
@@ -666,8 +594,7 @@ export default function CreateGroupPage() {
           </label>
           <textarea
             id="allergiesText"
-            value={allergiesText}
-            onChange={e => setAllergiesText(e.target.value)}
+            {...register('allergiesText')}
             placeholder="Separate with commas or new lines"
             rows={2}
             className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
@@ -681,8 +608,7 @@ export default function CreateGroupPage() {
           </label>
           <textarea
             id="chronicConditionsText"
-            value={chronicConditionsText}
-            onChange={e => setChronicConditionsText(e.target.value)}
+            {...register('chronicConditionsText')}
             placeholder="Separate with commas or new lines"
             rows={2}
             className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
@@ -696,8 +622,7 @@ export default function CreateGroupPage() {
           </label>
           <textarea
             id="currentMedicationsText"
-            value={currentMedicationsText}
-            onChange={e => setCurrentMedicationsText(e.target.value)}
+            {...register('currentMedicationsText')}
             placeholder="Separate with commas or new lines"
             rows={2}
             className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
@@ -713,8 +638,7 @@ export default function CreateGroupPage() {
             <input
               id="careLevel"
               type="text"
-              value={careLevel}
-              onChange={e => setCareLevel(e.target.value)}
+              {...register('careLevel')}
               placeholder="e.g. independent, assisted"
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
@@ -727,8 +651,7 @@ export default function CreateGroupPage() {
             <input
               id="primaryPhysicianId"
               type="text"
-              value={primaryPhysicianId}
-              onChange={e => setPrimaryPhysicianId(e.target.value)}
+              {...register('primaryPhysicianId')}
               placeholder="UUID if known"
               className="mt-2 h-11 w-full rounded-lg border px-3 font-mono text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
@@ -742,8 +665,7 @@ export default function CreateGroupPage() {
           </label>
           <textarea
             id="notes"
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
+            {...register('notes')}
             rows={3}
             className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
@@ -754,8 +676,7 @@ export default function CreateGroupPage() {
           <input
             id="isActive"
             type="checkbox"
-            checked={isActive}
-            onChange={e => setIsActive(e.target.checked)}
+            {...register('isActive')}
             className="h-4 w-4 rounded border"
             style={{ accentColor: 'var(--color-primary)' }}
           />
@@ -773,14 +694,14 @@ export default function CreateGroupPage() {
           </label>
           <select
             id="relationship"
-            value={relationship}
+            {...relationshipField}
             onChange={e => {
-              setRelationship(e.target.value);
-              setRelationshipError(null);
+              relationshipField.onChange(e);
+              clearErrors('relationship');
             }}
             className="mt-2 h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none"
             style={{
-              borderColor: inputBorder(relationshipError),
+              borderColor: inputBorder(errors.relationship?.message),
               color: 'var(--color-text-primary)',
             }}
           >
@@ -790,9 +711,9 @@ export default function CreateGroupPage() {
               </option>
             ))}
           </select>
-          {relationshipError && (
+          {errors.relationship && (
             <p className="mt-2 text-xs" style={{ color: 'var(--color-status-critical)' }}>
-              {relationshipError}
+              {errors.relationship.message}
             </p>
           )}
         </div>
@@ -810,8 +731,7 @@ export default function CreateGroupPage() {
             Cancel
           </button>
           <button
-            type="button"
-            onClick={() => void handleSubmit()}
+            type="submit"
             disabled={loading}
             className="h-10 rounded-lg px-4 text-sm font-bold text-white disabled:opacity-60"
             style={{ backgroundColor: 'var(--color-primary)' }}
@@ -819,7 +739,7 @@ export default function CreateGroupPage() {
             {loading ? 'Creating...' : 'Create circle'}
           </button>
         </div>
-      </div>
+      </form>
     </section>
   );
 }

@@ -173,7 +173,7 @@ export type Database = {
           can_communicate: boolean | null
           can_schedule: boolean | null
           can_view_medical: boolean | null
-          care_giver_id: string
+          caregiver_id: string
           group_id: string | null
           id: string
           joined_at: string
@@ -187,7 +187,7 @@ export type Database = {
           can_communicate?: boolean | null
           can_schedule?: boolean | null
           can_view_medical?: boolean | null
-          care_giver_id: string
+          caregiver_id: string
           group_id?: string | null
           id?: string
           joined_at?: string
@@ -201,7 +201,7 @@ export type Database = {
           can_communicate?: boolean | null
           can_schedule?: boolean | null
           can_view_medical?: boolean | null
-          care_giver_id?: string
+          caregiver_id?: string
           group_id?: string | null
           id?: string
           joined_at?: string
@@ -214,7 +214,7 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "care_givers_care_giver_id_fkey"
-            columns: ["care_giver_id"]
+            columns: ["caregiver_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

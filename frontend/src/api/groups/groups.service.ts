@@ -30,7 +30,7 @@ export async function getGroups(): Promise<GroupSummary[]> {
         created_at
       )
     `)
-    .eq('care_giver_id', user.id)
+    .eq('caregiver_id', user.id)
     .eq('status', 'active');
 
   if (error) {
@@ -59,7 +59,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     .from('care_givers')
     .select('role_in_care')
     .eq('group_id', groupId)
-    .eq('care_giver_id', user.id)
+    .eq('caregiver_id', user.id)
     .eq('status', 'active')
     .single();
 
@@ -80,7 +80,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
       patient_id,
       created_at,
       care_givers (
-        care_giver_id,
+        caregiver_id,
         role_in_care,
         status,
         joined_at,
@@ -101,7 +101,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
   const userRole = mapRole(userMembership.role_in_care);
 
   const members: GroupMember[] = (groupData.care_givers || []).map((m: any) => ({
-    id: m.care_giver_id,
+    id: m.caregiver_id,
     name: m.profiles.full_name,
     email: m.profiles.email, 
     role: mapRole(m.role_in_care),

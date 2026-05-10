@@ -134,7 +134,7 @@ export async function isUserInInviteGroup(
       .select('id')
       .eq('group_id', groupId)
       .eq('patient_id', patientId)
-      .eq('care_giver_id', careGiverId)
+      .eq('caregiver_id', careGiverId)
       .maybeSingle();
 
     if (error) {

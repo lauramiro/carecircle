@@ -189,7 +189,7 @@ describe('CreateGroupPage', () => {
       expect.objectContaining({
         group_id: 'group-123',
         patient_id: 'patient-123',
-        care_giver_id: 'test-user-id',
+        caregiver_id: 'test-user-id',
         relationship: 'parent',
         role_in_care: 'Primary Carer',
         can_view_medical: true,

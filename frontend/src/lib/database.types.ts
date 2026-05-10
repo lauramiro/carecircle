@@ -174,7 +174,7 @@ export type Database = {
           can_schedule: boolean | null
           can_view_medical: boolean | null
           caregiver_id: string
-          group_id: string | null
+          group_id: string
           id: string
           joined_at: string
           patient_id: string
@@ -188,7 +188,7 @@ export type Database = {
           can_schedule?: boolean | null
           can_view_medical?: boolean | null
           caregiver_id: string
-          group_id?: string | null
+          group_id: string
           id?: string
           joined_at?: string
           patient_id: string
@@ -202,7 +202,7 @@ export type Database = {
           can_schedule?: boolean | null
           can_view_medical?: boolean | null
           caregiver_id?: string
-          group_id?: string | null
+          group_id?: string
           id?: string
           joined_at?: string
           patient_id?: string

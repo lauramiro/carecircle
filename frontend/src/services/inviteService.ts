@@ -83,7 +83,7 @@ export async function fetchInviteGroupDetails(inviteId: string): Promise<InviteG
   }
 
   const { data: group, error: groupError } = await supabase
-    .from('care_groups')
+    .from('care_group')
     .select('name, description, patient_id')
     .eq('id', invite.group_id)
     .maybeSingle();

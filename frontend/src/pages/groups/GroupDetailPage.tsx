@@ -220,16 +220,6 @@ export default function GroupDetailPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <article
-          className="rounded-xl border bg-white p-5"
-          style={{ borderColor: 'var(--color-border)' }}
-        >
-          <Hash size={20} strokeWidth={1.9} color="var(--color-primary)" />
-          <p className="mt-3 text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
-            Group ID
-          </p>
-          <p className="mt-1 font-mono text-sm">{currentGroup.id}</p>
-        </article>
 
         <article
           className="rounded-xl border bg-white p-5"

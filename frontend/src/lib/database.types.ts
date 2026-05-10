@@ -213,7 +213,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "care_givers_care_giver_id_fkey"
+            foreignKeyName: "care_givers_caregiver_id_fkey"
             columns: ["caregiver_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -237,45 +237,45 @@ export type Database = {
       }
       care_group: {
         Row: {
-          caregiver_id: string
           created_at: string | null
           description: string | null
           id: string
           name: string | null
           patient_id: string
+          primary_caregiver_id: string
           updated_at: string | null
         }
         Insert: {
-          caregiver_id: string
           created_at?: string | null
           description?: string | null
           id?: string
           name?: string | null
           patient_id: string
+          primary_caregiver_id: string
           updated_at?: string | null
         }
         Update: {
-          caregiver_id?: string
           created_at?: string | null
           description?: string | null
           id?: string
           name?: string | null
           patient_id?: string
+          primary_caregiver_id?: string
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "care_circle_members_caregiver_id_fkey"
-            columns: ["caregiver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "care_circle_members_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_group_primary_caregiver_id_fkey"
+            columns: ["primary_caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

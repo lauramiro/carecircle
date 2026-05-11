@@ -244,7 +244,7 @@ describe('group invite integration flow', () => {
       expect.objectContaining({
         group_id: 'group-001',
         patient_id: 'patient-001',
-        care_giver_id: 'test-user-id',
+        caregiver_id: 'test-user-id',
         status: 'active',
       }),
     );

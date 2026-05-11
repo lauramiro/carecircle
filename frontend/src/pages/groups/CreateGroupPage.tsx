@@ -158,7 +158,7 @@ export default function CreateGroupPage() {
       const { error: careGiverError } = await supabase.from('care_givers').insert({
         group_id: careGroup.id,
         patient_id: patient.id,
-        care_giver_id: user.id,
+        caregiver_id: user.id,
         relationship: data.relationship,
         role_in_care: 'Primary Carer',
         can_view_medical: true,

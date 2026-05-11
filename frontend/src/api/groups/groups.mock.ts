@@ -1,10 +1,4 @@
-import type {
-  GPContact,
-  Group,
-  GroupSummary,
-  InvitePayload,
-  InviteResult,
-} from './groups.types';
+import type { GPContact, Group, GroupSummary } from './groups.types';
 
 const mockGroups: Group[] = [
   {
@@ -129,18 +123,6 @@ export async function getGroups(): Promise<GroupSummary[]> {
 
 export async function getUserGroupDetails(groupId: string): Promise<Group | null> {
   return delay(mockGroups.find((group) => group.id === groupId) ?? null);
-}
-
-export async function inviteMember(payload: InvitePayload): Promise<InviteResult> {
-  if (payload.email.toLowerCase().includes('fail')) {
-    throw new Error('Unable to send invite');
-  }
-
-  return delay({
-    inviteId: `invite-${payload.groupId}-${Date.now()}`,
-    groupId: payload.groupId,
-    email: payload.email,
-  });
 }
 
 function findMockGroup(groupId: string): Group {

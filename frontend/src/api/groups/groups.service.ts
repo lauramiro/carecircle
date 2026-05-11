@@ -1,3 +1,4 @@
+import { INVITE_TYPES } from '../../services/inviteService';
 import { supabase } from '../../lib/supabaseClient';
 import * as groupsMock from './groups.mock';
 import type {
@@ -29,7 +30,7 @@ export async function getGroups(): Promise<GroupSummary[]> {
         created_at
       )
     `)
-    .eq('care_giver_id', user.id)
+    .eq('caregiver_id', user.id)
     .eq('status', 'active');
 
   if (error) {
@@ -58,7 +59,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     .from('care_givers')
     .select('role_in_care')
     .eq('group_id', groupId)
-    .eq('care_giver_id', user.id)
+    .eq('caregiver_id', user.id)
     .eq('status', 'active')
     .single();
 
@@ -79,7 +80,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
       patient_id,
       created_at,
       care_givers (
-        care_giver_id,
+        caregiver_id,
         role_in_care,
         status,
         joined_at,
@@ -100,7 +101,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
   const userRole = mapRole(userMembership.role_in_care);
 
   const members: GroupMember[] = (groupData.care_givers || []).map((m: any) => ({
-    id: m.care_giver_id,
+    id: m.caregiver_id,
     name: m.profiles.full_name,
     email: m.profiles.email, 
     role: mapRole(m.role_in_care),
@@ -120,8 +121,45 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
   };
 }
 
+function parseCreateGroupInviteRow(data: unknown): InviteResult | null {
+  if (data === null || typeof data !== 'object') return null;
+  const row = data as Record<string, unknown>;
+  const id = row.id;
+  const groupId = row.group_id;
+  const email = row.email;
+  if (typeof id !== 'string' || typeof groupId !== 'string' || typeof email !== 'string') {
+    return null;
+  }
+  return {
+    inviteId: id,
+    groupId,
+    email,
+  };
+}
+
 export async function inviteMember(payload: InvitePayload): Promise<InviteResult> {
-  return groupsMock.inviteMember(payload);
+  const email = payload.email.trim().toLowerCase();
+  if (!email) {
+    throw new Error('Email is required');
+  }
+
+  const { data, error } = await supabase.rpc('create_group_invite', {
+    p_email: email,
+    p_group_id: payload.groupId,
+    p_invite_type: INVITE_TYPES.CARE_GROUP,
+  });
+
+  if (error) {
+    console.error('inviteMember:', error);
+    throw new Error(error.message || 'Unable to send invite');
+  }
+
+  const parsed = parseCreateGroupInviteRow(data);
+  if (!parsed) {
+    throw new Error('Unable to send invite');
+  }
+
+  return parsed;
 }
 
 export async function addGPContact(

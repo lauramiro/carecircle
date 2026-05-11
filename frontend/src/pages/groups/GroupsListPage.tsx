@@ -1,16 +1,16 @@
 import { motion } from 'framer-motion';
 import { Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import GroupRoleBadge from '../../components/groups/GroupRoleBadge';
-import { useGroups } from '../../hooks/groups/useGroups';
-import { formatDate, truncateText } from '../../utils/formatters';
+import GroupRoleBadge from '@components/groups/GroupRoleBadge';
+import { useGroups } from '@hooks/groups/useGroups';
+import { formatDate, truncateText } from '@utils/formatters';
 import {
   CARD_VARIANTS,
   STATIC_CARD_VARIANTS,
   STAGGER_CONTAINER_VARIANTS,
   TRANSITIONS,
-} from '../../lib/animation.constants';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
+} from '@lib/animation.constants';
+import { useReducedMotion } from '@hooks/useReducedMotion';
 
 function GroupsListSkeleton() {
   const shouldReduceMotion = useReducedMotion();
@@ -142,12 +142,6 @@ export default function GroupsListPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-base font-extrabold">{group.name}</h2>
-                  <p
-                    className="mt-1 font-mono text-xs"
-                    style={{ color: 'var(--color-text-hint)' }}
-                  >
-                    {group.id}
-                  </p>
                 </div>
                 <GroupRoleBadge role={group.role} />
               </div>

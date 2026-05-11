@@ -8,6 +8,7 @@ import {
   TRANSITIONS,
 } from '../lib/animation.constants';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { formatDate } from '@utils/formatters';
 
 interface AnimatedStatValueProps {
   value: number;
@@ -59,7 +60,7 @@ export default function DashboardPage() {
             color: 'var(--color-text-secondary)',
           }}
         >
-          Apr 30, 2026
+          {formatDate(new Date().toISOString())}
         </div>
       </div>
 

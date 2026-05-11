@@ -45,6 +45,7 @@ async function fillRequiredFormFields(user: ReturnType<typeof userEvent.setup>) 
   await user.type(screen.getByLabelText(/circle name/i), 'Mum Care Team');
   await user.type(screen.getByLabelText(/patient full name/i), 'Jane Doe');
   await user.type(screen.getByLabelText(/date of birth/i), '1955-05-01');
+  await user.type(screen.getByLabelText(/^email$/i), 'jane@example.com');
   await user.selectOptions(screen.getByLabelText(/relationship to the patient/i), 'parent');
 }
 
@@ -180,7 +181,7 @@ describe('CreateGroupPage', () => {
       expect.objectContaining({
         name: 'Mum Care Team',
         patient_id: 'patient-123',
-        primary_carer_id: 'test-user-id',
+        primary_caregiver_id: 'test-user-id',
       }),
     );
     expect(careGroupInsert.mock.calls[0][0]).not.toHaveProperty('description');
@@ -219,6 +220,7 @@ describe('CreateGroupPage', () => {
     );
     await user.type(screen.getByLabelText(/patient full name/i), 'Jane Doe');
     await user.type(screen.getByLabelText(/date of birth/i), '1955-05-01');
+    await user.type(screen.getByLabelText(/^email$/i), 'jane@example.com');
     await user.selectOptions(screen.getByLabelText(/relationship to the patient/i), 'parent');
     await user.click(screen.getByRole('button', { name: /create circle/i }));
 
@@ -232,7 +234,7 @@ describe('CreateGroupPage', () => {
         name: 'Mum Care Team',
         description: 'Family coordination hub',
         patient_id: 'patient-123',
-        primary_carer_id: 'test-user-id',
+        primary_caregiver_id: 'test-user-id',
       }),
     );
   });

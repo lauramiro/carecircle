@@ -1,40 +1,13 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { supabase } from '../../lib/supabaseClient';
-import { summarizeChecklist } from '../../lib/checklist';
-import type { ChecklistItem, MedicationStatus } from '../../lib/checklist';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { useChecklistSubscription } from '../../hooks/checklist/useChecklistSubscription';
-import SkipReasonModal from './SkipReasonModal';
-
-const STATUS_STYLES: Record<MedicationStatus, { bg: string; color: string; label: string }> = {
-  due: { bg: 'var(--color-status-given-bg)', color: 'var(--color-status-given)', label: 'Due' },
-  given: { bg: 'var(--color-status-given-bg)', color: 'var(--color-status-given)', label: 'Given' },
-  overdue: { bg: 'var(--color-status-overdue-bg)', color: 'var(--color-status-overdue)', label: 'Overdue' },
-  skipped: { bg: 'var(--color-status-skipped-bg)', color: 'var(--color-status-skipped)', label: 'Skipped' },
-};
-
-const TIME_WINDOWS = [
-  { id: 'morning', label: 'Morning', hours: [0, 11] },
-  { id: 'afternoon', label: 'Afternoon', hours: [12, 17] },
-  { id: 'evening', label: 'Evening', hours: [18, 20] },
-  { id: 'night', label: 'Night', hours: [21, 23] },
-];
-
-function groupItemsByWindow(items: ChecklistItem[]): Record<string, ChecklistItem[]> {
-  const groups: Record<string, ChecklistItem[]> = {
-    morning: [], afternoon: [], evening: [], night: [],
-  };
-  items.forEach(item => {
-    const hour = parseInt(item.time_window.time_of_day.split(':')[0]);
-    if (hour <= 11) groups.morning.push(item);
-    else if (hour <= 17) groups.afternoon.push(item);
-    else if (hour <= 20) groups.evening.push(item);
-    else groups.night.push(item);
-  });
-  return groups;
-}
+import { supabase } from '@lib/supabaseClient';
+import { summarizeChecklist } from '@lib/checklist';
+import type { ChecklistItem } from '@lib/checklist';
+import { useReducedMotion } from '@hooks/useReducedMotion';
+import { useChecklistSubscription } from '@hooks/checklist/useChecklistSubscription';
+import MedicationChecklistItemRow from '@components/checklist/MedicationChecklistItemRow';
+import { TIME_WINDOWS } from '@components/checklist/medicationChecklist.constants';
+import { groupItemsByWindow } from '@components/checklist/medicationChecklist.utils';
 
 interface MedicationChecklistProps {
   checklistId: string;
@@ -68,9 +41,13 @@ export default function MedicationChecklist({ checklistId, userRole }: Medicatio
   }, [checklistId]);
 
   function toggleSection(id: string) {
-    setExpandedSections(prev => {
+    setExpandedSections((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   }
@@ -79,10 +56,15 @@ export default function MedicationChecklist({ checklistId, userRole }: Medicatio
     <section>
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 style={{
-            color: 'var(--color-text-primary)', fontSize: '26px',
-            fontWeight: 800, letterSpacing: '-0.03em', margin: 0,
-          }}>
+          <h1
+            style={{
+              color: 'var(--color-text-primary)',
+              fontSize: '26px',
+              fontWeight: 800,
+              letterSpacing: '-0.03em',
+              margin: 0,
+            }}
+          >
             Today's Medications
           </h1>
           <p className="mt-1 text-sm flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
@@ -104,14 +86,13 @@ export default function MedicationChecklist({ checklistId, userRole }: Medicatio
         )}
       </div>
 
-      {/* Summary bar */}
       <div className="mb-6 grid grid-cols-4 gap-3">
         {[
           { label: 'Remaining', value: summary.remaining, color: 'var(--color-primary)' },
           { label: 'Given', value: summary.given, color: 'var(--color-status-given)' },
           { label: 'Overdue', value: summary.overdue, color: 'var(--color-status-overdue)' },
           { label: 'Skipped', value: summary.skipped, color: 'var(--color-status-skipped)' },
-        ].map(stat => (
+        ].map((stat) => (
           <article
             key={stat.label}
             className="rounded-xl border bg-white p-4"
@@ -127,13 +108,10 @@ export default function MedicationChecklist({ checklistId, userRole }: Medicatio
         ))}
       </div>
 
-      {/* Time windows */}
       <div className="space-y-3">
-        {TIME_WINDOWS.map(window => {
+        {TIME_WINDOWS.map((window) => {
           const windowItems = itemsByWindow[window.id] || [];
-          const remaining = windowItems.filter(
-            i => i.status === 'due' || i.status === 'overdue'
-          ).length;
+          const remaining = windowItems.filter((item) => item.status === 'due' || item.status === 'overdue').length;
           const isExpanded = expandedSections.has(window.id);
 
           return (
@@ -173,8 +151,8 @@ export default function MedicationChecklist({ checklistId, userRole }: Medicatio
                       No medications in this window
                     </p>
                   ) : (
-                    windowItems.map(item => (
-                      <ChecklistItemRow
+                    windowItems.map((item) => (
+                      <MedicationChecklistItemRow
                         key={item.id}
                         item={item}
                         disabled={isReadOnly}
@@ -189,102 +167,5 @@ export default function MedicationChecklist({ checklistId, userRole }: Medicatio
         })}
       </div>
     </section>
-  );
-}
-
-function ChecklistItemRow({
-  item,
-  disabled,
-  shouldReduceMotion,
-}: {
-  item: ChecklistItem;
-  disabled: boolean;
-  shouldReduceMotion: boolean;
-}) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [showSkipModal, setShowSkipModal] = useState(false);
-  const isTerminal = item.status === 'given' || item.status === 'skipped';
-  const isEditable = !isTerminal && !disabled;
-  const style = STATUS_STYLES[item.status];
-
-  const handleGive = async () => {
-    if (!isEditable) return;
-    setIsLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase
-        .from('checklist_items')
-        .update({
-          status: 'given',
-          given_at: new Date().toISOString(),
-          given_by_user_id: user?.id,
-        })
-        .eq('id', item.id);
-      if (error) throw error;
-    } catch {
-      toast.error('Failed to mark as given. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <>
-      <div
-        className="flex items-center justify-between rounded-lg border px-4 py-3 mt-2"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
-        <div>
-          <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            {item.medication_name}
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
-            {item.dosage} {item.dosage_unit} · {item.time_window.time_of_day}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span
-            className="rounded-full px-3 py-1 text-xs font-bold"
-            style={{ backgroundColor: style.bg, color: style.color }}
-          >
-            {style.label}
-          </span>
-
-          {isEditable && (
-            <>
-              <motion.button
-                type="button"
-                onClick={handleGive}
-                disabled={isLoading}
-                className="h-8 rounded-lg px-3 text-xs font-bold text-white disabled:opacity-60"
-                style={{ backgroundColor: 'var(--color-primary)' }}
-                whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-              >
-                {isLoading ? 'Giving...' : 'Give'}
-              </motion.button>
-              <button
-                type="button"
-                onClick={() => setShowSkipModal(true)}
-                className="h-8 rounded-lg border px-3 text-xs font-bold"
-                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-              >
-                Skip
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {showSkipModal && (
-        <SkipReasonModal
-          itemId={item.id}
-          medicationName={item.medication_name}
-          open={showSkipModal}
-          onSkipped={() => setShowSkipModal(false)}
-          onCancel={() => setShowSkipModal(false)}
-        />
-      )}
-    </>
   );
 }

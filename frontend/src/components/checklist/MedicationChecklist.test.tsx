@@ -18,6 +18,8 @@ const selectMock = vi.hoisted(() => vi.fn());
 const updateEqMock = vi.hoisted(() => vi.fn());
 const updateMock = vi.hoisted(() => vi.fn());
 const uploadMock = vi.hoisted(() => vi.fn());
+const listMock = vi.hoisted(() => vi.fn());
+const getPublicUrlMock = vi.hoisted(() => vi.fn());
 const storageFromMock = vi.hoisted(() => vi.fn());
 const fromMock = vi.hoisted(() => vi.fn());
 const getUserMock = vi.hoisted(() => vi.fn());
@@ -50,7 +52,12 @@ vi.mock('@lib/supabaseClient', () => ({
   },
 }));
 
-function buildItem(id: string, status: ChecklistItem['status'], time = '08:00'): ChecklistItem {
+function buildItem(
+  id: string,
+  status: ChecklistItem['status'],
+  time = '08:00',
+  overrides: Partial<ChecklistItem> = {},
+): ChecklistItem {
   return {
     id,
     medication_id: `med-${id}`,
@@ -69,6 +76,7 @@ function buildItem(id: string, status: ChecklistItem['status'], time = '08:00'):
     skip_notes: null,
     created_at: '2026-01-01T00:00:00.000Z',
     updated_at: '2026-01-01T00:00:00.000Z',
+    ...overrides,
   };
 }
 
@@ -85,13 +93,38 @@ describe('MedicationChecklist mark-as-given photo flow', () => {
     updateEqMock.mockResolvedValue({ error: null });
     updateMock.mockReturnValue({ eq: updateEqMock });
 
-    fromMock.mockImplementation(() => ({
-      select: selectMock,
-      update: updateMock,
-    }));
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { full_name: 'Sarah Cole' },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        select: selectMock,
+        update: updateMock,
+      };
+    });
 
     uploadMock.mockResolvedValue({ error: null });
-    storageFromMock.mockReturnValue({ upload: uploadMock });
+    listMock.mockResolvedValue({
+      data: [{ name: '1710000000000.jpg' }],
+      error: null,
+    });
+    getPublicUrlMock.mockReturnValue({
+      data: { publicUrl: 'https://example.com/proof.jpg' },
+    });
+    storageFromMock.mockReturnValue({
+      upload: uploadMock,
+      list: listMock,
+      getPublicUrl: getPublicUrlMock,
+    });
 
     getUserMock.mockResolvedValue({
       data: { user: { id: 'caregiver-001' } },
@@ -215,5 +248,32 @@ describe('MedicationChecklist mark-as-given photo flow', () => {
         status: 'given',
       }),
     );
+  });
+
+  it('opens full-screen viewer for given item with proof metadata', async () => {
+    selectEqMock.mockResolvedValueOnce({
+      data: [
+        buildItem('given-42', 'given', '08:00', {
+          given_by_user_id: 'caregiver-001',
+          given_at: '2026-01-01T08:05:00.000Z',
+        }),
+      ],
+      error: null,
+    });
+
+    render(<MedicationChecklist checklistId="checklist-5" userRole="primary" />);
+
+    await userEvent.click(await screen.findByText('Medication given-42'));
+
+    expect(await screen.findByRole('dialog', { name: /medication confirmation photo/i })).toBeInTheDocument();
+    expect(await screen.findByText(/confirmed by: Sarah Cole/i)).toBeInTheDocument();
+    expect(screen.getByText(/Medication given-42 · 1 tablet/i)).toBeInTheDocument();
+    expect(screen.getByText(/confirmed at:/i)).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /proof for Medication given-42/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /close photo viewer/i }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /medication confirmation photo/i })).toBeNull();
+    });
   });
 });

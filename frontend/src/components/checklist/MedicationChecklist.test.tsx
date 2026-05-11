@@ -18,6 +18,8 @@ const selectMock = vi.hoisted(() => vi.fn());
 const updateEqMock = vi.hoisted(() => vi.fn());
 const updateMock = vi.hoisted(() => vi.fn());
 const uploadMock = vi.hoisted(() => vi.fn());
+const listMock = vi.hoisted(() => vi.fn());
+const getPublicUrlMock = vi.hoisted(() => vi.fn());
 const storageFromMock = vi.hoisted(() => vi.fn());
 const fromMock = vi.hoisted(() => vi.fn());
 const getUserMock = vi.hoisted(() => vi.fn());
@@ -50,7 +52,12 @@ vi.mock('@lib/supabaseClient', () => ({
   },
 }));
 
-function buildItem(id: string, status: ChecklistItem['status'], time = '08:00'): ChecklistItem {
+function buildItem(
+  id: string,
+  status: ChecklistItem['status'],
+  time = '08:00',
+  overrides: Partial<ChecklistItem> = {},
+): ChecklistItem {
   return {
     id,
     medication_id: `med-${id}`,
@@ -69,6 +76,7 @@ function buildItem(id: string, status: ChecklistItem['status'], time = '08:00'):
     skip_notes: null,
     created_at: '2026-01-01T00:00:00.000Z',
     updated_at: '2026-01-01T00:00:00.000Z',
+    ...overrides,
   };
 }
 
@@ -85,13 +93,38 @@ describe('MedicationChecklist mark-as-given photo flow', () => {
     updateEqMock.mockResolvedValue({ error: null });
     updateMock.mockReturnValue({ eq: updateEqMock });
 
-    fromMock.mockImplementation(() => ({
-      select: selectMock,
-      update: updateMock,
-    }));
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { full_name: 'Sarah Cole' },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        select: selectMock,
+        update: updateMock,
+      };
+    });
 
     uploadMock.mockResolvedValue({ error: null });
-    storageFromMock.mockReturnValue({ upload: uploadMock });
+    listMock.mockResolvedValue({
+      data: [{ name: '1710000000000.jpg' }],
+      error: null,
+    });
+    getPublicUrlMock.mockReturnValue({
+      data: { publicUrl: 'https://example.com/proof.jpg' },
+    });
+    storageFromMock.mockReturnValue({
+      upload: uploadMock,
+      list: listMock,
+      getPublicUrl: getPublicUrlMock,
+    });
 
     getUserMock.mockResolvedValue({
       data: { user: { id: 'caregiver-001' } },
@@ -118,10 +151,11 @@ describe('MedicationChecklist mark-as-given photo flow', () => {
 
     await waitFor(() => {
       expect(screen.getAllByRole('button', { name: /mark as given/i })).toHaveLength(2);
+      expect(screen.getAllByRole('button', { name: /choose from gallery/i })).toHaveLength(2);
     });
   });
 
-  it('opens picker immediately and does not update status before photo selection', async () => {
+  it('opens camera immediately and does not update status before photo selection', async () => {
     const user = userEvent.setup();
     const clickSpy = vi
       .spyOn(HTMLInputElement.prototype, 'click')
@@ -139,13 +173,33 @@ describe('MedicationChecklist mark-as-given photo flow', () => {
     clickSpy.mockRestore();
   });
 
+  it('opens gallery picker via fallback button', async () => {
+    const user = userEvent.setup();
+    const clickSpy = vi
+      .spyOn(HTMLInputElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+
+    render(<MedicationChecklist checklistId="checklist-gallery" userRole="primary" />);
+
+    const chooseFromGallery = await screen.findByRole('button', {
+      name: /choose from gallery/i,
+    });
+    await user.click(chooseFromGallery);
+
+    expect(clickSpy).toHaveBeenCalled();
+    expect(uploadMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
+
+    clickSpy.mockRestore();
+  });
+
   it('updates status to given only after successful photo upload', async () => {
     render(<MedicationChecklist checklistId="checklist-3" userRole="primary" />);
 
     const markAsGiven = await screen.findByRole('button', { name: /mark as given/i });
     await userEvent.click(markAsGiven);
 
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
+    const fileInput = screen.getByTestId('camera-input-due-1') as HTMLInputElement | null;
     expect(fileInput).not.toBeNull();
 
     const proofPhoto = new File(['proof'], 'proof.jpg', { type: 'image/jpeg' });
@@ -168,5 +222,58 @@ describe('MedicationChecklist mark-as-given photo flow', () => {
       updateMock.mock.invocationCallOrder[0],
     );
     expect(toastMock.success).toHaveBeenCalled();
+  });
+
+  it('uses gallery-selected photo for the same upload and update flow', async () => {
+    render(<MedicationChecklist checklistId="checklist-4" userRole="primary" />);
+
+    const chooseFromGallery = await screen.findByRole('button', {
+      name: /choose from gallery/i,
+    });
+    await userEvent.click(chooseFromGallery);
+
+    const galleryInput = screen.getByTestId('gallery-input-due-1') as HTMLInputElement;
+    const galleryPhoto = new File(['gallery-proof'], 'gallery-proof.jpg', {
+      type: 'image/jpeg',
+    });
+    fireEvent.change(galleryInput, { target: { files: [galleryPhoto] } });
+
+    await waitFor(() => {
+      expect(uploadMock).toHaveBeenCalledTimes(1);
+      expect(updateEqMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'given',
+      }),
+    );
+  });
+
+  it('opens full-screen viewer for given item with proof metadata', async () => {
+    selectEqMock.mockResolvedValueOnce({
+      data: [
+        buildItem('given-42', 'given', '08:00', {
+          given_by_user_id: 'caregiver-001',
+          given_at: '2026-01-01T08:05:00.000Z',
+        }),
+      ],
+      error: null,
+    });
+
+    render(<MedicationChecklist checklistId="checklist-5" userRole="primary" />);
+
+    await userEvent.click(await screen.findByText('Medication given-42'));
+
+    expect(await screen.findByRole('dialog', { name: /medication confirmation photo/i })).toBeInTheDocument();
+    expect(await screen.findByText(/confirmed by: Sarah Cole/i)).toBeInTheDocument();
+    expect(screen.getByText(/Medication given-42 · 1 tablet/i)).toBeInTheDocument();
+    expect(screen.getByText(/confirmed at:/i)).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /proof for Medication given-42/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /close photo viewer/i }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /medication confirmation photo/i })).toBeNull();
+    });
   });
 });

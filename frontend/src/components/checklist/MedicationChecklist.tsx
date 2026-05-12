@@ -10,8 +10,8 @@ import SkipReasonModal from './SkipReasonModal';
 
 const STATUS_STYLES: Record<MedicationStatus, { bg: string; color: string; label: string }> = {
   due: { bg: 'var(--color-status-given-bg)', color: 'var(--color-status-given)', label: 'Due' },
-  given: { bg: 'var(--color-status-given-bg)', color: 'var(--color-status-given)', label: 'Given' },
-  overdue: { bg: 'var(--color-status-overdue-bg)', color: 'var(--color-status-overdue)', label: 'Overdue' },
+  given: { bg: '#E8F5E9', color: '#2E7D32', label: 'Given' },
+  overdue: { bg: 'var(--color-status-critical-bg)', color: 'var(--color-status-critical)', label: 'Overdue' },
   skipped: { bg: 'var(--color-status-skipped-bg)', color: 'var(--color-status-skipped)', label: 'Skipped' },
 };
 
@@ -108,8 +108,8 @@ export default function MedicationChecklist({ checklistId, userRole }: Medicatio
       <div className="mb-6 grid grid-cols-4 gap-3">
         {[
           { label: 'Remaining', value: summary.remaining, color: 'var(--color-primary)' },
-          { label: 'Given', value: summary.given, color: 'var(--color-status-given)' },
-          { label: 'Overdue', value: summary.overdue, color: 'var(--color-status-overdue)' },
+          {  label: 'Given', value: summary.given, color: '#2E7D32'  },
+          { label: 'Overdue', value: summary.overdue, color: 'var(--color-status-critical)' },
           { label: 'Skipped', value: summary.skipped, color: 'var(--color-status-skipped)' },
         ].map(stat => (
           <article

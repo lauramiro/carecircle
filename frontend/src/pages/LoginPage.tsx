@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Heart } from 'lucide-react';
+import { Eye, EyeOff, Heart } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getErrorMessage } from '../utils/helper';
 import { buildInviteConfirmationPath, getPendingInvite } from '../utils/inviteStorage';
@@ -10,13 +10,14 @@ function mapErrorMessage(message: string): string {
 }
 
 export default function LoginPage() {
-  const [email, setEmail]           = useState('');
-  const [password, setPassword]     = useState('');
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [formError, setFormError]   = useState<string | null>(null);
-  const [loading, setLoading]       = useState(false);
-  const [magicSent, setMagicSent]   = useState(false);
-  const [showMagic, setShowMagic]   = useState(false);
+  const [email, setEmail]               = useState('');
+  const [password, setPassword]         = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError]     = useState<string | null>(null);
+  const [formError, setFormError]       = useState<string | null>(null);
+  const [loading, setLoading]           = useState(false);
+  const [magicSent, setMagicSent]       = useState(false);
+  const [showMagic, setShowMagic]       = useState(false);
 
   const handleLogin = async (e: React.SubmitEvent) => {
     e.preventDefault();
@@ -176,43 +177,71 @@ export default function LoginPage() {
             {/* Password — hidden in magic link mode */}
             {!showMagic && (
               <div className="mb-6">
-                <label
-                  htmlFor="password"
-                  style={{
-                    display: 'block', fontSize: '12px', fontWeight: 500,
-                    fontFamily: 'Plus Jakarta Sans, sans-serif',
-                    color: 'var(--color-text-secondary)',
-                    marginBottom: '6px', letterSpacing: '0.01em'
-                  }}
-                >
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={e => { setPassword(e.target.value); setFormError(null); }}
-                  placeholder="Your password"
-                  style={{
-                    width: '100%', height: '40px', padding: '0 12px',
-                    border: `1px solid ${formError ? 'var(--color-status-critical)' : 'var(--color-border)'}`,
-                    borderRadius: '8px', fontSize: '13px',
-                    fontFamily: 'Plus Jakarta Sans, sans-serif',
-                    color: 'var(--color-text-primary)',
-                    backgroundColor: 'var(--color-card)',
-                    outline: 'none', boxSizing: 'border-box' as const,
-                  }}
-                  onFocus={e => {
-                    e.target.style.borderColor = 'var(--color-border-focus)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(58,111,191,0.12)';
-                  }}
-                  onBlur={e => {
-                    e.target.style.borderColor = formError
-                      ? 'var(--color-status-critical)' : 'var(--color-border)';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+                  <label
+                    htmlFor="password"
+                    style={{
+                      fontSize: '12px', fontWeight: 500,
+                      fontFamily: 'Plus Jakarta Sans, sans-serif',
+                      color: 'var(--color-text-secondary)',
+                      letterSpacing: '0.01em'
+                    }}
+                  >
+                    Password
+                  </label>
+                  <a
+                    href="/forgot-password"
+                    style={{
+                      fontSize: '12px', color: 'var(--color-primary)',
+                      fontFamily: 'Plus Jakarta Sans, sans-serif',
+                      fontWeight: 500, textDecoration: 'none'
+                    }}
+                  >
+                    Forgot password?
+                  </a>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={e => { setPassword(e.target.value); setFormError(null); }}
+                    placeholder="Your password"
+                    style={{
+                      width: '100%', height: '40px', padding: '0 40px 0 12px',
+                      border: `1px solid ${formError ? 'var(--color-status-critical)' : 'var(--color-border)'}`,
+                      borderRadius: '8px', fontSize: '13px',
+                      fontFamily: 'Plus Jakarta Sans, sans-serif',
+                      color: 'var(--color-text-primary)',
+                      backgroundColor: 'var(--color-card)',
+                      outline: 'none', boxSizing: 'border-box' as const,
+                    }}
+                    onFocus={e => {
+                      e.target.style.borderColor = 'var(--color-border-focus)';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(58,111,191,0.12)';
+                    }}
+                    onBlur={e => {
+                      e.target.style.borderColor = formError
+                        ? 'var(--color-status-critical)' : 'var(--color-border)';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    style={{
+                      position: 'absolute', right: '10px', top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', padding: 0,
+                      cursor: 'pointer', color: 'var(--color-text-hint)',
+                      display: 'flex', alignItems: 'center',
+                    }}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
             )}
 

@@ -6,7 +6,6 @@ import SignupPage from './SignupPage';
 const supabaseMock = vi.hoisted(() => ({
   auth: {
     signUp: vi.fn(),
-    signInWithOtp: vi.fn(),
   },
 }));
 
@@ -26,13 +25,14 @@ function deferred<T>() {
   };
 }
 
-async function fillSignupForm(email: string, password: string) {
+async function fillSignupForm(email: string, password: string, confirmPassword?: string) {
   const user = userEvent.setup();
 
   render(<SignupPage />);
 
   await user.type(screen.getByLabelText(/email address/i), email);
   await user.type(screen.getByLabelText(/^password$/i), password);
+  await user.type(screen.getByLabelText(/confirm password/i), confirmPassword ?? password);
 
   return user;
 }
@@ -41,7 +41,6 @@ describe('SignupPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     supabaseMock.auth.signUp.mockResolvedValue({ error: null });
-    supabaseMock.auth.signInWithOtp.mockResolvedValue({ error: null });
   });
 
   it('renders the signup form and navigation options', () => {
@@ -50,8 +49,9 @@ describe('SignupPage', () => {
     expect(screen.getByText('Create your account')).toBeInTheDocument();
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /send me a magic link instead/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /magic link/i })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute('href', '/login');
   });
 
@@ -91,6 +91,15 @@ describe('SignupPage', () => {
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
     expect(screen.getByText('Password must include at least one number.')).toBeInTheDocument();
+    expect(supabaseMock.auth.signUp).not.toHaveBeenCalled();
+  });
+
+  it('validates that confirm password matches password', async () => {
+    const user = await fillSignupForm('user@example.com', 'password1', 'different1');
+
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    expect(screen.getByText('Passwords do not match.')).toBeInTheDocument();
     expect(supabaseMock.auth.signUp).not.toHaveBeenCalled();
   });
 
@@ -159,39 +168,18 @@ describe('SignupPage', () => {
     expect(screen.getByRole('button', { name: /create account/i })).toBeEnabled();
   });
 
-  it('validates the email before sending a signup magic link', async () => {
+  it('toggles password visibility when the eye button is clicked', async () => {
     const user = userEvent.setup();
 
     render(<SignupPage />);
 
-    await user.click(screen.getByRole('button', { name: /send me a magic link instead/i }));
+    const passwordInput = screen.getByLabelText(/^password$/i);
+    expect(passwordInput).toHaveAttribute('type', 'password');
 
-    expect(screen.getByText('Email is required.')).toBeInTheDocument();
-    expect(supabaseMock.auth.signInWithOtp).not.toHaveBeenCalled();
-  });
+    await user.click(screen.getAllByRole('button', { name: /show password/i })[0]);
+    expect(passwordInput).toHaveAttribute('type', 'text');
 
-  it('sends a signup magic link and shows confirmation', async () => {
-    const user = userEvent.setup();
-
-    render(<SignupPage />);
-
-    await user.type(screen.getByLabelText(/email address/i), 'magic@example.com');
-    await user.click(screen.getByRole('button', { name: /send me a magic link instead/i }));
-
-    expect(supabaseMock.auth.signInWithOtp).toHaveBeenCalledWith({ email: 'magic@example.com' });
-    expect(await screen.findByText('Check your email')).toBeInTheDocument();
-    expect(screen.getByText('magic@example.com')).toBeInTheDocument();
-  });
-
-  it('shows an error when the signup magic link cannot be sent', async () => {
-    supabaseMock.auth.signInWithOtp.mockResolvedValue({ error: new Error('otp failed') });
-    const user = userEvent.setup();
-
-    render(<SignupPage />);
-
-    await user.type(screen.getByLabelText(/email address/i), 'magic@example.com');
-    await user.click(screen.getByRole('button', { name: /send me a magic link instead/i }));
-
-    expect(await screen.findByText('Could not send magic link. Please try again.')).toBeInTheDocument();
+    await user.click(screen.getAllByRole('button', { name: /hide password/i })[0]);
+    expect(passwordInput).toHaveAttribute('type', 'password');
   });
 });

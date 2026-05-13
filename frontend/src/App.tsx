@@ -3,6 +3,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import { useAuth } from './contexts/AuthContext';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import InvitePage from './pages/InvitePage';
 import CreateGroupPage from './pages/groups/CreateGroupPage';
@@ -45,9 +46,10 @@ function App() {
           path="/signup"
           element={session ? <Navigate to="/dashboard" replace /> : <SignupPage />}
         />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route
           path="/"
-          element={session ? <DashboardLayout /> : <Navigate to="/signup" replace />}
+          element={session ? <DashboardLayout /> : <Navigate to="/login" replace />}
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
@@ -60,7 +62,7 @@ function App() {
         </Route>
         <Route
           path="*"
-          element={<Navigate to={session ? '/dashboard' : '/signup'} replace />}
+          element={<Navigate to={session ? '/dashboard' : '/login'} replace />}
         />
       </Routes>
     </BrowserRouter>

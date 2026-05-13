@@ -22,20 +22,20 @@ export async function getPatient(groupId: string): Promise<Patient | null> {
 
 export async function uploadPatientAvatar(patientId: string, file: File): Promise<string> {
   const ext = file.name.split('.').pop() ?? 'jpg';
-  const path = `patients/${patientId}/avatar.${ext}`;
+  const path = `${patientId}/avatar.${ext}`;
 
   const { error } = await supabase.storage
-    .from('avatars')
+    .from('patient-avatars')
     .upload(path, file, { upsert: true, contentType: file.type });
 
   if (error) throw error;
 
-  const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+  const { data } = supabase.storage.from('patient-avatars').getPublicUrl(path);
   return data.publicUrl;
 }
 
-export async function upsertPatient(
-  groupId: string,
+export async function updatePatient(
+  patientId: string,
   fullName: string,
   dateOfBirth: string,
   chronicConditions: string[],
@@ -43,7 +43,6 @@ export async function upsertPatient(
   avatarUrl?: string,
 ): Promise<void> {
   const payload: Record<string, unknown> = {
-    group_id: groupId,
     full_name: fullName,
     date_of_birth: dateOfBirth,
     chronic_conditions: chronicConditions,
@@ -54,7 +53,8 @@ export async function upsertPatient(
 
   const { error } = await supabase
     .from('patients')
-    .upsert(payload, { onConflict: 'group_id' });
+    .update(payload as any)
+    .eq('id', patientId);
 
   if (error) throw error;
 }

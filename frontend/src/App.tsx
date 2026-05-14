@@ -16,6 +16,7 @@ import MedicationChecklistPage from './pages/checklist/MedicationChecklistPage';
 
 function App() {
   const { session, loading } = useAuth();
+  const isAuthenticated = !!session?.user?.email_confirmed_at;
 
   if (loading) {
     return (
@@ -40,16 +41,16 @@ function App() {
         <Route path="/group-invite/:groupId" element={<GroupInvite />} />
         <Route
           path="/login"
-          element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
         />
         <Route
           path="/signup"
-          element={session ? <Navigate to="/dashboard" replace /> : <SignupPage />}
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <SignupPage />}
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route
           path="/"
-          element={session ? <DashboardLayout /> : <Navigate to="/login" replace />}
+          element={isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" replace />}
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
@@ -62,7 +63,7 @@ function App() {
         </Route>
         <Route
           path="*"
-          element={<Navigate to={session ? '/dashboard' : '/login'} replace />}
+          element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />}
         />
       </Routes>
     </BrowserRouter>

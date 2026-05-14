@@ -17,6 +17,7 @@ function validatePassword(password: string): string | null {
   if (!password) return 'Password is required.';
   if (password.length < 8) return 'Password must be at least 8 characters.';
   if (!/\d/.test(password)) return 'Password must include at least one number.';
+  if (!/[!@#$%&*]/.test(password)) return `Password must include at least one special character: ${ALLOWED_SPECIAL_CHARS}`;
   return null;
 }
 
@@ -63,13 +64,13 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) throw error;
       const pendingInvite = getPendingInvite();
-      if (pendingInvite && pendingInvite.email.toLowerCase() === email.toLowerCase()) {
-        window.location.href = buildInviteConfirmationPath(pendingInvite);
-        return;
-      }
+      const inviteMatches = pendingInvite && pendingInvite.email.toLowerCase() === email.toLowerCase();
+      const emailRedirectTo = inviteMatches
+        ? `${window.location.origin}${buildInviteConfirmationPath(pendingInvite!)}`
+        : undefined;
+      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
+      if (error) throw error;
       setSubmitted(true);
     } catch (err: unknown) {
       if (getErrorMessage(err).includes('already registered')) {
@@ -251,7 +252,7 @@ export default function SignupPage() {
                   fontSize: '11px', color: 'var(--color-text-hint)',
                   marginTop: '4px', fontFamily: 'Plus Jakarta Sans, sans-serif', lineHeight: 1.5
                 }}>
-                  At least 8 characters and 1 number. Allowed special characters: {ALLOWED_SPECIAL_CHARS}
+                  At least 8 characters, 1 number, and 1 special character: {ALLOWED_SPECIAL_CHARS}
                 </p>
               )}
             </div>

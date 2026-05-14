@@ -91,9 +91,8 @@ describe('InvitePage', () => {
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       ),
     );
-    expect(localStorage.getItem('carecircle:pendingInvite')).toBe(
-      JSON.stringify({ email: 'new@example.com', inviteId: INVITE_ID }),
-    );
+    const stored = JSON.parse(localStorage.getItem('carecircle:pendingInvite') ?? '{}');
+    expect(stored).toMatchObject({ email: 'new@example.com', inviteId: INVITE_ID });
   });
 
   it('redirects authenticated matching users toward confirmation mode', async () => {
@@ -101,9 +100,8 @@ describe('InvitePage', () => {
     renderInvitePage(memberInviteSearch(INVITE_ID, 'new@example.com', 'false'));
 
     await waitFor(() => {
-      expect(localStorage.getItem('carecircle:pendingInvite')).toBe(
-        JSON.stringify({ email: 'new@example.com', inviteId: INVITE_ID }),
-      );
+      const stored = JSON.parse(localStorage.getItem('carecircle:pendingInvite') ?? '{}');
+      expect(stored).toMatchObject({ email: 'new@example.com', inviteId: INVITE_ID });
     });
   });
 

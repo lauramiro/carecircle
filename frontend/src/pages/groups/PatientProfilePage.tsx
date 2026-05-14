@@ -87,6 +87,14 @@ export default function PatientProfilePage() {
         setAvatarPreviewUrl(patient.avatarUrl ?? null);
       } else {
         setPatientId(null);
+        resetValues({
+          fullName: '',
+          dateOfBirth: '',
+          chronicConditions: [],
+          allergies: [],
+        });
+        setAvatarPreviewUrl(null);
+        setPendingFile(null);
       }
       setLoadingPatient(false);
     });

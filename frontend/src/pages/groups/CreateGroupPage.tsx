@@ -170,6 +170,15 @@ export default function CreateGroupPage() {
 
       if (careGiverError) throw careGiverError;
 
+      // Update the patient with the newly created group_id so it links correctly
+      // (Done after care_givers insert so the UPDATE RLS policy passes!)
+      const { error: linkPatientError } = await supabase
+        .from('patients')
+        .update({ group_id: careGroup.id })
+        .eq('id', patient.id);
+
+      if (linkPatientError) throw linkPatientError;
+
       toast.success(`"${groupNameTrimmed}" care circle created!`);
       navigate('/groups/list');
     } catch (err: unknown) {
@@ -635,14 +644,18 @@ export default function CreateGroupPage() {
             <label htmlFor="careLevel" className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
               Care level
             </label>
-            <input
+            <select
               id="careLevel"
-              type="text"
               {...register('careLevel')}
-              placeholder="e.g. independent, assisted"
-              className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
+              className="mt-2 h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-            />
+            >
+              <option value="">Not specified</option>
+              <option value="independent">Independent</option>
+              <option value="assisted">Assisted</option>
+              <option value="intensive">Intensive</option>
+              <option value="hospice">Hospice</option>
+            </select>
           </div>
           <div>
             <label htmlFor="primaryPhysicianId" className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>

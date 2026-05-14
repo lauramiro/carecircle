@@ -21,7 +21,22 @@ export async function getPatient(groupId: string): Promise<Patient | null> {
 }
 
 export async function uploadPatientAvatar(patientId: string, file: File): Promise<string> {
-  const ext = file.name.split('.').pop() ?? 'jpg';
+  let ext = 'jpg';
+  const nameParts = file.name.split('.');
+  if (nameParts.length > 1) {
+    const parsedExt = nameParts.pop()?.toLowerCase();
+    if (parsedExt && ['jpg', 'jpeg', 'png', 'webp'].includes(parsedExt)) {
+      ext = parsedExt;
+    }
+  } else if (file.type) {
+    const mimeMap: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+    ext = mimeMap[file.type] ?? ext;
+  }
+
   const path = `${patientId}/avatar.${ext}`;
 
   const { error } = await supabase.storage

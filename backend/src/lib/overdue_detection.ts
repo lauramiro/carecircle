@@ -3,11 +3,11 @@ import { supabase } from '../lib/supabase';
 import { calculateStatus } from './medication_status';
 
 const OVERDUE_THRESHOLD_MINUTES = 30;
-const JOB_INTERVAL = process.env.OVERDUE_CHECK_INTERVAL || '*/5 * * * *';
+const JOB_INTERVAL = process.env.OVERDUE_CHECK_INTERVAL || '*/ * * * *';
 
 /**
  * Start the overdue detection background job
- * Runs every 5 minutes (or configured interval)
+ * Runs every  minute (or configured interval)
  */
 
 export function startOverdueDetectionJob() {
@@ -24,7 +24,7 @@ export function startOverdueDetectionJob() {
 }
 
 /**
- * Core logic: Fetch due items, cehck if they've become overdue, update database
+ * Core logic: Fetch due items, check if they've become overdue, update database
  */
 
 export async function checkAndUpdateOverdueItems() {
@@ -37,7 +37,7 @@ export async function checkAndUpdateOverdueItems() {
 
         //Step 2: Fetch all 'due' items for today
         const { data: dueItems, error: fetchError } = await supabase
-          .from('daily_medication_checklist')
+          .from('daily_medication_checklists')
           .select(`
             id,
             checklist_date,
@@ -51,8 +51,10 @@ export async function checkAndUpdateOverdueItems() {
             created_at,
             given_at,
             skip_reason,
-            medications(name, dosage, dosage_unit),
-            time_windows(time_of_day, window_start, window_end)
+            time_of_day,
+            window_start,
+            window_end,
+            medications(name, dosage, dosage_unit)
             )
         `)
         .eq('checklist_date', today)
@@ -76,7 +78,11 @@ export async function checkAndUpdateOverdueItems() {
         const tzMap = Object.fromEntries(families?.map(f => [f.id, f.prefered_timezone]) || []);
         
         //Step 4: Check each item and update if it's now overdue
-        const toUpdate: Array<{ id: string; status: 'overdue' }> = [];
+        const toUpdate: Array<{ id: string;
+            status: 'overdue';
+            medication_id: string;
+            patient_id: string;
+            scheduled_time: string; }> = [];
 
         for (const checklist of dueItems) {
             const tz = tzMap[checklist.family_id] || 'UTC';
@@ -86,13 +92,13 @@ export async function checkAndUpdateOverdueItems() {
                     {
                         id: item.id,
                         medication_id: item.medication_id,
-                        medication_name: item.medications.name,
-                        dosage: item.medications.dosage,
-                        dosage_unit: item.medications.dosage_unit,
+                        medication_name: item.medications[0].name,
+                        dosage: item.medications[0].dosage,
+                        dosage_unit: item.medications[0].dosage_unit,
                         time_window: {
-                            time_of_day: item.time_windows.time_of_day,
-                            window_start: item.time_windows.window_start,
-                            window_end: item.time_windows.window_end
+                            time_of_day: item.time_of_day,
+                            window_start: item.window_start,
+                            window_end: item.window_end,
                         },
                         given_at: item.given_at,
                         skip_reason: item.skip_reason,
@@ -103,7 +109,12 @@ export async function checkAndUpdateOverdueItems() {
                 );
 
                 if (recalculatedStatus === 'overdue') {
-                    toUpdate.push({ id: item.id, status: 'overdue' });
+                    toUpdate.push({ 
+                        id: item.id, 
+                        status: 'overdue',
+                        medication_id: item.medication_id, 
+                        patient_id: checklist.patient_id,
+                        scheduled_time: item.time_of_day, });
                 }
             }
         }
@@ -120,6 +131,17 @@ export async function checkAndUpdateOverdueItems() {
 
                 if (updateError) {
                     console.log(`[OverdueDetectionJob] Failed to update ${update.id}:`, updateError);  
+                } else {
+                    //Write to medication_logs
+                    await supabase
+                      .from('medication_logs')
+                      .insert({
+                        medication_id: update.medication_id,
+                        patient_id: update.patient_id,
+                        status: 'overdue',
+                        scheduled_time: update.scheduled_time,
+                        created_at: now.toISOString(),
+                      })
                 }
             }
         }else {

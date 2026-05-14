@@ -68,7 +68,7 @@ describe('SignupPage', () => {
   });
 
   it('validates invalid email format before signup', async () => {
-    const user = await fillSignupForm('not-an-email', 'password1');
+    const user = await fillSignupForm('not-an-email', 'password1!');
 
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
@@ -94,8 +94,17 @@ describe('SignupPage', () => {
     expect(supabaseMock.auth.signUp).not.toHaveBeenCalled();
   });
 
+  it('validates passwords that do not include a special character before signup', async () => {
+    const user = await fillSignupForm('user@example.com', 'password1');
+
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    expect(screen.getByText(/must include at least one special character/i)).toBeInTheDocument();
+    expect(supabaseMock.auth.signUp).not.toHaveBeenCalled();
+  });
+
   it('validates that confirm password matches password', async () => {
-    const user = await fillSignupForm('user@example.com', 'password1', 'different1');
+    const user = await fillSignupForm('user@example.com', 'password1!', 'different1!');
 
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
@@ -120,13 +129,14 @@ describe('SignupPage', () => {
   });
 
   it('submits valid signup details and shows confirmation', async () => {
-    const user = await fillSignupForm('user@example.com', 'password1');
+    const user = await fillSignupForm('user@example.com', 'password1!');
 
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
     expect(supabaseMock.auth.signUp).toHaveBeenCalledWith({
       email: 'user@example.com',
-      password: 'password1',
+      password: 'password1!',
+      options: { emailRedirectTo: undefined },
     });
     expect(await screen.findByText('Check your email')).toBeInTheDocument();
     expect(screen.getByText('user@example.com')).toBeInTheDocument();
@@ -135,7 +145,7 @@ describe('SignupPage', () => {
   it('disables the submit button while signup is pending', async () => {
     const pendingSignup = deferred<{ error: null }>();
     supabaseMock.auth.signUp.mockReturnValue(pendingSignup.promise);
-    const user = await fillSignupForm('user@example.com', 'password1');
+    const user = await fillSignupForm('user@example.com', 'password1!');
 
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
@@ -148,7 +158,7 @@ describe('SignupPage', () => {
     supabaseMock.auth.signUp.mockResolvedValue({
       error: new Error('User already registered'),
     });
-    const user = await fillSignupForm('user@example.com', 'password1');
+    const user = await fillSignupForm('user@example.com', 'password1!');
 
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
@@ -158,7 +168,7 @@ describe('SignupPage', () => {
 
   it('shows a generic signup error for unexpected Supabase failures', async () => {
     supabaseMock.auth.signUp.mockRejectedValue(new Error('network down'));
-    const user = await fillSignupForm('user@example.com', 'password1');
+    const user = await fillSignupForm('user@example.com', 'password1!');
 
     await user.click(screen.getByRole('button', { name: /create account/i }));
 

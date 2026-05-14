@@ -1,12 +1,18 @@
 const pendingInviteKey = 'carecircle:pendingInvite';
+const INVITE_TTL_MS = 48 * 60 * 60 * 1000;
 
 export interface PendingInvite {
   email: string;
   inviteId: string;
 }
 
+interface StoredInvite extends PendingInvite {
+  savedAt: number;
+}
+
 export function savePendingInvite(invite: PendingInvite) {
-  localStorage.setItem(pendingInviteKey, JSON.stringify(invite));
+  const stored: StoredInvite = { ...invite, savedAt: Date.now() };
+  localStorage.setItem(pendingInviteKey, JSON.stringify(stored));
 }
 
 export function getPendingInvite(): PendingInvite | null {
@@ -14,8 +20,12 @@ export function getPendingInvite(): PendingInvite | null {
   if (!value) return null;
 
   try {
-    const parsed = JSON.parse(value) as Partial<PendingInvite>;
+    const parsed = JSON.parse(value) as Partial<StoredInvite>;
     if (!parsed.email || !parsed.inviteId) return null;
+    if (parsed.savedAt && Date.now() - parsed.savedAt > INVITE_TTL_MS) {
+      localStorage.removeItem(pendingInviteKey);
+      return null;
+    }
     return { email: parsed.email, inviteId: parsed.inviteId };
   } catch {
     return null;

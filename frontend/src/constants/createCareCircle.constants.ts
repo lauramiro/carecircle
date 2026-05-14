@@ -39,7 +39,6 @@ export const CREATE_CARE_CIRCLE_DEFAULT_VALUES: CreateCareCircleFormValues = {
   groupDescription: '',
   patientFullName: '',
   dateOfBirth: '',
-  userId: '',
   gender: '',
   bloodType: '',
   patientEmail: '',

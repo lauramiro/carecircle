@@ -67,9 +67,6 @@ export default function CreateGroupPage() {
         is_active: data.isActive,
       };
 
-      const uid = data.userId.trim();
-      if (uid) patientInsert.user_id = uid;
-
       if (data.gender) patientInsert.gender = data.gender;
 
       const bt = data.bloodType.trim();
@@ -329,20 +326,6 @@ export default function CreateGroupPage() {
               {errors.dateOfBirth.message}
             </p>
           )}
-        </div>
-
-        <div className="mb-5">
-          <label htmlFor="userId" className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
-            Linked user ID
-          </label>
-          <input
-            id="userId"
-            type="text"
-            {...register('userId')}
-            placeholder="Auth user UUID if the patient has an account"
-            className="mt-2 h-11 w-full rounded-lg border px-3 font-mono text-sm outline-none"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-          />
         </div>
 
         <div className="mb-5 grid gap-4 sm:grid-cols-2">

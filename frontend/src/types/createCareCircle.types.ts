@@ -3,7 +3,6 @@ export type CreateCareCircleFormValues = {
   groupDescription: string;
   patientFullName: string;
   dateOfBirth: string;
-  userId: string;
   gender: string;
   bloodType: string;
   patientEmail: string;

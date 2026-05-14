@@ -6,7 +6,7 @@ import type { Allergy } from '../../api/groups/patient.types';
 import {
   getPatient,
   uploadPatientAvatar,
-  upsertPatient,
+  updatePatient,
 } from '../../api/groups/patient.service';
 import { usePatientForm } from '../../hooks/groups/usePatientForm';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
@@ -64,6 +64,7 @@ export default function PatientProfilePage() {
   const [allergySeverity, setAllergySeverity] = useState<Allergy['severity']>(undefined);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [patientId, setPatientId] = useState<string | null>(null);
   const [loadingPatient, setLoadingPatient] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
@@ -76,6 +77,7 @@ export default function PatientProfilePage() {
 
     getPatient(groupId).then((patient) => {
       if (patient) {
+        setPatientId(patient.id);
         resetValues({
           fullName: patient.fullName,
           dateOfBirth: patient.dateOfBirth,
@@ -83,6 +85,16 @@ export default function PatientProfilePage() {
           allergies: patient.allergies,
         });
         setAvatarPreviewUrl(patient.avatarUrl ?? null);
+      } else {
+        setPatientId(null);
+        resetValues({
+          fullName: '',
+          dateOfBirth: '',
+          chronicConditions: [],
+          allergies: [],
+        });
+        setAvatarPreviewUrl(null);
+        setPendingFile(null);
       }
       setLoadingPatient(false);
     });
@@ -105,16 +117,20 @@ export default function PatientProfilePage() {
 
     setSaving(true);
     try {
+      if (!patientId) {
+        throw new Error('Patient profile not found.');
+      }
+
       let avatarUrl: string | undefined;
 
       if (pendingFile) {
-        avatarUrl = await uploadPatientAvatar(groupId, pendingFile);
+        avatarUrl = await uploadPatientAvatar(patientId, pendingFile);
         setPendingFile(null);
         setAvatarPreviewUrl(avatarUrl);
       }
 
-      await upsertPatient(
-        groupId,
+      await updatePatient(
+        patientId,
         values.fullName,
         values.dateOfBirth,
         chronicConditions,
@@ -123,7 +139,7 @@ export default function PatientProfilePage() {
       );
       setSavedAt(new Date());
     } catch (err: unknown) {
-      console.error('upsertPatient failed:', err);
+      console.error('updatePatient failed:', err);
       setFormError(getErrorMessage(err) || 'Something went wrong. Please try again.');
     }
     setSaving(false);

@@ -57,7 +57,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
   // Verify access 
   const { data: userMembership, error: membershipError } = await supabase
     .from('care_givers')
-    .select('role_in_care')
+    .select('role_in_care, can_schedule')
     .eq('group_id', groupId)
     .eq('caregiver_id', user.id)
     .eq('status', 'active')
@@ -99,6 +99,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
   }
 
   const userRole = mapRole(userMembership.role_in_care);
+  const canSchedule = (userMembership as any).can_schedule === true;
 
   const members: GroupMember[] = (groupData.care_givers || []).map((m: any) => ({
     id: m.caregiver_id,
@@ -114,6 +115,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     name: groupData.name,
     description: groupData.description || '',
     role: userRole,
+    canSchedule,
     createdAt: groupData.created_at,
     members,
     gpContacts: [],

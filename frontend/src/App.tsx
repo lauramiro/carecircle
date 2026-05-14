@@ -14,6 +14,8 @@ import PatientProfilePage from './pages/groups/PatientProfilePage';
 import AddMedicationPage from './pages/medications/AddMedicationPage';
 import MedicationsSchedulePage from './pages/medications/MedicationsSchedulePage';
 import MedicationChecklistPage from './pages/checklist/MedicationChecklistPage';
+import AppointmentsPage from './pages/appointments/AppointmentsPage';
+import AppointmentFormPage from './pages/appointments/AppointmentFormPage';
 
 function App() {
   const { session, loading } = useAuth();
@@ -62,6 +64,9 @@ function App() {
           <Route path="groups/:groupId/profile" element={<PatientProfilePage />} />
           <Route path="groups/:groupId/medications/add" element={<AddMedicationPage />} />
           <Route path="checklist/:checklistId" element={<MedicationChecklistPage />} />
+          <Route path="groups/:groupId/appointments" element={<AppointmentsPage />} />
+          <Route path="groups/:groupId/appointments/new" element={<AppointmentFormPage />} />
+          <Route path="groups/:groupId/appointments/:appointmentId/edit" element={<AppointmentFormPage />} />
         </Route>
         <Route
           path="*"

@@ -188,6 +188,18 @@ export default function GroupDetailPage() {
         <div className="flex gap-2">
           <motion.button
             type="button"
+            onClick={() => navigate(`/groups/${currentGroup.id}/appointments`)}
+            className="h-10 rounded-lg border px-4 text-sm font-bold"
+            style={{
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text-secondary)',
+            }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+          >
+            Appointments
+          </motion.button>
+          <motion.button
+            type="button"
             onClick={() => navigate(`/groups/${currentGroup.id}/medications`)}
             className="h-10 rounded-lg border px-4 text-sm font-bold"
             style={{

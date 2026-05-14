@@ -72,10 +72,10 @@ describe('App', () => {
     expect(screen.queryByText('Invite page')).not.toBeInTheDocument();
   });
 
-  it('renders signup by default when unauthenticated', () => {
+  it('renders login by default when unauthenticated', () => {
     render(<App />);
 
-    expect(screen.getByText('Signup page')).toBeInTheDocument();
+    expect(screen.getByText('Login page')).toBeInTheDocument();
   });
 
   it('renders login for unauthenticated users on /login', () => {
@@ -86,12 +86,12 @@ describe('App', () => {
     expect(screen.getByText('Login page')).toBeInTheDocument();
   });
 
-  it('falls back to signup for unknown unauthenticated paths', () => {
+  it('falls back to login for unknown unauthenticated paths', () => {
     setPath('/unknown');
 
     render(<App />);
 
-    expect(screen.getByText('Signup page')).toBeInTheDocument();
+    expect(screen.getByText('Login page')).toBeInTheDocument();
   });
 
   it('renders dashboard for authenticated users on /dashboard', () => {

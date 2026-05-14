@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Heart } from 'lucide-react';
+import { Eye, EyeOff, Heart } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getErrorMessage } from '../utils/helper';
 import { buildInviteConfirmationPath, getPendingInvite } from '../utils/inviteStorage';
+
+const ALLOWED_SPECIAL_CHARS = '! @ # $ % & *';
 
 function validateEmail(email: string): string | null {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,14 +20,34 @@ function validatePassword(password: string): string | null {
   return null;
 }
 
+function validateConfirmPassword(password: string, confirm: string): string | null {
+  if (!confirm) return 'Please confirm your password.';
+  if (password !== confirm) return 'Passwords do not match.';
+  return null;
+}
+
+const inputStyle = (hasError: boolean) => ({
+  width: '100%', height: '40px', padding: '0 40px 0 12px',
+  border: `1px solid ${hasError ? 'var(--color-status-critical)' : 'var(--color-border)'}`,
+  borderRadius: '8px', fontSize: '13px',
+  fontFamily: 'Plus Jakarta Sans, sans-serif',
+  color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--color-card)',
+  outline: 'none', boxSizing: 'border-box' as const,
+});
+
 export default function SignupPage() {
-  const [email, setEmail]                 = useState('');
-  const [password, setPassword]           = useState('');
-  const [emailError, setEmailError]       = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [formError, setFormError]         = useState<string | null>(null);
-  const [loading, setLoading]             = useState(false);
-  const [submitted, setSubmitted]         = useState(false);
+  const [email, setEmail]                           = useState('');
+  const [password, setPassword]                     = useState('');
+  const [confirmPassword, setConfirmPassword]       = useState('');
+  const [showPassword, setShowPassword]             = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [emailError, setEmailError]                 = useState<string | null>(null);
+  const [passwordError, setPasswordError]           = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
+  const [formError, setFormError]                   = useState<string | null>(null);
+  const [loading, setLoading]                       = useState(false);
+  const [submitted, setSubmitted]                   = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,9 +55,11 @@ export default function SignupPage() {
 
     const eErr = validateEmail(email);
     const pErr = validatePassword(password);
+    const cErr = validateConfirmPassword(password, confirmPassword);
     setEmailError(eErr);
     setPasswordError(pErr);
-    if (eErr || pErr) return;
+    setConfirmPasswordError(cErr);
+    if (eErr || pErr || cErr) return;
 
     setLoading(true);
     try {
@@ -53,23 +77,6 @@ export default function SignupPage() {
       } else {
         setFormError('Something went wrong. Please check your connection and try again.');
       }
-    }
-    setLoading(false);
-  };
-
-  const handleMagicLink = async () => {
-    setFormError(null);
-    const eErr = validateEmail(email);
-    setEmailError(eErr);
-    if (eErr) return;
-
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({ email });
-      if (error) throw error;
-      setSubmitted(true);
-    } catch {
-      setFormError('Could not send magic link. Please try again.');
     }
     setLoading(false);
   };
@@ -162,13 +169,8 @@ export default function SignupPage() {
                 onChange={e => { setEmail(e.target.value); setEmailError(null); setFormError(null); }}
                 placeholder="you@example.com"
                 style={{
-                  width: '100%', height: '40px', padding: '0 12px',
-                  border: `1px solid ${emailError ? 'var(--color-status-critical)' : 'var(--color-border)'}`,
-                  borderRadius: '8px', fontSize: '13px',
-                  fontFamily: 'Plus Jakarta Sans, sans-serif',
-                  color: 'var(--color-text-primary)',
-                  backgroundColor: 'var(--color-card)',
-                  outline: 'none', boxSizing: 'border-box' as const,
+                  ...inputStyle(!!emailError),
+                  padding: '0 12px',
                 }}
                 onFocus={e => {
                   e.target.style.borderColor = 'var(--color-border-focus)';
@@ -191,7 +193,7 @@ export default function SignupPage() {
             </div>
 
             {/* Password */}
-            <div className="mb-6">
+            <div className="mb-5">
               <label
                 htmlFor="password"
                 style={{
@@ -203,38 +205,110 @@ export default function SignupPage() {
               >
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={e => { setPassword(e.target.value); setPasswordError(null); setFormError(null); }}
-                placeholder="Min. 8 characters, 1 number"
-                style={{
-                  width: '100%', height: '40px', padding: '0 12px',
-                  border: `1px solid ${passwordError ? 'var(--color-status-critical)' : 'var(--color-border)'}`,
-                  borderRadius: '8px', fontSize: '13px',
-                  fontFamily: 'Plus Jakarta Sans, sans-serif',
-                  color: 'var(--color-text-primary)',
-                  backgroundColor: 'var(--color-card)',
-                  outline: 'none', boxSizing: 'border-box' as const,
-                }}
-                onFocus={e => {
-                  e.target.style.borderColor = 'var(--color-border-focus)';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(74,111,165,0.12)';
-                }}
-                onBlur={e => {
-                  e.target.style.borderColor = passwordError
-                    ? 'var(--color-status-critical)' : 'var(--color-border)';
-                  e.target.style.boxShadow = 'none';
-                }}
-              />
-              {passwordError && (
+              <div style={{ position: 'relative' }}>
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={e => { setPassword(e.target.value); setPasswordError(null); setConfirmPasswordError(null); setFormError(null); }}
+                  placeholder="Min. 8 characters, 1 number"
+                  style={inputStyle(!!passwordError)}
+                  onFocus={e => {
+                    e.target.style.borderColor = 'var(--color-border-focus)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(74,111,165,0.12)';
+                  }}
+                  onBlur={e => {
+                    e.target.style.borderColor = passwordError
+                      ? 'var(--color-status-critical)' : 'var(--color-border)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute', right: '10px', top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', padding: 0,
+                    cursor: 'pointer', color: 'var(--color-text-hint)',
+                    display: 'flex', alignItems: 'center',
+                  }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {passwordError ? (
                 <p style={{
                   fontSize: '12px', color: 'var(--color-status-critical)',
                   marginTop: '4px', fontFamily: 'Plus Jakarta Sans, sans-serif'
                 }}>
                   {passwordError}
+                </p>
+              ) : (
+                <p style={{
+                  fontSize: '11px', color: 'var(--color-text-hint)',
+                  marginTop: '4px', fontFamily: 'Plus Jakarta Sans, sans-serif', lineHeight: 1.5
+                }}>
+                  At least 8 characters and 1 number. Allowed special characters: {ALLOWED_SPECIAL_CHARS}
+                </p>
+              )}
+            </div>
+
+            {/* Confirm password */}
+            <div className="mb-6">
+              <label
+                htmlFor="confirmPassword"
+                style={{
+                  display: 'block', fontSize: '12px', fontWeight: 500,
+                  fontFamily: 'Plus Jakarta Sans, sans-serif',
+                  color: 'var(--color-text-secondary)',
+                  marginBottom: '6px', letterSpacing: '0.01em'
+                }}
+              >
+                Confirm password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={e => { setConfirmPassword(e.target.value); setConfirmPasswordError(null); setFormError(null); }}
+                  placeholder="Re-enter your password"
+                  style={inputStyle(!!confirmPasswordError)}
+                  onFocus={e => {
+                    e.target.style.borderColor = 'var(--color-border-focus)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(74,111,165,0.12)';
+                  }}
+                  onBlur={e => {
+                    e.target.style.borderColor = confirmPasswordError
+                      ? 'var(--color-status-critical)' : 'var(--color-border)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(v => !v)}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute', right: '10px', top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', padding: 0,
+                    cursor: 'pointer', color: 'var(--color-text-hint)',
+                    display: 'flex', alignItems: 'center',
+                  }}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {confirmPasswordError && (
+                <p style={{
+                  fontSize: '12px', color: 'var(--color-status-critical)',
+                  marginTop: '4px', fontFamily: 'Plus Jakarta Sans, sans-serif'
+                }}>
+                  {confirmPasswordError}
                 </p>
               )}
             </div>
@@ -278,37 +352,6 @@ export default function SignupPage() {
             </button>
 
           </form>
-
-          {/* Divider */}
-          <div className="flex items-center my-5">
-            <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--color-border)' }} />
-            <span style={{
-              padding: '0 12px', fontSize: '12px',
-              color: 'var(--color-text-hint)',
-              fontFamily: 'Plus Jakarta Sans, sans-serif'
-            }}>
-              or
-            </span>
-            <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--color-border)' }} />
-          </div>
-
-          {/* Magic link button */}
-          <button
-            type="button"
-            onClick={handleMagicLink}
-            disabled={loading}
-            style={{
-              width: '100%', height: '40px',
-              backgroundColor: 'var(--color-primary-light)',
-              color: 'var(--color-primary-dark)',
-              border: 'none', borderRadius: '8px',
-              fontSize: '13px', fontWeight: 500,
-              fontFamily: 'Plus Jakarta Sans, sans-serif',
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {loading ? 'Sending link...' : 'Send me a magic link instead'}
-          </button>
 
           {/* Link to login */}
           <p className="text-center mt-5" style={{

@@ -11,6 +11,7 @@ import GroupsListPage from './pages/groups/GroupsListPage';
 import GroupInvite from './pages/GroupInvite';
 import PatientProfilePage from './pages/groups/PatientProfilePage';
 import AddMedicationPage from './pages/medications/AddMedicationPage';
+import MedicationsSchedulePage from './pages/medications/MedicationsSchedulePage';
 import MedicationChecklistPage from './pages/checklist/MedicationChecklistPage';
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
           <Route path="groups/create" element={<CreateGroupPage />} />
           <Route path="groups/list" element={<GroupsListPage />} />
           <Route path="groups/:groupId" element={<GroupDetailPage />} />
+          <Route path="groups/:groupId/medications" element={<MedicationsSchedulePage />} />
           <Route path="groups/:groupId/profile" element={<PatientProfilePage />} />
           <Route path="groups/:groupId/medications/add" element={<AddMedicationPage />} />
           <Route path="checklist/:checklistId" element={<MedicationChecklistPage />} />

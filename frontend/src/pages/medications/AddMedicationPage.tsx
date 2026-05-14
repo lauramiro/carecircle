@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Pill } from 'lucide-react';
 import AddMedicationForm from '../../components/medications/AddMedicationForm';
+import EditMedicationForm from '../../components/medications/EditMedicationForm';
 import { useMedications } from '../../hooks/medications/useMedications';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
-import type { AddMedicationPayload } from '../../api/medications/medications.types';
+import type { AddMedicationPayload, EditMedicationPayload, Medication } from '../../api/medications/medications.types';
+
 import { FREQUENCY_LABELS } from '../../api/medications/medications.types';
 
 export default function AddMedicationPage() {
@@ -12,8 +15,9 @@ export default function AddMedicationPage() {
   const navigate = useNavigate();
   const { group, loading: groupLoading } = useGroupDetail(groupId);
   const patientId = group?.patientId ?? '';
-  const { medications, loading: medsLoading, isSubmitting, addMedication, pauseMedication, activateMedication, archiveMedication } =
+  const { medications, loading: medsLoading, isSubmitting, addMedication, editMedication, pauseMedication, activateMedication, archiveMedication } =
     useMedications(patientId);
+  const [editingMed, setEditingMed] = useState<Medication | null>(null);
 
   if (!groupId) return <Navigate to="/groups/list" replace />;
 
@@ -35,9 +39,16 @@ export default function AddMedicationPage() {
     return <Navigate to="/groups/list" replace />;
   }
 
-  async function handleSubmit(payload: AddMedicationPayload) {
+  async function handleAdd(payload: AddMedicationPayload) {
     await addMedication(payload);
     toast.success('Medication added to schedule');
+  }
+
+  async function handleEdit(changes: EditMedicationPayload) {
+    if (!editingMed) return;
+    await editMedication(editingMed.id, changes);
+    setEditingMed(null);
+    toast.success('Medication updated');
   }
 
   function handleCancel() {
@@ -71,12 +82,26 @@ export default function AddMedicationPage() {
             className="rounded-xl border bg-white p-6"
             style={{ borderColor: 'var(--color-border)' }}
           >
-            <AddMedicationForm
-              patientId={patientId}
-              isSubmitting={isSubmitting}
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-            />
+            {editingMed ? (
+              <>
+                <h2 className="mb-4 text-sm font-bold" style={{ color: 'var(--color-text-secondary)' }}>
+                  Editing: {editingMed.medicationName}
+                </h2>
+                <EditMedicationForm
+                  initialValues={editingMed}
+                  isSubmitting={isSubmitting}
+                  onSubmit={handleEdit}
+                  onCancel={() => setEditingMed(null)}
+                />
+              </>
+            ) : (
+              <AddMedicationForm
+                patientId={patientId}
+                isSubmitting={isSubmitting}
+                onSubmit={handleAdd}
+                onCancel={handleCancel}
+              />
+            )}
           </div>
         </div>
 
@@ -108,7 +133,7 @@ export default function AddMedicationPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                            {med.name}
+                            {med.medicationName}
                           </p>
                           {med.status === 'paused' && (
                             <span
@@ -120,13 +145,24 @@ export default function AddMedicationPage() {
                           )}
                         </div>
                         <p style={{ color: 'var(--color-text-secondary)' }}>
-                          {med.dose} {med.unit} &middot; {FREQUENCY_LABELS[med.frequency]}
+                          {med.dosage} &middot; {FREQUENCY_LABELS[med.frequency]}
                         </p>
                         <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-hint)' }}>
-                          {med.timeWindows.join(', ')}
+                          {(med.timeOfDay ?? []).join(', ')}
                         </p>
                       </div>
                       <div className="flex flex-col gap-1 shrink-0">
+                        {med.status === 'active' && (
+                          <button
+                            type="button"
+                            disabled={isSubmitting}
+                            onClick={() => setEditingMed(med)}
+                            className="text-xs px-2 py-0.5 rounded border"
+                            style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+                          >
+                            Edit
+                          </button>
+                        )}
                         {med.status === 'active' && (
                           <button
                             type="button"

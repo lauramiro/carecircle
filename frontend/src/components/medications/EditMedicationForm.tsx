@@ -1,6 +1,6 @@
-import { type FormEvent, useId, useState } from 'react';
+import { type FormEvent, useId, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { AddMedicationPayload } from '../../api/medications/medications.types';
+import type { EditMedicationPayload, Medication, MedicationUnit, MedicationFrequency } from '../../api/medications/medications.types';
 import {
   FREQUENCY_LABELS,
   TIME_WINDOWS,
@@ -9,34 +9,44 @@ import { checkDuplicateName } from '../../api/medications/medications.service';
 import { useMedicationForm } from '../../hooks/medications/useMedicationForm';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 
-interface AddMedicationFormProps {
-  patientId: string;
+interface EditMedicationFormProps {
+  initialValues: Medication;
   isSubmitting: boolean;
-  onSubmit: (payload: AddMedicationPayload) => Promise<void>;
+  onSubmit: (changes: EditMedicationPayload) => Promise<void>;
   onCancel: () => void;
 }
 
 const UNIT_OPTIONS = ['mg', 'ml', 'mcg', 'units'] as const;
 
-export default function AddMedicationForm({
-  patientId,
+export default function EditMedicationForm({
+  initialValues,
   isSubmitting,
   onSubmit,
   onCancel,
-}: AddMedicationFormProps) {
+}: EditMedicationFormProps) {
   const formId = useId();
   const shouldReduceMotion = useReducedMotion();
-  const { values, errors, updateField, toggleTimeWindow, touchField, validateForm, toPayload, reset } =
+  const { values, errors, updateField, toggleTimeWindow, touchField, validateForm } =
     useMedicationForm();
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [awaitingDuplicateConfirm, setAwaitingDuplicateConfirm] = useState(false);
+
+  useEffect(() => {
+    const parts = initialValues.dosage.split(' ');
+    updateField('name', initialValues.medicationName);
+    updateField('dose', parts[0] ?? '');
+    updateField('unit', (parts[1] ?? 'mg') as MedicationUnit);
+    updateField('frequency', initialValues.frequency);
+    updateField('timeWindows', initialValues.timeOfDay ?? []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialValues.id]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!validateForm()) return;
 
-    if (!awaitingDuplicateConfirm) {
-      const isDuplicate = await checkDuplicateName(patientId, values.name.trim());
+    if (!awaitingDuplicateConfirm && values.name.trim().toLowerCase() !== initialValues.medicationName.toLowerCase()) {
+      const isDuplicate = await checkDuplicateName(initialValues.patientId, values.name.trim());
       if (isDuplicate) {
         setDuplicateWarning(values.name.trim());
         setAwaitingDuplicateConfirm(true);
@@ -44,8 +54,14 @@ export default function AddMedicationForm({
       }
     }
 
-    await onSubmit(toPayload(patientId));
-    reset();
+    const changes: EditMedicationPayload = {
+      medicationName: values.name.trim(),
+      dosage: `${values.dose} ${values.unit as MedicationUnit}`,
+      frequency: values.frequency as MedicationFrequency,
+      timeOfDay: values.timeWindows,
+    };
+
+    await onSubmit(changes);
     setDuplicateWarning(null);
     setAwaitingDuplicateConfirm(false);
   }
@@ -80,7 +96,7 @@ export default function AddMedicationForm({
             <p className="font-bold">Duplicate medication</p>
             <p className="mt-1">
               A medication named <strong>{duplicateWarning}</strong> already exists for
-              this patient. Are you sure you want to add another?
+              this patient. Are you sure you want to save this name?
             </p>
             <div className="mt-3 flex gap-2">
               <button
@@ -99,13 +115,12 @@ export default function AddMedicationForm({
                 className="h-8 rounded-lg px-3 text-xs font-bold text-white"
                 style={{ backgroundColor: 'var(--color-status-warning, #f59e0b)' }}
               >
-                Add anyway
+                Save anyway
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="grid gap-4 md:grid-cols-2">
         <div className="md:col-span-2">
           <label
@@ -223,9 +238,7 @@ export default function AddMedicationForm({
             }
             onBlur={() => touchField('frequency')}
             aria-invalid={Boolean(errors.frequency)}
-            aria-describedby={
-              errors.frequency ? `${formId}-frequency-error` : undefined
-            }
+            aria-describedby={errors.frequency ? `${formId}-frequency-error` : undefined}
             className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
             style={fieldStyle(Boolean(errors.frequency))}
           >
@@ -261,9 +274,7 @@ export default function AddMedicationForm({
             <div
               className="mt-2 flex flex-wrap gap-2"
               role="group"
-              aria-describedby={
-                errors.timeWindows ? `${formId}-timewindows-error` : undefined
-              }
+              aria-describedby={errors.timeWindows ? `${formId}-timewindows-error` : undefined}
             >
               {TIME_WINDOWS.map((window) => {
                 const checked = values.timeWindows.includes(window);
@@ -309,31 +320,29 @@ export default function AddMedicationForm({
         </div>
       </div>
 
-      {!duplicateWarning && (
-        <div className="flex justify-end gap-2">
-          <motion.button
-            type="button"
-            onClick={onCancel}
-            className="h-9 rounded-lg border px-4 text-xs font-bold"
-            style={{
-              borderColor: 'var(--color-border)',
-              color: 'var(--color-text-secondary)',
-            }}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          >
-            Cancel
-          </motion.button>
-          <motion.button
-            type="submit"
-            disabled={isSubmitting}
-            className="h-9 rounded-lg px-4 text-xs font-bold text-white disabled:opacity-60"
-            style={{ backgroundColor: 'var(--color-primary)' }}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          >
-            {isSubmitting ? 'Saving...' : 'Add medication'}
-          </motion.button>
-        </div>
-      )}
+      <div className="flex justify-end gap-2">
+        <motion.button
+          type="button"
+          onClick={onCancel}
+          className="h-9 rounded-lg border px-4 text-xs font-bold"
+          style={{
+            borderColor: 'var(--color-border)',
+            color: 'var(--color-text-secondary)',
+          }}
+          whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+        >
+          Cancel
+        </motion.button>
+        <motion.button
+          type="submit"
+          disabled={isSubmitting}
+          className="h-9 rounded-lg px-4 text-xs font-bold text-white disabled:opacity-60"
+          style={{ backgroundColor: 'var(--color-primary)' }}
+          whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+        >
+          {isSubmitting ? 'Saving...' : 'Save changes'}
+        </motion.button>
+      </div>
     </form>
   );
 }

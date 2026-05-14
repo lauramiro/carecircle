@@ -138,6 +138,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
 
   const g = groupData as GroupDetailQueryRow;
   const userRole = mapRole(userMembership.role_in_care ?? '');
+  const canSchedule = (userMembership as any).can_schedule === true;
 
   const members: GroupMember[] = (g.care_givers ?? []).map(m => ({
     id: m.caregiver_id,
@@ -153,6 +154,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     name: g.name ?? '',
     description: g.description || '',
     role: userRole,
+    canSchedule,
     createdAt: g.created_at ?? new Date().toISOString(),
     members,
     gpContacts: [],

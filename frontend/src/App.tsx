@@ -64,6 +64,9 @@ function App() {
           <Route path="groups/:groupId/profile" element={<PatientProfilePage />} />
           <Route path="groups/:groupId/medications/add" element={<AddMedicationPage />} />
           <Route path="groups/:groupId/checklist" element={<MedicationChecklistPage />} />
+          <Route path="groups/:groupId/appointments" element={<AppointmentsPage />} />
+          <Route path="groups/:groupId/appointments/new" element={<AppointmentFormPage />} />
+          <Route path="groups/:groupId/appointments/:appointmentId/edit" element={<AppointmentFormPage />} />
         </Route>
         <Route
           path="*"

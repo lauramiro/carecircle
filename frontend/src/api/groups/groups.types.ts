@@ -22,6 +22,7 @@ export interface Group {
   name: string;
   description: string;
   role: GroupRole;
+  canSchedule: boolean;
   createdAt: string;
   members: GroupMember[];
   gpContacts: GPContact[];

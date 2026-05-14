@@ -14,6 +14,8 @@ import PatientProfilePage from './pages/groups/PatientProfilePage';
 import AddMedicationPage from './pages/medications/AddMedicationPage';
 import MedicationsSchedulePage from './pages/medications/MedicationsSchedulePage';
 import MedicationChecklistPage from './pages/checklist/MedicationChecklistPage';
+import AppointmentsPage from './pages/appointments/AppointmentsPage';
+import AppointmentFormPage from './pages/appointments/AppointmentFormPage';
 
 function App() {
   const { session, loading } = useAuth();

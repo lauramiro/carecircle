@@ -50,6 +50,14 @@ vi.mock('./pages/groups/GroupDetailPage', () => ({
   default: () => <div>Group detail page</div>,
 }));
 
+vi.mock('./pages/appointments/AppointmentsPage', () => ({
+  default: () => <div>Appointments page</div>,
+}));
+
+vi.mock('./pages/appointments/AppointmentFormPage', () => ({
+  default: () => <div>Appointment form page</div>,
+}));
+
 function setPath(path: string) {
   window.history.pushState({}, '', path);
 }

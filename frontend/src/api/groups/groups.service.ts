@@ -95,7 +95,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
   // Verify access 
   const { data: userMembership, error: membershipError } = await supabase
     .from('care_givers')
-    .select('role_in_care')
+    .select('role_in_care, can_schedule')
     .eq('group_id', groupId)
     .eq('caregiver_id', user.id)
     .eq('status', 'active')

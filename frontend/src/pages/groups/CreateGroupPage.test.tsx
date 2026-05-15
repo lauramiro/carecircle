@@ -165,6 +165,11 @@ describe('CreateGroupPage', () => {
       .mockReturnValueOnce(mockCareGroupInsertSuccess())
       .mockReturnValueOnce({
         insert: careGiversInsert,
+      })
+      .mockReturnValueOnce({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        }),
       });
 
     renderPage();
@@ -210,6 +215,11 @@ describe('CreateGroupPage', () => {
       .mockReturnValueOnce(mockCareGroupInsertSuccess())
       .mockReturnValueOnce({
         insert: careGiversInsert,
+      })
+      .mockReturnValueOnce({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        }),
       });
 
     renderPage();

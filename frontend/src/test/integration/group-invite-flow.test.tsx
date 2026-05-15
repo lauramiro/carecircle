@@ -228,6 +228,11 @@ describe('group invite integration flow', () => {
       .mockReturnValueOnce(mockGroupInsertSuccess('group-001'))
       .mockReturnValueOnce({
         insert: careGiverInsert,
+      })
+      .mockReturnValueOnce({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        }),
       });
 
     renderCreateGroupFlow();

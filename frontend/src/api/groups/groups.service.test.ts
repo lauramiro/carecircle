@@ -5,6 +5,9 @@ vi.mock('../../lib/supabaseClient', () => ({
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'mock-user-123' } } }),
     },
+    functions: {
+      invoke: vi.fn(),
+    },
     rpc: vi.fn(),
     from: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
@@ -87,6 +90,10 @@ describe('groups service', () => {
       },
       error: null,
     } as unknown as Awaited<ReturnType<typeof supabase.rpc>>);
+    vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+      data: { success: true },
+      error: null,
+    });
 
     await expect(
       inviteMember({ groupId: 'group-care-001', email: 'John@Example.com' }),
@@ -101,6 +108,32 @@ describe('groups service', () => {
       p_group_id: 'group-care-001',
       p_invite_type: 'care_group',
     });
+
+    expect(supabase.functions.invoke).toHaveBeenCalledWith('smooth-endpoint', {
+      body: {
+        id: 'invite-uuid-mock',
+        email: 'john@example.com',
+      },
+    });
+  });
+
+  it('throws when the invite email cannot be sent', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({
+      data: {
+        id: 'invite-uuid-mock',
+        group_id: 'group-care-001',
+        email: 'john@example.com',
+      },
+      error: null,
+    } as unknown as Awaited<ReturnType<typeof supabase.rpc>>);
+    vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+      data: { success: false, error: 'Resend rejected the request' },
+      error: null,
+    });
+
+    await expect(
+      inviteMember({ groupId: 'group-care-001', email: 'John@Example.com' }),
+    ).rejects.toThrow('Resend rejected the request');
   });
 
   it('adds, updates, and removes GP contacts', async () => {

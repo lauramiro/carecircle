@@ -79,7 +79,7 @@ describe('GroupDetailPage', () => {
 
     expect(screen.getByText('Dad Care Circle')).toBeInTheDocument();
     expect(screen.getByText('Daily support and medication coordination for Dad.')).toBeInTheDocument();
-    expect(screen.getByText('group-care-001')).toBeInTheDocument();
+    // expect(screen.getByText('group-care-001')).toBeInTheDocument(); // UUID removed from presentation
     expect(screen.getAllByText('12 May 2025')).toHaveLength(2);
     expect(screen.getAllByText('Admin').length).toBeGreaterThan(0);
     expect(screen.getByText('2')).toBeInTheDocument();

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Pill } from 'lucide-react';
 import AddMedicationForm from '../../components/medications/AddMedicationForm';
@@ -7,8 +7,7 @@ import EditMedicationForm from '../../components/medications/EditMedicationForm'
 import { useMedications } from '../../hooks/medications/useMedications';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import type { AddMedicationPayload, EditMedicationPayload, Medication } from '../../api/medications/medications.types';
-
-import { FREQUENCY_LABELS } from '../../api/medications/medications.types';
+import { formatMedicationSchedule } from '../../utils/formatMedicationSchedule';
 
 export default function AddMedicationPage() {
   const { groupId } = useParams();
@@ -17,7 +16,20 @@ export default function AddMedicationPage() {
   const patientId = group?.patientId ?? '';
   const { medications, loading: medsLoading, isSubmitting, addMedication, editMedication, pauseMedication, activateMedication, archiveMedication } =
     useMedications(patientId);
+  const location = useLocation();
   const [editingMed, setEditingMed] = useState<Medication | null>(null);
+  const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
+
+  // Pre-select a medication for editing when navigated here from the schedule page
+  useEffect(() => {
+    const editingMedId = (location.state as { editingMedId?: string } | null)?.editingMedId;
+    if (editingMedId && medications.length > 0) {
+      const target = medications.find((m) => m.id === editingMedId) ?? null;
+      setEditingMed(target);
+      // Clear state so a refresh doesn't re-trigger
+      window.history.replaceState({}, '');
+    }
+  }, [location.state, medications]);
 
   if (!groupId) return <Navigate to="/groups/list" replace />;
 
@@ -145,10 +157,7 @@ export default function AddMedicationPage() {
                           )}
                         </div>
                         <p style={{ color: 'var(--color-text-secondary)' }}>
-                          {med.dosage} &middot; {FREQUENCY_LABELS[med.frequency]}
-                        </p>
-                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-hint)' }}>
-                          {(med.timeOfDay ?? []).join(', ')}
+                          {med.dosage} &middot; {formatMedicationSchedule(med)}
                         </p>
                       </div>
                       <div className="flex flex-col gap-1 shrink-0">
@@ -185,15 +194,37 @@ export default function AddMedicationPage() {
                             Activate
                           </button>
                         )}
-                        <button
-                          type="button"
-                          disabled={isSubmitting}
-                          onClick={() => void archiveMedication(med.id)}
-                          className="text-xs px-2 py-0.5 rounded border"
-                          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-                        >
-                          Archive
-                        </button>
+                        {confirmArchiveId === med.id ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled={isSubmitting}
+                              onClick={() => { void archiveMedication(med.id); setConfirmArchiveId(null); }}
+                              className="text-xs px-2 py-0.5 rounded border font-bold"
+                              style={{ borderColor: 'var(--color-status-critical)', color: 'var(--color-status-critical)' }}
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmArchiveId(null)}
+                              className="text-xs px-2 py-0.5 rounded border"
+                              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={isSubmitting}
+                            onClick={() => setConfirmArchiveId(med.id)}
+                            className="text-xs px-2 py-0.5 rounded border"
+                            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                          >
+                            Archive
+                          </button>
+                        )}
                       </div>
                     </div>
                   </li>

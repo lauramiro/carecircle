@@ -137,6 +137,30 @@ function parseCreateGroupInviteRow(data: unknown): InviteResult | null {
   };
 }
 
+const GROUP_INVITE_EMAIL_FUNCTION = import.meta.env.VITE_GROUP_INVITE_EMAIL_FUNCTION || 'smooth-endpoint';
+
+async function sendGroupInviteEmail(invite: InviteResult): Promise<void> {
+  const { data, error } = await supabase.functions.invoke(GROUP_INVITE_EMAIL_FUNCTION, {
+    body: {
+      id: invite.inviteId,
+      email: invite.email,
+    },
+  });
+
+  if (error) {
+    console.error('sendGroupInviteEmail:', error);
+    throw new Error('Invite created, but email could not be sent');
+  }
+
+  if (!data || typeof data !== 'object' || (data as { success?: unknown }).success !== true) {
+    const result = data as { error?: unknown } | null;
+    const message = (result && typeof result.error === 'string')
+      ? result.error
+      : 'Invite created, but email could not be sent';
+    throw new Error(message);
+  }
+}
+
 export async function inviteMember(payload: InvitePayload): Promise<InviteResult> {
   const email = payload.email.trim().toLowerCase();
   if (!email) {
@@ -158,6 +182,8 @@ export async function inviteMember(payload: InvitePayload): Promise<InviteResult
   if (!parsed) {
     throw new Error('Unable to send invite');
   }
+
+  await sendGroupInviteEmail(parsed);
 
   return parsed;
 }

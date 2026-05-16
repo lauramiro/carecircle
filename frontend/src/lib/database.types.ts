@@ -242,6 +242,7 @@ export type Database = {
           id: string
           name: string | null
           patient_id: string
+          preferred_timezone: string | null
           primary_caregiver_id: string
           updated_at: string | null
         }
@@ -251,6 +252,7 @@ export type Database = {
           id?: string
           name?: string | null
           patient_id: string
+          preferred_timezone?: string | null
           primary_caregiver_id: string
           updated_at?: string | null
         }
@@ -260,6 +262,7 @@ export type Database = {
           id?: string
           name?: string | null
           patient_id?: string
+          preferred_timezone?: string | null
           primary_caregiver_id?: string
           updated_at?: string | null
         }
@@ -384,6 +387,127 @@ export type Database = {
           },
         ]
       }
+      checklist_items: {
+        Row: {
+          checklist_id: string
+          created_at: string | null
+          given_at: string | null
+          given_by_user_id: string | null
+          id: string
+          medication_id: string
+          skip_notes: string | null
+          skip_reason: string | null
+          status: string
+          time_of_day: string
+          updated_at: string | null
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          checklist_id: string
+          created_at?: string | null
+          given_at?: string | null
+          given_by_user_id?: string | null
+          id?: string
+          medication_id: string
+          skip_notes?: string | null
+          skip_reason?: string | null
+          status?: string
+          time_of_day: string
+          updated_at?: string | null
+          window_end: string
+          window_start: string
+        }
+        Update: {
+          checklist_id?: string
+          created_at?: string | null
+          given_at?: string | null
+          given_by_user_id?: string | null
+          id?: string
+          medication_id?: string
+          skip_notes?: string | null
+          skip_reason?: string | null
+          status?: string
+          time_of_day?: string
+          updated_at?: string | null
+          window_end?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "daily_medication_checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_given_by_user_id_fkey"
+            columns: ["given_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "care_givers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "medications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_medication_checklists: {
+        Row: {
+          checklist_date: string
+          created_at: string | null
+          give_at: string | null
+          group_id: string
+          id: string
+          patient_id: string
+          skip_reason: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          checklist_date: string
+          created_at?: string | null
+          give_at?: string | null
+          group_id: string
+          id?: string
+          patient_id: string
+          skip_reason?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          checklist_date?: string
+          created_at?: string | null
+          give_at?: string | null
+          group_id?: string
+          id?: string
+          patient_id?: string
+          skip_reason?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_medication_checklists_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_group"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_medication_checklists_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           created_at: string | null
@@ -449,6 +573,38 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      families: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          id: string
+          preferred_timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          id?: string
+          preferred_timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          preferred_timezone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "families_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: true
+            referencedRelation: "care_group"
             referencedColumns: ["id"]
           },
         ]
@@ -576,6 +732,51 @@ export type Database = {
           },
         ]
       }
+      medication_confirmations: {
+        Row: {
+          carer_id: string
+          checklist_item_id: string
+          confirmed_at_utc: string
+          created_at: string
+          id: string
+          local_timezone: string
+          photo_url: string
+        }
+        Insert: {
+          carer_id: string
+          checklist_item_id: string
+          confirmed_at_utc?: string
+          created_at?: string
+          id?: string
+          local_timezone: string
+          photo_url: string
+        }
+        Update: {
+          carer_id?: string
+          checklist_item_id?: string
+          confirmed_at_utc?: string
+          created_at?: string
+          id?: string
+          local_timezone?: string
+          photo_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_confirmations_carer_id_fkey"
+            columns: ["carer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medication_confirmations_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medication_logs: {
         Row: {
           actual_time: string | null
@@ -625,13 +826,6 @@ export type Database = {
             foreignKeyName: "medication_logs_medication_id_fkey"
             columns: ["medication_id"]
             isOneToOne: false
-            referencedRelation: "active_medications_by_patient"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "medication_logs_medication_id_fkey"
-            columns: ["medication_id"]
-            isOneToOne: false
             referencedRelation: "medications"
             referencedColumns: ["id"]
           },
@@ -644,20 +838,78 @@ export type Database = {
           },
         ]
       }
+      medication_schedules: {
+        Row: {
+          created_at: string | null
+          days_of_week: string
+          id: string
+          is_active: boolean | null
+          medication_id: string
+          patient_id: string
+          time_of_day: string
+          updated_at: string | null
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          created_at?: string | null
+          days_of_week: string
+          id?: string
+          is_active?: boolean | null
+          medication_id: string
+          patient_id: string
+          time_of_day: string
+          updated_at?: string | null
+          window_end: string
+          window_start: string
+        }
+        Update: {
+          created_at?: string | null
+          days_of_week?: string
+          id?: string
+          is_active?: boolean | null
+          medication_id?: string
+          patient_id?: string
+          time_of_day?: string
+          updated_at?: string | null
+          window_end?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_schedules_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "medications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medication_schedules_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medications: {
         Row: {
           created_at: string | null
+          created_by: string | null
+          day_of_month: number | null
+          days_of_week: number[] | null
           discontinued_date: string | null
           discontinued_reason: string | null
-          dosage: string
+          dosage_unit: string | null
+          dose: number
           end_date: string | null
           form: string | null
-          frequency: string
-          generic_name: string | null
           id: string
           instructions: string | null
+          interval_hours: number | null
           last_refill_date: string | null
           medication_name: string
+          name: string | null
           notes: string | null
           patient_id: string
           pharmacy: string | null
@@ -667,28 +919,34 @@ export type Database = {
           prescription_number: string | null
           refills_remaining: number | null
           route: string | null
+          schedule_type: string | null
           side_effects: string[] | null
           specific_times: string[] | null
           start_date: string
           status: string | null
           take_with_food: boolean | null
-          time_of_day: string[] | null
+          time_windows: Json | null
+          unit: Database["public"]["Enums"]["medication_unit"]
           updated_at: string | null
           version: number | null
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
+          day_of_month?: number | null
+          days_of_week?: number[] | null
           discontinued_date?: string | null
           discontinued_reason?: string | null
-          dosage: string
+          dosage_unit?: string | null
+          dose: number
           end_date?: string | null
           form?: string | null
-          frequency: string
-          generic_name?: string | null
           id?: string
           instructions?: string | null
+          interval_hours?: number | null
           last_refill_date?: string | null
           medication_name: string
+          name?: string | null
           notes?: string | null
           patient_id: string
           pharmacy?: string | null
@@ -698,28 +956,34 @@ export type Database = {
           prescription_number?: string | null
           refills_remaining?: number | null
           route?: string | null
+          schedule_type?: string | null
           side_effects?: string[] | null
           specific_times?: string[] | null
           start_date: string
           status?: string | null
           take_with_food?: boolean | null
-          time_of_day?: string[] | null
+          time_windows?: Json | null
+          unit: Database["public"]["Enums"]["medication_unit"]
           updated_at?: string | null
           version?: number | null
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
+          day_of_month?: number | null
+          days_of_week?: number[] | null
           discontinued_date?: string | null
           discontinued_reason?: string | null
-          dosage?: string
+          dosage_unit?: string | null
+          dose?: number
           end_date?: string | null
           form?: string | null
-          frequency?: string
-          generic_name?: string | null
           id?: string
           instructions?: string | null
+          interval_hours?: number | null
           last_refill_date?: string | null
           medication_name?: string
+          name?: string | null
           notes?: string | null
           patient_id?: string
           pharmacy?: string | null
@@ -729,12 +993,14 @@ export type Database = {
           prescription_number?: string | null
           refills_remaining?: number | null
           route?: string | null
+          schedule_type?: string | null
           side_effects?: string[] | null
           specific_times?: string[] | null
           start_date?: string
           status?: string | null
           take_with_food?: boolean | null
-          time_of_day?: string[] | null
+          time_windows?: Json | null
+          unit?: Database["public"]["Enums"]["medication_unit"]
           updated_at?: string | null
           version?: number | null
         }
@@ -895,6 +1161,7 @@ export type Database = {
         Row: {
           address: Json | null
           allergies: string[] | null
+          avatar_url: string | null
           blood_type: string | null
           care_level: string | null
           chronic_conditions: string[] | null
@@ -919,6 +1186,7 @@ export type Database = {
         Insert: {
           address?: Json | null
           allergies?: string[] | null
+          avatar_url?: string | null
           blood_type?: string | null
           care_level?: string | null
           chronic_conditions?: string[] | null
@@ -943,6 +1211,7 @@ export type Database = {
         Update: {
           address?: Json | null
           allergies?: string[] | null
+          avatar_url?: string | null
           blood_type?: string | null
           care_level?: string | null
           chronic_conditions?: string[] | null
@@ -965,6 +1234,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "patients_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: true
+            referencedRelation: "care_group"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "patients_primary_caregiver_id_fkey"
             columns: ["primary_caregiver_id"]
@@ -1211,26 +1487,6 @@ export type Database = {
       }
     }
     Views: {
-      active_medications_by_patient: {
-        Row: {
-          dosage: string | null
-          frequency: string | null
-          id: string | null
-          medication_name: string | null
-          patient_id: string | null
-          patient_name: string | null
-          start_date: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "medications_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       upcoming_appointments: {
         Row: {
           id: string | null
@@ -1264,6 +1520,24 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_patient_checklist_today: {
+        Args: { p_include_past?: boolean; p_patient_id: string }
+        Returns: {
+          checklist_date: string
+          checklist_id: string
+          dosage: number
+          dosage_unit: string
+          given_at: string
+          item_id: string
+          medication_name: string
+          skip_reason: string
+          status: string
+          time_of_day: string
+          window_end: string
+          window_start: string
+        }[]
+      }
+      is_caregiver_for: { Args: { p_patient_id: string }; Returns: boolean }
       is_email_registered: { Args: { p_email: string }; Returns: boolean }
       is_group_member: { Args: { check_group_id: string }; Returns: boolean }
       verify_profile_trigger: {
@@ -1278,6 +1552,7 @@ export type Database = {
     }
     Enums: {
       invite_status: "pending" | "accepted" | "rejected" | "expired"
+      medication_unit: "mg" | "ml" | "mcg" | "units"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1406,6 +1681,7 @@ export const Constants = {
   public: {
     Enums: {
       invite_status: ["pending", "accepted", "rejected", "expired"],
+      medication_unit: ["mg", "ml", "mcg", "units"],
     },
   },
 } as const

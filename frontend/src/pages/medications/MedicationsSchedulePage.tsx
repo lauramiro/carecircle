@@ -42,7 +42,7 @@ export default function MedicationsSchedulePage() {
 
   return (
     <section>
-      <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1
             style={{
@@ -57,16 +57,26 @@ export default function MedicationsSchedulePage() {
           </h1>
         </div>
 
-        {group.role === 'Admin' && (
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => navigate(`/groups/${groupId}/medications/add`)}
+            onClick={() => navigate(`/groups/${groupId}/checklist`)}
             className="h-10 rounded-lg px-4 text-sm font-bold text-white"
             style={{ backgroundColor: 'var(--color-primary)' }}
           >
-            Add medication
+            Daily checklist
           </button>
-        )}
+          {group.role === 'Admin' && (
+            <button
+              type="button"
+              onClick={() => navigate(`/groups/${groupId}/medications/add`)}
+              className="h-10 rounded-lg px-4 text-sm font-bold text-white"
+              style={{ backgroundColor: 'var(--color-primary)' }}
+            >
+              Add medication
+            </button>
+          )}
+        </div>
       </div>
 
       {medsLoading ? (

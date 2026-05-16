@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { CalendarDays, Hash, HeartPulse, Users } from 'lucide-react';
+import { CalendarDays, Hash, HeartPulse, Users, ClipboardList } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
 import GPContactSection from '../../components/groups/GPContactSection';
@@ -19,6 +19,7 @@ import {
 } from '../../lib/animation.constants';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 
+
 type PendingMemberAction =
   | { type: 'remove'; member: GroupMember }
   | { type: 'role'; member: GroupMember; role: GroupRole }
@@ -26,7 +27,6 @@ type PendingMemberAction =
 
 export default function GroupDetailPage() {
   const { groupId } = useParams();
-  const navigate = useNavigate();
   const { group, loading, error } = useGroupDetail(groupId);
   const {
     contacts: gpContacts,
@@ -36,6 +36,7 @@ export default function GroupDetailPage() {
     removeGP,
   } = useGPContacts(groupId ?? '', group?.gpContacts ?? []);
   const shouldReduceMotion = useReducedMotion();
+  const navigate = useNavigate();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [managedMembers, setManagedMembers] = useState<{
     groupId: string;
@@ -268,30 +269,19 @@ export default function GroupDetailPage() {
         </article>
       </div>
 
-      <button
-        type="button"
-        onClick={() => navigate(`/groups/${currentGroup.id}/profile`)}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          marginTop: '24px',
-          marginBottom: '4px',
-          height: '40px',
-          padding: '0 16px',
-          backgroundColor: 'var(--color-accent-soft)',
-          color: 'var(--color-primary)',
-          border: '1px solid var(--color-border)',
-          borderRadius: '8px',
-          fontSize: '13px',
-          fontWeight: 500,
-          fontFamily: 'Plus Jakarta Sans, sans-serif',
-          cursor: 'pointer',
-        }}
-      >
-        <HeartPulse size={15} strokeWidth={1.9} />
-        Loved One's Profile
-      </button>
+      {/* Today's Medications button */}
+      <div className="mt-6 mb-2">
+        <button
+          type="button"
+          onClick={() => navigate(`/groups/${currentGroup.id}/checklist`)}
+          className="flex items-center gap-2 h-10 rounded-lg px-4 text-sm font-bold text-white"
+          style={{ backgroundColor: 'var(--color-primary)' }}
+        >
+          <ClipboardList size={16} strokeWidth={1.9} />
+          Today's Medications
+        </button>
+      </div>
+
       <GPContactSection
         groupId={currentGroup.id}
         gpContacts={gpContacts}

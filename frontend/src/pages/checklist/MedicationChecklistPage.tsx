@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 export default function MedicationChecklistPage() {
-  const { checklistId } = useParams();
+  const { groupId } = useParams();
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   return (
@@ -14,7 +14,7 @@ export default function MedicationChecklistPage() {
         onDateChange={setSelectedDate}
       />
       <MedicationChecklist
-        checklistId={checklistId ?? ''}
+        checklistId={groupId ?? ''}
         userRole="primary"
       />
     </section>

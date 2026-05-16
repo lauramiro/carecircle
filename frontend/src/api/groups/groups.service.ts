@@ -102,16 +102,16 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
 
   const members: GroupMember[] = (groupData.care_givers || []).map((m: any) => ({
     id: m.caregiver_id,
-    name: m.profiles.full_name,
-    email: m.profiles.email, 
-    role: mapRole(m.role_in_care),
-    joinedAt: m.joined_at,
+    name: m.profiles?.full_name || 'Unknown',
+    email: m.profiles?.email || '', 
+    role: m.role_in_care === 'Primary Carer' ? 'Admin' : 'Member',
+    joinedAt: m.joined_at || new Date().toISOString(),
     status: m.status === 'active' ? 'Active' : 'Suspended',
   }));
 
   return {
     id: groupData.id,
-    name: groupData.name,
+    name: groupData.name, 
     description: groupData.description || '',
     role: userRole,
     createdAt: groupData.created_at,

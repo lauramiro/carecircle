@@ -27,6 +27,7 @@ type PendingMemberAction =
 
 export default function GroupDetailPage() {
   const { groupId } = useParams();
+  const navigate = useNavigate();
   const { group, loading, error } = useGroupDetail(groupId);
   const {
     contacts: gpContacts,
@@ -186,7 +187,16 @@ export default function GroupDetailPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <motion.button
+            type="button"
+            onClick={() => navigate(`/groups/${currentGroup.id}/administration-log`)}
+            className="h-10 rounded-lg border px-4 text-sm font-bold"
+            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+          >
+            Administration log
+          </motion.button>
           <motion.button
             type="button"
             onClick={() => navigate(`/groups/${currentGroup.id}/checklist`)}

@@ -10,9 +10,19 @@ import type {
   InviteResult,
   GroupRole,
 } from './groups.types';
+import { ROLE } from '@typings/role-enum';
 
-function mapRole(role: string): GroupRole {
-  return role === 'Primary Carer' ? 'Admin' : 'Member';
+export function mapRole(role: string): GroupRole {
+  switch (role) {
+    case ROLE.PRIMARY_CAREGIVER:
+      return 'Admin';
+    case ROLE.SECONDARY_CAREGIVER:
+      return 'Member';
+    case ROLE.OBSERVER:
+      return 'Observer';
+    default:
+      return 'Member';
+  }
 }
 export async function getGroups(): Promise<GroupSummary[]> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -43,7 +53,7 @@ export async function getGroups(): Promise<GroupSummary[]> {
       id: item.care_group.id,
       name: item.care_group.name || 'Care Group',
       description: item.care_group.description || '',
-      role: item.role_in_care === 'Primary Carer' ? 'Admin' : 'Member',
+      role: mapRole(item.role_in_care),
       createdAt: item.care_group.created_at || item.joined_at || new Date().toISOString(),
       memberCount: 1, 
     };

@@ -11,8 +11,12 @@ import {
   RELATIONSHIP_OPTIONS,
 } from '@constants/createCareCircle.constants';
 import { supabase } from '@lib/supabaseClient';
+import type { Database } from '@lib/database.types';
 import type { CreateCareCircleFormValues } from '@typings/createCareCircle.types';
 import { parseCommaSeparatedList, pickDefinedStrings } from '@utils/createCareCircleForm';
+import { ROLE } from '@typings/role-enum';
+
+type PatientInsert = Database['public']['Tables']['patients']['Insert'];
 
 export type { CreateCareCircleFormValues } from '@typings/createCareCircle.types';
 
@@ -60,7 +64,7 @@ export default function CreateGroupPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const patientInsert: Record<string, unknown> = {
+      const patientInsert: PatientInsert = {
         full_name: data.patientFullName.trim(),
         date_of_birth: data.dateOfBirth,
         primary_caregiver_id: user.id,
@@ -157,7 +161,7 @@ export default function CreateGroupPage() {
         patient_id: patient.id,
         caregiver_id: user.id,
         relationship: data.relationship,
-        role_in_care: 'Primary Carer',
+        role_in_care: ROLE.PRIMARY_CAREGIVER,
         can_view_medical: true,
         can_schedule: true,
         can_communicate: true,

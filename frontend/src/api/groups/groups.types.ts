@@ -1,4 +1,4 @@
-export type GroupRole = 'Admin' | 'Member';
+export type GroupRole = 'Admin' | 'Member' | 'Observer';
 export type GroupMemberStatus = 'Active' | 'Suspended';
 
 export interface GPContact {

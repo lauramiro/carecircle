@@ -179,7 +179,7 @@ export type Database = {
           joined_at: string
           patient_id: string
           relationship: string | null
-          role_in_care: string | null
+          role_in_care: Database["public"]["Enums"]["member_role"] | null
           status: string
           updated_at: string
         }
@@ -193,7 +193,7 @@ export type Database = {
           joined_at?: string
           patient_id: string
           relationship?: string | null
-          role_in_care?: string | null
+          role_in_care?: Database["public"]["Enums"]["member_role"] | null
           status: string
           updated_at?: string
         }
@@ -207,7 +207,7 @@ export type Database = {
           joined_at?: string
           patient_id?: string
           relationship?: string | null
-          role_in_care?: string | null
+          role_in_care?: Database["public"]["Enums"]["member_role"] | null
           status?: string
           updated_at?: string
         }
@@ -244,6 +244,7 @@ export type Database = {
           patient_id: string
           preferred_timezone: string | null
           primary_caregiver_id: string
+          role: Database["public"]["Enums"]["group_member_role"]
           updated_at: string | null
         }
         Insert: {
@@ -254,6 +255,7 @@ export type Database = {
           patient_id: string
           preferred_timezone?: string | null
           primary_caregiver_id: string
+          role?: Database["public"]["Enums"]["group_member_role"]
           updated_at?: string | null
         }
         Update: {
@@ -264,6 +266,7 @@ export type Database = {
           patient_id?: string
           preferred_timezone?: string | null
           primary_caregiver_id?: string
+          role?: Database["public"]["Enums"]["group_member_role"]
           updated_at?: string | null
         }
         Relationships: [
@@ -1520,6 +1523,52 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      edit_medication: {
+        Args: { p_changes: Json; p_id: string }
+        Returns: {
+          created_at: string | null
+          created_by: string | null
+          day_of_month: number | null
+          days_of_week: number[] | null
+          discontinued_date: string | null
+          discontinued_reason: string | null
+          dosage_unit: string | null
+          dose: number
+          end_date: string | null
+          form: string | null
+          id: string
+          instructions: string | null
+          interval_hours: number | null
+          last_refill_date: string | null
+          medication_name: string
+          name: string | null
+          notes: string | null
+          patient_id: string
+          pharmacy: string | null
+          pharmacy_phone: string | null
+          prescribed_by: string | null
+          prescribed_date: string | null
+          prescription_number: string | null
+          refills_remaining: number | null
+          route: string | null
+          schedule_type: string | null
+          side_effects: string[] | null
+          specific_times: string[] | null
+          start_date: string
+          status: string | null
+          take_with_food: boolean | null
+          time_windows: Json | null
+          unit: Database["public"]["Enums"]["medication_unit"]
+          updated_at: string | null
+          version: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "medications"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_patient_checklist_today: {
         Args: { p_include_past?: boolean; p_patient_id: string }
         Returns: {
@@ -1551,8 +1600,10 @@ export type Database = {
       }
     }
     Enums: {
+      group_member_role: "primary_carer" | "secondary_carer" | "observer"
       invite_status: "pending" | "accepted" | "rejected" | "expired"
       medication_unit: "mg" | "ml" | "mcg" | "units"
+      member_role: "primary_carer" | "secondary_carer" | "observer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1680,8 +1731,10 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      group_member_role: ["primary_carer", "secondary_carer", "observer"],
       invite_status: ["pending", "accepted", "rejected", "expired"],
       medication_unit: ["mg", "ml", "mcg", "units"],
+      member_role: ["primary_carer", "secondary_carer", "observer"],
     },
   },
 } as const

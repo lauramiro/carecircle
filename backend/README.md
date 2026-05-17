@@ -37,6 +37,14 @@ Never commit real `.env`, `.env.development`, or `.env.production` files.
 | --- | --- | --- | --- |
 | `NODE_ENV` | Yes | `development`, `production`, `test` | Runtime environment. Used for env file priority and environment-specific behavior. |
 | `PORT` | Yes | `1`-`65535` | Port the NestJS HTTP server listens on. |
+| `SUPABASE_URL` | Yes | URL | Supabase project URL. |
+| `SUPABASE_ANON_KEY` | Yes | string | Supabase anon (public) API key. |
+| `TWILIO_ACCOUNT_SID` | No | string | Twilio Account SID. **Never commit.** Required to send SMS. |
+| `TWILIO_AUTH_TOKEN` | No | string | Twilio Auth Token. **Never commit.** |
+| `TWILIO_FROM_NUMBER` | No | E.164 | Sender number registered with Twilio (e.g. `+15551234567`). |
+| `TWILIO_DEV_TEST_TO_NUMBER` | No | E.164 | Default recipient for `POST /api/dev/sms/test` in `development` only. |
+
+**Twilio (CC-100):** Store credentials only in environment variables or your secrets manager. The dev-only endpoint `POST /api/dev/sms/test` sends a generic connectivity message (no patient or medication content) so delivery logs do not capture sensitive medical data. Profile phone numbers in the database should be validated as E.164 before save (see `src/common/validation/e164.ts`).
 
 Environment validation is defined in `src/config/env.schema.ts` using Zod. If any required variable is missing or invalid, the app throws during bootstrap and refuses to start.
 

@@ -11,6 +11,13 @@ export const appConfigSchema = z.object({
   GMAIL_APP_PASSWORD: z.string().min(1).optional(),
   MAIL_FROM: z.string().min(1).optional(),
   MAIL_FROM_NAME: z.string().min(1).optional(),
+  /** Twilio — never commit real values; set only in deployment env or local `.env`. */
+  TWILIO_ACCOUNT_SID: z.string().min(1).optional(),
+  TWILIO_AUTH_TOKEN: z.string().min(1).optional(),
+  /** E.164 sender number, e.g. +15551234567 */
+  TWILIO_FROM_NUMBER: z.string().min(1).optional(),
+  /** Optional default recipient for `POST /api/dev/sms/test` in development */
+  TWILIO_DEV_TEST_TO_NUMBER: z.string().min(1).optional(),
 });
 
 export type AppConfig = z.infer<typeof appConfigSchema>;

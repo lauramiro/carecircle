@@ -153,8 +153,9 @@ export async function acceptInvitation(inviteId: string, email: string): Promise
   void email;
   assertValidInviteUuid(inviteId);
 
-  const { data, error } = await supabase.rpc('accept_group_invite', {
+  const { data, error } = await supabase.rpc('update_invite_status', {
     p_invite_id: inviteId,
+    p_status: INVITE_STATUS.ACCEPTED,
   });
 
   if (error) {
@@ -172,8 +173,9 @@ export async function acceptInvitation(inviteId: string, email: string): Promise
 export async function rejectInvitation(inviteId: string): Promise<void> {
   assertValidInviteUuid(inviteId);
 
-  const { error } = await supabase.rpc('reject_group_invite', {
+  const { error } = await supabase.rpc('update_invite_status', {
     p_invite_id: inviteId,
+    p_status: INVITE_STATUS.REJECTED,
   });
 
   if (error) {
@@ -191,8 +193,8 @@ export async function isUserInGroup(groupId: string, email: string): Promise<boo
     return false;
   }
 
-  const { data, error } = await supabase.rpc('user_member_of_care_group', {
-    p_care_group_id: groupId,
+  const { data, error } = await supabase.rpc('is_group_member', {
+    check_group_id: groupId,
   });
 
   if (error) {

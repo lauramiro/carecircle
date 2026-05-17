@@ -58,6 +58,9 @@ function App() {
           <Route path="groups/create" element={<CreateGroupPage />} />
           <Route path="groups/list" element={<GroupsListPage />} />
           <Route path="groups/:groupId" element={<GroupDetailPage />} />
+          <Route path="groups/:groupId/medications" element={<MedicationsSchedulePage />} />
+          <Route path="groups/:groupId/profile" element={<PatientProfilePage />} />
+          <Route path="groups/:groupId/medications/add" element={<AddMedicationPage />} />
           <Route path="groups/:groupId/checklist" element={<MedicationChecklistPage />} />
         </Route>
         <Route

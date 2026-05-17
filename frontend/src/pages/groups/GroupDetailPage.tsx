@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { CalendarDays, Hash, HeartPulse, Users, ClipboardList } from 'lucide-react';
+import { CalendarDays, HeartPulse, Users } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
 import GPContactSection from '../../components/groups/GPContactSection';
@@ -186,7 +187,18 @@ export default function GroupDetailPage() {
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <motion.button
+            type="button"
+            onClick={() => navigate(`/groups/${currentGroup.id}/checklist`)}
+            className="h-10 rounded-lg px-4 text-sm font-bold text-white"
+            style={{
+              backgroundColor: 'var(--color-primary)',
+            }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+          >
+            Daily checklist
+          </motion.button>
           <motion.button
             type="button"
             onClick={() => navigate(`/groups/${currentGroup.id}/medications`)}

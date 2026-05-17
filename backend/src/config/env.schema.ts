@@ -11,6 +11,13 @@ export const appConfigSchema = z.object({
   GMAIL_APP_PASSWORD: z.string().min(1).optional(),
   MAIL_FROM: z.string().min(1).optional(),
   MAIL_FROM_NAME: z.string().min(1).optional(),
+  /** Service role — server only; enables SMS recipient lookup and realtime cancel (CC-101/CC-102). */
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  /**
+   * Shared secret for `POST /api/internal/missed-medication/push-dispatched`.
+   * Set in production alongside your push worker; omit to disable the endpoint.
+   */
+  INTERNAL_MISSED_MED_SMS_KEY: z.string().min(1).optional(),
   /** Twilio — never commit real values; set only in deployment env or local `.env`. */
   TWILIO_ACCOUNT_SID: z.string().min(1).optional(),
   TWILIO_AUTH_TOKEN: z.string().min(1).optional(),

@@ -18,6 +18,8 @@ export class AppConfigService {
       GMAIL_APP_PASSWORD: this.configService.get('GMAIL_APP_PASSWORD', { infer: true }),
       MAIL_FROM: this.configService.get('MAIL_FROM', { infer: true }),
       MAIL_FROM_NAME: this.configService.get('MAIL_FROM_NAME', { infer: true }),
+      SUPABASE_SERVICE_ROLE_KEY: this.configService.get('SUPABASE_SERVICE_ROLE_KEY', { infer: true }),
+      INTERNAL_MISSED_MED_SMS_KEY: this.configService.get('INTERNAL_MISSED_MED_SMS_KEY', { infer: true }),
       TWILIO_ACCOUNT_SID: this.configService.get('TWILIO_ACCOUNT_SID', { infer: true }),
       TWILIO_AUTH_TOKEN: this.configService.get('TWILIO_AUTH_TOKEN', { infer: true }),
       TWILIO_FROM_NUMBER: this.configService.get('TWILIO_FROM_NUMBER', { infer: true }),

@@ -82,7 +82,7 @@ export default function PatientProfilePage() {
           fullName: patient.fullName,
           dateOfBirth: patient.dateOfBirth,
           chronicConditions: patient.chronicConditions,
-          allergies: patient.allergies,
+          allergies: patient.allergies.map(s => ({ description: s })),
         });
         setAvatarPreviewUrl(patient.avatarUrl ?? null);
       } else {
@@ -134,7 +134,7 @@ export default function PatientProfilePage() {
         values.fullName,
         values.dateOfBirth,
         chronicConditions,
-        allergies,
+        allergies.map(a => a.description),
         avatarUrl,
       );
       setSavedAt(new Date());

@@ -34,7 +34,7 @@ export default function MedicationChecklist({ checklistId, userRole }: Medicatio
       if (error) {
         toast.error('Failed to load checklist.');
       } else {
-        setInitialItems(data || []);
+        setInitialItems((data || []) as unknown as ChecklistItem[]);
       }
     }
     loadChecklist();

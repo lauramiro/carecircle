@@ -172,6 +172,7 @@ function buildAdminGroupWithMembers(memberCount: number): Group {
     description: 'A shared care group.',
     role: 'Admin',
     createdAt: '2025-05-12T09:00:00.000Z',
+    patientId: 'patient-care-001',
     members: Array.from({ length: memberCount }, (_, index) => ({
       id: `member-${index + 1}`,
       name: `Member ${index + 1}`,

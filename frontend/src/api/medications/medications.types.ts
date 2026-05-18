@@ -1,3 +1,4 @@
+export type MedicationUnit = 'mg' | 'ml' | 'mcg' | 'units';
 export type MedicationStatus = 'active' | 'paused' | 'archived' | 'superseded';
 export type MedicationFrequency =
   | 'once_daily'

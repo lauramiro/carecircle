@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabaseClient';
+import type { Json } from '../../lib/database.types';
 import type {
   AddMedicationPayload,
   EditMedicationPayload,
@@ -6,6 +7,7 @@ import type {
   MedicationFrequency,
   MedicationStatus,
   MedicationTimeWindow,
+  MedicationUnit,
 } from './medications.types';
 
 function fromRow(row: Record<string, unknown>): Medication {
@@ -14,13 +16,13 @@ function fromRow(row: Record<string, unknown>): Medication {
     patientId: row.patient_id as string,
     medicationName: row.medication_name as string,
     genericName: (row.generic_name as string) ?? null,
-    dosage: row.dosage as string,
+    dosage: `${row.dose as number} ${row.unit as string}`,
     form: (row.form as string) ?? null,
     prescribedBy: (row.prescribed_by as string) ?? null,
     prescribedDate: (row.prescribed_date as string) ?? null,
     prescriptionNumber: (row.prescription_number as string) ?? null,
-    frequency: row.frequency as MedicationFrequency,
-    timeOfDay: (row.time_of_day as MedicationTimeWindow[]) ?? null,
+    frequency: row.schedule_type as MedicationFrequency,
+    timeOfDay: (row.time_windows as MedicationTimeWindow[]) ?? null,
     specificTimes: (row.specific_times as string[]) ?? null,
     instructions: (row.instructions as string) ?? null,
     route: (row.route as string) ?? null,
@@ -54,14 +56,19 @@ export async function getMedicationsByPatient(patientId: string): Promise<Medica
 }
 
 export async function addMedication(payload: AddMedicationPayload): Promise<Medication> {
+  const parts = payload.dosage.split(' ');
+  const dose = parseFloat(parts[0] ?? '0');
+  const unit = (parts[1] ?? 'mg') as MedicationUnit;
+
   const { data, error } = await supabase
     .from('medications')
     .insert({
       patient_id: payload.patientId,
       medication_name: payload.medicationName,
-      dosage: payload.dosage,
-      frequency: payload.frequency,
-      time_of_day: payload.timeOfDay,
+      dose,
+      unit,
+      schedule_type: payload.frequency,
+      time_windows: payload.timeOfDay as unknown as Json,
       start_date: payload.startDate,
     })
     .select('*')
@@ -82,7 +89,7 @@ export async function editMedication(id: string, changes: EditMedicationPayload)
 
   const { data, error } = await supabase.rpc('edit_medication', {
     p_id: id,
-    p_changes: rpcChanges,
+    p_changes: rpcChanges as unknown as Json,
   });
 
   if (error) throw new Error(error.message);

@@ -1589,6 +1589,10 @@ export type Database = {
       is_caregiver_for: { Args: { p_patient_id: string }; Returns: boolean }
       is_email_registered: { Args: { p_email: string }; Returns: boolean }
       is_group_member: { Args: { check_group_id: string }; Returns: boolean }
+      update_invite_status: {
+        Args: { p_invite_id: string; p_status: string }
+        Returns: Json
+      }
       verify_profile_trigger: {
         Args: never
         Returns: {

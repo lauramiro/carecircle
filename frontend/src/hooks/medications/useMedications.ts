@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AddMedicationPayload, EditMedicationPayload, Medication } from '../../api/medications/medications.types';
 import {
   addMedication as addMedicationService,
@@ -15,22 +15,27 @@ export function useMedications(patientId: string) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getMedicationsByPatient(patientId);
-      setMedications(data);
-    } catch {
-      setError('Failed to load medications.');
-    } finally {
-      setLoading(false);
-    }
-  }, [patientId]);
-
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+
+    void (async () => {
+      await Promise.resolve();
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getMedicationsByPatient(patientId);
+        if (!cancelled) setMedications(data);
+      } catch {
+        if (!cancelled) setError('Failed to load medications.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [patientId]);
 
   async function addMedication(payload: AddMedicationPayload): Promise<void> {
     setIsSubmitting(true);

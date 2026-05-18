@@ -131,7 +131,8 @@ export async function activateMedication(id: string): Promise<Medication> {
   return delay({ ...med });
 }
 
-export async function deleteMedication(_id: string): Promise<never> {
+export async function deleteMedication(id: string): Promise<never> {
+  void id;
   throw new Error('Hard deletes are not permitted on medications');
 }
 

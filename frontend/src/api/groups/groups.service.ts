@@ -12,6 +12,34 @@ import type {
 } from './groups.types';
 import { ROLE } from '@typings/role-enum';
 
+type GroupListQueryRow = {
+  role_in_care: string | null;
+  joined_at: string;
+  care_group: {
+    id: string;
+    name: string | null;
+    description: string | null;
+    created_at: string | null;
+  };
+};
+
+type GroupDetailMemberRow = {
+  caregiver_id: string;
+  role_in_care: string | null;
+  status: string;
+  joined_at: string;
+  profiles: { full_name: string | null; email: string | null } | null;
+};
+
+type GroupDetailQueryRow = {
+  id: string;
+  name: string | null;
+  description: string | null;
+  patient_id: string | null;
+  created_at: string | null;
+  care_givers: GroupDetailMemberRow[] | null;
+};
+
 export function mapRole(role: string): GroupRole {
   switch (role) {
     case ROLE.PRIMARY_CAREGIVER:
@@ -48,12 +76,12 @@ export async function getGroups(): Promise<GroupSummary[]> {
     throw new Error('Failed to load groups');
   }
 
-  return data.map((item: any) => {
+  return (data as GroupListQueryRow[]).map(item => {
     return {
       id: item.care_group.id,
       name: item.care_group.name || 'Care Group',
       description: item.care_group.description || '',
-      role: mapRole(item.role_in_care),
+      role: mapRole(item.role_in_care ?? ''),
       createdAt: item.care_group.created_at || item.joined_at || new Date().toISOString(),
       memberCount: 1, 
     };
@@ -108,26 +136,27 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     return null;
   }
 
-  const userRole = mapRole(userMembership.role_in_care);
+  const g = groupData as GroupDetailQueryRow;
+  const userRole = mapRole(userMembership.role_in_care ?? '');
 
-  const members: GroupMember[] = (groupData.care_givers || []).map((m: any) => ({
+  const members: GroupMember[] = (g.care_givers ?? []).map(m => ({
     id: m.caregiver_id,
     name: m.profiles?.full_name || 'Unknown',
     email: m.profiles?.email || '', 
-    role: m.role_in_care === 'Primary Carer' ? 'Admin' : 'Member',
+    role: mapRole(m.role_in_care ?? ''),
     joinedAt: m.joined_at || new Date().toISOString(),
     status: m.status === 'active' ? 'Active' : 'Suspended',
   }));
 
   return {
-    id: groupData.id,
-    name: groupData.name, 
-    description: groupData.description || '',
+    id: g.id,
+    name: g.name ?? '',
+    description: g.description || '',
     role: userRole,
-    createdAt: groupData.created_at,
+    createdAt: g.created_at ?? new Date().toISOString(),
     members,
     gpContacts: [],
-    patientId: groupData.patient_id,
+    patientId: g.patient_id ?? '',
   };
 }
 

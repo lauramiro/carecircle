@@ -125,7 +125,8 @@ export async function archiveMedication(id: string): Promise<Medication> {
   return fromRow(data as Record<string, unknown>);
 }
 
-export async function deleteMedication(_id: string): Promise<never> {
+export async function deleteMedication(id: string): Promise<never> {
+  void id;
   throw new Error('Hard deletes are not permitted on medications');
 }
 

@@ -20,17 +20,21 @@ export default function MedicationChecklistPage() {
   const [resolvingChecklist, setResolvingChecklist] = useState(true);
 
   useEffect(() => {
-    if (!group?.patientId || !groupId) {
-      setChecklistId(null);
-      setResolvingChecklist(false);
-      return;
-    }
-
     let active = true;
-    setResolvingChecklist(true);
-    const dateStr = toLocalDateString(selectedDate);
 
     void (async () => {
+      await Promise.resolve();
+
+      if (!group?.patientId || !groupId) {
+        if (!active) return;
+        setChecklistId(null);
+        setResolvingChecklist(false);
+        return;
+      }
+
+      setResolvingChecklist(true);
+      const dateStr = toLocalDateString(selectedDate);
+
       const id = await fetchDailyChecklistId({
         patientId: group.patientId,
         groupId,

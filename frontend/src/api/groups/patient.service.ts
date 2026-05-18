@@ -1,5 +1,8 @@
 import { supabase } from '../../lib/supabaseClient';
-import type { Allergy, Patient } from './patient.types';
+import type { Database } from '../../lib/database.types';
+import type { Patient } from './patient.types';
+
+type PatientUpdate = Database['public']['Tables']['patients']['Update'];
 
 export async function getPatient(groupId: string): Promise<Patient | null> {
   const { data, error } = await supabase
@@ -15,7 +18,7 @@ export async function getPatient(groupId: string): Promise<Patient | null> {
     fullName: data.full_name as string,
     dateOfBirth: data.date_of_birth as string,
     chronicConditions: (data.chronic_conditions as string[] | null) ?? [],
-    allergies: (data.allergies as Allergy[] | null) ?? [],
+    allergies: data.allergies ?? [],
     avatarUrl: (data.avatar_url as string | null) ?? undefined,
   };
 }
@@ -54,10 +57,10 @@ export async function updatePatient(
   fullName: string,
   dateOfBirth: string,
   chronicConditions: string[],
-  allergies: Allergy[],
+  allergies: string[],
   avatarUrl?: string,
 ): Promise<void> {
-  const payload: Record<string, unknown> = {
+  const payload: PatientUpdate = {
     full_name: fullName,
     date_of_birth: dateOfBirth,
     chronic_conditions: chronicConditions,
@@ -66,10 +69,7 @@ export async function updatePatient(
 
   if (avatarUrl !== undefined) payload.avatar_url = avatarUrl;
 
-  const { error } = await supabase
-    .from('patients')
-    .update(payload as any)
-    .eq('id', patientId);
+  const { error } = await supabase.from('patients').update(payload).eq('id', patientId);
 
   if (error) throw error;
 }

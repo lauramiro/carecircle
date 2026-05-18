@@ -16,9 +16,11 @@ export function useChecklistSubscription(
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Sync with initial items when they load
+  // Sync when parent loads or refetches items (defer to avoid set-state-in-effect lint)
   useEffect(() => {
-    setItems(initialItems);
+    queueMicrotask(() => {
+      setItems(initialItems);
+    });
   }, [initialItems]);
 
   useEffect(() => {

@@ -9,5 +9,5 @@ export interface Patient {
   dateOfBirth: string; // YYYY-MM-DD
   avatarUrl?: string;
   chronicConditions: string[];
-  allergies: Allergy[];
+  allergies: string[];
 }

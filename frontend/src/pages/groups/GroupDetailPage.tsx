@@ -351,6 +351,7 @@ export default function GroupDetailPage() {
 
       <InviteMemberModal
         groupId={currentGroup.id}
+        groupName={currentGroup.name}
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
       />

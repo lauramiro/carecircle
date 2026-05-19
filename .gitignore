@@ -22,4 +22,5 @@ backend/dist/
 Thumbs.db
 
 # Local agent configuration
-.github/agents/Agent_Lou.agent.md
+*.docx
+

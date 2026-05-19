@@ -23,9 +23,11 @@ function makeMed(overrides: Partial<Medication> = {}): Medication {
     prescribedBy: null,
     prescribedDate: null,
     prescriptionNumber: null,
-    frequency: 'twice_daily',
-    timeOfDay: ['Morning', 'Evening'],
-    specificTimes: null,
+    scheduleType: 'daily',
+    specificTimes: ['08:00', '18:00'],
+    intervalHours: null,
+    daysOfWeek: null,
+    dayOfMonth: null,
     instructions: null,
     route: null,
     takeWithFood: null,
@@ -65,11 +67,10 @@ describe('EditMedicationForm', () => {
     expect(screen.getByLabelText(/medication name/i)).toHaveValue('Metformin');
     expect(screen.getByPlaceholderText('e.g. 500')).toHaveValue(500);
     expect(screen.getByLabelText(/unit/i)).toHaveValue('mg');
-    expect(screen.getByLabelText(/frequency/i)).toHaveValue('twice_daily');
-    expect(screen.getByLabelText('Morning')).toBeChecked();
-    expect(screen.getByLabelText('Evening')).toBeChecked();
-    expect(screen.getByLabelText('Afternoon')).not.toBeChecked();
-    expect(screen.getByLabelText('Night')).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Daily' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'At specific times' })).toBeChecked();
+    expect(screen.getByRole('button', { name: /Morning/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /Evening/i })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('parses a dosage string with mcg unit correctly', () => {
@@ -106,6 +107,29 @@ describe('EditMedicationForm', () => {
       expect(onSubmit).toHaveBeenCalledOnce();
     });
     expect(mockCheckDuplicateName).not.toHaveBeenCalled();
+  });
+
+  it('payload contains the new schedule fields on submit', async () => {
+    mockCheckDuplicateName.mockResolvedValue(false);
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <EditMedicationForm
+        initialValues={makeMed()}
+        isSubmitting={false}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+
+    const changes = onSubmit.mock.calls[0][0];
+    expect(changes.scheduleType).toBe('daily');
+    expect(changes.specificTimes).toEqual(['08:00', '18:00']);
   });
 
   it('skips duplicate check and calls onSubmit when name changes to a unique name', async () => {

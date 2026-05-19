@@ -15,8 +15,8 @@ async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/medication name/i), 'Metformin');
   await user.type(screen.getByPlaceholderText('e.g. 500'), '500');
   await user.selectOptions(screen.getByLabelText(/unit/i), 'mg');
-  await user.selectOptions(screen.getByLabelText(/frequency/i), 'once_daily');
-  await user.click(screen.getByLabelText('Morning'));
+  await user.click(screen.getByRole('radio', { name: 'Daily' }));
+  await user.click(screen.getByRole('button', { name: /Morning/i }));
 }
 
 describe('AddMedicationForm', () => {
@@ -125,5 +125,86 @@ describe('AddMedicationForm', () => {
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledOnce();
     });
+  });
+
+  it('payload contains the new schedule fields on submit', async () => {
+    mockCheckDuplicateName.mockResolvedValue(false);
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <AddMedicationForm
+        patientId="patient-1"
+        isSubmitting={false}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    await fillValidForm(user);
+    await user.click(screen.getByRole('button', { name: /add medication/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+
+    const payload = onSubmit.mock.calls[0][0];
+    expect(payload.scheduleType).toBe('daily');
+    expect(payload.specificTimes).toEqual(['08:00']);
+    expect(payload.medicationName).toBe('Metformin');
+    expect(payload.dosage).toBe('500 mg');
+  });
+
+  it('shows a validation error when Daily is selected with no time filled in', async () => {
+    mockCheckDuplicateName.mockResolvedValue(false);
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    render(
+      <AddMedicationForm
+        patientId="patient-1"
+        isSubmitting={false}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    await user.type(screen.getByLabelText(/medication name/i), 'Metformin');
+    await user.type(screen.getByPlaceholderText('e.g. 500'), '500');
+    await user.selectOptions(screen.getByLabelText(/unit/i), 'mg');
+    await user.click(screen.getByRole('radio', { name: 'Daily' }));
+    // Do not fill in a time — leave the empty slot as-is
+
+    await user.click(screen.getByRole('button', { name: /add medication/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/at least one time is required/i)).toBeInTheDocument();
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('submits successfully for an as-needed medication without any times', async () => {
+    mockCheckDuplicateName.mockResolvedValue(false);
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <AddMedicationForm
+        patientId="patient-1"
+        isSubmitting={false}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    await user.type(screen.getByLabelText(/medication name/i), 'Salbutamol');
+    await user.type(screen.getByPlaceholderText('e.g. 500'), '100');
+    await user.selectOptions(screen.getByLabelText(/unit/i), 'mcg');
+    await user.click(screen.getByRole('radio', { name: 'As needed' }));
+    await user.click(screen.getByRole('button', { name: /add medication/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+
+    const payload = onSubmit.mock.calls[0][0];
+    expect(payload.scheduleType).toBe('as_needed');
+    expect(payload.specificTimes).toBeUndefined();
   });
 });

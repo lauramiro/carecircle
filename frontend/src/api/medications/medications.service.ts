@@ -1,13 +1,10 @@
 import { supabase } from '../../lib/supabaseClient';
-import type { Json } from '../../lib/database.types';
 import type {
   AddMedicationPayload,
   EditMedicationPayload,
   Medication,
-  MedicationFrequency,
   MedicationStatus,
-  MedicationTimeWindow,
-  MedicationUnit,
+  ScheduleType,
 } from './medications.types';
 
 function fromRow(row: Record<string, unknown>): Medication {
@@ -21,9 +18,11 @@ function fromRow(row: Record<string, unknown>): Medication {
     prescribedBy: (row.prescribed_by as string) ?? null,
     prescribedDate: (row.prescribed_date as string) ?? null,
     prescriptionNumber: (row.prescription_number as string) ?? null,
-    frequency: row.schedule_type as MedicationFrequency,
-    timeOfDay: (row.time_windows as MedicationTimeWindow[]) ?? null,
+    scheduleType: (row.schedule_type as ScheduleType) ?? null,
     specificTimes: (row.specific_times as string[]) ?? null,
+    intervalHours: (row.interval_hours as number) ?? null,
+    daysOfWeek: (row.days_of_week as number[]) ?? null,
+    dayOfMonth: (row.day_of_month as number) ?? null,
     instructions: (row.instructions as string) ?? null,
     route: (row.route as string) ?? null,
     takeWithFood: (row.take_with_food as boolean) ?? null,
@@ -56,23 +55,22 @@ export async function getMedicationsByPatient(patientId: string): Promise<Medica
 }
 
 export async function addMedication(payload: AddMedicationPayload): Promise<Medication> {
-  const parts = payload.dosage.split(' ');
-  const dose = parseFloat(parts[0] ?? '0');
-  const unit = (parts[1] ?? 'mg') as MedicationUnit;
-
-  const { data, error } = await supabase
-    .from('medications')
+  // Cast needed until Supabase types are regenerated after the schema migration.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('medications') as any)
     .insert({
       patient_id: payload.patientId,
       medication_name: payload.medicationName,
-      dose,
-      unit,
-      schedule_type: payload.frequency,
-      time_windows: payload.timeOfDay as unknown as Json,
+      dosage: payload.dosage,
       start_date: payload.startDate,
+      schedule_type: payload.scheduleType,
+      specific_times: payload.specificTimes ?? null,
+      interval_hours: payload.intervalHours ?? null,
+      days_of_week: payload.daysOfWeek ?? null,
+      day_of_month: payload.dayOfMonth ?? null,
     })
     .select('*')
-    .single();
+    .single() as { data: Record<string, unknown> | null; error: { message: string } | null };
 
   if (error) throw new Error(error.message);
   return fromRow(data as Record<string, unknown>);
@@ -82,15 +80,20 @@ export async function editMedication(id: string, changes: EditMedicationPayload)
   const rpcChanges: Record<string, unknown> = {};
   if (changes.medicationName !== undefined) rpcChanges.medication_name = changes.medicationName;
   if (changes.dosage !== undefined) rpcChanges.dosage = changes.dosage;
-  if (changes.frequency !== undefined) rpcChanges.frequency = changes.frequency;
-  if (changes.timeOfDay !== undefined) rpcChanges.time_of_day = changes.timeOfDay;
+  if (changes.scheduleType !== undefined) rpcChanges.schedule_type = changes.scheduleType;
+  if (changes.specificTimes !== undefined) rpcChanges.specific_times = changes.specificTimes;
+  if (changes.intervalHours !== undefined) rpcChanges.interval_hours = changes.intervalHours;
+  if (changes.daysOfWeek !== undefined) rpcChanges.days_of_week = changes.daysOfWeek;
+  if (changes.dayOfMonth !== undefined) rpcChanges.day_of_month = changes.dayOfMonth;
+  if (changes.startDate !== undefined) rpcChanges.start_date = changes.startDate;
   if (changes.instructions !== undefined) rpcChanges.instructions = changes.instructions;
   if (changes.notes !== undefined) rpcChanges.notes = changes.notes;
 
-  const { data, error } = await supabase.rpc('edit_medication', {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)('edit_medication', {
     p_id: id,
-    p_changes: rpcChanges as unknown as Json,
-  });
+    p_changes: rpcChanges,
+  }) as { data: Record<string, unknown> | null; error: { message: string } | null };
 
   if (error) throw new Error(error.message);
   return fromRow(data as Record<string, unknown>);

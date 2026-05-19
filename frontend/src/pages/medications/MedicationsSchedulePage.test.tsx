@@ -54,9 +54,13 @@ function makeMed(overrides: Partial<Medication>): Medication {
     prescribedBy: null,
     prescribedDate: null,
     prescriptionNumber: null,
-    frequency: 'once_daily',
-    timeOfDay: ['Morning'],
-    specificTimes: null,
+    scheduleType: 'daily',
+    specificTimes: ['08:00'],
+    intervalHours: null,
+    daysOfWeek: null,
+    dayOfMonth: null,
+    frequency: null,
+    timeOfDay: null,
     instructions: null,
     route: null,
     takeWithFood: null,
@@ -94,29 +98,27 @@ describe('MedicationsSchedulePage', () => {
     medsHookMock.value.medications = [];
   });
 
-  it('renders the time window section for medications that have it', () => {
+  it('renders today\'s time slots for active medications', () => {
     medsHookMock.value.medications = [
-      makeMed({ id: 'med-1', medicationName: 'Aspirin', timeOfDay: ['Morning'] }),
-      makeMed({ id: 'med-2', medicationName: 'Ibuprofen', timeOfDay: ['Evening'] }),
+      makeMed({ id: 'med-1', medicationName: 'Aspirin', scheduleType: 'daily', specificTimes: ['08:00'] }),
+      makeMed({ id: 'med-2', medicationName: 'Ibuprofen', scheduleType: 'daily', specificTimes: ['18:00'] }),
     ];
     renderPage();
 
-    expect(screen.getByText('Morning')).toBeInTheDocument();
-    expect(screen.getByText('Evening')).toBeInTheDocument();
-    expect(screen.getByText('Aspirin')).toBeInTheDocument();
-    expect(screen.getByText('Ibuprofen')).toBeInTheDocument();
+    expect(screen.getByText('08:00')).toBeInTheDocument();
+    expect(screen.getByText('18:00')).toBeInTheDocument();
+    expect(screen.getAllByText('Aspirin').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Ibuprofen').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('does not render a time window section that has no medications', () => {
+  it('does not show today slots for as-needed medications', () => {
     medsHookMock.value.medications = [
-      makeMed({ id: 'med-1', medicationName: 'Aspirin', timeOfDay: ['Morning'] }),
+      makeMed({ id: 'med-1', medicationName: 'Aspirin', scheduleType: 'as_needed', specificTimes: null }),
     ];
     renderPage();
 
-    expect(screen.getByText('Morning')).toBeInTheDocument();
-    expect(screen.queryByText('Afternoon')).not.toBeInTheDocument();
-    expect(screen.queryByText('Evening')).not.toBeInTheDocument();
-    expect(screen.queryByText('Night')).not.toBeInTheDocument();
+    expect(screen.getByText('No scheduled doses today.')).toBeInTheDocument();
+    expect(screen.getAllByText('Aspirin').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows the Paused badge on paused medications', () => {
@@ -130,13 +132,13 @@ describe('MedicationsSchedulePage', () => {
 
   it('does not render archived medications', () => {
     medsHookMock.value.medications = [
-      makeMed({ id: 'med-1', medicationName: 'ArchivedMed', status: 'archived', timeOfDay: ['Morning'] }),
-      makeMed({ id: 'med-2', medicationName: 'ActiveMed', status: 'active', timeOfDay: ['Night'] }),
+      makeMed({ id: 'med-1', medicationName: 'ArchivedMed', status: 'archived' }),
+      makeMed({ id: 'med-2', medicationName: 'ActiveMed', status: 'active' }),
     ];
     renderPage();
 
     expect(screen.queryByText('ArchivedMed')).not.toBeInTheDocument();
-    expect(screen.getByText('ActiveMed')).toBeInTheDocument();
+    expect(screen.getAllByText('ActiveMed').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows the empty state when there are no active or paused medications', () => {

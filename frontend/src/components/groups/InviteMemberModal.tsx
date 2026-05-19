@@ -13,6 +13,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 interface InviteMemberModalProps {
   groupId: string;
+  groupName: string;
   open: boolean;
   onClose: () => void;
 }
@@ -28,12 +29,13 @@ function validateEmail(email: string): string | null {
 
 export default function InviteMemberModal({
   groupId,
+  groupName,
   open,
   onClose,
 }: InviteMemberModalProps) {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
-  const { inviting, sendInvite } = useInviteMember(groupId);
+  const { inviting, sendInvite } = useInviteMember(groupId, groupName);
   const shouldReduceMotion = useReducedMotion();
   const modalVariants = shouldReduceMotion ? STATIC_MODAL_VARIANTS : MODAL_PANEL_VARIANTS;
 

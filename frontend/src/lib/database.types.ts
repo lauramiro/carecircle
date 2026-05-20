@@ -654,6 +654,123 @@ export type Database = {
           },
         ]
       }
+      weekly_shift_assignment_history: {
+        Row: {
+          assigned_caregiver_id: string | null
+          assignment_id: string | null
+          changed_at: string
+          changed_by: string
+          group_id: string
+          id: string
+          previous_caregiver_id: string | null
+          shift_date: string
+          shift_slot: string
+        }
+        Insert: {
+          assigned_caregiver_id?: string | null
+          assignment_id?: string | null
+          changed_at?: string
+          changed_by: string
+          group_id: string
+          id?: string
+          previous_caregiver_id?: string | null
+          shift_date: string
+          shift_slot: string
+        }
+        Update: {
+          assigned_caregiver_id?: string | null
+          assignment_id?: string | null
+          changed_at?: string
+          changed_by?: string
+          group_id?: string
+          id?: string
+          previous_caregiver_id?: string | null
+          shift_date?: string
+          shift_slot?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_shift_assignment_history_assigned_caregiver_id_fkey"
+            columns: ["assigned_caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_shift_assignment_history_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_shift_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_shift_assignment_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_shift_assignment_history_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_group"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_shift_assignment_history_previous_caregiver_id_fkey"
+            columns: ["previous_caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_shift_assignments: {
+        Row: {
+          assigned_caregiver_id: string | null
+          created_at: string
+          group_id: string
+          id: string
+          shift_date: string
+          shift_slot: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_caregiver_id?: string | null
+          created_at?: string
+          group_id: string
+          id?: string
+          shift_date: string
+          shift_slot: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_caregiver_id?: string | null
+          created_at?: string
+          group_id?: string
+          id?: string
+          shift_date?: string
+          shift_slot?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_shift_assignments_assigned_caregiver_id_fkey"
+            columns: ["assigned_caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_shift_assignments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_group"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invites: {
         Row: {
           created_at: string

@@ -190,6 +190,18 @@ export default function GroupDetailPage() {
         <div className="flex flex-wrap gap-2">
           <motion.button
             type="button"
+            onClick={() => navigate(`/groups/${currentGroup.id}/shifts`)}
+            className="h-10 rounded-lg border px-4 text-sm font-bold"
+            style={{
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text-secondary)',
+            }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+          >
+            Shift Coverage
+          </motion.button>
+          <motion.button
+            type="button"
             onClick={() => navigate(`/groups/${currentGroup.id}/journal`)}
             className="h-10 rounded-lg border px-4 text-sm font-bold"
             style={{

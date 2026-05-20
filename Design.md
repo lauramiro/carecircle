@@ -604,6 +604,63 @@ This section documents **every** RLS policy currently enforced in the CareCircle
 
 ---
 
+### 11. `weekly_shift_assignments`
+
+#### SELECT — "Group members can view weekly shift assignments"
+
+| Detail | Value |
+|:---|:---|
+| **Roles** | `public` |
+| **USING** | `EXISTS (SELECT 1 FROM care_givers cg WHERE cg.group_id = weekly_shift_assignments.group_id AND cg.caregiver_id = auth.uid() AND cg.status = 'active')` |
+
+**Allows:** Any active member of the care group can read the weekly shift coverage grid, including observers.
+
+**Blocks:** Users who are not active members of the group cannot see shift assignments for that group.
+
+---
+
+#### INSERT — "Primary carers can create weekly shift assignments"
+
+| Detail | Value |
+|:---|:---|
+| **Roles** | `public` |
+| **WITH CHECK** | `EXISTS (SELECT 1 FROM care_givers cg WHERE cg.group_id = weekly_shift_assignments.group_id AND cg.caregiver_id = auth.uid() AND cg.status = 'active' AND cg.role_in_care = 'primary_carer'::member_role) AND (assigned_caregiver_id IS NULL OR EXISTS (SELECT 1 FROM care_givers cg WHERE cg.group_id = weekly_shift_assignments.group_id AND cg.caregiver_id = weekly_shift_assignments.assigned_caregiver_id AND cg.status = 'active'))` |
+
+**Allows:** Only an active `primary_carer` can create or mark a weekly slot assignment for the group. The selected assignee must either be empty or an active group member.
+
+**Blocks:** Secondary carers and observers cannot assign slots, and no user can assign a slot to someone outside the care group.
+
+---
+
+#### UPDATE — "Primary carers can update weekly shift assignments"
+
+| Detail | Value |
+|:---|:---|
+| **Roles** | `public` |
+| **USING** | `EXISTS (SELECT 1 FROM care_givers cg WHERE cg.group_id = weekly_shift_assignments.group_id AND cg.caregiver_id = auth.uid() AND cg.status = 'active' AND cg.role_in_care = 'primary_carer'::member_role)` |
+| **WITH CHECK** | `EXISTS (SELECT 1 FROM care_givers cg WHERE cg.group_id = weekly_shift_assignments.group_id AND cg.caregiver_id = auth.uid() AND cg.status = 'active' AND cg.role_in_care = 'primary_carer'::member_role) AND (assigned_caregiver_id IS NULL OR EXISTS (SELECT 1 FROM care_givers cg WHERE cg.group_id = weekly_shift_assignments.group_id AND cg.caregiver_id = weekly_shift_assignments.assigned_caregiver_id AND cg.status = 'active'))` |
+
+**Allows:** Only an active `primary_carer` can change an existing weekly shift assignment, including clearing a slot back to unassigned.
+
+**Blocks:** Non-primary roles cannot reassign or clear coverage slots.
+
+---
+
+### 12. `weekly_shift_assignment_history`
+
+#### SELECT — "Group members can view weekly shift assignment history"
+
+| Detail | Value |
+|:---|:---|
+| **Roles** | `public` |
+| **USING** | `EXISTS (SELECT 1 FROM care_givers cg WHERE cg.group_id = weekly_shift_assignment_history.group_id AND cg.caregiver_id = auth.uid() AND cg.status = 'active')` |
+
+**Allows:** Any active member of the care group can read the historical record of shift changes for that group. This keeps the data queryable for downstream wellbeing features.
+
+**Blocks:** Non-members cannot inspect shift history.
+
+---
+
 ### Summary: Role Impact Across All Tables
 
 | Table | primary_carer | secondary_carer | observer |
@@ -615,6 +672,8 @@ This section documents **every** RLS policy currently enforced in the CareCircle
 | `medications` | SELECT, INSERT | SELECT, INSERT | SELECT |
 | `daily_medication_checklists` | SELECT | — | — |
 | `handover_journal_entries` | SELECT, INSERT, UPDATE (own, 60 mins) | SELECT, INSERT, UPDATE (own, 60 mins) | SELECT |
+| `weekly_shift_assignments` | SELECT, INSERT, UPDATE | SELECT | SELECT |
+| `weekly_shift_assignment_history` | SELECT | SELECT | SELECT |
 | `medication_confirmations` | SELECT, INSERT | SELECT, INSERT | SELECT, INSERT |
 | `invites` | SELECT (own), INSERT | SELECT (own), INSERT | SELECT (own), INSERT |
 | `messages` | SELECT (own) | SELECT (own) | SELECT (own) |

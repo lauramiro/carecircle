@@ -590,6 +590,20 @@ This section documents **every** RLS policy currently enforced in the CareCircle
 
 ---
 
+#### UPDATE — "Authors can edit handover journal entries for 60 minutes"
+
+| Detail | Value |
+|:---|:---|
+| **Roles** | `public` |
+| **USING** | `author_id = auth.uid() AND created_at >= timezone('utc', now()) - interval '60 minutes'` |
+| **WITH CHECK** | *(same as USING)* |
+
+**Allows:** The original author of a handover journal entry can edit their own entry for up to 60 minutes after it was created.
+
+**Blocks:** Other members cannot edit someone else's entry, and authors lose edit access once the 60-minute window has expired.
+
+---
+
 ### Summary: Role Impact Across All Tables
 
 | Table | primary_carer | secondary_carer | observer |
@@ -600,7 +614,7 @@ This section documents **every** RLS policy currently enforced in the CareCircle
 | `patients` | SELECT, INSERT, UPDATE, DELETE | SELECT | SELECT |
 | `medications` | SELECT, INSERT | SELECT, INSERT | SELECT |
 | `daily_medication_checklists` | SELECT | — | — |
-| `handover_journal_entries` | SELECT, INSERT | SELECT, INSERT | SELECT |
+| `handover_journal_entries` | SELECT, INSERT, UPDATE (own, 60 mins) | SELECT, INSERT, UPDATE (own, 60 mins) | SELECT |
 | `medication_confirmations` | SELECT, INSERT | SELECT, INSERT | SELECT, INSERT |
 | `invites` | SELECT (own), INSERT | SELECT (own), INSERT | SELECT (own), INSERT |
 | `messages` | SELECT (own) | SELECT (own) | SELECT (own) |

@@ -5,4 +5,5 @@ export interface JournalEntry {
   authorName: string;
   content: string;
   createdAt: string;
+  updatedAt: string;
 }

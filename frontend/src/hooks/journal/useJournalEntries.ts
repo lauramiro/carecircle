@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import { createJournalEntry, getJournalEntriesByGroup } from '../../api/journal/journal.service';
+import {
+  createJournalEntry,
+  getJournalEntriesByGroup,
+  updateJournalEntry,
+} from '../../api/journal/journal.service';
 import type { JournalEntry } from '../../api/journal/journal.types';
 
 interface UseJournalEntriesResult {
@@ -7,7 +11,9 @@ interface UseJournalEntriesResult {
   loading: boolean;
   error: string | null;
   isSubmitting: boolean;
+  updatingEntryId: string | null;
   addEntry: (content: string) => Promise<void>;
+  editEntry: (entryId: string, content: string) => Promise<void>;
 }
 
 export function useJournalEntries(groupId: string | undefined): UseJournalEntriesResult {
@@ -15,6 +21,7 @@ export function useJournalEntries(groupId: string | undefined): UseJournalEntrie
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [updatingEntryId, setUpdatingEntryId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -60,5 +67,18 @@ export function useJournalEntries(groupId: string | undefined): UseJournalEntrie
     }
   }
 
-  return { entries, loading, error, isSubmitting, addEntry };
+  async function editEntry(entryId: string, content: string) {
+    setUpdatingEntryId(entryId);
+    try {
+      const updatedEntry = await updateJournalEntry(entryId, content);
+      setEntries((currentEntries) =>
+        currentEntries.map((entry) => (entry.id === entryId ? updatedEntry : entry)),
+      );
+      setError(null);
+    } finally {
+      setUpdatingEntryId(null);
+    }
+  }
+
+  return { entries, loading, error, isSubmitting, updatingEntryId, addEntry, editEntry };
 }

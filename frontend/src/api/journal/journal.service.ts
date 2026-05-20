@@ -7,6 +7,7 @@ type JournalEntryRow = {
   author_id: string;
   content: string;
   created_at: string;
+  updated_at: string;
   author: { full_name: string | null } | null;
 };
 
@@ -18,6 +19,7 @@ function mapJournalEntry(row: JournalEntryRow): JournalEntry {
     authorName: row.author?.full_name?.trim() || 'Unknown carer',
     content: row.content,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -27,6 +29,7 @@ const journalEntrySelect = `
   author_id,
   content,
   created_at,
+  updated_at,
   author:profiles!handover_journal_entries_author_id_fkey (
     full_name
   )
@@ -62,6 +65,30 @@ export async function createJournalEntry(
       author_id: user.id,
       content,
     })
+    .select(journalEntrySelect)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return mapJournalEntry(data as unknown as JournalEntryRow);
+}
+
+export async function updateJournalEntry(
+  entryId: string,
+  content: string,
+): Promise<JournalEntry> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data, error } = await supabase
+    .from('handover_journal_entries')
+    .update({ content })
+    .eq('id', entryId)
+    .eq('author_id', user.id)
     .select(journalEntrySelect)
     .single();
 

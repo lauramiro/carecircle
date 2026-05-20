@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { CalendarDays, Users, ClipboardList } from 'lucide-react';
+import { CalendarDays, Users, ClipboardList, NotebookText } from 'lucide-react';
 
 import { toast } from 'react-toastify';
 import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
@@ -190,6 +190,18 @@ export default function GroupDetailPage() {
         <div className="flex flex-wrap gap-2">
           <motion.button
             type="button"
+            onClick={() => navigate(`/groups/${currentGroup.id}/journal`)}
+            className="h-10 rounded-lg border px-4 text-sm font-bold"
+            style={{
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text-secondary)',
+            }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+          >
+            Handover Journal
+          </motion.button>
+          <motion.button
+            type="button"
             onClick={() => navigate(`/groups/${currentGroup.id}/checklist`)}
             className="h-10 rounded-lg px-4 text-sm font-bold text-white"
             style={{
@@ -245,6 +257,19 @@ export default function GroupDetailPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+
+        <article
+          className="rounded-xl border bg-white p-5"
+          style={{ borderColor: 'var(--color-border)' }}
+        >
+          <NotebookText size={20} strokeWidth={1.9} color="var(--color-primary)" />
+          <p className="mt-3 text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
+            Handover
+          </p>
+          <p className="mt-1 text-sm font-bold">
+            {currentGroup.role === 'Observer' ? 'Read-only journal access' : 'Write and review journal entries'}
+          </p>
+        </article>
 
         <article
           className="rounded-xl border bg-white p-5"

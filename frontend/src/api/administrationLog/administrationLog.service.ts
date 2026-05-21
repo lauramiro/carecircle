@@ -23,6 +23,34 @@ function parseDailyChecklist(raw: unknown): Record<string, unknown> | null {
   return null;
 }
 
+/** Medication columns on `medications` (no legacy `dosage` column). */
+const MEDICATION_EMBED_SELECT = 'medication_name, name, dose, unit, dosage_unit';
+
+function medicationNameFromRow(
+  row: Record<string, unknown>,
+  med: Record<string, unknown> | null,
+): string {
+  const snapshot = (row.medication_name as string | null)?.trim();
+  if (snapshot) return snapshot;
+  if (med) return medicationDisplayName(med);
+  return 'Medication';
+}
+
+function doseDisplayFromRow(
+  row: Record<string, unknown>,
+  med: Record<string, unknown> | null,
+): string {
+  if (row.dose != null || row.dosage_unit != null) {
+    return formatMedicationDoseLine({
+      dose: row.dose as number | string | null,
+      unit: row.dosage_unit as string | null,
+      dosage_unit: row.dosage_unit as string | null,
+    });
+  }
+  if (med) return formatMedicationDoseLine(med);
+  return '—';
+}
+
 async function resolveLatestProofPublicUrl(checklistItemId: string): Promise<string | null> {
   try {
     const folderPath = `checklist-proofs/${checklistItemId}`;
@@ -92,9 +120,13 @@ export async function fetchAdministrationLogEvents(
         updated_at,
         skip_reason,
         skip_notes,
-        given_by_user_id,
+        given_by_carer_id,
+        medication_name,
+        dose,
+        dosage_unit,
+        scheduled_time,
         time_of_day,
-        medications ( medication_name, name, dose, dosage, unit, dosage_unit ),
+        medications ( ${MEDICATION_EMBED_SELECT} ),
         daily_medication_checklists ( checklist_date )
       `,
       )
@@ -105,7 +137,9 @@ export async function fetchAdministrationLogEvents(
       console.error('[administrationLog] checklist_items', itemsError);
     } else {
       const rows = (items ?? []) as Record<string, unknown>[];
-      const carerIds = rows.map(r => r.given_by_user_id as string | null).filter((x): x is string => Boolean(x));
+      const carerIds = rows
+        .map(r => r.given_by_carer_id as string | null)
+        .filter((x): x is string => Boolean(x));
       const profileMap = await loadProfileNames(carerIds);
 
       for (const row of rows) {
@@ -115,15 +149,15 @@ export async function fetchAdministrationLogEvents(
         const med = parseMedication(row.medications);
         const dmc = parseDailyChecklist(row.daily_medication_checklists);
         const checklistDate = (dmc?.checklist_date as string | undefined) ?? undefined;
-        const medName = med ? medicationDisplayName(med) : 'Medication';
-        const doseDisplay = med ? formatMedicationDoseLine(med) : '—';
+        const medName = medicationNameFromRow(row, med);
+        const doseDisplay = doseDisplayFromRow(row, med);
 
         const occurred =
           status === 'given' && row.given_at
             ? (row.given_at as string)
             : (row.updated_at as string) || (row.given_at as string) || new Date().toISOString();
 
-        const carerId = (row.given_by_user_id as string | null) ?? null;
+        const carerId = (row.given_by_carer_id as string | null) ?? null;
         const carerName =
           status === 'skipped'
             ? carerId
@@ -149,7 +183,9 @@ export async function fetchAdministrationLogEvents(
           doseDisplay,
           carerName,
           checklistDate,
-          scheduledTimeLabel: row.time_of_day as string | undefined,
+          scheduledTimeLabel:
+            (row.scheduled_time as string | undefined) ??
+            (row.time_of_day as string | undefined),
           notes: (row.skip_notes as string | null) ?? null,
           photoThumbnailUrl: photoFullUrl,
           photoFullUrl,
@@ -171,7 +207,7 @@ export async function fetchAdministrationLogEvents(
         notes,
         logged_by,
         medication_id,
-        medications ( medication_name, name, dose, dosage, unit, dosage_unit )
+        medications ( ${MEDICATION_EMBED_SELECT} )
       `,
       )
       .eq('patient_id', patientId)

@@ -10,10 +10,10 @@ export function formatMedicationDoseLine(medication: {
   dosage_unit?: string | null;
 }): string {
   const dose =
-    medication.dosage != null && String(medication.dosage).trim() !== ''
-      ? String(medication.dosage)
-      : medication.dose != null
-        ? String(medication.dose)
+    medication.dose != null && String(medication.dose).trim() !== ''
+      ? String(medication.dose)
+      : medication.dosage != null && String(medication.dosage).trim() !== ''
+        ? String(medication.dosage)
         : '';
   const unit = (medication.unit ?? medication.dosage_unit ?? '').toString();
   const core = [dose, unit].filter(Boolean).join(' ');

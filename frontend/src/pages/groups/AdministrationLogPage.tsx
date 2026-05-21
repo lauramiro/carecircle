@@ -102,20 +102,56 @@ export default function AdministrationLogPage() {
           No medication events recorded yet for this care circle.
         </p>
       ) : (
-        <ul className="mt-6 flex list-none flex-col gap-3 p-0">
-          {events.map((event) => {
-            const localTimestampLabel = new Date(event.occurredAtIso).toLocaleString();
-            return (
-              <li key={event.id}>
-                <AdministrationLogRow
-                  event={event}
-                  localTimestampLabel={localTimestampLabel}
-                  onOpen={() => setSelected(event)}
-                />
-              </li>
-            );
-          })}
-        </ul>
+        <div
+          className="mt-6 overflow-hidden rounded-xl border bg-white"
+          style={{ borderColor: 'var(--color-border)' }}
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+              <thead>
+                <tr
+                  className="border-b text-[11px] uppercase tracking-wide"
+                  style={{
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text-hint)',
+                  }}
+                >
+                  <th className="w-12 px-3 py-2 font-bold" scope="col">
+                    <span className="sr-only">Photo</span>
+                  </th>
+                  <th className="px-3 py-2 font-bold" scope="col">
+                    Medication
+                  </th>
+                  <th className="px-3 py-2 font-bold" scope="col">
+                    Dose
+                  </th>
+                  <th className="px-3 py-2 font-bold" scope="col">
+                    Carer
+                  </th>
+                  <th className="px-3 py-2 font-bold" scope="col">
+                    Time
+                  </th>
+                  <th className="px-3 py-2 text-right font-bold" scope="col">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map((event) => {
+                  const localTimestampLabel = new Date(event.occurredAtIso).toLocaleString();
+                  return (
+                    <AdministrationLogRow
+                      key={event.id}
+                      event={event}
+                      localTimestampLabel={localTimestampLabel}
+                      onOpen={() => setSelected(event)}
+                    />
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       <AdministrationLogEventModal

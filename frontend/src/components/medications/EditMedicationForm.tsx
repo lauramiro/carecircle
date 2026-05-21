@@ -6,6 +6,7 @@ import { useMedicationForm } from '../../hooks/medications/useMedicationForm';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { getSchedulePreview } from '../../utils/formatMedicationSchedule';
 import MedicationScheduleFields from './MedicationScheduleFields';
+import MedicationAdditionalFields from './MedicationAdditionalFields';
 
 interface EditMedicationFormProps {
   initialValues: Medication;
@@ -284,6 +285,15 @@ export default function EditMedicationForm({
             </p>
           )}
         </div>
+
+        <MedicationAdditionalFields
+          formId={formId}
+          values={values}
+          errors={errors}
+          updateField={updateField}
+          touchField={touchField}
+          defaultExpanded
+        />
       </div>
 
       <div className="flex justify-end gap-2">

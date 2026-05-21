@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Group } from '../../api/groups/groups.types';
@@ -151,6 +152,26 @@ describe('MedicationsSchedulePage', () => {
   it('shows the Add medication button for Admin users', () => {
     renderPage();
     expect(screen.getByRole('button', { name: /add medication/i })).toBeInTheDocument();
+  });
+
+  it('opens the details modal when Info is clicked', async () => {
+    const user = userEvent.setup();
+    medsHookMock.value.medications = [
+      makeMed({
+        id: 'med-1',
+        medicationName: 'Metformin',
+        form: 'Tablet',
+        pharmacy: 'Boots Pharmacy',
+      }),
+    ];
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: /view details for metformin/i }));
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Form')).toBeInTheDocument();
+    expect(screen.getByText('Tablet')).toBeInTheDocument();
+    expect(screen.getByText('Boots Pharmacy')).toBeInTheDocument();
   });
 
   it('does not show the Add medication button for non-Admin users', () => {

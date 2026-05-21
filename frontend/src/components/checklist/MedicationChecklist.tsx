@@ -1,88 +1,50 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
-import { supabase } from '@lib/supabaseClient';
-import { summarizeChecklist } from '@lib/checklist';
-import type { ChecklistItem } from '@lib/checklist';
+import { useMemo } from 'react';
+import { summarizeChecklist, type ChecklistItem } from '@lib/checklist';
+import { sortChecklistItemsByScheduledTime } from '@lib/checklistStatus';
+import { toLocalDateString } from '@lib/dates';
 import { useReducedMotion } from '@hooks/useReducedMotion';
 import { useChecklistSubscription } from '@hooks/checklist/useChecklistSubscription';
 import MedicationChecklistItemRow from '@components/checklist/MedicationChecklistItemRow';
-import { TIME_WINDOWS } from '@components/checklist/medicationChecklist.constants';
-import { groupItemsByWindow } from '@components/checklist/medicationChecklist.utils';
 
 interface MedicationChecklistProps {
   checklistId: string;
+  checklistDate: string;
+  items: ChecklistItem[];
   userRole: 'primary' | 'secondary' | 'observer';
+  isLoading?: boolean;
+  loadingLabel?: string;
+  onItemsChange?: (items: ChecklistItem[]) => void;
 }
 
-export default function MedicationChecklist({ checklistId, userRole }: MedicationChecklistProps) {
-  const [initialItems, setInitialItems] = useState<ChecklistItem[]>([]);
-  const { items, isSubscribed } = useChecklistSubscription(checklistId, initialItems);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['morning', 'afternoon'])
+function isToday(dateStr: string): boolean {
+  return dateStr === toLocalDateString(new Date());
+}
+
+export default function MedicationChecklist({
+  checklistId,
+  checklistDate,
+  items: itemsFromParent,
+  userRole,
+  isLoading = false,
+  loadingLabel = 'Loading checklist…',
+  onItemsChange,
+}: MedicationChecklistProps) {
+  const { items, isSubscribed, patchItem } = useChecklistSubscription(
+    checklistId,
+    checklistDate,
+    itemsFromParent,
+    onItemsChange,
   );
   const shouldReduceMotion = useReducedMotion();
   const isReadOnly = userRole === 'observer';
-  const summary = summarizeChecklist(items);
-  const itemsByWindow = groupItemsByWindow(items);
 
-  // Toggle a time window section open/closed
-  function toggleSection(windowId: string) {
-    setExpandedSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(windowId)) {
-        next.delete(windowId);
-      } else {
-        next.add(windowId);
-      }
-      return next;
-    });
-  }
+  const sortedItems = useMemo(
+    () => sortChecklistItemsByScheduledTime(items),
+    [items],
+  );
+  const summary = summarizeChecklist(sortedItems);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadChecklist(retryCount = 0) {
-      const { data, error } = await supabase
-        .from('checklist_items')
-        .select('*')
-        .eq('checklist_id', checklistId);
-
-      if (cancelled) return;
-
-      if (error) {
-        console.error('[MedicationChecklist] Failed to load checklist:', error);
-        toast.error('Failed to load checklist.');
-        return;
-      }
-
-      const items = (data || []) as unknown as ChecklistItem[];
-
-      console.log('[MedicationChecklist] Loaded items:', items.length);
-
-      // If no items yet, retry a few times to allow createChecklistItems() to finish
-      if (items.length === 0 && retryCount < 5) {
-        console.log(
-          `[MedicationChecklist] No items found, retrying (${retryCount + 1}/5)...`
-        );
-
-        setTimeout(() => {
-          if (!cancelled) {
-            loadChecklist(retryCount + 1);
-          }
-        }, 500);
-
-        return;
-      }
-
-      setInitialItems(items);
-    }
-
-    loadChecklist();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [checklistId]);
+  const title = isToday(checklistDate) ? "Today's Medications" : `Medications for ${checklistDate}`;
 
   return (
     <section>
@@ -97,14 +59,24 @@ export default function MedicationChecklist({ checklistId, userRole }: Medicatio
               margin: 0,
             }}
           >
-            Today's Medications
+            {title}
           </h1>
           <p className="mt-1 text-sm flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
             <span
               className="inline-block h-2 w-2 rounded-full"
-              style={{ backgroundColor: isSubscribed ? 'var(--color-status-given)' : 'var(--color-text-hint)' }}
+              style={{
+                backgroundColor: isLoading
+                  ? 'var(--color-text-hint)'
+                  : isSubscribed
+                    ? 'var(--color-status-given)'
+                    : 'var(--color-text-hint)',
+              }}
             />
-            {isSubscribed ? 'Live updates on' : 'Connecting...'}
+            {isLoading
+              ? loadingLabel
+              : isSubscribed
+                ? 'Live updates on'
+                : 'Connecting…'}
           </p>
         </div>
 
@@ -140,63 +112,36 @@ export default function MedicationChecklist({ checklistId, userRole }: Medicatio
         ))}
       </div>
 
-      <div className="space-y-3">
-        {TIME_WINDOWS.map((window) => {
-          const windowItems = itemsByWindow[window.id] || [];
-          const remaining = windowItems.filter((item) => item.status === 'due' || item.status === 'overdue').length;
-          const isExpanded = expandedSections.has(window.id);
-
-          return (
-            <div
-              key={window.id}
-              className="rounded-xl border bg-white overflow-hidden"
-              style={{ borderColor: 'var(--color-border)' }}
-            >
-              <button
-                type="button"
-                onClick={() => toggleSection(window.id)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left"
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
-              >
-                <span className="text-sm font-extrabold" style={{ color: 'var(--color-text-primary)' }}>
-                  {window.label}
-                </span>
-                <div className="flex items-center gap-3">
-                  {remaining > 0 && (
-                    <span
-                      className="rounded-full px-2 py-0.5 text-xs font-bold"
-                      style={{ backgroundColor: 'var(--color-status-overdue-bg)', color: 'var(--color-status-overdue)' }}
-                    >
-                      {remaining} remaining
-                    </span>
-                  )}
-                  <span style={{ color: 'var(--color-text-hint)', fontSize: '12px' }}>
-                    {isExpanded ? '▲' : '▼'}
-                  </span>
-                </div>
-              </button>
-
-              {isExpanded && (
-                <div className="border-t px-5 pb-4 space-y-2" style={{ borderColor: 'var(--color-border)' }}>
-                  {windowItems.length === 0 ? (
-                    <p className="py-4 text-sm text-center" style={{ color: 'var(--color-text-hint)' }}>
-                      No medications in this window
-                    </p>
-                  ) : (
-                    windowItems.map((item) => (
-                      <MedicationChecklistItemRow
-                        key={item.id}
-                        item={item}
-                        disabled={isReadOnly}
-                        shouldReduceMotion={shouldReduceMotion}
-                      />
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+      <div
+        className="relative rounded-xl border bg-white overflow-hidden"
+        style={{ borderColor: 'var(--color-border)' }}
+      >
+        {isLoading && (
+          <div
+            className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/80 px-4 text-sm font-medium"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            {loadingLabel}
+          </div>
+        )}
+        {sortedItems.length === 0 ? (
+          <p className="py-8 text-sm text-center" style={{ color: 'var(--color-text-hint)' }}>
+            No medications scheduled for this day.
+          </p>
+        ) : (
+          <div className="px-5 py-4 space-y-1">
+            {sortedItems.map((item) => (
+              <MedicationChecklistItemRow
+                key={item.id}
+                item={item}
+                checklistDate={checklistDate}
+                disabled={isReadOnly}
+                shouldReduceMotion={shouldReduceMotion}
+                onItemPatch={patchItem}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

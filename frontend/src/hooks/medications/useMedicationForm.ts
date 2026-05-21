@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { toLocalDateString } from '../../lib/dates';
+import { parseDosageString } from '../../lib/dosage';
 import type {
   AddMedicationPayload,
   EditMedicationPayload,
@@ -21,6 +23,19 @@ export interface MedicationFormValues {
   daysOfWeek: number[];
   dayOfMonth: number | '';
   startDate: string;
+  form: string;
+  route: string;
+  instructions: string;
+  takeWithFood: boolean;
+  endDate: string;
+  prescribedDate: string;
+  prescriptionNumber: string;
+  pharmacy: string;
+  pharmacyPhone: string;
+  refillsRemaining: string;
+  lastRefillDate: string;
+  sideEffectsText: string;
+  notes: string;
 }
 
 export type MedicationFormErrors = Partial<
@@ -35,13 +50,15 @@ export type MedicationFormErrors = Partial<
     | 'intervalStartTime'
     | 'daysOfWeek'
     | 'dayOfMonth'
-    | 'startDate',
+    | 'startDate'
+    | 'endDate'
+    | 'refillsRemaining',
     string
   >
 >;
 
 function todayStr(): string {
-  return new Date().toISOString().split('T')[0];
+  return toLocalDateString();
 }
 
 const emptyValues: MedicationFormValues = {
@@ -56,7 +73,73 @@ const emptyValues: MedicationFormValues = {
   daysOfWeek: [],
   dayOfMonth: '',
   startDate: todayStr(),
+  form: '',
+  route: '',
+  instructions: '',
+  takeWithFood: false,
+  endDate: '',
+  prescribedDate: '',
+  prescriptionNumber: '',
+  pharmacy: '',
+  pharmacyPhone: '',
+  refillsRemaining: '',
+  lastRefillDate: '',
+  sideEffectsText: '',
+  notes: '',
 };
+
+function parseSideEffectsText(text: string): string[] | undefined {
+  const items = text
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return items.length > 0 ? items : undefined;
+}
+
+function formatSideEffects(sideEffects: string[] | null): string {
+  return sideEffects?.join(', ') ?? '';
+}
+
+function buildOptionalFields(values: MedicationFormValues) {
+  const optional: Record<string, unknown> = {};
+
+  const form = values.form.trim();
+  if (form) optional.form = form;
+
+  const route = values.route.trim();
+  if (route) optional.route = route;
+
+  const instructions = values.instructions.trim();
+  if (instructions) optional.instructions = instructions;
+
+  if (values.takeWithFood) optional.takeWithFood = true;
+
+  if (values.endDate) optional.endDate = values.endDate;
+  if (values.prescribedDate) optional.prescribedDate = values.prescribedDate;
+
+  const prescriptionNumber = values.prescriptionNumber.trim();
+  if (prescriptionNumber) optional.prescriptionNumber = prescriptionNumber;
+
+  const pharmacy = values.pharmacy.trim();
+  if (pharmacy) optional.pharmacy = pharmacy;
+
+  const pharmacyPhone = values.pharmacyPhone.trim();
+  if (pharmacyPhone) optional.pharmacyPhone = pharmacyPhone;
+
+  if (values.refillsRemaining !== '') {
+    optional.refillsRemaining = Number(values.refillsRemaining);
+  }
+
+  if (values.lastRefillDate) optional.lastRefillDate = values.lastRefillDate;
+
+  const sideEffects = parseSideEffectsText(values.sideEffectsText);
+  if (sideEffects) optional.sideEffects = sideEffects;
+
+  const notes = values.notes.trim();
+  if (notes) optional.notes = notes;
+
+  return optional;
+}
 
 function validateAll(values: MedicationFormValues): MedicationFormErrors {
   const errors: MedicationFormErrors = {};
@@ -95,13 +178,24 @@ function validateAll(values: MedicationFormValues): MedicationFormErrors {
     if (values.specificTimes.length === 0 || values.specificTimes.some((t) => t === '')) {
       errors.specificTimes = 'At least one time is required';
     }
-  } else if (st === 'monthly') {
+  } else   if (st === 'monthly') {
     const d = Number(values.dayOfMonth);
     if (values.dayOfMonth === '' || isNaN(d) || d < 1 || d > 31) {
       errors.dayOfMonth = 'Enter a valid day of month (1-31)';
     }
     if (values.specificTimes.length === 0 || values.specificTimes.some((t) => t === '')) {
       errors.specificTimes = 'At least one time is required';
+    }
+  }
+
+  if (values.endDate && values.startDate && values.endDate < values.startDate) {
+    errors.endDate = 'End date cannot be before start date';
+  }
+
+  if (values.refillsRemaining !== '') {
+    const refills = Number(values.refillsRemaining);
+    if (isNaN(refills) || refills < 0 || !Number.isInteger(refills)) {
+      errors.refillsRemaining = 'Refills must be a whole number of 0 or more';
     }
   }
 
@@ -163,7 +257,7 @@ export function useMedicationForm() {
   }
 
   function initFromMedication(med: Medication) {
-    const parts = med.dosage.split(' ');
+    const { dose, unit } = parseDosageString(med.dosage);
 
     let scheduleFields: Pick<
       MedicationFormValues,
@@ -189,9 +283,22 @@ export function useMedicationForm() {
 
     setValues({
       name: med.medicationName,
-      dose: parts[0] ?? '',
-      unit: (parts[1] ?? 'mg') as MedicationUnit,
+      dose: String(dose),
+      unit: unit as MedicationUnit,
       startDate: med.startDate,
+      form: med.form ?? '',
+      route: med.route ?? '',
+      instructions: med.instructions ?? '',
+      takeWithFood: med.takeWithFood === true,
+      endDate: med.endDate ?? '',
+      prescribedDate: med.prescribedDate ?? '',
+      prescriptionNumber: med.prescriptionNumber ?? '',
+      pharmacy: med.pharmacy ?? '',
+      pharmacyPhone: med.pharmacyPhone ?? '',
+      refillsRemaining: med.refillsRemaining != null ? String(med.refillsRemaining) : '',
+      lastRefillDate: med.lastRefillDate ?? '',
+      sideEffectsText: formatSideEffects(med.sideEffects),
+      notes: med.notes ?? '',
       ...scheduleFields,
     });
     setErrors({});
@@ -222,6 +329,7 @@ export function useMedicationForm() {
       dosage: `${values.dose} ${values.unit as MedicationUnit}`,
       startDate: values.startDate,
       scheduleType: values.scheduleType as ScheduleType,
+      ...buildOptionalFields(values),
     };
 
     const st = values.scheduleType;
@@ -248,7 +356,7 @@ export function useMedicationForm() {
         dayOfMonth: values.dayOfMonth as number,
       };
     }
-    return base; // as_needed
+    return base;
   }
 
   function toEditPayload(): EditMedicationPayload {
@@ -257,6 +365,19 @@ export function useMedicationForm() {
       dosage: `${values.dose} ${values.unit as MedicationUnit}`,
       scheduleType: values.scheduleType as ScheduleType,
       startDate: values.startDate,
+      form: values.form.trim() || null,
+      route: values.route.trim() || null,
+      instructions: values.instructions.trim() || null,
+      takeWithFood: values.takeWithFood ? true : null,
+      endDate: values.endDate || null,
+      prescribedDate: values.prescribedDate || null,
+      prescriptionNumber: values.prescriptionNumber.trim() || null,
+      pharmacy: values.pharmacy.trim() || null,
+      pharmacyPhone: values.pharmacyPhone.trim() || null,
+      refillsRemaining: values.refillsRemaining !== '' ? Number(values.refillsRemaining) : null,
+      lastRefillDate: values.lastRefillDate || null,
+      sideEffects: parseSideEffectsText(values.sideEffectsText) ?? null,
+      notes: values.notes.trim() || null,
     };
 
     const st = values.scheduleType;

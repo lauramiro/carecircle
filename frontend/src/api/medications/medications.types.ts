@@ -36,6 +36,22 @@ export interface Medication {
   updatedAt: string;
 }
 
+export type MedicationOptionalFields = {
+  form?: string;
+  route?: string;
+  instructions?: string;
+  takeWithFood?: boolean;
+  endDate?: string;
+  prescribedDate?: string;
+  prescriptionNumber?: string;
+  pharmacy?: string;
+  pharmacyPhone?: string;
+  refillsRemaining?: number;
+  lastRefillDate?: string;
+  sideEffects?: string[];
+  notes?: string;
+};
+
 export type AddMedicationPayload = {
   patientId: string;
   medicationName: string;
@@ -46,7 +62,7 @@ export type AddMedicationPayload = {
   intervalHours?: number;
   daysOfWeek?: number[];
   dayOfMonth?: number;
-};
+} & MedicationOptionalFields;
 
 export type EditMedicationPayload = Partial<
   Pick<
@@ -59,7 +75,18 @@ export type EditMedicationPayload = Partial<
     | 'daysOfWeek'
     | 'dayOfMonth'
     | 'startDate'
+    | 'form'
+    | 'route'
     | 'instructions'
+    | 'takeWithFood'
+    | 'endDate'
+    | 'prescribedDate'
+    | 'prescriptionNumber'
+    | 'pharmacy'
+    | 'pharmacyPhone'
+    | 'refillsRemaining'
+    | 'lastRefillDate'
+    | 'sideEffects'
     | 'notes'
   >
 >;

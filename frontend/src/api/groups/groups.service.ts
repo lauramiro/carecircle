@@ -92,7 +92,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
-  // Verify access 
+  // Verify access
   const { data: userMembership, error: membershipError } = await supabase
     .from('care_givers')
     .select('role_in_care')
@@ -136,6 +136,10 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     return null;
   }
 
+  if (!groupData.patient_id) {
+    throw new Error('Care group is missing required patient_id.');
+  }
+
   const userRole = mapRole(userMembership.role_in_care ?? '');
 
   const members: GroupMember[] = (groupData.care_givers ?? []).map(m => ({
@@ -156,7 +160,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     canSchedule: (userMembership as any).can_schedule === true, // TODO: fix this. Had to add this to fix an error. Code was changed during resolving of MC, introducing a bug that removed the canSchedule property.
     members,
     gpContacts: [],
-    patientId: groupData.patient_id ?? '',
+    patientId: groupData.patient_id,
   };
 }
 

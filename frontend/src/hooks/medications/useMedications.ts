@@ -7,7 +7,7 @@ import {
   activateMedication as activateMedicationService,
   archiveMedication as archiveMedicationService,
   getMedicationsByPatient,
-} from '../../api/medications/medications.mock';
+} from '../../api/medications/medications.service';
 
 export function useMedications(patientId: string) {
   const [medications, setMedications] = useState<Medication[]>([]);
@@ -19,7 +19,13 @@ export function useMedications(patientId: string) {
     let cancelled = false;
 
     void (async () => {
-      await Promise.resolve();
+      if (!patientId) {
+        setMedications([]);
+        setLoading(false);
+        setError(null);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {

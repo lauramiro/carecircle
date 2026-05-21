@@ -266,6 +266,18 @@ export default function GroupDetailPage() {
             </motion.button>
           )}
         </div>
+        <motion.button
+          type="button"
+          onClick={() => navigate(`/groups/${currentGroup.id}/ai-assistant`)}
+          className="h-10 rounded-lg border px-4 text-sm font-bold"
+          style={{
+            borderColor: 'var(--color-primary)',
+            color: 'var(--color-primary)',
+          }}
+          whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+          >
+            🤖 AI Assistant
+          </motion.button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

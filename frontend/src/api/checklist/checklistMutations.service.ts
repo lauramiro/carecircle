@@ -53,7 +53,7 @@ export async function markChecklistItemGiven(
   if (photoUrl && carerId) {
     const { error: confirmationErr } = await supabase.from('medication_confirmations').insert({
       checklist_item_id: input.itemId,
-      carer_id: carerId,
+      caregiver_id: carerId,
       photo_url: photoUrl,
       confirmed_at_utc: givenAt,
       local_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

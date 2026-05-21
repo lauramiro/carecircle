@@ -10,6 +10,7 @@ import { TraceMiddleware } from './common/trace-context/trace.middleware';
 import { AppConfigModule } from './config/app-config.module';
 import { LoggerModule } from './logger/logger.module';
 import { AppThrottlingModule } from './throttling/throttling.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AppThrottlingModule } from './throttling/throttling.module';
     TraceContextModule,
     LoggerModule,
     AppThrottlingModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [

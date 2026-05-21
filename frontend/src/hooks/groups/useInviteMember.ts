@@ -6,13 +6,13 @@ interface UseInviteMemberResult {
   sendInvite: (email: string) => Promise<void>;
 }
 
-export function useInviteMember(groupId: string): UseInviteMemberResult {
+export function useInviteMember(groupId: string, groupName: string): UseInviteMemberResult {
   const [inviting, setInviting] = useState(false);
 
   async function sendInvite(email: string) {
     setInviting(true);
     try {
-      await inviteMember({ groupId, email });
+      await inviteMember({ groupId, email, groupName });
     } finally {
       setInviting(false);
     }

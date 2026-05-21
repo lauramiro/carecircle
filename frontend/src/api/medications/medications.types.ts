@@ -1,12 +1,6 @@
 export type MedicationUnit = 'mg' | 'ml' | 'mcg' | 'units';
 export type MedicationStatus = 'active' | 'paused' | 'archived' | 'superseded';
-export type MedicationFrequency =
-  | 'once_daily'
-  | 'twice_daily'
-  | 'three_times_daily'
-  | 'four_times_daily'
-  | 'as_needed';
-export type MedicationTimeWindow = 'Morning' | 'Afternoon' | 'Evening' | 'Night';
+export type ScheduleType = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'as_needed';
 
 export interface Medication {
   id: string;
@@ -18,9 +12,11 @@ export interface Medication {
   prescribedBy: string | null;
   prescribedDate: string | null;
   prescriptionNumber: string | null;
-  frequency: MedicationFrequency;
-  timeOfDay: MedicationTimeWindow[] | null;
+  scheduleType: ScheduleType | null;
   specificTimes: string[] | null;
+  intervalHours: number | null;
+  daysOfWeek: number[] | null;
+  dayOfMonth: number | null;
   instructions: string | null;
   route: string | null;
   takeWithFood: boolean | null;
@@ -44,26 +40,61 @@ export type AddMedicationPayload = {
   patientId: string;
   medicationName: string;
   dosage: string;
-  frequency: MedicationFrequency;
-  timeOfDay: MedicationTimeWindow[];
   startDate: string;
+  scheduleType: ScheduleType;
+  specificTimes?: string[];
+  intervalHours?: number;
+  daysOfWeek?: number[];
+  dayOfMonth?: number;
 };
 
 export type EditMedicationPayload = Partial<
-  Pick<Medication, 'medicationName' | 'dosage' | 'frequency' | 'timeOfDay' | 'instructions' | 'notes'>
+  Pick<
+    Medication,
+    | 'medicationName'
+    | 'dosage'
+    | 'scheduleType'
+    | 'specificTimes'
+    | 'intervalHours'
+    | 'daysOfWeek'
+    | 'dayOfMonth'
+    | 'startDate'
+    | 'instructions'
+    | 'notes'
+  >
 >;
 
-export const FREQUENCY_LABELS: Record<MedicationFrequency, string> = {
-  once_daily: 'Once daily',
-  twice_daily: 'Twice daily',
-  three_times_daily: 'Three times daily',
-  four_times_daily: 'Four times daily',
+export const SCHEDULE_TYPE_LABELS: Record<ScheduleType, string> = {
+  daily: 'Daily',
+  weekly: 'Weekly',
+  biweekly: 'Every 2 weeks',
+  monthly: 'Monthly',
   as_needed: 'As needed',
 };
 
-export const TIME_WINDOWS: MedicationTimeWindow[] = [
-  'Morning',
-  'Afternoon',
-  'Evening',
-  'Night',
+export const SCHEDULE_TYPES: ScheduleType[] = [
+  'daily',
+  'weekly',
+  'biweekly',
+  'monthly',
+  'as_needed',
+];
+
+export const DAY_LABELS: Record<number, string> = {
+  0: 'Sun',
+  1: 'Mon',
+  2: 'Tue',
+  3: 'Wed',
+  4: 'Thu',
+  5: 'Fri',
+  6: 'Sat',
+};
+
+export const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
+
+export const INTERVAL_OPTIONS: { value: number; label: string }[] = [
+  { value: 4, label: 'Every 4 hours' },
+  { value: 6, label: 'Every 6 hours' },
+  { value: 8, label: 'Every 8 hours' },
+  { value: 12, label: 'Every 12 hours' },
 ];

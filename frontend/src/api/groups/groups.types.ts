@@ -41,6 +41,7 @@ export interface GroupSummary {
 export interface InvitePayload {
   groupId: string;
   email: string;
+  groupName: string;
 }
 
 export interface InviteResult {

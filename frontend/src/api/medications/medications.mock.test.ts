@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import * as mock from './medications.mock';
 import type { AddMedicationPayload } from './medications.types';
 
@@ -6,23 +6,17 @@ const BASE_PAYLOAD: AddMedicationPayload = {
   patientId: 'test-patient',
   medicationName: 'TestMed',
   dosage: '10 mg',
-  frequency: 'once_daily',
-  timeOfDay: ['Morning'],
   startDate: '2025-05-01',
+  scheduleType: 'daily',
+  specificTimes: ['08:00'],
 };
 
-async function seedMedication(): Promise<string> {
-  const med = await mock.addMedication(BASE_PAYLOAD);
+async function seedMedication(overrides: Partial<AddMedicationPayload> = {}): Promise<string> {
+  const med = await mock.addMedication({ ...BASE_PAYLOAD, ...overrides });
   return med.id;
 }
 
 describe('medications mock', () => {
-  beforeEach(async () => {
-    // Seed a fresh active medication before each test so state is isolated.
-    // The shared array is module-level, so each test adds its own entry and
-    // operates on its own id — prior tests' entries remain but don't interfere.
-  });
-
   it('pauseMedication sets status to paused', async () => {
     const id = await seedMedication();
     const result = await mock.pauseMedication(id);
@@ -114,7 +108,7 @@ describe('medications mock', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Scenario 2 edge cases: duplicate name check
+  // Duplicate name check
   // -------------------------------------------------------------------------
 
   it('checkDuplicateName returns true for a case-insensitive match', async () => {
@@ -183,32 +177,165 @@ describe('medications mock', () => {
     );
   });
 
-  it('getMedicationsByPatient returns an empty array for a patient with no medications', async () => {
+  it('getMedicationsByPatient returns seed data for a patient with no own medications', async () => {
+    // The mock falls back to seed data so the UI is never empty during dev.
     const results = await mock.getMedicationsByPatient(`patient-none-${Date.now()}`);
-    expect(results).toEqual([]);
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.every((m) => m.status !== 'archived' && m.status !== 'superseded')).toBe(true);
   });
 
   // -------------------------------------------------------------------------
-  // Scenario 3 edge case: editing preserves unchanged fields
+  // Preserving fields across edits
   // -------------------------------------------------------------------------
 
-  it('editMedication preserves unchanged fields in the new version', async () => {
+  it('editMedication preserves unchanged schedule fields in the new version', async () => {
     const patientId = `patient-edit-fields-${Date.now()}`;
     const original = await mock.addMedication({
       ...BASE_PAYLOAD,
       patientId,
       medicationName: 'Amlodipine',
       dosage: '5 mg',
-      frequency: 'once_daily',
-      timeOfDay: ['Morning'],
+      scheduleType: 'daily',
+      specificTimes: ['08:00'],
     });
 
     const next = await mock.editMedication(original.id, { dosage: '10 mg' });
 
     expect(next.medicationName).toBe('Amlodipine');
-    expect(next.frequency).toBe('once_daily');
-    expect(next.timeOfDay).toEqual(['Morning']);
+    expect(next.scheduleType).toBe('daily');
+    expect(next.specificTimes).toEqual(['08:00']);
     expect(next.patientId).toBe(patientId);
     expect(next.dosage).toBe('10 mg');
+  });
+
+  // -------------------------------------------------------------------------
+  // New schedule model: add tests
+  // -------------------------------------------------------------------------
+
+  it('addMedication stores daily specific-times schedule correctly', async () => {
+    const patientId = `patient-daily-times-${Date.now()}`;
+    const med = await mock.addMedication({
+      patientId,
+      medicationName: 'Amoxicillin',
+      dosage: '500 mg',
+      startDate: '2025-06-01',
+      scheduleType: 'daily',
+      specificTimes: ['08:00', '20:00'],
+    });
+
+    expect(med.scheduleType).toBe('daily');
+    expect(med.specificTimes).toEqual(['08:00', '20:00']);
+    expect(med.intervalHours).toBeNull();
+  });
+
+  it('addMedication stores daily interval schedule correctly', async () => {
+    const patientId = `patient-daily-interval-${Date.now()}`;
+    const med = await mock.addMedication({
+      patientId,
+      medicationName: 'Ibuprofen',
+      dosage: '400 mg',
+      startDate: '2025-06-01',
+      scheduleType: 'daily',
+      intervalHours: 6,
+      specificTimes: ['08:00'],
+    });
+
+    expect(med.scheduleType).toBe('daily');
+    expect(med.intervalHours).toBe(6);
+    expect(med.specificTimes).toEqual(['08:00']);
+  });
+
+  it('addMedication stores weekly schedule correctly', async () => {
+    const patientId = `patient-weekly-${Date.now()}`;
+    const med = await mock.addMedication({
+      patientId,
+      medicationName: 'Vitamin D',
+      dosage: '1000 units',
+      startDate: '2025-06-01',
+      scheduleType: 'weekly',
+      daysOfWeek: [1, 4],
+      specificTimes: ['09:00'],
+    });
+
+    expect(med.scheduleType).toBe('weekly');
+    expect(med.daysOfWeek).toEqual([1, 4]);
+    expect(med.specificTimes).toEqual(['09:00']);
+  });
+
+  it('addMedication stores monthly schedule correctly', async () => {
+    const patientId = `patient-monthly-${Date.now()}`;
+    const med = await mock.addMedication({
+      patientId,
+      medicationName: 'B12 Injection',
+      dosage: '1000 mcg',
+      startDate: '2025-06-01',
+      scheduleType: 'monthly',
+      dayOfMonth: 15,
+      specificTimes: ['10:00'],
+    });
+
+    expect(med.scheduleType).toBe('monthly');
+    expect(med.dayOfMonth).toBe(15);
+    expect(med.specificTimes).toEqual(['10:00']);
+  });
+
+  it('addMedication stores as-needed schedule with no times', async () => {
+    const patientId = `patient-as-needed-${Date.now()}`;
+    const med = await mock.addMedication({
+      patientId,
+      medicationName: 'Salbutamol',
+      dosage: '100 mcg',
+      startDate: '2025-06-01',
+      scheduleType: 'as_needed',
+    });
+
+    expect(med.scheduleType).toBe('as_needed');
+    expect(med.specificTimes).toBeNull();
+    expect(med.intervalHours).toBeNull();
+  });
+
+  it('editMedication can update schedule fields', async () => {
+    const patientId = `patient-edit-schedule-${Date.now()}`;
+    const original = await mock.addMedication({
+      ...BASE_PAYLOAD,
+      patientId,
+      scheduleType: 'daily',
+      specificTimes: ['08:00'],
+    });
+
+    const next = await mock.editMedication(original.id, {
+      scheduleType: 'weekly',
+      daysOfWeek: [1, 3, 5],
+      specificTimes: ['07:00'],
+      intervalHours: null,
+    });
+
+    expect(next.scheduleType).toBe('weekly');
+    expect(next.daysOfWeek).toEqual([1, 3, 5]);
+    expect(next.specificTimes).toEqual(['07:00']);
+    expect(next.intervalHours).toBeNull();
+  });
+
+  it('payload sent to onSubmit contains new schedule fields (duplicate warning flow)', async () => {
+    const patientId = `patient-dup-flow-${Date.now()}`;
+    await mock.addMedication({ ...BASE_PAYLOAD, patientId, medicationName: 'Warfarin' });
+
+    const isDup = await mock.checkDuplicateName(patientId, 'Warfarin');
+    expect(isDup).toBe(true);
+
+    // Simulates "Add anyway": adding despite duplicate returns the medication
+    const added = await mock.addMedication({
+      patientId,
+      medicationName: 'Warfarin',
+      dosage: '2 mg',
+      startDate: '2025-06-01',
+      scheduleType: 'daily',
+      specificTimes: ['18:00'],
+    });
+
+    expect(added.scheduleType).toBe('daily');
+    expect(added.specificTimes).toEqual(['18:00']);
+    const results = await mock.getMedicationsByPatient(patientId);
+    expect(results.filter((m) => m.medicationName === 'Warfarin')).toHaveLength(2);
   });
 });

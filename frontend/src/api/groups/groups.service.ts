@@ -95,7 +95,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
   // Verify access 
   const { data: userMembership, error: membershipError } = await supabase
     .from('care_givers')
-    .select('role_in_care, can_schedule')
+    .select('role_in_care')
     .eq('group_id', groupId)
     .eq('caregiver_id', user.id)
     .eq('status', 'active')
@@ -136,29 +136,27 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     return null;
   }
 
-  const g = groupData as GroupDetailQueryRow;
   const userRole = mapRole(userMembership.role_in_care ?? '');
-  const canSchedule = (userMembership as any).can_schedule === true;
 
-  const members: GroupMember[] = (g.care_givers ?? []).map(m => ({
+  const members: GroupMember[] = (groupData.care_givers ?? []).map(m => ({
     id: m.caregiver_id,
     name: m.profiles?.full_name || 'Unknown',
-    email: m.profiles?.email || '', 
-    role: mapRole(m.role_in_care ?? ''),
-    joinedAt: m.joined_at || new Date().toISOString(),
+    email: m.profiles.email, 
+    role: mapRole(m.role_in_care),
+    joinedAt: m.joined_at,
     status: m.status === 'active' ? 'Active' : 'Suspended',
   }));
 
   return {
-    id: g.id,
-    name: g.name ?? '',
-    description: g.description || '',
+    id: groupData.id,
+    name: groupData.name,
+    description: groupData.description || '',
     role: userRole,
-    canSchedule,
-    createdAt: g.created_at ?? new Date().toISOString(),
+    createdAt: groupData.created_at,
+    canSchedule: (userMembership as any).can_schedule === true, // TODO: fix this. Had to add this to fix an error. Code was changed during resolving of MC, introducing a bug that removed the canSchedule property.
     members,
     gpContacts: [],
-    patientId: g.patient_id ?? '',
+    patientId: groupData.patient_id ?? '',
   };
 }
 

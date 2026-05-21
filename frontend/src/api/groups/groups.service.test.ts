@@ -1,4 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+
+vi.mock('axios', () => ({
+  default: {
+    post: vi.fn(),
+    isAxiosError: vi.fn(() => false),
+  },
+}));
 
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
@@ -37,6 +44,7 @@ vi.mock('./groups.service', async (importOriginal) => {
   };
 });
 
+import axios from 'axios';
 import { supabase } from '../../lib/supabaseClient';
 import {
   addGPContact,
@@ -48,6 +56,11 @@ import {
 } from './groups.service';
 
 describe('groups service', () => {
+  beforeEach(() => {
+    vi.mocked(axios.post).mockReset();
+    vi.mocked(axios.isAxiosError).mockReturnValue(false);
+  });
+
   it('returns group summaries', async () => {
     const groups = await getGroups();
 
@@ -90,13 +103,14 @@ describe('groups service', () => {
       },
       error: null,
     } as unknown as Awaited<ReturnType<typeof supabase.rpc>>);
-    vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-      data: { success: true },
-      error: null,
-    });
+    vi.mocked(axios.post).mockResolvedValueOnce({ data: { ok: true } });
 
     await expect(
-      inviteMember({ groupId: 'group-care-001', email: 'John@Example.com' }),
+      inviteMember({
+        groupId: 'group-care-001',
+        email: 'John@Example.com',
+        groupName: "Dad's Circle",
+      }),
     ).resolves.toMatchObject({
       inviteId: 'invite-uuid-mock',
       groupId: 'group-care-001',
@@ -109,12 +123,18 @@ describe('groups service', () => {
       p_invite_type: 'care_group',
     });
 
-    expect(supabase.functions.invoke).toHaveBeenCalledWith('smooth-endpoint', {
-      body: {
-        id: 'invite-uuid-mock',
+    expect(axios.post).toHaveBeenCalledWith(
+      expect.stringContaining('/api/invites/group/send-email'),
+      {
+        inviteId: 'invite-uuid-mock',
+        groupId: 'group-care-001',
         email: 'john@example.com',
+        groupName: "Dad's Circle",
       },
-    });
+      expect.objectContaining({
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
   });
 
   it('throws when the invite email cannot be sent', async () => {
@@ -126,13 +146,22 @@ describe('groups service', () => {
       },
       error: null,
     } as unknown as Awaited<ReturnType<typeof supabase.rpc>>);
+
     vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
       data: { success: false, error: 'Resend rejected the request' },
       error: null,
     });
+    vi.mocked(axios.isAxiosError).mockReturnValue(true);
+    vi.mocked(axios.post).mockRejectedValueOnce({
+      response: { data: { message: 'Resend rejected the request' } },
+    });
 
     await expect(
-      inviteMember({ groupId: 'group-care-001', email: 'John@Example.com' }),
+      inviteMember({
+        groupId: 'group-care-001',
+        email: 'John@Example.com',
+        groupName: 'Test',
+      }),
     ).rejects.toThrow('Resend rejected the request');
   });
 

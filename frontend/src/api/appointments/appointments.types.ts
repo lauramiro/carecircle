@@ -15,6 +15,8 @@ export interface Appointment {
   createdBy: string | null;
   createdAt: string | null;
   updatedAt: string | null;
+  /** Minutes before appointment to send reminders, e.g. [1440, 60] = 24 h + 1 h. Empty array = no reminders. */
+  reminderOffsets: number[];
 }
 
 export interface AddAppointmentPayload {
@@ -25,6 +27,7 @@ export interface AddAppointmentPayload {
   specialistName?: string;
   location?: string;
   preVisitNotes?: string;
+  reminderOffsets?: number[];
 }
 
 export interface EditAppointmentPayload {
@@ -35,4 +38,5 @@ export interface EditAppointmentPayload {
   location?: string | null;
   preVisitNotes?: string | null;
   postVisitNotes?: string | null;
+  reminderOffsets?: number[];
 }

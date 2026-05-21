@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Bell, ChevronDown, CircleUserRound, HeartPulse, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePushNotifications } from '../../hooks/usePushNotifications';
 import { dashboardNavItems } from '../../config/nav.config';
 import {
   DROPDOWN_VARIANTS,
@@ -227,6 +228,7 @@ function useDashboardNavigationHistory(location: DashboardLocationSnapshot) {
 
 export default function DashboardLayout() {
   const { session, signOut } = useAuth();
+  usePushNotifications();
   const location = useLocation();
   const navigate = useNavigate();
   const locationSnapshot = useMemo(

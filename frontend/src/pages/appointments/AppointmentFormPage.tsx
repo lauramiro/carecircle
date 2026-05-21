@@ -43,6 +43,8 @@ export default function AppointmentFormPage() {
   const [location, setLocation] = useState('');
   const [preVisitNotes, setPreVisitNotes] = useState('');
   const [postVisitNotes, setPostVisitNotes] = useState('');
+  const [remind24h, setRemind24h] = useState(true);
+  const [remind1h, setRemind1h] = useState(true);
   const [errors, setErrors] = useState<FormErrors>({});
   const [initialized, setInitialized] = useState(false);
 
@@ -57,6 +59,8 @@ export default function AppointmentFormPage() {
     setLocation(existing.location ?? '');
     setPreVisitNotes(existing.preVisitNotes ?? '');
     setPostVisitNotes(existing.postVisitNotes ?? '');
+    setRemind24h(existing.reminderOffsets.includes(1440));
+    setRemind1h(existing.reminderOffsets.includes(60));
     setInitialized(true);
   }, [existing, isEdit, initialized]);
 
@@ -95,6 +99,10 @@ export default function AppointmentFormPage() {
     if (!validate()) return;
 
     const startTime = toISOFromInputs(date, time);
+    const reminderOffsets = [
+      ...(remind24h ? [1440] : []),
+      ...(remind1h ? [60] : []),
+    ];
 
     try {
       if (isEdit && existing) {
@@ -105,6 +113,7 @@ export default function AppointmentFormPage() {
           specialistName: specialistName.trim() || null,
           location: location.trim() || null,
           preVisitNotes: preVisitNotes.trim() || null,
+          reminderOffsets,
         };
         if (appointmentIsPast) {
           changes.postVisitNotes = postVisitNotes.trim() || null;
@@ -120,6 +129,7 @@ export default function AppointmentFormPage() {
           specialistName: specialistName.trim() || undefined,
           location: location.trim() || undefined,
           preVisitNotes: preVisitNotes.trim() || undefined,
+          reminderOffsets,
         };
         await addAppointment(payload);
         toast.success('Appointment created');
@@ -272,6 +282,33 @@ export default function AppointmentFormPage() {
                   style={{ ...inputStyle, resize: 'vertical' }}
                 />
               </div>
+
+              {/* Reminders */}
+              {!appointmentIsPast && (
+                <div>
+                  <label style={labelStyle}>Reminders</label>
+                  <div className="flex flex-col gap-2">
+                    {([
+                      { key: '24h', label: '24 hours before', checked: remind24h, onChange: setRemind24h },
+                      { key: '1h',  label: '1 hour before',   checked: remind1h,  onChange: setRemind1h  },
+                    ] as const).map(({ key, label, checked, onChange }) => (
+                      <label
+                        key={key}
+                        className="flex items-center gap-2 cursor-pointer select-none text-sm"
+                        style={{ color: 'var(--color-text-primary)' }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={e => onChange(e.target.checked)}
+                          style={{ accentColor: 'var(--color-primary)', width: 15, height: 15 }}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Post-visit notes — unlocked only after appointment date has passed */}
               {appointmentIsPast && (

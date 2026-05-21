@@ -4,6 +4,7 @@ import { applyApiPrefix } from './bootstrap/api-prefix';
 import { applyValidationPipe } from './bootstrap/validation-pipe';
 import { AppConfigService } from './config/app-config.service';
 import { buildCorsOptions } from './config/cors.config';
+import { startAppointmentReminderJob } from './lib/appointment_reminders';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,5 +16,7 @@ async function bootstrap() {
   applyValidationPipe(app);
 
   await app.listen(config.PORT);
+
+  startAppointmentReminderJob();
 }
 void bootstrap();

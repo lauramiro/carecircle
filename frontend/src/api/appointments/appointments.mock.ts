@@ -13,6 +13,7 @@ function makeAppt(
     createdBy: 'member-1',
     createdAt: '2026-05-01T08:00:00.000Z',
     updatedAt: '2026-05-01T08:00:00.000Z',
+    reminderOffsets: [1440, 60],
     ...overrides,
   };
 }
@@ -89,6 +90,7 @@ export async function addAppointment(payload: AddAppointmentPayload): Promise<Ap
     createdBy: null,
     createdAt: now,
     updatedAt: now,
+    reminderOffsets: payload.reminderOffsets ?? [1440, 60],
   };
   mockAppointments.push(appt);
   return delay({ ...appt });
@@ -105,6 +107,7 @@ export async function editAppointment(id: string, changes: EditAppointmentPayloa
   if (changes.location !== undefined) appt.location = changes.location;
   if (changes.preVisitNotes !== undefined) appt.preVisitNotes = changes.preVisitNotes;
   if (changes.postVisitNotes !== undefined) appt.postVisitNotes = changes.postVisitNotes;
+  if (changes.reminderOffsets !== undefined) appt.reminderOffsets = changes.reminderOffsets;
   appt.updatedAt = new Date().toISOString();
 
   return delay({ ...appt });

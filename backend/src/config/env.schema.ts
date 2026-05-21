@@ -16,6 +16,12 @@ export const appConfigSchema = z.object({
   MAIL_FROM: z.string().min(1).optional(),
   /** Optional display name for the From header. */
   MAIL_FROM_NAME: z.string().min(1).optional(),
+  /** VAPID public key for Web Push (generate with: npx web-push generate-vapid-keys). */
+  VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+  /** VAPID signing key for Web Push (the private key from generate-vapid-keys output). */
+  VAPID_SECRET: z.string().min(1).optional(),
+  /** VAPID subject: a mailto: or https: URI identifying the sender. */
+  VAPID_SUBJECT: z.string().min(1).optional(),
 });
 
 export type AppConfig = z.infer<typeof appConfigSchema>;

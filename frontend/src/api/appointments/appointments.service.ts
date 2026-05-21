@@ -23,6 +23,7 @@ function fromRow(row: Record<string, unknown>): Appointment {
     createdBy: (row.created_by as string) ?? null,
     createdAt: (row.created_at as string) ?? null,
     updatedAt: (row.updated_at as string) ?? null,
+    reminderOffsets: (row.reminder_offsets as number[] | null) ?? [1440, 60],
   };
 }
 
@@ -53,6 +54,7 @@ export async function addAppointment(payload: AddAppointmentPayload): Promise<Ap
       provider_name: payload.specialistName ?? null,
       location: payload.location ?? null,
       notes: payload.preVisitNotes ?? null,
+      reminder_offsets: payload.reminderOffsets ?? [1440, 60],
       status: 'scheduled',
       created_by: user.id,
     })
@@ -75,6 +77,7 @@ export async function editAppointment(id: string, changes: EditAppointmentPayloa
   if (changes.location !== undefined) update.location = changes.location;
   if (changes.preVisitNotes !== undefined) update.notes = changes.preVisitNotes;
   if (changes.postVisitNotes !== undefined) update.post_appointment_notes = changes.postVisitNotes;
+  if (changes.reminderOffsets !== undefined) update.reminder_offsets = changes.reminderOffsets;
 
   const { data, error } = await supabase
     .from('appointments')

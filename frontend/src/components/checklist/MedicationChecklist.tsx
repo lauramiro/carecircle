@@ -25,32 +25,64 @@ export default function MedicationChecklist({ checklistId, userRole }: Medicatio
   const summary = summarizeChecklist(items);
   const itemsByWindow = groupItemsByWindow(items);
 
-  useEffect(() => {
-    async function loadChecklist() {
-      const { data, error } = await supabase
-        .from('checklist_items')
-        .select('*')
-        .eq('checklist_id', checklistId);
-      if (error) {
-        toast.error('Failed to load checklist.');
-      } else {
-        setInitialItems((data || []) as unknown as ChecklistItem[]);
-      }
-    }
-    loadChecklist();
-  }, [checklistId]);
-
-  function toggleSection(id: string) {
+  // Toggle a time window section open/closed
+  function toggleSection(windowId: string) {
     setExpandedSections((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
+      if (next.has(windowId)) {
+        next.delete(windowId);
       } else {
-        next.add(id);
+        next.add(windowId);
       }
       return next;
     });
   }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadChecklist(retryCount = 0) {
+      const { data, error } = await supabase
+        .from('checklist_items')
+        .select('*')
+        .eq('checklist_id', checklistId);
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error('[MedicationChecklist] Failed to load checklist:', error);
+        toast.error('Failed to load checklist.');
+        return;
+      }
+
+      const items = (data || []) as unknown as ChecklistItem[];
+
+      console.log('[MedicationChecklist] Loaded items:', items.length);
+
+      // If no items yet, retry a few times to allow createChecklistItems() to finish
+      if (items.length === 0 && retryCount < 5) {
+        console.log(
+          `[MedicationChecklist] No items found, retrying (${retryCount + 1}/5)...`
+        );
+
+        setTimeout(() => {
+          if (!cancelled) {
+            loadChecklist(retryCount + 1);
+          }
+        }, 500);
+
+        return;
+      }
+
+      setInitialItems(items);
+    }
+
+    loadChecklist();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [checklistId]);
 
   return (
     <section>

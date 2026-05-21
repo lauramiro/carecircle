@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { CalendarDays, Users, ClipboardList } from 'lucide-react';
-
+import { CalendarDays, Hash, HeartPulse, Users, ClipboardList } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
 import GPContactSection from '../../components/groups/GPContactSection';
@@ -211,18 +210,7 @@ export default function GroupDetailPage() {
           >
             Appointments
           </motion.button>
-          <motion.button
-            type="button"
-            onClick={() => navigate(`/groups/${currentGroup.id}/appointments`)}
-            className="h-10 rounded-lg border px-4 text-sm font-bold"
-            style={{
-              borderColor: 'var(--color-border)',
-              color: 'var(--color-text-secondary)',
-            }}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          >
-            Appointments
-          </motion.button>
+
           <motion.button
             type="button"
             onClick={() => navigate(`/groups/${currentGroup.id}/medications`)}

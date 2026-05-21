@@ -57,11 +57,15 @@ export async function getMedicationsByPatient(patientId: string): Promise<Medica
 export async function addMedication(payload: AddMedicationPayload): Promise<Medication> {
   // Cast needed until Supabase types are regenerated after the schema migration.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [doseStr, unit] = payload.dosage.split(' ');
+  const dose = parseFloat(doseStr);
+
   const { data, error } = await (supabase.from('medications') as any)
     .insert({
       patient_id: payload.patientId,
       medication_name: payload.medicationName,
-      dosage: payload.dosage,
+      dose,
+      unit,
       start_date: payload.startDate,
       schedule_type: payload.scheduleType,
       specific_times: payload.specificTimes ?? null,

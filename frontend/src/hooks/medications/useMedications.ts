@@ -16,6 +16,12 @@ export function useMedications(patientId: string) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!patientId) {
+      setMedications([]);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     void (async () => {

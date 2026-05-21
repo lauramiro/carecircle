@@ -210,7 +210,6 @@ export default function GroupDetailPage() {
           >
             Appointments
           </motion.button>
-
           <motion.button
             type="button"
             onClick={() => navigate(`/groups/${currentGroup.id}/medications`)}

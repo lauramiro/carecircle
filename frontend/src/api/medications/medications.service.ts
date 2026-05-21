@@ -1,3 +1,4 @@
+import type { Json } from '@lib/database.types';
 import { supabase } from '@lib/supabaseClient';
 import { parseDosageString } from '@lib/dosage';
 import { normalizeTime } from '@lib/time';
@@ -74,7 +75,7 @@ export async function addMedication(payload: AddMedicationPayload): Promise<Medi
 }
 
 export async function editMedication(id: string, changes: EditMedicationPayload): Promise<Medication> {
-  const rpcChanges: Record<string, unknown> = {};
+  const rpcChanges: Record<string, Json> = {};
   if (changes.medicationName !== undefined) rpcChanges.medication_name = changes.medicationName;
   if (changes.dosage !== undefined) {
     const { dose, unit } = parseDosageString(changes.dosage);

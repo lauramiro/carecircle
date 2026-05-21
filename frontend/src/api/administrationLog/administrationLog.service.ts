@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabaseClient';
-import { CHECKLIST_PROOF_BUCKET } from '../../constants/checklistStorage.constants';
+import { CHECKLIST_PROOF_BUCKET } from '@components/checklist/medicationChecklist.constants';
 import type { AdministrationLogEvent, AdministrationLogStatus } from './administrationLog.types';
 import {
   formatMedicationDoseLine,

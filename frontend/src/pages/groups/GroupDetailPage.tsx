@@ -37,7 +37,6 @@ export default function GroupDetailPage() {
     removeGP,
   } = useGPContacts(groupId ?? '', group?.gpContacts ?? []);
   const shouldReduceMotion = useReducedMotion();
-  const navigate = useNavigate();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [managedMembers, setManagedMembers] = useState<{
     groupId: string;

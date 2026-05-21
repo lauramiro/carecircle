@@ -147,7 +147,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     canSchedule,
     members,
     gpContacts: [],
-    patientId: groupData.patient_id,
+    patientId: groupData.patient_id ?? '',
   };
 }
 

@@ -1,11 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { fetchAdministrationLogEvents } from '../../api/administrationLog/administrationLog.service';
 import type { AdministrationLogEvent } from '../../api/administrationLog/administrationLog.types';
 import AdministrationLogRow from '../../components/administrationLog/AdministrationLogRow';
 import AdministrationLogEventModal from '../../components/administrationLog/AdministrationLogEventModal';
+import AdministrationLogFiltersBar from '../../components/administrationLog/AdministrationLogFiltersBar';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
+import {
+  defaultAdministrationLogFilters,
+  filterAdministrationLogEvents,
+  type AdministrationLogFiltersState,
+} from '../../utils/administrationLog.filters.utils';
 
 export default function AdministrationLogPage() {
   const { groupId } = useParams();
@@ -13,6 +19,17 @@ export default function AdministrationLogPage() {
   const [events, setEvents] = useState<AdministrationLogEvent[]>([]);
   const [loadingLog, setLoadingLog] = useState(true);
   const [selected, setSelected] = useState<AdministrationLogEvent | null>(null);
+  const [filters, setFilters] = useState<AdministrationLogFiltersState>(() =>
+    defaultAdministrationLogFilters(),
+  );
+
+  const filteredEvents = useMemo(
+    () => filterAdministrationLogEvents(events, filters),
+    [events, filters],
+  );
+
+  const carerOptions = useMemo(() => events.map((e) => e.carerName), [events]);
+  const medicationOptions = useMemo(() => events.map((e) => e.medicationName), [events]);
 
   useEffect(() => {
     if (!groupId || !group?.patientId) {
@@ -102,56 +119,75 @@ export default function AdministrationLogPage() {
           No medication events recorded yet for this care circle.
         </p>
       ) : (
-        <div
-          className="mt-6 overflow-hidden rounded-xl border bg-white"
-          style={{ borderColor: 'var(--color-border)' }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-              <thead>
-                <tr
-                  className="border-b text-[11px] uppercase tracking-wide"
-                  style={{
-                    borderColor: 'var(--color-border)',
-                    color: 'var(--color-text-hint)',
-                  }}
-                >
-                  <th className="w-12 px-3 py-2 font-bold" scope="col">
-                    <span className="sr-only">Photo</span>
-                  </th>
-                  <th className="px-3 py-2 font-bold" scope="col">
-                    Medication
-                  </th>
-                  <th className="px-3 py-2 font-bold" scope="col">
-                    Dose
-                  </th>
-                  <th className="px-3 py-2 font-bold" scope="col">
-                    Carer
-                  </th>
-                  <th className="px-3 py-2 font-bold" scope="col">
-                    Time
-                  </th>
-                  <th className="px-3 py-2 text-right font-bold" scope="col">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.map((event) => {
-                  const localTimestampLabel = new Date(event.occurredAtIso).toLocaleString();
-                  return (
-                    <AdministrationLogRow
-                      key={event.id}
-                      event={event}
-                      localTimestampLabel={localTimestampLabel}
-                      onOpen={() => setSelected(event)}
-                    />
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <>
+          <AdministrationLogFiltersBar
+            filters={filters}
+            onChange={setFilters}
+            carerOptions={carerOptions}
+            medicationOptions={medicationOptions}
+          />
+
+          {filteredEvents.length === 0 ? (
+            <p
+              className="mt-6 rounded-xl border bg-white p-6 text-sm"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+            >
+              No events match your filters. Adjust the filters above or use &quot;Clear filters&quot; to see the full
+              log.
+            </p>
+          ) : (
+            <div
+              className="mt-6 overflow-hidden rounded-xl border bg-white"
+              style={{ borderColor: 'var(--color-border)' }}
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                  <thead>
+                    <tr
+                      className="border-b text-[11px] uppercase tracking-wide"
+                      style={{
+                        borderColor: 'var(--color-border)',
+                        color: 'var(--color-text-hint)',
+                      }}
+                    >
+                      <th className="w-12 px-3 py-2 font-bold" scope="col">
+                        <span className="sr-only">Photo</span>
+                      </th>
+                      <th className="px-3 py-2 font-bold" scope="col">
+                        Medication
+                      </th>
+                      <th className="px-3 py-2 font-bold" scope="col">
+                        Dose
+                      </th>
+                      <th className="px-3 py-2 font-bold" scope="col">
+                        Carer
+                      </th>
+                      <th className="px-3 py-2 font-bold" scope="col">
+                        Time
+                      </th>
+                      <th className="px-3 py-2 text-right font-bold" scope="col">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredEvents.map((event) => {
+                      const localTimestampLabel = new Date(event.occurredAtIso).toLocaleString();
+                      return (
+                        <AdministrationLogRow
+                          key={event.id}
+                          event={event}
+                          localTimestampLabel={localTimestampLabel}
+                          onOpen={() => setSelected(event)}
+                        />
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <AdministrationLogEventModal

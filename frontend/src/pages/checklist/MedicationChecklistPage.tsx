@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, Link, useParams } from 'react-router-dom';
 import MedicationChecklist from '../../components/checklist/MedicationChecklist';
 import DateNavigation from '../../components/checklist/DateNavigation';
-import { fetchDailyChecklistId } from '../../api/checklist/dailyChecklist.service';
+import { getOrCreateDailyChecklistId, populateChecklistItems } from '../../api/checklist/dailyChecklist.service';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 
 function toLocalDateString(d: Date): string {
@@ -35,11 +35,21 @@ export default function MedicationChecklistPage() {
       setResolvingChecklist(true);
       const dateStr = toLocalDateString(selectedDate);
 
-      const id = await fetchDailyChecklistId({
+      const id = await getOrCreateDailyChecklistId({
         patientId: group.patientId,
         groupId,
         checklistDate: dateStr,
       });
+
+      // If we have a checklist, ensure its items exist before showing it
+      if (id) {
+        await populateChecklistItems({
+          checklistId: id,
+          patientId: group.patientId,
+          checklistDate: dateStr,
+        });
+      }
+
       if (!active) return;
       setChecklistId(id);
       setResolvingChecklist(false);
@@ -49,6 +59,8 @@ export default function MedicationChecklistPage() {
       active = false;
     };
   }, [group?.patientId, groupId, selectedDate]);
+
+  // ... rest of the component stays exactly the same ...
 
   if (!groupId) {
     return <Navigate to="/groups/list" replace />;

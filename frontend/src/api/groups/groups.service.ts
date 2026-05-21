@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { INVITE_TYPES } from '../../services/inviteService';
 import { supabase } from '../../lib/supabaseClient';
 import * as groupsMock from './groups.mock';
@@ -24,9 +23,21 @@ type GroupListQueryRow = {
   };
 };
 
-type CareGiverMembershipRow = {
+type GroupDetailMemberRow = {
+  caregiver_id: string;
   role_in_care: string | null;
-  can_schedule: boolean | null;
+  status: string;
+  joined_at: string;
+  profiles: { full_name: string | null; email: string | null } | null;
+};
+
+type GroupDetailQueryRow = {
+  id: string;
+  name: string | null;
+  description: string | null;
+  patient_id: string | null;
+  created_at: string | null;
+  care_givers: GroupDetailMemberRow[] | null;
 };
 
 export function mapRole(role: string): GroupRole {
@@ -84,7 +95,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
   // Verify access 
   const { data: userMembership, error: membershipError } = await supabase
     .from('care_givers')
-    .select('role_in_care, can_schedule')
+    .select('role_in_care')
     .eq('group_id', groupId)
     .eq('caregiver_id', user.id)
     .eq('status', 'active')
@@ -96,8 +107,6 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     }
     return null;
   }
-
-  const membership = userMembership as CareGiverMembershipRow;
 
   // Fetch group details and all members
   const { data: groupData, error: groupError } = await supabase
@@ -127,13 +136,12 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     return null;
   }
 
-  const userRole = mapRole(membership.role_in_care ?? '');
-  const canSchedule = membership.can_schedule === true;
+  const userRole = mapRole(userMembership.role_in_care ?? '');
 
   const members: GroupMember[] = (groupData.care_givers ?? []).map(m => ({
     id: m.caregiver_id,
     name: m.profiles?.full_name || 'Unknown',
-    email: m.profiles.email,
+    email: m.profiles.email, 
     role: mapRole(m.role_in_care),
     joinedAt: m.joined_at,
     status: m.status === 'active' ? 'Active' : 'Suspended',
@@ -142,13 +150,13 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
   return {
     id: groupData.id,
     name: groupData.name,
-    description: groupData.description ?? '',
+    description: groupData.description || '',
     role: userRole,
-    createdAt: groupData.created_at ?? new Date().toISOString(),
-    canSchedule,
+    createdAt: groupData.created_at,
+    canSchedule: (userMembership as any).can_schedule === true, // TODO: fix this. Had to add this to fix an error. Code was changed during resolving of MC, introducing a bug that removed the canSchedule property.
     members,
     gpContacts: [],
-    patientId: groupData.patient_id,
+    patientId: groupData.patient_id ?? '',
   };
 }
 
@@ -168,61 +176,34 @@ function parseCreateGroupInviteRow(data: unknown): InviteResult | null {
   };
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000').replace(
-  /\/$/,
-  '',
-);
+const GROUP_INVITE_EMAIL_FUNCTION = import.meta.env.VITE_GROUP_INVITE_EMAIL_FUNCTION || 'smooth-endpoint';
 
-async function sendGroupInviteEmail(invite: InviteResult, groupName: string): Promise<void> {
-  try {
-    await axios.post(
-      `${apiBaseUrl}/api/invites/group/send-email`,
-      {
-        inviteId: invite.inviteId,
-        groupId: invite.groupId,
-        email: invite.email,
-        groupName: groupName.trim(),
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    );
-  } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      const data = err.response?.data;
-      const messageFromBody =
-        typeof data === 'object' &&
-        data !== null &&
-        'message' in data &&
-        Array.isArray((data as { message?: unknown }).message)
-          ? String((data as { message: string[] }).message[0])
-          : typeof data === 'object' &&
-              data !== null &&
-              'message' in data &&
-              typeof (data as { message?: unknown }).message === 'string'
-            ? String((data as { message: string }).message)
-            : null;
-      console.error('sendGroupInviteEmail:', err.response?.data ?? err.message);
-      throw new Error(messageFromBody || 'Invite created, but email could not be sent', {
-        cause: err,
-      });
-    }
-    console.error('sendGroupInviteEmail:', err);
-    throw new Error('Invite created, but email could not be sent', { cause: err });
+async function sendGroupInviteEmail(invite: InviteResult): Promise<void> {
+  const { data, error } = await supabase.functions.invoke(GROUP_INVITE_EMAIL_FUNCTION, {
+    body: {
+      id: invite.inviteId,
+      email: invite.email,
+    },
+  });
+
+  if (error) {
+    console.error('sendGroupInviteEmail:', error);
+    throw new Error('Invite created, but email could not be sent');
+  }
+
+  if (!data || typeof data !== 'object' || (data as { success?: unknown }).success !== true) {
+    const result = data as { error?: unknown } | null;
+    const message = (result && typeof result.error === 'string')
+      ? result.error
+      : 'Invite created, but email could not be sent';
+    throw new Error(message);
   }
 }
-
 
 export async function inviteMember(payload: InvitePayload): Promise<InviteResult> {
   const email = payload.email.trim().toLowerCase();
   if (!email) {
     throw new Error('Email is required');
-  }
-  const groupName = payload.groupName.trim();
-  if (!groupName) {
-    throw new Error('Group name is required');
   }
 
   const { data, error } = await supabase.rpc('create_group_invite', {
@@ -241,7 +222,7 @@ export async function inviteMember(payload: InvitePayload): Promise<InviteResult
     throw new Error('Unable to send invite');
   }
 
-  await sendGroupInviteEmail(parsed, groupName);
+  await sendGroupInviteEmail(parsed);
 
   return parsed;
 }

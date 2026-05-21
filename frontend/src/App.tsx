@@ -16,6 +16,8 @@ import MedicationsSchedulePage from './pages/medications/MedicationsSchedulePage
 import MedicationChecklistPage from './pages/checklist/MedicationChecklistPage';
 import AppointmentsPage from './pages/appointments/AppointmentsPage';
 import AppointmentFormPage from './pages/appointments/AppointmentFormPage';
+import AiQaPage from './pages/ai/AiQaPage';
+import AiQaTestPage from './pages/ai/AiQaTestPage';
 
 function App() {
   const { session, loading } = useAuth();
@@ -67,10 +69,12 @@ function App() {
           <Route path="groups/:groupId/appointments" element={<AppointmentsPage />} />
           <Route path="groups/:groupId/appointments/new" element={<AppointmentFormPage />} />
           <Route path="groups/:groupId/appointments/:appointmentId/edit" element={<AppointmentFormPage />} />
+          <Route path="groups/:groupId/ai-assistant" element={<AiQaTestPage />} />
         </Route>
         <Route
           path="*"
           element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />}
+        
         />
       </Routes>
     </BrowserRouter>

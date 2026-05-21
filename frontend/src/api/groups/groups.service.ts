@@ -81,7 +81,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
-  // Verify access 
+  // Verify access
   const { data: userMembership, error: membershipError } = await supabase
     .from('care_givers')
     .select('role_in_care, can_schedule')
@@ -99,7 +99,6 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
 
   const membership = userMembership as CareGiverMembershipRow;
 
-  // Fetch group details and all members
   const { data: groupData, error: groupError } = await supabase
     .from('care_group')
     .select(`
@@ -127,7 +126,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     return null;
   }
 
-  const userRole = mapRole(membership.role_in_care ?? '');
+  const userRole = mapRole(membership.role_in_care);
   const canSchedule = membership.can_schedule === true;
 
   const members: GroupMember[] = (groupData.care_givers ?? []).map(m => ({

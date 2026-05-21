@@ -6,6 +6,7 @@ import { useMedicationForm } from '../../hooks/medications/useMedicationForm';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { getSchedulePreview } from '../../utils/formatMedicationSchedule';
 import MedicationScheduleFields from './MedicationScheduleFields';
+import MedicationAdditionalFields from './MedicationAdditionalFields';
 
 interface AddMedicationFormProps {
   patientId: string;
@@ -271,6 +272,14 @@ export default function AddMedicationForm({
             </p>
           )}
         </div>
+
+        <MedicationAdditionalFields
+          formId={formId}
+          values={values}
+          errors={errors}
+          updateField={updateField}
+          touchField={touchField}
+        />
       </div>
 
       {!duplicateWarning && (

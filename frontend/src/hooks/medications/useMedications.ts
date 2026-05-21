@@ -25,7 +25,13 @@ export function useMedications(patientId: string) {
     let cancelled = false;
 
     void (async () => {
-      await Promise.resolve();
+      if (!patientId) {
+        setMedications([]);
+        setLoading(false);
+        setError(null);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {

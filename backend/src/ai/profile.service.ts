@@ -8,7 +8,7 @@ export class ProfileService {
    * Fetches the full care profile for a patient.
    * Re-fetched on every request — never cached.
    */
-  async getCareProfile(patientId: string): Promise<CareProfileContext> {
+  async getCareProfile(groupId: string): Promise<CareProfileContext> {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const sevenDaysAgoStr = sevenDaysAgo.toISOString();
@@ -16,13 +16,15 @@ export class ProfileService {
     // Fetch patient base info
     const { data: patient, error: patientError } = await supabase
       .from('patients')
-      .select('full_name, date_of_birth, chronic_conditions, allergies')
-      .eq('id', patientId)
+      .select('id, full_name, date_of_birth, chronic_conditions, allergies')
+      .eq('group_id', groupId)
       .single();
 
     if (patientError || !patient) {
-      throw new Error('Patient not found');
+      throw new Error(`Patient not found for group ${groupId}`);
     }
+
+    const patientId = patient.id;
 
     // Fetch active medications
     const { data: medications } = await supabase

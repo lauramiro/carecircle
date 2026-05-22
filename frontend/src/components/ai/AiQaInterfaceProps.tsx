@@ -7,7 +7,7 @@ import LoadingIndicator from './LoadingIndicator';
 import type { ConversationMessage } from './types';
 
 interface AiQaInterfaceProps {
-  patientId: string;
+  groupId: string;
 }
 
 // ========== MOCK RESPONSE FUNCTION ==========
@@ -30,11 +30,12 @@ async function mockAiResponse(question: string, _patientId: string): Promise<{ a
 }
 // ============================================
 
-export default function AiQaInterface({ patientId }: AiQaInterfaceProps) {
+export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function AiQaInterface({ patientId }: AiQaInterfaceProps) {
 
       if (useMock) {
         // ---------- MOCK MODE ----------
-        const { answer, latencyMs } = await mockAiResponse(question, patientId);
+        const { answer, latencyMs } = await mockAiResponse(question, groupId);
         const aiMessage: ConversationMessage = {
           id: `ai-${Date.now()}`,
           type: 'answer',
@@ -75,12 +76,12 @@ export default function AiQaInterface({ patientId }: AiQaInterfaceProps) {
         // ------------------------------
       } else {
         // ---------- REAL BACKEND (currently commented out) ----------
-         const response = await fetch('/api/ai/qa/test', {
+         const response = await fetch('/api/ai/qa', {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify({
              question: question.trim(),
-             patientId,
+             groupId,
            }),
          });
          if (!response.ok) {

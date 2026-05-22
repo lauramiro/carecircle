@@ -69,7 +69,7 @@ function App() {
           <Route path="groups/:groupId/appointments" element={<AppointmentsPage />} />
           <Route path="groups/:groupId/appointments/new" element={<AppointmentFormPage />} />
           <Route path="groups/:groupId/appointments/:appointmentId/edit" element={<AppointmentFormPage />} />
-          <Route path="groups/:groupId/ai-assistant" element={<AiQaTestPage />} />
+          <Route path="groups/:groupId/ai-assistant" element={<AiQaPage />} />
         </Route>
         <Route
           path="*"

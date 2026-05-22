@@ -84,6 +84,7 @@ export default function GroupDetailPage() {
   }
 
   const currentGroup = group;
+  console.log('Group object:', currentGroup);
   const members =
     managedMembers?.groupId === currentGroup.id
       ? managedMembers.members
@@ -129,6 +130,7 @@ export default function GroupDetailPage() {
       setManagedMembers({
         groupId: currentGroup.id,
         members: members.filter((member) => member.id !== pendingAction.member.id),
+
       });
       toast.success(`${pendingAction.member.name} removed from group`);
     }
@@ -165,6 +167,7 @@ export default function GroupDetailPage() {
   }
 
   const confirmationCopy = getConfirmationCopy(pendingAction);
+  
 
   return (
     <section>
@@ -253,9 +256,12 @@ export default function GroupDetailPage() {
             </motion.button>
           )}
         </div>
+        
         <motion.button
           type="button"
-          onClick={() => navigate(`/groups/${currentGroup.id}/ai-assistant`)}
+           onClick={() => {
+             console.log('AI Assistant clicked. groupId:', groupId, 'patientId:', group.patientId);
+             navigate(`/groups/${groupId}/ai-assistant`, { state: { groupId } }); }}
           className="h-10 rounded-lg border px-4 text-sm font-bold"
           style={{
             borderColor: 'var(--color-primary)',

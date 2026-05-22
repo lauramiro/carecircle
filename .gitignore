@@ -22,5 +22,6 @@ backend/dist/
 Thumbs.db
 
 # Local agent configuration
+.cursor/.env
 *.docx
 

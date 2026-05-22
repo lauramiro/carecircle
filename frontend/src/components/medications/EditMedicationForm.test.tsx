@@ -54,6 +54,21 @@ describe('EditMedicationForm', () => {
     vi.clearAllMocks();
   });
 
+  it('shows additional detail fields expanded for editing', () => {
+    render(
+      <EditMedicationForm
+        initialValues={makeMed()}
+        isSubmitting={false}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText(/instructions/i)).toBeInTheDocument();
+    expect(screen.getByText('Additional details')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Pharmacy name')).toBeInTheDocument();
+  });
+
   it('pre-populates all fields from the initial medication', () => {
     render(
       <EditMedicationForm

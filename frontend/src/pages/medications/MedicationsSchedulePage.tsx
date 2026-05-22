@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import MedicationDetailsModal from '../../components/medications/MedicationDetailsModal';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { useMedications } from '../../hooks/medications/useMedications';
 import { formatMedicationSchedule, getMedicationTimesToday } from '../../utils/formatMedicationSchedule';
@@ -8,8 +9,9 @@ import type { Medication } from '../../api/medications/medications.types';
 export default function MedicationsSchedulePage() {
   const { groupId } = useParams();
   const navigate = useNavigate();
-  const { group, loading: groupLoading } = useGroupDetail(groupId);
+  const { group, loading: groupLoading, error: groupError } = useGroupDetail(groupId);
   const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
+  const [detailsMed, setDetailsMed] = useState<Medication | null>(null);
   const patientId = group?.patientId ?? '';
   const { medications, loading: medsLoading, isSubmitting, pauseMedication, activateMedication, archiveMedication } =
     useMedications(patientId);
@@ -31,6 +33,24 @@ export default function MedicationsSchedulePage() {
   }
 
   if (!group) return <Navigate to="/groups/list" replace />;
+
+  if (groupError) {
+    return (
+      <section>
+        <h1 className="text-2xl font-extrabold">Medication Schedule</h1>
+        <div
+          className="mt-6 rounded-xl border p-6 text-sm"
+          style={{
+            borderColor: 'var(--color-status-critical)',
+            backgroundColor: 'var(--color-status-critical-bg)',
+            color: 'var(--color-status-critical)',
+          }}
+        >
+          {groupError}
+        </div>
+      </section>
+    );
+  }
 
   const isAdmin = group.role === 'Admin';
   const visibleMeds = medications.filter((m) => m.status === 'active' || m.status === 'paused');
@@ -206,49 +226,64 @@ export default function MedicationsSchedulePage() {
                       </p>
                     </div>
 
-                    {isAdmin && (
-                      <div className="flex shrink-0 gap-1">
-                        {med.status === 'active' && (
-                          <button
-                            type="button"
-                            disabled={isSubmitting}
-                            onClick={() => handleEdit(med)}
-                            className="rounded border px-2 py-1 text-xs font-bold"
-                            style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
-                          >
-                            Edit
-                          </button>
-                        )}
-                        {med.status === 'active' && (
-                          <button
-                            type="button"
-                            disabled={isSubmitting}
-                            onClick={() => void pauseMedication(med.id)}
-                            className="rounded border px-2 py-1 text-xs"
-                            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-                          >
-                            Pause
-                          </button>
-                        )}
-                        {med.status === 'paused' && (
-                          <button
-                            type="button"
-                            disabled={isSubmitting}
-                            onClick={() => void activateMedication(med.id)}
-                            className="rounded border px-2 py-1 text-xs"
-                            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-                          >
-                            Activate
-                          </button>
-                        )}
-                        {confirmArchiveId === med.id ? (
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setDetailsMed(med)}
+                        className="rounded border px-2 py-1 text-xs"
+                        style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                        aria-label={`View details for ${med.medicationName}`}
+                      >
+                        Info
+                      </button>
+                      {isAdmin && med.status === 'active' && (
+                        <button
+                          type="button"
+                          disabled={isSubmitting}
+                          onClick={() => handleEdit(med)}
+                          className="rounded border px-2 py-1 text-xs font-bold"
+                          style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {isAdmin && med.status === 'active' && (
+                        <button
+                          type="button"
+                          disabled={isSubmitting}
+                          onClick={() => void pauseMedication(med.id)}
+                          className="rounded border px-2 py-1 text-xs"
+                          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                        >
+                          Pause
+                        </button>
+                      )}
+                      {isAdmin && med.status === 'paused' && (
+                        <button
+                          type="button"
+                          disabled={isSubmitting}
+                          onClick={() => void activateMedication(med.id)}
+                          className="rounded border px-2 py-1 text-xs"
+                          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                        >
+                          Activate
+                        </button>
+                      )}
+                      {isAdmin &&
+                        (confirmArchiveId === med.id ? (
                           <>
                             <button
                               type="button"
                               disabled={isSubmitting}
-                              onClick={() => { void archiveMedication(med.id); setConfirmArchiveId(null); }}
+                              onClick={() => {
+                                void archiveMedication(med.id);
+                                setConfirmArchiveId(null);
+                              }}
                               className="rounded border px-2 py-1 text-xs font-bold"
-                              style={{ borderColor: 'var(--color-status-critical)', color: 'var(--color-status-critical)' }}
+                              style={{
+                                borderColor: 'var(--color-status-critical)',
+                                color: 'var(--color-status-critical)',
+                              }}
                             >
                               Confirm
                             </button>
@@ -271,9 +306,8 @@ export default function MedicationsSchedulePage() {
                           >
                             Archive
                           </button>
-                        )}
-                      </div>
-                    )}
+                        ))}
+                    </div>
                   </div>
                 </li>
               ))}
@@ -281,6 +315,12 @@ export default function MedicationsSchedulePage() {
           </div>
         </div>
       )}
+
+      <MedicationDetailsModal
+        medication={detailsMed}
+        open={detailsMed !== null}
+        onClose={() => setDetailsMed(null)}
+      />
     </section>
   );
 }

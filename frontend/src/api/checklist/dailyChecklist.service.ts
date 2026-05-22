@@ -1,88 +1,75 @@
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '@lib/supabaseClient';
+import type { Medication } from '@api/medications/medications.types';
+import { getMedicationsByPatient } from '@api/medications/medications.service';
+import {
+  computeDoseTimesForDate,
+  deriveWindowBounds,
+} from '@lib/medicationSchedule';
+import { rowToChecklistItem, type ChecklistItem } from '@lib/checklist';
+import { withDisplayStatus } from '@lib/checklistStatus';
+import { parseLocalDateString } from '@lib/dates';
+import { parseDosageString } from '@lib/dosage';
+import type { ChecklistItemInsert, ChecklistItemRow } from '@lib/supabaseTables';
 
-function dailyChecklistsTable() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (supabase as any).from('daily_medication_checklists');
+export { getCurrentCarerProfileId, markChecklistItemGiven, skipChecklistItem } from './checklistMutations.service';
+
+const TERMINAL_ITEM_STATUSES = new Set(['given', 'skipped']);
+
+type SyncItemRow = Pick<ChecklistItemRow, 'id' | 'medication_id' | 'scheduled_time' | 'status'>;
+
+function checklistSlotKey(medicationId: string, scheduledTime: string): string {
+  return `${medicationId}:${scheduledTime}`;
 }
 
-// ── Time window mapping (used by createChecklistItems) ──────────────
-const TIME_WINDOWS = [
-  { label: 'morning' as const,   start: '06:00', end: '11:59' },
-  { label: 'afternoon' as const, start: '12:00', end: '16:59' },
-  { label: 'evening' as const,   start: '17:00', end: '20:59' },
-  { label: 'night' as const,     start: '21:00', end: '05:59' },
-];
+function buildChecklistItemInsert(
+  med: Medication,
+  checklistId: string,
+  scheduledTime: string,
+): ChecklistItemInsert {
+  const { dose, unit } = parseDosageString(med.dosage);
+  const bounds = deriveWindowBounds(scheduledTime);
 
-function getTimeWindow(time: string) {
-  const [h, m] = time.split(':').map(Number);
-  const minutes = h * 60 + m;
-  if (minutes >= 21 * 60 || minutes < 6 * 60) return TIME_WINDOWS[3];
-  if (minutes >= 6 * 60 && minutes < 12 * 60) return TIME_WINDOWS[0];
-  if (minutes >= 12 * 60 && minutes < 17 * 60) return TIME_WINDOWS[1];
-  return TIME_WINDOWS[2];
+  return {
+    id: crypto.randomUUID(),
+    checklist_id: checklistId,
+    medication_id: med.id,
+    medication_name: med.medicationName,
+    dose,
+    dosage_unit: unit,
+    scheduled_time: scheduledTime,
+    time_of_day: scheduledTime,
+    window_start: bounds.window_start,
+    window_end: bounds.window_end,
+    status: 'due',
+  };
 }
 
-const DAY_NAMES = [
-  'SUNDAY',
-  'MONDAY',
-  'TUESDAY',
-  'WEDNESDAY',
-  'THURSDAY',
-  'FRIDAY',
-  'SATURDAY',
-];
-
-function getNumericDay(jsDay: number) {
-  return jsDay === 0 ? 7 : jsDay;
-}
-
-// ── Exported helpers ────────────────────────────────────────────────
-
-/**
- * Ensures a daily checklist row exists and returns its ID.
- * Pure lookup/create – does NOT populate items.
- */
 export async function getOrCreateDailyChecklistId(params: {
   patientId: string;
   groupId: string;
-  checklistDate: string; // YYYY-MM-DD
+  checklistDate: string;
 }): Promise<string | null> {
   const { patientId, groupId, checklistDate } = params;
-  const table = dailyChecklistsTable();
 
-  console.log('[getOrCreateDailyChecklistId] Starting', { patientId, groupId, checklistDate });
+  if (!patientId.trim()) {
+    throw new Error('patient_id is required to load or create a daily checklist.');
+  }
 
-  // 1. Try patient_id
-  const { data: byPatient, error: patientErr } = await table
+  const { data: existing, error: lookupErr } = await supabase
+    .from('daily_medication_checklists')
     .select('id')
     .eq('checklist_date', checklistDate)
     .eq('patient_id', patientId)
     .maybeSingle();
 
-  if (patientErr) {
-    console.error('[getOrCreateDailyChecklistId] patient_id lookup failed', patientErr);
-  } else if (byPatient?.id) {
-    console.log('[getOrCreateDailyChecklistId] Found by patient_id');
-    return byPatient.id;
+  if (lookupErr) {
+    throw new Error(lookupErr.message ?? 'Failed to look up daily checklist.');
   }
 
-  // 2. Try group_id
-  const { data: byGroup, error: groupErr } = await table
-    .select('id')
-    .eq('checklist_date', checklistDate)
-    .eq('group_id', groupId)
-    .maybeSingle();
+  if (existing?.id) return existing.id;
 
-  if (groupErr) {
-    console.error('[getOrCreateDailyChecklistId] group_id lookup failed', groupErr);
-  } else if (byGroup?.id) {
-    console.log('[getOrCreateDailyChecklistId] Found by group_id');
-    return byGroup.id;
-  }
-
-  // 3. Create new row
-  console.log('[getOrCreateDailyChecklistId] Creating new daily checklist');
-  const { data: created, error: insertErr } = await table
+  const { data: created, error: insertErr } = await supabase
+    .from('daily_medication_checklists')
     .insert({
       id: crypto.randomUUID(),
       patient_id: patientId,
@@ -94,122 +81,110 @@ export async function getOrCreateDailyChecklistId(params: {
     .single();
 
   if (insertErr) {
-    console.error('[getOrCreateDailyChecklistId] Create failed', insertErr);
-    return null;
+    throw new Error(insertErr.message ?? 'Failed to create daily checklist.');
   }
 
   return created.id;
 }
 
-/**
- * Populates checklist_items from active medications if none exist.
- */
-export async function populateChecklistItems(params: {
-  checklistId: string;
-  patientId: string;
-  checklistDate: string;
-}): Promise<void> {
-  const hasItems = await checklistHasItems(params.checklistId);
-  if (!hasItems) {
-    await createChecklistItems(params);
-  }
-}
-
-// ── Internal helpers ────────────────────────────────────────────────
-
-async function checklistHasItems(checklistId: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('checklist_items')
-    .select('id')
-    .eq('checklist_id', checklistId)
-    .limit(1);
-
-  if (error) {
-    console.error('[checklistHasItems] Error checking items', error);
-    return false;
-  }
-  return (data && data.length > 0) ? true : false;
-}
-
-async function createChecklistItems(params: {
+export async function syncChecklistItems(params: {
   checklistId: string;
   patientId: string;
   checklistDate: string;
 }): Promise<void> {
   const { checklistId, patientId, checklistDate } = params;
 
-  console.log('[createChecklistItems] Starting (medications source)', { checklistId, patientId, checklistDate });
+  if (!patientId.trim()) {
+    throw new Error('patient_id is required to sync checklist items.');
+  }
 
-  const date = new Date(`${checklistDate}T00:00:00`);
-  const jsDay = date.getDay();
-  const numericDay = getNumericDay(jsDay);
+  const date = parseLocalDateString(checklistDate);
+  const activeMeds = (await getMedicationsByPatient(patientId)).filter((m) => m.status === 'active');
 
-  const { data: meds, error: medsErr } = await supabase
-    .from('medications')
+  const { data: existingRows, error: existingErr } = await supabase
+    .from('checklist_items')
+    .select('id, medication_id, scheduled_time, status')
+    .eq('checklist_id', checklistId);
+
+  if (existingErr) {
+    throw new Error(existingErr.message ?? 'Failed to load checklist items for sync.');
+  }
+
+  const rows = (existingRows ?? []) as SyncItemRow[];
+  const expectedKeys = new Set<string>();
+
+  for (const med of activeMeds) {
+    for (const scheduledTime of computeDoseTimesForDate(med, date)) {
+      expectedKeys.add(checklistSlotKey(med.id, scheduledTime));
+    }
+  }
+
+  const existingKeys = new Set(
+    rows.map((row) => checklistSlotKey(row.medication_id, row.scheduled_time ?? '')),
+  );
+
+  const staleIds = rows
+    .filter((row) => {
+      if (TERMINAL_ITEM_STATUSES.has(row.status)) return false;
+      return !expectedKeys.has(checklistSlotKey(row.medication_id, row.scheduled_time ?? ''));
+    })
+    .map((row) => row.id);
+
+  if (staleIds.length > 0) {
+    const { error: deleteErr } = await supabase.from('checklist_items').delete().in('id', staleIds);
+    if (deleteErr) {
+      throw new Error(deleteErr.message ?? 'Failed to remove stale checklist items.');
+    }
+  }
+
+  const toInsert: ChecklistItemInsert[] = [];
+
+  for (const med of activeMeds) {
+    for (const scheduledTime of computeDoseTimesForDate(med, date)) {
+      if (existingKeys.has(checklistSlotKey(med.id, scheduledTime))) continue;
+      toInsert.push(buildChecklistItemInsert(med, checklistId, scheduledTime));
+    }
+  }
+
+  if (toInsert.length === 0) return;
+
+  const { error: insertErr } = await supabase.from('checklist_items').insert(toInsert);
+  if (insertErr) {
+    throw new Error(insertErr.message ?? 'Failed to insert checklist items.');
+  }
+}
+
+export async function fetchChecklistItems(
+  checklistId: string,
+  checklistDate: string,
+): Promise<ChecklistItem[]> {
+  const { data, error } = await supabase
+    .from('checklist_items')
     .select('*')
-    .eq('patient_id', patientId)
-    .eq('status', 'active')
-    .lte('start_date', checklistDate)
-    .or(`end_date.is.null,end_date.gte.${checklistDate}`);
+    .eq('checklist_id', checklistId);
 
-  if (medsErr) {
-    console.error('[createChecklistItems] Fetch medications failed', medsErr);
-    return;
+  if (error) throw new Error(error.message);
+
+  const now = new Date();
+  return (data ?? []).map((row) => withDisplayStatus(rowToChecklistItem(row), checklistDate, now));
+}
+
+export async function loadDailyChecklist(params: {
+  patientId: string;
+  groupId: string;
+  checklistDate: string;
+}): Promise<{ checklistId: string | null; items: ChecklistItem[] }> {
+  const checklistId = await getOrCreateDailyChecklistId(params);
+  if (!checklistId) {
+    return { checklistId: null, items: [] };
   }
 
-  if (!meds || meds.length === 0) {
-    console.warn('[createChecklistItems] No active medications found');
-    return;
-  }
-
-  const todayMeds = meds.filter((med: any) => {
-    const st = med.schedule_type;
-    if (!st || st === 'as_needed') return false;
-    if (st === 'daily') return true;
-    if (st === 'weekly') {
-      const days: number[] = med.days_of_week || [];
-      return days.includes(numericDay);
-    }
-    if (st === 'biweekly') return true;
-    if (st === 'monthly') {
-      return med.day_of_month === date.getDate();
-    }
-    return false;
+  await syncChecklistItems({
+    checklistId,
+    patientId: params.patientId,
+    checklistDate: params.checklistDate,
   });
 
-  if (todayMeds.length === 0) {
-    console.log('[createChecklistItems] No medications scheduled for today');
-    return;
-  }
-
-  const items: any[] = [];
-  for (const med of todayMeds) {
-    const times: string[] = med.specific_times || [];
-    if (times.length === 0) continue;
-    for (const time of times) {
-      const window = getTimeWindow(time);
-      items.push({
-        id: crypto.randomUUID(),
-        checklist_id: checklistId,
-        medication_id: med.id,
-        time_of_day: window.label,
-        window_start: window.start,
-        window_end: window.end,
-        status: 'due',
-      });
-    }
-  }
-
-  if (items.length === 0) {
-    console.warn('[createChecklistItems] No times to create items from');
-    return;
-  }
-
-  const { error: insertErr } = await supabase.from('checklist_items').insert(items);
-  if (insertErr) {
-    console.error('[createChecklistItems] Insert failed', insertErr);
-    return;
-  }
-
-  console.log(`[createChecklistItems] Successfully created ${items.length} checklist item(s)`);
+  const items = await fetchChecklistItems(checklistId, params.checklistDate);
+  return { checklistId, items };
 }

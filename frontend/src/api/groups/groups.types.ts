@@ -26,6 +26,7 @@ export interface Group {
   createdAt: string;
   members: GroupMember[];
   gpContacts: GPContact[];
+  /** Care recipient / patient this circle manages — used for medication & log queries */
   patientId: string;
 }
 

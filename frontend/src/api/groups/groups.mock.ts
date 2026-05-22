@@ -3,6 +3,7 @@ import type { GPContact, Group, GroupSummary } from './groups.types';
 const mockGroups: Group[] = [
   {
     id: 'group-care-001',
+    patientId: 'patient-mock-001',
     name: 'Dad Care Circle',
     description: 'Daily support and medication coordination for Dad.',
     role: 'Admin',
@@ -31,6 +32,7 @@ const mockGroups: Group[] = [
   },
   {
     id: 'group-care-002',
+    patientId: 'patient-mock-002',
     name: 'Mum Recovery Team',
     description: 'Post-surgery care planning and appointment tracking.',
     role: 'Member',
@@ -54,6 +56,7 @@ const mockGroups: Group[] = [
   },
   {
     id: 'group-care-003',
+    patientId: 'patient-mock-003',
     name: 'Grandpa Wellness',
     description: 'Weekly wellness checks and shared notes for Grandpa.',
     role: 'Admin',
@@ -68,6 +71,7 @@ const mockGroups: Group[] = [
   },
   {
     id: 'group-care-004',
+    patientId: 'patient-mock-004',
     name: 'Aunt May Support',
     description: 'Care shift coordination for Aunt May and her neighbours.',
     role: 'Member',
@@ -85,6 +89,7 @@ const mockGroups: Group[] = [
   },
   {
     id: 'group-care-005',
+    patientId: 'patient-mock-005',
     name: 'Medication Helpers',
     description: 'Shared medication reminders across the family.',
     role: 'Admin',

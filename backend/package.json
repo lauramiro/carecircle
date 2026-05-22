@@ -20,6 +20,7 @@
     "test:e2e": "vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
@@ -31,7 +32,9 @@
     "class-validator": "^0.15.1",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
+    "groq-sdk": "^1.2.0",
     "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.7",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "winston": "^3.19.0",
@@ -45,6 +48,7 @@
     "@nestjs/testing": "^11.0.1",
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
+    "@types/nodemailer": "^8.0.0",
     "@types/supertest": "^7.0.0",
     "@vitest/coverage-v8": "^4.1.5",
     "eslint": "^9.18.0",

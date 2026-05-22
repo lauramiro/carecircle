@@ -1,23 +1,37 @@
-import { useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Pill } from 'lucide-react';
 import AddMedicationForm from '../../components/medications/AddMedicationForm';
 import EditMedicationForm from '../../components/medications/EditMedicationForm';
+import MedicationDetailsModal from '../../components/medications/MedicationDetailsModal';
 import { useMedications } from '../../hooks/medications/useMedications';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import type { AddMedicationPayload, EditMedicationPayload, Medication } from '../../api/medications/medications.types';
-
-import { FREQUENCY_LABELS } from '../../api/medications/medications.types';
+import { formatMedicationSchedule } from '../../utils/formatMedicationSchedule';
 
 export default function AddMedicationPage() {
   const { groupId } = useParams();
   const navigate = useNavigate();
-  const { group, loading: groupLoading } = useGroupDetail(groupId);
+  const { group, loading: groupLoading, error: groupError } = useGroupDetail(groupId);
   const patientId = group?.patientId ?? '';
   const { medications, loading: medsLoading, isSubmitting, addMedication, editMedication, pauseMedication, activateMedication, archiveMedication } =
     useMedications(patientId);
+  const location = useLocation();
   const [editingMed, setEditingMed] = useState<Medication | null>(null);
+  const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
+  const [detailsMed, setDetailsMed] = useState<Medication | null>(null);
+
+  // Pre-select a medication for editing when navigated here from the schedule page
+  useEffect(() => {
+    const editingMedId = (location.state as { editingMedId?: string } | null)?.editingMedId;
+    if (editingMedId && medications.length > 0) {
+      const target = medications.find((m) => m.id === editingMedId) ?? null;
+      setEditingMed(target);
+      // Clear state so a refresh doesn't re-trigger
+      window.history.replaceState({}, '');
+    }
+  }, [location.state, medications]);
 
   if (!groupId) return <Navigate to="/groups/list" replace />;
 
@@ -37,6 +51,24 @@ export default function AddMedicationPage() {
 
   if (!group) {
     return <Navigate to="/groups/list" replace />;
+  }
+
+  if (groupError) {
+    return (
+      <section>
+        <h1 className="text-2xl font-extrabold">Add Medication</h1>
+        <div
+          className="mt-6 rounded-xl border p-6 text-sm"
+          style={{
+            borderColor: 'var(--color-status-critical)',
+            backgroundColor: 'var(--color-status-critical-bg)',
+            color: 'var(--color-status-critical)',
+          }}
+        >
+          {groupError}
+        </div>
+      </section>
+    );
   }
 
   async function handleAdd(payload: AddMedicationPayload) {
@@ -145,13 +177,19 @@ export default function AddMedicationPage() {
                           )}
                         </div>
                         <p style={{ color: 'var(--color-text-secondary)' }}>
-                          {med.dosage} &middot; {FREQUENCY_LABELS[med.frequency]}
-                        </p>
-                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-hint)' }}>
-                          {(med.timeOfDay ?? []).join(', ')}
+                          {med.dosage} &middot; {formatMedicationSchedule(med)}
                         </p>
                       </div>
                       <div className="flex flex-col gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setDetailsMed(med)}
+                          className="text-xs px-2 py-0.5 rounded border"
+                          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                          aria-label={`View details for ${med.medicationName}`}
+                        >
+                          Info
+                        </button>
                         {med.status === 'active' && (
                           <button
                             type="button"
@@ -185,15 +223,37 @@ export default function AddMedicationPage() {
                             Activate
                           </button>
                         )}
-                        <button
-                          type="button"
-                          disabled={isSubmitting}
-                          onClick={() => void archiveMedication(med.id)}
-                          className="text-xs px-2 py-0.5 rounded border"
-                          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-                        >
-                          Archive
-                        </button>
+                        {confirmArchiveId === med.id ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled={isSubmitting}
+                              onClick={() => { void archiveMedication(med.id); setConfirmArchiveId(null); }}
+                              className="text-xs px-2 py-0.5 rounded border font-bold"
+                              style={{ borderColor: 'var(--color-status-critical)', color: 'var(--color-status-critical)' }}
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmArchiveId(null)}
+                              className="text-xs px-2 py-0.5 rounded border"
+                              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={isSubmitting}
+                            onClick={() => setConfirmArchiveId(med.id)}
+                            className="text-xs px-2 py-0.5 rounded border"
+                            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                          >
+                            Archive
+                          </button>
+                        )}
                       </div>
                     </div>
                   </li>
@@ -203,6 +263,12 @@ export default function AddMedicationPage() {
           </div>
         </aside>
       </div>
+
+      <MedicationDetailsModal
+        medication={detailsMed}
+        open={detailsMed !== null}
+        onClose={() => setDetailsMed(null)}
+      />
     </section>
   );
 }

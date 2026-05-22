@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { CalendarDays, Users, ClipboardList, NotebookText } from 'lucide-react';
-
+import { CalendarDays,  Hash, HeartPulse, Users, ClipboardList, NotebookText } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
 import GPContactSection from '../../components/groups/GPContactSection';
@@ -28,6 +27,7 @@ type PendingMemberAction =
 
 export default function GroupDetailPage() {
   const { groupId } = useParams();
+  const navigate = useNavigate();
   const { group, loading, error } = useGroupDetail(groupId);
   const {
     contacts: gpContacts,
@@ -37,7 +37,6 @@ export default function GroupDetailPage() {
     removeGP,
   } = useGPContacts(groupId ?? '', group?.gpContacts ?? []);
   const shouldReduceMotion = useReducedMotion();
-  const navigate = useNavigate();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [managedMembers, setManagedMembers] = useState<{
     groupId: string;
@@ -85,6 +84,7 @@ export default function GroupDetailPage() {
   }
 
   const currentGroup = group;
+  console.log('Group object:', currentGroup);
   const members =
     managedMembers?.groupId === currentGroup.id
       ? managedMembers.members
@@ -130,6 +130,7 @@ export default function GroupDetailPage() {
       setManagedMembers({
         groupId: currentGroup.id,
         members: members.filter((member) => member.id !== pendingAction.member.id),
+
       });
       toast.success(`${pendingAction.member.name} removed from group`);
     }
@@ -166,6 +167,7 @@ export default function GroupDetailPage() {
   }
 
   const confirmationCopy = getConfirmationCopy(pendingAction);
+  
 
   return (
     <section>
@@ -187,7 +189,16 @@ export default function GroupDetailPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <motion.button
+            type="button"
+            onClick={() => navigate(`/groups/${currentGroup.id}/administration-log`)}
+            className="h-10 rounded-lg border px-4 text-sm font-bold"
+            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+          >
+            Administration log
+          </motion.button>
           <motion.button
             type="button"
             onClick={() => navigate(`/groups/${currentGroup.id}/journal`)}
@@ -210,6 +221,18 @@ export default function GroupDetailPage() {
             whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
           >
             Daily checklist
+          </motion.button>
+          <motion.button
+            type="button"
+            onClick={() => navigate(`/groups/${currentGroup.id}/appointments`)}
+            className="h-10 rounded-lg border px-4 text-sm font-bold"
+            style={{
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text-secondary)',
+            }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+          >
+            Appointments
           </motion.button>
           <motion.button
             type="button"
@@ -254,6 +277,21 @@ export default function GroupDetailPage() {
             </motion.button>
           )}
         </div>
+        
+        <motion.button
+          type="button"
+           onClick={() => {
+             console.log('AI Assistant clicked. groupId:', groupId, 'patientId:', group.patientId);
+             navigate(`/groups/${groupId}/ai-assistant`, { state: { groupId } }); }}
+          className="h-10 rounded-lg border px-4 text-sm font-bold"
+          style={{
+            borderColor: 'var(--color-primary)',
+            color: 'var(--color-primary)',
+          }}
+          whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+          >
+            🤖 AI Assistant
+          </motion.button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -352,6 +390,7 @@ export default function GroupDetailPage() {
 
       <InviteMemberModal
         groupId={currentGroup.id}
+        groupName={currentGroup.name}
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
       />

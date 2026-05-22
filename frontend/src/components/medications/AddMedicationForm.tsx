@@ -1,13 +1,12 @@
 import { type FormEvent, useId, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AddMedicationPayload } from '../../api/medications/medications.types';
-import {
-  FREQUENCY_LABELS,
-  TIME_WINDOWS,
-} from '../../api/medications/medications.types';
 import { checkDuplicateName } from '../../api/medications/medications.service';
 import { useMedicationForm } from '../../hooks/medications/useMedicationForm';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { getSchedulePreview } from '../../utils/formatMedicationSchedule';
+import MedicationScheduleFields from './MedicationScheduleFields';
+import MedicationAdditionalFields from './MedicationAdditionalFields';
 
 interface AddMedicationFormProps {
   patientId: string;
@@ -26,8 +25,21 @@ export default function AddMedicationForm({
 }: AddMedicationFormProps) {
   const formId = useId();
   const shouldReduceMotion = useReducedMotion();
-  const { values, errors, updateField, toggleTimeWindow, touchField, validateForm, toPayload, reset } =
-    useMedicationForm();
+  const {
+    values,
+    errors,
+    updateField,
+    setScheduleType,
+    setDailyMode,
+    setSpecificTime,
+    addSpecificTime,
+    removeSpecificTime,
+    toggleDayOfWeek,
+    touchField,
+    validateForm,
+    toPayload,
+    reset,
+  } = useMedicationForm();
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [awaitingDuplicateConfirm, setAwaitingDuplicateConfirm] = useState(false);
 
@@ -79,8 +91,8 @@ export default function AddMedicationForm({
           >
             <p className="font-bold">Duplicate medication</p>
             <p className="mt-1">
-              A medication named <strong>{duplicateWarning}</strong> already exists for
-              this patient. Are you sure you want to add another?
+              A medication named <strong>{duplicateWarning}</strong> already exists for this
+              patient. Are you sure you want to add another?
             </p>
             <div className="mt-3 flex gap-2">
               <button
@@ -208,105 +220,66 @@ export default function AddMedicationForm({
         </div>
 
         <div className="md:col-span-2">
+          <MedicationScheduleFields
+            formId={formId}
+            values={values}
+            errors={errors}
+            setScheduleType={setScheduleType}
+            setDailyMode={setDailyMode}
+            updateField={updateField}
+            setSpecificTime={setSpecificTime}
+            addSpecificTime={addSpecificTime}
+            removeSpecificTime={removeSpecificTime}
+            toggleDayOfWeek={toggleDayOfWeek}
+            touchField={touchField}
+          />
+          {(() => {
+            const preview = getSchedulePreview(values);
+            return preview ? (
+              <p className="mt-3 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                Schedule: <span style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>{preview}</span>
+              </p>
+            ) : null;
+          })()}
+        </div>
+
+        <div className="md:col-span-2">
           <label
-            htmlFor={`${formId}-frequency`}
+            htmlFor={`${formId}-start-date`}
             className="text-xs font-bold"
             style={{ color: 'var(--color-text-secondary)' }}
           >
-            Frequency <span style={{ color: 'var(--color-status-critical)' }}>*</span>
+            Start date <span style={{ color: 'var(--color-status-critical)' }}>*</span>
           </label>
-          <select
-            id={`${formId}-frequency`}
-            value={values.frequency}
-            onChange={(e) =>
-              updateField('frequency', e.target.value as typeof values.frequency)
-            }
-            onBlur={() => touchField('frequency')}
-            aria-invalid={Boolean(errors.frequency)}
-            aria-describedby={
-              errors.frequency ? `${formId}-frequency-error` : undefined
-            }
+          <input
+            id={`${formId}-start-date`}
+            type="date"
+            value={values.startDate}
+            onChange={(e) => updateField('startDate', e.target.value)}
+            onBlur={() => touchField('startDate')}
+            aria-invalid={Boolean(errors.startDate)}
+            aria-describedby={errors.startDate ? `${formId}-start-date-error` : undefined}
             className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-            style={fieldStyle(Boolean(errors.frequency))}
-          >
-            <option value="">Select frequency</option>
-            {(Object.entries(FREQUENCY_LABELS) as [string, string][]).map(
-              ([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ),
-            )}
-          </select>
-          {errors.frequency && (
+            style={fieldStyle(Boolean(errors.startDate))}
+          />
+          {errors.startDate && (
             <p
-              id={`${formId}-frequency-error`}
+              id={`${formId}-start-date-error`}
               className="mt-1 text-xs"
               style={{ color: 'var(--color-status-critical)' }}
             >
-              {errors.frequency}
+              {errors.startDate}
             </p>
           )}
         </div>
 
-        <div className="md:col-span-2">
-          <fieldset>
-            <legend
-              className="text-xs font-bold"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              Time windows{' '}
-              <span style={{ color: 'var(--color-status-critical)' }}>*</span>
-            </legend>
-            <div
-              className="mt-2 flex flex-wrap gap-2"
-              role="group"
-              aria-describedby={
-                errors.timeWindows ? `${formId}-timewindows-error` : undefined
-              }
-            >
-              {TIME_WINDOWS.map((window) => {
-                const checked = values.timeWindows.includes(window);
-                return (
-                  <label
-                    key={window}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold select-none"
-                    style={{
-                      borderColor: checked
-                        ? 'var(--color-primary)'
-                        : errors.timeWindows
-                          ? 'var(--color-status-critical)'
-                          : 'var(--color-border)',
-                      backgroundColor: checked
-                        ? 'var(--color-primary-light, #eff6ff)'
-                        : 'white',
-                      color: checked
-                        ? 'var(--color-primary)'
-                        : 'var(--color-text-secondary)',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={checked}
-                      onChange={() => toggleTimeWindow(window)}
-                    />
-                    {window}
-                  </label>
-                );
-              })}
-            </div>
-            {errors.timeWindows && (
-              <p
-                id={`${formId}-timewindows-error`}
-                className="mt-1 text-xs"
-                style={{ color: 'var(--color-status-critical)' }}
-              >
-                {errors.timeWindows}
-              </p>
-            )}
-          </fieldset>
-        </div>
+        <MedicationAdditionalFields
+          formId={formId}
+          values={values}
+          errors={errors}
+          updateField={updateField}
+          touchField={touchField}
+        />
       </div>
 
       {!duplicateWarning && (

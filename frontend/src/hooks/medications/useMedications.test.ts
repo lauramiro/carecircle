@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AddMedicationPayload, Medication } from '../../api/medications/medications.types';
 import { useMedications } from './useMedications';
 
-vi.mock('../../api/medications/medications.mock', () => ({
+vi.mock('../../api/medications/medications.service', () => ({
   getMedicationsByPatient: vi.fn(),
   addMedication: vi.fn(),
   editMedication: vi.fn(),
@@ -19,7 +19,7 @@ import {
   pauseMedication as pauseMedicationService,
   activateMedication as activateMedicationService,
   archiveMedication as archiveMedicationService,
-} from '../../api/medications/medications.mock';
+} from '../../api/medications/medications.service';
 
 const mockGetMedications = vi.mocked(getMedicationsByPatient);
 const mockAdd = vi.mocked(addMedicationService);
@@ -39,9 +39,11 @@ function makeMed(overrides: Partial<Medication> = {}): Medication {
     prescribedBy: null,
     prescribedDate: null,
     prescriptionNumber: null,
-    frequency: 'once_daily',
-    timeOfDay: ['Morning'],
-    specificTimes: null,
+    scheduleType: 'daily',
+    specificTimes: ['08:00'],
+    intervalHours: null,
+    daysOfWeek: null,
+    dayOfMonth: null,
     instructions: null,
     route: null,
     takeWithFood: null,
@@ -67,8 +69,8 @@ const BASE_PAYLOAD: AddMedicationPayload = {
   patientId: 'patient-1',
   medicationName: 'Aspirin',
   dosage: '100 mg',
-  frequency: 'once_daily',
-  timeOfDay: ['Morning'],
+  scheduleType: 'daily',
+  specificTimes: ['08:00'],
   startDate: '2025-01-01',
 };
 
@@ -76,6 +78,17 @@ describe('useMedications', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetMedications.mockResolvedValue([]);
+  });
+
+  it('does not fetch when patientId is empty', async () => {
+    const { result } = renderHook(() => useMedications(''));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(mockGetMedications).not.toHaveBeenCalled();
+    expect(result.current.medications).toEqual([]);
   });
 
   it('loads medications on mount and clears loading state', async () => {

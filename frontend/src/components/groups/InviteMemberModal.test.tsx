@@ -25,7 +25,14 @@ vi.mock('react-toastify', () => ({
 }));
 
 function renderModal(onClose = vi.fn()) {
-  render(<InviteMemberModal groupId="group-care-001" open onClose={onClose} />);
+  render(
+    <InviteMemberModal
+      groupId="group-care-001"
+      groupName="Test Circle"
+      open
+      onClose={onClose}
+    />,
+  );
   return onClose;
 }
 

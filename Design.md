@@ -562,6 +562,48 @@ This section documents **every** RLS policy currently enforced in the CareCircle
 
 ---
 
+### 10. `handover_journal_entries`
+
+#### SELECT — "Group members can view handover journal entries"
+
+| Detail | Value |
+|:---|:---|
+| **Roles** | `public` |
+| **USING** | `EXISTS (SELECT 1 FROM care_givers cg WHERE cg.group_id = handover_journal_entries.group_id AND cg.caregiver_id = auth.uid() AND cg.status = 'active')` |
+
+**Allows:** Any active member of the care group can read every handover journal entry for that group. This satisfies the requirement that all family roles, including observers, can view the handover log.
+
+**Blocks:** Users who are not active members of the group cannot view that group's handover journal entries.
+
+---
+
+#### INSERT — "Carers can add handover journal entries"
+
+| Detail | Value |
+|:---|:---|
+| **Roles** | `public` |
+| **WITH CHECK** | `author_id = auth.uid() AND EXISTS (SELECT 1 FROM care_givers cg WHERE cg.group_id = handover_journal_entries.group_id AND cg.caregiver_id = auth.uid() AND cg.status = 'active' AND cg.role_in_care IN ('primary_carer'::member_role, 'secondary_carer'::member_role))` |
+
+**Allows:** Active primary and secondary carers can write their own handover journal entries for the group.
+
+**Blocks:** Observers cannot create handover journal entries, and no user can create an entry on behalf of another author.
+
+---
+
+#### UPDATE — "Authors can edit handover journal entries for 60 minutes"
+
+| Detail | Value |
+|:---|:---|
+| **Roles** | `public` |
+| **USING** | `author_id = auth.uid() AND created_at >= timezone('utc', now()) - interval '60 minutes'` |
+| **WITH CHECK** | *(same as USING)* |
+
+**Allows:** The original author of a handover journal entry can edit their own entry for up to 60 minutes after it was created.
+
+**Blocks:** Other members cannot edit someone else's entry, and authors lose edit access once the 60-minute window has expired.
+
+---
+
 ### Summary: Role Impact Across All Tables
 
 | Table | primary_carer | secondary_carer | observer |
@@ -572,6 +614,7 @@ This section documents **every** RLS policy currently enforced in the CareCircle
 | `patients` | SELECT, INSERT, UPDATE, DELETE | SELECT | SELECT |
 | `medications` | SELECT, INSERT | SELECT, INSERT | SELECT |
 | `daily_medication_checklists` | SELECT | — | — |
+| `handover_journal_entries` | SELECT, INSERT, UPDATE (own, 60 mins) | SELECT, INSERT, UPDATE (own, 60 mins) | SELECT |
 | `medication_confirmations` | SELECT, INSERT | SELECT, INSERT | SELECT, INSERT |
 | `invites` | SELECT (own), INSERT | SELECT (own), INSERT | SELECT (own), INSERT |
 | `messages` | SELECT (own) | SELECT (own) | SELECT (own) |

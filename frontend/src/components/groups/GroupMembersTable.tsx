@@ -1,7 +1,7 @@
-import { ROLE } from '@typings/role-enum';
 import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
 import { formatDate } from '../../utils/formatters';
-import { mapRole } from '@api/groups/groups.service';
+
+const MANAGEABLE_ROLES: GroupRole[] = ['Admin', 'Member', 'Observer'];
 
 interface GroupMembersTableProps {
   members: GroupMember[];
@@ -106,6 +106,9 @@ export default function GroupMembersTable({
                         color: 'var(--color-primary)',
                       }}
                     >
+                      {MANAGEABLE_ROLES.map((role) => (
+                        <option key={role} value={role}>{role}</option>
+                      ))}
                       {Object.values(ROLE).map((role) => <option key={role} value={role}>{mapRole(role)}</option>)}
                     </select>
                   ) : (

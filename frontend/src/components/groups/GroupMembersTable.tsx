@@ -109,7 +109,6 @@ export default function GroupMembersTable({
                       {MANAGEABLE_ROLES.map((role) => (
                         <option key={role} value={role}>{role}</option>
                       ))}
-                      {Object.values(ROLE).map((role) => <option key={role} value={role}>{mapRole(role)}</option>)}
                     </select>
                   ) : (
                     <span className="text-xs font-bold" style={{ color: 'var(--color-primary)' }}>

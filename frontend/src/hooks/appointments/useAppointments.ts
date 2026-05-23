@@ -5,7 +5,7 @@ import {
   deleteAppointment as deleteAppointmentService,
   editAppointment as editAppointmentService,
   getAppointmentsByPatient,
-} from '../../api/appointments/appointments.mock';
+} from '../../api/appointments/appointments.service';
 import type {
   AddAppointmentPayload,
   Appointment,

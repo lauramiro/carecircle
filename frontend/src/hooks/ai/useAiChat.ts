@@ -1,10 +1,6 @@
 import { sendChatMessage } from '../../api/ai/ai.service';
-import { sendChatMessageMock } from '../../api/ai/ai.mock';
 import type { ChatMessage } from '../../api/ai/ai.types';
 import { useState, useCallback } from 'react';
-
-const useMock = import.meta.env.VITE_USE_AI_MOCK === 'true';
-const sendMessage = useMock ? sendChatMessageMock : sendChatMessage;
 
 export function useAiChat(patientId: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -17,7 +13,7 @@ export function useAiChat(patientId: string) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await sendMessage(patientId, content, messages);
+      const response = await sendChatMessage(patientId, content, messages);
       const assistantMsg: ChatMessage = { role: 'assistant', content: response.reply, timestamp: new Date() };
       setMessages(prev => [...prev, assistantMsg]);
       return response.responseTimeMs;

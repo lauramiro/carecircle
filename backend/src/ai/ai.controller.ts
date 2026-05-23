@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Logger } from '@nestjs/common';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { Groq } from 'groq-sdk';
 import { AiService } from './ai.service';
@@ -17,6 +17,7 @@ export class AskQuestionDto {
 
 @Controller('ai')
 export class AiController {
+  private readonly logger = new Logger(AiController.name);
   constructor(
     private readonly aiService: AiService,
     private readonly appConfigService: AppConfigService,
@@ -25,6 +26,7 @@ export class AiController {
   // CC-109: Production endpoint (when I have real patient IDs)
   @Post('qa')
   async ask(@Body() dto: AskQuestionDto) {
+    this.logger.log(`askQuestion request received for groupId=${dto.groupId}`);
     return this.aiService.askQuestion(dto.question, dto.groupId);
   }
 }

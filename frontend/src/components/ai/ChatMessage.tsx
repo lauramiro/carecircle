@@ -1,4 +1,5 @@
 import { CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import MarkdownContent from './MarkDownContent';
 import type { ConversationMessage } from './types';
 
 interface ChatMessageProps {
@@ -57,7 +58,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
     );
   }
 
-  // Answer message
+  // Answer message - now with markdown rendering
   return (
     <div className="flex justify-start">
       <div
@@ -67,26 +68,26 @@ export default function ChatMessage({ message }: ChatMessageProps) {
           border: '1px solid var(--color-border)',
         }}
       >
-        <p
-          className="text-sm leading-relaxed"
+        {/* Use MarkdownContent instead of plain text */}
+        <div
           style={{
             color: 'var(--color-text-primary)',
             fontFamily: 'Plus Jakarta Sans, sans-serif',
+            fontSize: '14px',
+            lineHeight: '1.6',
           }}
         >
-          {message.content}
-        </p>
+          <MarkdownContent content={message.content} />
+        </div>
 
         {/* Metadata footer */}
         {message.latencyMs !== undefined && (
-          <div className="mt-2 flex items-center gap-2 text-xs">
+          <div className="mt-3 pt-3 border-t flex items-center gap-2 text-xs"
+            style={{ borderColor: 'var(--color-border)' }}>
             <Clock size={12} style={{ color: 'var(--color-text-hint)' }} />
             <span style={{ color: 'var(--color-text-hint)' }}>
               {message.latencyMs}ms
             </span>
-        
-              
-            )
           </div>
         )}
       </div>

@@ -6,6 +6,8 @@ import type { AdministrationLogEvent } from '../../api/administrationLog/adminis
 import AdministrationLogRow from '../../components/administrationLog/AdministrationLogRow';
 import AdministrationLogEventModal from '../../components/administrationLog/AdministrationLogEventModal';
 import AdministrationLogFiltersBar from '../../components/administrationLog/AdministrationLogFiltersBar';
+import PageHeader from '../../components/ui/PageHeader';
+import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import {
   defaultAdministrationLogFilters,
@@ -69,10 +71,8 @@ export default function AdministrationLogPage() {
   if (loading) {
     return (
       <section>
-        <h1 className="text-2xl font-extrabold">Medication administration log</h1>
-        <p className="mt-4 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          Loading…
-        </p>
+        <PageHeader title="Administration log" subtitle="Review recorded medication administrations and history." />
+        <LoadingPanel message="Loading group…" />
       </section>
     );
   }
@@ -80,31 +80,19 @@ export default function AdministrationLogPage() {
   if (error || !group) {
     return (
       <section>
-        <h1 className="text-2xl font-extrabold">Medication administration log</h1>
-        <p className="mt-4 text-sm" style={{ color: 'var(--color-status-critical)' }}>
-          {error ?? 'Group not found.'}
-        </p>
+        <PageHeader title="Administration log" subtitle="Review recorded medication administrations and history." />
+        <ErrorPanel message={error ?? 'Group not found.'} />
       </section>
     );
   }
 
   return (
     <section>
-      <h1
-        style={{
-          color: 'var(--color-text-primary)',
-          fontSize: '26px',
-          fontWeight: 800,
-          letterSpacing: '-0.03em',
-          margin: 0,
-        }}
-      >
-        Medication administration log
-      </h1>
-      <p className="mt-2 max-w-2xl text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-        {group.name} — read-only history of medications given, skipped, or marked overdue. Entries cannot be edited or
-        removed from this screen.
-      </p>
+      <PageHeader
+        eyebrow="Care group"
+        title="Administration log"
+        subtitle={`${group.name} — read-only history of medications given, skipped, or marked overdue.`}
+      />
 
       {!group.patientId ? (
         <p className="mt-6 text-sm" style={{ color: 'var(--color-text-hint)' }}>

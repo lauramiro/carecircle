@@ -1,9 +1,25 @@
 import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Bell, ChevronDown, CircleUserRound, HeartPulse, LogOut } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Bell,
+  ChevronDown,
+  CircleUserRound,
+  HeartPulse,
+  LogOut,
+  Menu,
+  X,
+} from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { dashboardNavItems } from '../../config/nav.config';
+import {
+  buildGroupNavPath,
+  dashboardNavItems,
+  getActiveGroupId,
+  groupContextNavItems,
+  isGroupContextNavActive,
+} from '../../config/nav.config';
 import {
   DROPDOWN_VARIANTS,
   PAGE_VARIANTS,
@@ -12,6 +28,8 @@ import {
   TRANSITIONS,
 } from '../../lib/animation.constants';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { usePushRegistration } from '../../hooks/usePushRegistration';
+import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 
 function getInitials(email?: string): string {
   if (!email) return 'CC';
@@ -26,7 +44,7 @@ function getNavLinkStyle(isActive: boolean): CSSProperties {
     height: '38px',
     padding: '0 12px',
     borderRadius: '8px',
-    color: isActive ? '#FFFFFF' : 'var(--color-text-secondary)',
+    color: isActive ? 'var(--color-nav-active-text)' : 'var(--color-text-secondary)',
     backgroundColor: 'transparent',
     fontSize: '13px',
     fontWeight: 600,
@@ -51,6 +69,15 @@ function getChildNavLinkStyle(isActive: boolean): CSSProperties {
     fontWeight: 600,
     textDecoration: 'none',
     transition: 'background-color 160ms ease, color 160ms ease',
+  };
+}
+
+function getGroupContextNavLinkStyle(isActive: boolean): CSSProperties {
+  return {
+    ...getChildNavLinkStyle(isActive),
+    height: '36px',
+    padding: '0 12px',
+    fontSize: '13px',
   };
 }
 
@@ -227,6 +254,7 @@ function useDashboardNavigationHistory(location: DashboardLocationSnapshot) {
 
 export default function DashboardLayout() {
   const { session, signOut } = useAuth();
+  const pushRegistration = usePushRegistration();
   const location = useLocation();
   const navigate = useNavigate();
   const locationSnapshot = useMemo(
@@ -239,15 +267,35 @@ export default function DashboardLayout() {
   const { canGoBack, canGoForward } =
     useDashboardNavigationHistory(locationSnapshot);
   const shouldReduceMotion = useReducedMotion();
-  const [groupsOpen, setGroupsOpen] = useState(false);
+  const groupsActive = location.pathname.startsWith('/groups');
+  const activeGroupId = useMemo(
+    () => getActiveGroupId(location.pathname),
+    [location.pathname],
+  );
+  const { group: activeGroup, loading: activeGroupLoading } = useGroupDetail(
+    activeGroupId ?? undefined,
+  );
+  const [groupsOpen, setGroupsOpen] = useState(groupsActive);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const email = session?.user?.email;
+
+  useEffect(() => {
+    if (groupsActive) {
+      setGroupsOpen(true);
+    }
+  }, [groupsActive]);
+
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        !dropdownRef.current.contains(event.target as Node) &&
+        !location.pathname.startsWith('/groups')
       ) {
         setGroupsOpen(false);
       }
@@ -255,86 +303,130 @@ export default function DashboardLayout() {
 
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, []);
+  }, [location.pathname]);
+
+  function closeMobileSidebar() {
+    setMobileSidebarOpen(false);
+  }
 
   return (
     <div
       className="min-h-screen"
       style={{
-        backgroundColor: '#F5F8FC',
+        backgroundColor: 'var(--color-bg-page)',
         color: 'var(--color-text-primary)',
         fontFamily: 'Plus Jakarta Sans, sans-serif',
       }}
     >
-      <div className="flex min-h-screen w-full p-3 sm:p-4">
+      <AnimatePresence>
+        {mobileSidebarOpen && (
+          <motion.button
+            type="button"
+            aria-label="Close navigation"
+            className="fixed inset-0 z-30 lg:hidden"
+            style={{ backgroundColor: 'var(--color-overlay)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeMobileSidebar}
+          />
+        )}
+      </AnimatePresence>
+
+      <div className="flex min-h-screen w-full p-0 lg:p-4">
         <aside
-          className="flex w-64 shrink-0 flex-col rounded-l-2xl border bg-white"
+          className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r bg-white transition-transform duration-200 ease-out lg:static lg:w-64 lg:translate-x-0 lg:rounded-l-2xl lg:border ${
+            mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
           style={{ borderColor: 'var(--color-border)' }}
         >
-          <Link
-            to="/dashboard"
-            className="flex h-16 items-center gap-2 border-b px-5 no-underline"
-            style={{
-              borderColor: 'var(--color-border)',
-              color: 'var(--color-primary)',
-              fontWeight: 800,
-            }}
+          <div
+            className="flex h-16 items-center gap-2 border-b px-5 lg:rounded-tl-2xl"
+            style={{ borderColor: 'var(--color-border)' }}
           >
-            <span
-              className="flex h-8 w-8 items-center justify-center rounded-full"
-              style={{ backgroundColor: 'var(--color-primary-light)' }}
+            <Link
+              to="/dashboard"
+              onClick={closeMobileSidebar}
+              className="flex min-w-0 flex-1 items-center gap-2 no-underline"
+              style={{
+                color: 'var(--color-primary)',
+                fontWeight: 800,
+              }}
             >
-              <HeartPulse size={18} strokeWidth={2.2} />
-            </span>
-            CareCircle
-          </Link>
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                style={{ backgroundColor: 'var(--color-primary-light)' }}
+              >
+                <HeartPulse size={18} strokeWidth={2.2} />
+              </span>
+              <span className="truncate">CareCircle</span>
+            </Link>
+            <button
+              type="button"
+              aria-label="Close navigation"
+              onClick={closeMobileSidebar}
+              className="flex h-9 w-9 items-center justify-center rounded-lg lg:hidden"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <X size={18} strokeWidth={1.8} />
+            </button>
+          </div>
 
-          <nav className="flex-1 px-4 py-5" aria-label="Dashboard navigation">
+          <nav
+            className="flex-1 overflow-y-auto px-4 py-5"
+            aria-label="Dashboard navigation"
+          >
             <div className="space-y-2">
               {dashboardNavItems.map((item) => {
                 const Icon = item.icon;
-                const groupsActive = location.pathname.startsWith('/groups');
 
-                if (item.children) {
+                if (item.children && item.path) {
                   return (
                     <div key={item.label} ref={dropdownRef}>
-                      <button
-                        type="button"
-                        onClick={() => setGroupsOpen((open) => !open)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Escape') setGroupsOpen(false);
-                        }}
-                        aria-expanded={groupsOpen}
-                        aria-controls="groups-nav-menu"
-                        className="w-full"
-                        style={{
-                          ...getNavLinkStyle(groupsActive),
-                          justifyContent: 'space-between',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontFamily: 'Plus Jakarta Sans, sans-serif',
-                        }}
+                      <div
+                        className="relative flex items-center"
+                        style={{ height: '38px', borderRadius: '8px' }}
                       >
-                        {/* The shared pill makes active nav changes feel continuous. */}
                         <ActiveNavPill active={groupsActive} />
-                        <span className="relative z-10 flex items-center gap-2">
+                        <NavLink
+                          to={item.path}
+                          onClick={closeMobileSidebar}
+                          style={{
+                            ...getNavLinkStyle(groupsActive),
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
                           <Icon size={17} strokeWidth={1.9} />
                           {item.label}
-                        </span>
-                        <ChevronDown
-                          className="relative z-10"
-                          size={16}
-                          strokeWidth={1.9}
+                        </NavLink>
+                        <button
+                          type="button"
+                          aria-label="Toggle groups menu"
+                          aria-expanded={groupsOpen}
+                          aria-controls="groups-nav-menu"
+                          onClick={() => setGroupsOpen((open) => !open)}
+                          className="relative z-10 mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
                           style={{
-                            transform: groupsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                            transition: 'transform 160ms ease',
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            color: groupsActive ? 'var(--color-nav-active-text)' : 'var(--color-text-secondary)',
                           }}
-                        />
-                      </button>
+                        >
+                          <ChevronDown
+                            size={16}
+                            strokeWidth={1.9}
+                            style={{
+                              transform: groupsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                              transition: 'transform 160ms ease',
+                            }}
+                          />
+                        </button>
+                      </div>
 
                       <AnimatePresence initial={false}>
                         {groupsOpen && (
-                          // Height animation keeps nested destinations discoverable without a jump.
                           <motion.div
                             id="groups-nav-menu"
                             className="overflow-hidden"
@@ -359,7 +451,7 @@ export default function DashboardLayout() {
                                   <NavLink
                                     key={child.path}
                                     to={child.path}
-                                    onClick={() => setGroupsOpen(false)}
+                                    onClick={closeMobileSidebar}
                                     style={({ isActive }) => getChildNavLinkStyle(isActive)}
                                   >
                                     <ChildIcon size={16} strokeWidth={1.8} />
@@ -379,11 +471,11 @@ export default function DashboardLayout() {
                   <NavLink
                     key={item.path}
                     to={item.path ?? '/dashboard'}
+                    onClick={closeMobileSidebar}
                     style={({ isActive }) => getNavLinkStyle(isActive)}
                   >
                     {({ isActive }) => (
                       <>
-                        {/* The shared pill makes active nav changes feel continuous. */}
                         <ActiveNavPill active={isActive} />
                         <span className="relative z-10 flex">
                           <Icon size={17} strokeWidth={1.9} />
@@ -395,6 +487,80 @@ export default function DashboardLayout() {
                 );
               })}
             </div>
+
+            {activeGroupId && (
+              <div className="mt-6">
+                <p
+                  className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wide"
+                  style={{ color: 'var(--color-text-hint)' }}
+                >
+                  Current care circle
+                </p>
+
+                <div
+                  className="mb-3 rounded-xl border p-3"
+                  style={{
+                    borderColor: 'var(--color-border)',
+                    backgroundColor: 'var(--color-bg-muted)',
+                  }}
+                >
+                  {activeGroupLoading ? (
+                    <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                      Loading care circle...
+                    </p>
+                  ) : (
+                    <>
+                      <p
+                        className="truncate text-sm font-bold"
+                        style={{ color: 'var(--color-text-primary)' }}
+                      >
+                        {activeGroup?.name ?? 'Care circle'}
+                      </p>
+                      {activeGroup?.role ? (
+                        <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                          Your role: {activeGroup.role}
+                        </p>
+                      ) : null}
+                      <Link
+                        to={`/groups/${activeGroupId}/profile`}
+                        onClick={closeMobileSidebar}
+                        className="mt-2 inline-block text-xs font-semibold no-underline"
+                        style={{ color: 'var(--color-primary)' }}
+                      >
+                        View profile →
+                      </Link>
+                    </>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  {groupContextNavItems.map((contextItem) => {
+                    const ContextIcon = contextItem.icon;
+                    const contextPath = buildGroupNavPath(
+                      activeGroupId,
+                      contextItem.segment,
+                    );
+                    const isActive = isGroupContextNavActive(
+                      location.pathname,
+                      activeGroupId,
+                      contextItem,
+                    );
+
+                    return (
+                      <NavLink
+                        key={contextItem.segment || 'overview'}
+                        to={contextPath}
+                        onClick={closeMobileSidebar}
+                        style={getGroupContextNavLinkStyle(isActive)}
+                      >
+                        <ContextIcon size={16} strokeWidth={1.8} />
+                        {contextItem.label}
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </nav>
 
           <div className="border-t p-4" style={{ borderColor: 'var(--color-border)' }}>
@@ -402,12 +568,12 @@ export default function DashboardLayout() {
               className="rounded-xl border p-3"
               style={{
                 borderColor: 'var(--color-border)',
-                backgroundColor: '#F8FBFF',
+                backgroundColor: 'var(--color-bg-muted)',
               }}
             >
               <div className="flex items-center gap-3">
                 <div
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold"
                   style={{
                     backgroundColor: 'var(--color-primary-light)',
                     color: 'var(--color-primary)',
@@ -416,7 +582,12 @@ export default function DashboardLayout() {
                   {getInitials(email)}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">Caregiver</p>
+                  <p
+                    className="truncate text-sm font-semibold"
+                    style={{ color: 'var(--color-text-primary)' }}
+                  >
+                    {activeGroup?.name ?? 'Caregiver'}
+                  </p>
                   <p
                     className="truncate text-xs"
                     style={{ color: 'var(--color-text-secondary)' }}
@@ -446,14 +617,27 @@ export default function DashboardLayout() {
         </aside>
 
         <div
-          className="flex min-w-0 flex-1 flex-col rounded-r-2xl border-y border-r bg-white"
+          className="flex min-w-0 flex-1 flex-col bg-[var(--color-card)] lg:rounded-r-2xl lg:border-y lg:border-r"
           style={{ borderColor: 'var(--color-border)' }}
         >
           <header
-            className="flex h-16 items-center justify-end gap-4 border-b px-8"
+            className="flex h-16 items-center justify-between gap-4 border-b px-4 lg:justify-end lg:px-8"
             style={{ borderColor: 'var(--color-border)' }}
           >
-            <div className="flex items-center gap-2" aria-label="Page history controls">
+            <button
+              type="button"
+              aria-label="Open navigation"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border bg-white lg:hidden"
+              style={{
+                borderColor: 'var(--color-border)',
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              <Menu size={18} strokeWidth={1.8} />
+            </button>
+
+            <div className="ml-auto flex items-center gap-2 lg:ml-0" aria-label="Page history controls">
               <motion.button
                 type="button"
                 aria-label="Go back"
@@ -489,22 +673,60 @@ export default function DashboardLayout() {
             </div>
             <button
               type="button"
-              aria-label="Notifications"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border bg-white"
+              aria-label={
+                pushRegistration.status === 'registered'
+                  ? 'Medication notifications enabled'
+                  : 'Enable medication notifications'
+              }
+              title={
+                pushRegistration.status === 'registered'
+                  ? 'Medication notifications enabled'
+                  : pushRegistration.errorMessage ?? 'Enable browser notifications for overdue medication alerts'
+              }
+              onClick={() => void pushRegistration.register()}
+              disabled={pushRegistration.status === 'prompting' || pushRegistration.status === 'unsupported'}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border bg-white disabled:opacity-60"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
             >
               <Bell size={18} strokeWidth={1.8} />
-              <span
-                className="absolute right-2 top-2 h-2 w-2 rounded-full"
-                style={{ backgroundColor: 'var(--color-status-critical)' }}
-              />
+              {pushRegistration.status !== 'registered' && (
+                <span
+                  className="absolute right-2 top-2 h-2 w-2 rounded-full"
+                  style={{ backgroundColor: 'var(--color-status-critical)' }}
+                />
+              )}
             </button>
             <CircleUserRound size={34} strokeWidth={1.5} color="var(--color-primary)" />
           </header>
 
-          <main className="flex-1 overflow-auto p-8">
+          <main className="flex-1 overflow-auto p-4 lg:p-8">
+            {pushRegistration.status !== 'registered' &&
+              pushRegistration.status !== 'unsupported' &&
+              pushRegistration.status !== 'prompting' && (
+                <div
+                  className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white px-4 py-3"
+                  style={{ borderColor: 'var(--color-border)' }}
+                >
+                  <div>
+                    <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                      Enable medication alerts
+                    </p>
+                    <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                      {pushRegistration.errorMessage ??
+                        'Allow browser notifications to get push alerts when a dose becomes overdue.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void pushRegistration.register()}
+                    className="h-9 rounded-lg px-4 text-sm font-bold text-white"
+                    style={{ backgroundColor: 'var(--color-primary)' }}
+                  >
+                    Enable notifications
+                  </button>
+                </div>
+              )}
             <AnimatePresence mode="wait">
-              {/* Page transitions orient users after route changes without delaying content. */}
               <motion.div
                 key={location.pathname}
                 variants={shouldReduceMotion ? STATIC_PAGE_VARIANTS : PAGE_VARIANTS}

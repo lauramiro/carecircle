@@ -9,6 +9,7 @@ interface GroupMembersTableProps {
   onRemoveMember: (member: GroupMember) => void;
   onRoleChange: (member: GroupMember, role: GroupRole) => void;
   onStatusChange: (member: GroupMember, status: GroupMember['status']) => void;
+  embedded?: boolean;
 }
 
 function StatusPill({ status }: { status: GroupMember['status'] }) {
@@ -35,26 +36,40 @@ export default function GroupMembersTable({
   onRemoveMember,
   onRoleChange,
   onStatusChange,
+  embedded = false,
 }: GroupMembersTableProps) {
   return (
     <section
-      className="mt-5 overflow-hidden rounded-xl border bg-white"
+      className={`overflow-hidden rounded-xl border bg-white ${embedded ? '' : 'mt-5'}`}
       style={{ borderColor: 'var(--color-border)' }}
     >
-      <div
-        className="flex items-center justify-between border-b px-4 py-3"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
-        <div>
-          <h2 className="text-base font-extrabold">Members</h2>
-          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            Manage group access, roles, and member status.
-          </p>
+      {!embedded && (
+        <div
+          className="flex items-center justify-between border-b px-4 py-3"
+          style={{ borderColor: 'var(--color-border)' }}
+        >
+          <div>
+            <h2 className="text-base font-extrabold">Members</h2>
+            <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              Manage group access, roles, and member status.
+            </p>
+          </div>
+          <span className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
+            {members.length} total
+          </span>
         </div>
-        <span className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
-          {members.length} total
-        </span>
-      </div>
+      )}
+
+      {embedded && (
+        <div
+          className="flex items-center justify-end border-b px-4 py-3"
+          style={{ borderColor: 'var(--color-border)' }}
+        >
+          <span className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
+            {members.length} total
+          </span>
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px] border-collapse text-left text-sm">

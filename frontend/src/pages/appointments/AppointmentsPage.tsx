@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { CalendarDays, Clock, LayoutList, MapPin, Plus, Stethoscope, Trash2, UserCheck } from 'lucide-react';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
+import PageHeader from '../../components/ui/PageHeader';
+import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
 import { useAppointments } from '../../hooks/appointments/useAppointments';
 import type { Appointment } from '../../api/appointments/appointments.types';
 
@@ -754,13 +756,8 @@ export default function AppointmentsPage() {
   if (groupLoading) {
     return (
       <section>
-        <h1 className="text-2xl font-extrabold">Appointments</h1>
-        <div
-          className="mt-6 rounded-xl border bg-white p-6 text-sm"
-          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-        >
-          Loading...
-        </div>
+        <PageHeader title="Appointments" subtitle="View and manage upcoming care appointments." />
+        <LoadingPanel message="Loading group…" />
       </section>
     );
   }
@@ -798,7 +795,7 @@ export default function AppointmentsPage() {
     onDelete: handleDelete,
   };
 
-  const VIEWS: { id: ViewMode; label: string; icon: React.ReactNode }[] = [
+  const VIEWS: { id: ViewMode; label: string; icon: ReactNode }[] = [
     { id: 'list', label: 'List', icon: <LayoutList size={13} strokeWidth={2} /> },
     { id: 'week', label: 'Week', icon: <Clock size={13} strokeWidth={2} /> },
     { id: 'month', label: 'Month', icon: <CalendarDays size={13} strokeWidth={2} /> },
@@ -806,71 +803,50 @@ export default function AppointmentsPage() {
 
   return (
     <section>
-      {/* Header — title+subtitle on one row, controls on next row for mobile safety */}
-      <div className="mb-6">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1
-              style={{
-                color: 'var(--color-text-primary)',
-                fontSize: '26px',
-                fontWeight: 800,
-                letterSpacing: '-0.03em',
-                margin: 0,
-              }}
-            >
-              Appointments
-            </h1>
-            <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              {group.name}
-            </p>
-          </div>
-
-          {canEdit && (
+      <PageHeader
+        eyebrow="Care group"
+        title="Appointments"
+        subtitle={`View and manage appointments for ${group.name}.`}
+        actions={
+          canEdit ? (
             <button
               type="button"
               onClick={() => navigate(`/groups/${groupId}/appointments/new`)}
-              className="shrink-0 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white"
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg px-4 text-sm font-bold text-white"
               style={{ background: 'var(--color-primary)' }}
             >
               <Plus size={15} strokeWidth={2.2} />
               <span className="hidden sm:inline">New appointment</span>
               <span className="sm:hidden">New</span>
             </button>
-          )}
-        </div>
+          ) : undefined
+        }
+      />
 
-        {/* View toggle — separate row so it never collides with the action button */}
-        <div
-          className="mt-3 inline-flex rounded-lg border overflow-hidden"
-          style={{ borderColor: 'var(--color-border)' }}
-        >
-          {VIEWS.map(v => (
-            <button
-              key={v.id}
-              type="button"
-              onClick={() => setViewMode(v.id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors"
-              style={{
-                background: viewMode === v.id ? 'var(--color-primary)' : 'white',
-                color: viewMode === v.id ? 'white' : 'var(--color-text-secondary)',
-              }}
-              aria-pressed={viewMode === v.id}
-            >
-              {v.icon}
-              {v.label}
-            </button>
-          ))}
-        </div>
+      <div
+        className="mb-6 inline-flex rounded-lg border overflow-hidden"
+        style={{ borderColor: 'var(--color-border)' }}
+      >
+        {VIEWS.map(v => (
+          <button
+            key={v.id}
+            type="button"
+            onClick={() => setViewMode(v.id)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors"
+            style={{
+              background: viewMode === v.id ? 'var(--color-primary)' : 'var(--color-card)',
+              color: viewMode === v.id ? 'white' : 'var(--color-text-secondary)',
+            }}
+            aria-pressed={viewMode === v.id}
+          >
+            {v.icon}
+            {v.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
-        <div
-          className="rounded-xl border bg-white p-6 text-sm"
-          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-hint)' }}
-        >
-          Loading appointments...
-        </div>
+        <LoadingPanel message="Loading appointments..." />
       ) : viewMode === 'list' ? (
         <ListView {...sharedProps} />
       ) : viewMode === 'week' ? (

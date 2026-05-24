@@ -1,31 +1,42 @@
-import { useLocation, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { AiQaInterface } from '@components/ai';
+import PageHeader from '../../components/ui/PageHeader';
+import { ErrorPanel } from '../../components/ui/ContentPanel';
 
 export default function AiQaPage() {
-  const location = useLocation();
   const { groupId } = useParams<{ groupId: string }>();
-  
-  // First try to get patientId from navigation state
-  //const groupId = location.state?.groupId;
-  
-  
-  
+
   if (!groupId) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h2>Patient not found</h2>
-        <p>No patient ID provided. Please go back and try again.</p>
-        <a href={`/groups/${groupId}`}>← Back to Group</a>
-      </div>
+      <section>
+        <PageHeader title="AI assistant" subtitle="Ask questions about care plans and medication guidance." />
+        <ErrorPanel message="No care circle selected. Open AI assistant from a group page." />
+      </section>
     );
   }
-  
+
   return (
-    <div>
-      <header style={{ padding: '16px', borderBottom: '1px solid #ddd' }}>
-        <a href={`/groups/${groupId}`}>← Back to Group</a>
-      </header>
-      <AiQaInterface groupId={groupId} />
-    </div>
+    <section className="space-y-4">
+      <PageHeader
+        eyebrow="Care tools"
+        title="AI assistant"
+        subtitle="Ask questions about medications, care routines, and handover context for this circle."
+        actions={
+          <Link
+            to={`/groups/${groupId}`}
+            className="inline-flex h-10 items-center rounded-lg border bg-white px-4 text-sm font-bold no-underline"
+            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+          >
+            Back to group
+          </Link>
+        }
+      />
+      <div
+        className="overflow-hidden rounded-2xl border bg-white"
+        style={{ borderColor: 'var(--color-border)' }}
+      >
+        <AiQaInterface groupId={groupId} />
+      </div>
+    </section>
   );
 }

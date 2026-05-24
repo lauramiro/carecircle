@@ -4,13 +4,16 @@ import 'react-toastify/dist/ReactToastify.css'
 import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext.tsx'
-import { Slide, ToastContainer } from 'react-toastify'
+import { ThemeProvider } from './contexts/ThemeContext.tsx'
+import ThemedToastContainer from './components/layout/ThemedToastContainer.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthProvider>
-      <App />
-      <ToastContainer position="top-right" autoClose={3000} transition={Slide} />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <App />
+        <ThemedToastContainer />
+      </AuthProvider>
+    </ThemeProvider>
   </StrictMode>,
 )

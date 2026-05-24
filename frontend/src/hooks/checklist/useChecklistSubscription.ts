@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@lib/supabaseClient';
 import { rowToChecklistItem, type ChecklistItem } from '@lib/checklist';
 import type { ChecklistItemPatch } from '@api/checklist/checklist.types';
@@ -26,21 +26,22 @@ export function useChecklistSubscription(
   const [items, setItems] = useState(initialItems);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const itemsRef = useRef(initialItems);
+  const onItemsChangeRef = useRef(onItemsChange);
+
+  onItemsChangeRef.current = onItemsChange;
 
   useEffect(() => {
+    itemsRef.current = initialItems;
     setItems(initialItems);
   }, [initialItems]);
 
-  const commitItems = useCallback(
-    (updater: (prev: ChecklistItem[]) => ChecklistItem[]) => {
-      setItems((prev) => {
-        const next = updater(prev);
-        onItemsChange?.(next);
-        return next;
-      });
-    },
-    [onItemsChange],
-  );
+  const commitItems = useCallback((updater: (prev: ChecklistItem[]) => ChecklistItem[]) => {
+    const next = updater(itemsRef.current);
+    itemsRef.current = next;
+    setItems(next);
+    onItemsChangeRef.current?.(next);
+  }, []);
 
   const patchItem = useCallback(
     (id: string, patch: ChecklistItemPatch) => {

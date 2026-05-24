@@ -105,7 +105,6 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
       id,
       name,
       description,
-      patient_id,
       created_at,
       care_givers (
         caregiver_id,
@@ -125,6 +124,12 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     console.error('Error fetching members:', groupError);
     return null;
   }
+
+  const { data: patientRow } = await supabase
+    .from('patients')
+    .select('id')
+    .eq('group_id', groupId)
+    .maybeSingle();
 
   const userRole = mapRole(membership.role_in_care);
   const canSchedule = membership.can_schedule === true;
@@ -147,7 +152,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     canSchedule,
     members,
     gpContacts: [],
-    patientId: groupData.patient_id ?? '',
+    patientId: patientRow?.id ?? '',
   };
 }
 

@@ -28,6 +28,8 @@ export function medicationFromRow(row: MedicationRow): Medication {
     takeWithFood: row.take_with_food,
     startDate: row.start_date,
     endDate: row.end_date,
+    perpetual: (row as { perpetual?: boolean }).perpetual ?? false,
+    totalDoses: (row as { total_doses?: number | null }).total_doses ?? null,
     status: row.status as MedicationStatus,
     discontinuedDate: row.discontinued_date,
     discontinuedReason: row.discontinued_reason,

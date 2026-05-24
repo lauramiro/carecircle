@@ -138,7 +138,7 @@ export default function AppointmentFormPage() {
     fontSize: '14px',
     color: 'var(--color-text-primary)',
     outline: 'none',
-    background: '#fff',
+    background: 'var(--color-input-bg)',
   };
 
   const errorStyle = { color: 'var(--color-status-critical)', fontSize: '12px', marginTop: '4px' };

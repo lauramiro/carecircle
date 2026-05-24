@@ -25,3 +25,7 @@ export function truncateText(value: string, maxLength: number): string {
   if (value.length <= maxLength) return value;
   return `${value.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
 }
+
+export function formatMemberCount(count: number): string {
+  return `${count} member${count === 1 ? '' : 's'}`;
+}

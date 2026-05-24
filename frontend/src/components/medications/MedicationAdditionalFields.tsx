@@ -116,26 +116,6 @@ export default function MedicationAdditionalFields({
           </div>
 
           <div>
-            <label htmlFor={`${formId}-end-date`} className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
-              End date
-            </label>
-            <input
-              id={`${formId}-end-date`}
-              type="date"
-              value={values.endDate}
-              onChange={(e) => updateField('endDate', e.target.value)}
-              onBlur={() => touchField('endDate')}
-              className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-              style={fieldStyle(Boolean(errors.endDate))}
-            />
-            {errors.endDate && (
-              <p className="mt-1 text-xs" style={{ color: 'var(--color-status-critical)' }}>
-                {errors.endDate}
-              </p>
-            )}
-          </div>
-
-          <div>
             <label htmlFor={`${formId}-prescribed-date`} className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
               Prescribed date
             </label>

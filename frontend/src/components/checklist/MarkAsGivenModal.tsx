@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import type { ChecklistItem } from '@lib/checklist';
 import type { ChecklistItemPatch } from '@api/checklist/checklist.types';
 import { markChecklistItemGiven } from '@api/checklist/dailyChecklist.service';
-import { computeOverdueDuration } from '@lib/checklistStatus';
+import { overdueDurationSince } from '@lib/checklistStatus';
 import { useReducedMotion } from '@hooks/useReducedMotion';
 import {
   MODAL_BACKDROP_VARIANTS,
@@ -42,7 +42,7 @@ export default function MarkAsGivenModal({
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
 
-  const autoOverdue = computeOverdueDuration(item.scheduled_time, checklistDate, new Date());
+  const autoOverdue = overdueDurationSince(item.overdue_at);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());

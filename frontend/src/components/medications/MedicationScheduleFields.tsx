@@ -7,13 +7,14 @@ import {
   WEEKDAYS,
 } from '../../api/medications/medications.types';
 import type { ScheduleType } from '../../api/medications/medications.types';
-import type { DailyMode, MedicationFormErrors, MedicationFormValues } from '../../hooks/medications/useMedicationForm';
+import type { CourseDurationMode, DailyMode, MedicationFormErrors, MedicationFormValues } from '../../hooks/medications/useMedicationForm';
 
 interface Props {
   formId: string;
   values: MedicationFormValues;
   errors: MedicationFormErrors;
   setScheduleType: (type: ScheduleType) => void;
+  setCourseDurationMode: (mode: CourseDurationMode) => void;
   setDailyMode: (mode: DailyMode) => void;
   updateField: <K extends keyof MedicationFormValues>(name: K, value: MedicationFormValues[K]) => void;
   setSpecificTime: (index: number, time: string) => void;
@@ -37,6 +38,7 @@ export default function MedicationScheduleFields({
   values,
   errors,
   setScheduleType,
+  setCourseDurationMode,
   setDailyMode,
   updateField,
   setSpecificTime,
@@ -93,10 +95,7 @@ export default function MedicationScheduleFields({
                   name={`${formId}-schedule-type`}
                   value={type}
                   checked={selected}
-                  onChange={() => {
-                    setScheduleType(type);
-                    touchField('scheduleType');
-                  }}
+                  onChange={() => setScheduleType(type)}
                   className="sr-only"
                 />
                 {SCHEDULE_TYPE_LABELS[type]}
@@ -349,6 +348,130 @@ export default function MedicationScheduleFields({
           style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
         >
           No fixed schedule. Give this medication as needed.
+        </div>
+      )}
+
+      {/* Start date */}
+      {values.scheduleType && (
+        <div>
+          <label
+            htmlFor={`${formId}-start-date`}
+            className="text-xs font-bold"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            Start date <span style={{ color: 'var(--color-status-critical)' }}>*</span>
+          </label>
+          <input
+            id={`${formId}-start-date`}
+            type="date"
+            value={values.startDate}
+            onChange={(e) => updateField('startDate', e.target.value)}
+            onBlur={() => touchField('startDate')}
+            aria-invalid={Boolean(errors.startDate)}
+            aria-describedby={errors.startDate ? `${formId}-start-date-error` : undefined}
+            className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
+            style={fieldStyle(Boolean(errors.startDate))}
+          />
+          {errors.startDate && (
+            <p
+              id={`${formId}-start-date-error`}
+              className="mt-1 text-xs"
+              style={{ color: 'var(--color-status-critical)' }}
+            >
+              {errors.startDate}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Course duration (non as-needed) */}
+      {values.scheduleType && values.scheduleType !== 'as_needed' && (
+        <div className="space-y-3 rounded-lg border p-4" style={{ borderColor: 'var(--color-border)' }}>
+          <p className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
+            Course duration <span style={{ color: 'var(--color-status-critical)' }}>*</span>
+          </p>
+          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            Choose exactly one: ongoing medication (automatic roll-forward), a fixed end date, or total planned doses.
+          </p>
+          {errors.perpetual && (
+            <p className="text-xs" style={{ color: 'var(--color-status-critical)' }}>
+              {errors.perpetual}
+            </p>
+          )}
+
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="radio"
+              name={`${formId}-course-mode`}
+              checked={values.courseDurationMode === 'perpetual'}
+              onChange={() => setCourseDurationMode('perpetual')}
+            />
+            Ongoing (perpetual) — checklist rolls forward automatically
+          </label>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="radio"
+                name={`${formId}-course-mode`}
+                checked={values.courseDurationMode === 'end_date'}
+                onChange={() => setCourseDurationMode('end_date')}
+              />
+              Fixed end date
+            </label>
+            {values.courseDurationMode === 'end_date' && (
+              <>
+                <input
+                  id={`${formId}-course-end`}
+                  type="date"
+                  value={values.endDate}
+                  onChange={(e) => updateField('endDate', e.target.value)}
+                  onBlur={() => touchField('endDate')}
+                  aria-invalid={Boolean(errors.endDate)}
+                  className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
+                  style={fieldStyle(Boolean(errors.endDate))}
+                />
+                {errors.endDate && (
+                  <p className="mt-1 text-xs" style={{ color: 'var(--color-status-critical)' }}>
+                    {errors.endDate}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="radio"
+                name={`${formId}-course-mode`}
+                checked={values.courseDurationMode === 'total_doses'}
+                onChange={() => setCourseDurationMode('total_doses')}
+              />
+              Total planned doses
+            </label>
+            {values.courseDurationMode === 'total_doses' && (
+              <>
+                <input
+                  id={`${formId}-course-total`}
+                  type="number"
+                  min={1}
+                  value={values.totalDoses}
+                  onChange={(e) => updateField('totalDoses', e.target.value)}
+                  onBlur={() => touchField('totalDoses')}
+                  placeholder="e.g. 30"
+                  aria-invalid={Boolean(errors.totalDoses)}
+                  className="mt-2 h-10 w-32 rounded-lg border px-3 text-sm outline-none"
+                  style={fieldStyle(Boolean(errors.totalDoses))}
+                />
+                {errors.totalDoses && (
+                  <p className="mt-1 text-xs" style={{ color: 'var(--color-status-critical)' }}>
+                    {errors.totalDoses}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>

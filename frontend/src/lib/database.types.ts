@@ -244,7 +244,6 @@ export type Database = {
           description: string | null
           id: string
           name: string | null
-          patient_id: string
           preferred_timezone: string | null
           primary_caregiver_id: string
           role: Database["public"]["Enums"]["group_member_role"]
@@ -255,7 +254,6 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string | null
-          patient_id: string
           preferred_timezone?: string | null
           primary_caregiver_id: string
           role?: Database["public"]["Enums"]["group_member_role"]
@@ -266,20 +264,12 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string | null
-          patient_id?: string
           preferred_timezone?: string | null
           primary_caregiver_id?: string
           role?: Database["public"]["Enums"]["group_member_role"]
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "care_circle_members_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "care_group_primary_caregiver_id_fkey"
             columns: ["primary_caregiver_id"]
@@ -408,6 +398,8 @@ export type Database = {
           medication_name: string | null
           overdue_hours: number | null
           overdue_minutes: number | null
+          overdue_at: string | null
+          scheduled_at: string | null
           scheduled_time: string | null
           skip_notes: string | null
           skip_reason: string | null
@@ -431,6 +423,8 @@ export type Database = {
           medication_name?: string | null
           overdue_hours?: number | null
           overdue_minutes?: number | null
+          overdue_at?: string | null
+          scheduled_at?: string | null
           scheduled_time?: string | null
           skip_notes?: string | null
           skip_reason?: string | null
@@ -454,6 +448,8 @@ export type Database = {
           medication_name?: string | null
           overdue_hours?: number | null
           overdue_minutes?: number | null
+          overdue_at?: string | null
+          scheduled_at?: string | null
           scheduled_time?: string | null
           skip_notes?: string | null
           skip_reason?: string | null

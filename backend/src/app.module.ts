@@ -12,8 +12,12 @@ import { LoggerModule } from './logger/logger.module';
 import { AppThrottlingModule } from './throttling/throttling.module';
 import { AiModule } from './ai/ai.module';
 import { InvitesModule } from './invites/invites.module';
-
 import { SmsModule } from './sms/sms.module';
+import { SupabaseAdminModule } from './integrations/supabase-admin.module';
+import { ChecklistModule } from './checklist/checklist.module';
+import { AlertsModule } from './alerts/alerts.module';
+import { MedicationsModule } from './medications/medications.module';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   imports: [
@@ -21,9 +25,14 @@ import { SmsModule } from './sms/sms.module';
     TraceContextModule,
     LoggerModule,
     AppThrottlingModule,
+    SupabaseAdminModule,
     InvitesModule,
     AiModule,
     SmsModule,
+    ChecklistModule,
+    AlertsModule,
+    MedicationsModule,
+    CronModule,
   ],
   controllers: [AppController],
   providers: [

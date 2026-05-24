@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { summarizeChecklist, type ChecklistItem } from '@lib/checklist';
 import { sortChecklistItemsByScheduledTime } from '@lib/checklistStatus';
 import { toLocalDateString } from '@lib/dates';
@@ -14,6 +14,7 @@ interface MedicationChecklistProps {
   isLoading?: boolean;
   loadingLabel?: string;
   onItemsChange?: (items: ChecklistItem[]) => void;
+  highlightItemId?: string;
 }
 
 function isToday(dateStr: string): boolean {
@@ -28,7 +29,9 @@ export default function MedicationChecklist({
   isLoading = false,
   loadingLabel = 'Loading checklist…',
   onItemsChange,
+  highlightItemId,
 }: MedicationChecklistProps) {
+  const highlightRef = useRef<HTMLDivElement | null>(null);
   const { items, isSubscribed, patchItem } = useChecklistSubscription(
     checklistId,
     checklistDate,
@@ -45,6 +48,11 @@ export default function MedicationChecklist({
   const summary = summarizeChecklist(sortedItems);
 
   const title = isToday(checklistDate) ? "Today's Medications" : `Medications for ${checklistDate}`;
+
+  useEffect(() => {
+    if (!highlightItemId || isLoading) return;
+    highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlightItemId, isLoading, sortedItems.length]);
 
   return (
     <section>
@@ -131,14 +139,28 @@ export default function MedicationChecklist({
         ) : (
           <div className="px-5 py-4 space-y-1">
             {sortedItems.map((item) => (
-              <MedicationChecklistItemRow
+              <div
                 key={item.id}
-                item={item}
-                checklistDate={checklistDate}
-                disabled={isReadOnly}
-                shouldReduceMotion={shouldReduceMotion}
-                onItemPatch={patchItem}
-              />
+                id={`checklist-item-${item.id}`}
+                ref={item.id === highlightItemId ? highlightRef : undefined}
+                className="rounded-lg"
+                style={
+                  item.id === highlightItemId
+                    ? {
+                        backgroundColor: 'var(--color-primary-light, #eff6ff)',
+                        outline: '2px solid var(--color-primary)',
+                      }
+                    : undefined
+                }
+              >
+                <MedicationChecklistItemRow
+                  item={item}
+                  checklistDate={checklistDate}
+                  disabled={isReadOnly}
+                  shouldReduceMotion={shouldReduceMotion}
+                  onItemPatch={patchItem}
+                />
+              </div>
             ))}
           </div>
         )}

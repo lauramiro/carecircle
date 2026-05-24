@@ -7,23 +7,11 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { IsOptional, IsString, Matches } from 'class-validator';
 import { DevOnlyGuard } from '../common/guards/dev-only.guard';
 import { AppConfigService } from '../config/app-config.service';
+import { DevSmsTestBodyDto } from './dto/dev-sms-test-body.dto';
 import { TwilioSmsService } from './twilio-sms.service';
 
-class DevSmsTestBodyDto {
-  @IsOptional()
-  @IsString()
-  @Matches(/^\+[1-9]\d{7,14}$/, {
-    message: 'to must be E.164 (e.g. +447911123456)',
-  })
-  to?: string;
-}
-
-/**
- * Development-only: verify Twilio wiring without logging sensitive payloads (CC-100).
- */
 @Controller('dev/sms')
 @UseGuards(DevOnlyGuard)
 export class DevSmsController {

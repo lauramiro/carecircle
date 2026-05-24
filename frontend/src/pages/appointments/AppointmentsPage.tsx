@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { CalendarDays, Clock, LayoutList, MapPin, Plus, Stethoscope, Trash2, UserCheck } from 'lucide-react';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
@@ -234,17 +234,38 @@ interface ViewProps {
   isSubmitting: boolean;
   deletingId: string | null;
   onDelete: (appt: Appointment) => void;
+  highlightApptId?: string | null;
 }
 
-function ListView({ appointments, ...rest }: ViewProps) {
+function ListView({ appointments, highlightApptId, ...rest }: ViewProps) {
   const sorted = [...appointments].sort(
     (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
   );
   const upcoming = sorted.filter(a => !isPast(a.startTime));
   const past = sorted.filter(a => isPast(a.startTime));
 
+  const highlightRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (highlightApptId && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [highlightApptId, appointments.length]);
+
   if (sorted.length === 0) {
     return <p className="text-sm" style={{ color: 'var(--color-text-hint)' }}>No appointments.</p>;
+  }
+
+  function cardWrapper(a: Appointment, children: React.ReactNode) {
+    const isHighlighted = a.id === highlightApptId;
+    return (
+      <div
+        key={a.id}
+        ref={isHighlighted ? highlightRef : null}
+        style={isHighlighted ? { outline: '2px solid var(--color-primary)', borderRadius: '12px' } : undefined}
+      >
+        {children}
+      </div>
+    );
   }
 
   return (
@@ -257,7 +278,7 @@ function ListView({ appointments, ...rest }: ViewProps) {
           <p className="text-sm" style={{ color: 'var(--color-text-hint)' }}>No upcoming appointments.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {upcoming.map(a => <AppointmentCard key={a.id} appt={a} {...rest} />)}
+            {upcoming.map(a => cardWrapper(a, <AppointmentCard appt={a} {...rest} />))}
           </div>
         )}
       </div>
@@ -267,7 +288,7 @@ function ListView({ appointments, ...rest }: ViewProps) {
             Past
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {past.map(a => <AppointmentCard key={a.id} appt={a} dimPast {...rest} />)}
+            {past.map(a => cardWrapper(a, <AppointmentCard appt={a} dimPast {...rest} />))}
           </div>
         </div>
       )}
@@ -745,6 +766,8 @@ function MonthGridView({ appointments, canEdit, groupId, memberName, navigate, i
 export default function AppointmentsPage() {
   const { groupId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const highlightApptId = searchParams.get('apptId');
   const { group, loading: groupLoading } = useGroupDetail(groupId);
   const patientId = group?.patientId ?? '';
   const { appointments, loading, isSubmitting, deleteAppointment } = useAppointments(patientId);
@@ -793,6 +816,7 @@ export default function AppointmentsPage() {
     isSubmitting,
     deletingId,
     onDelete: handleDelete,
+    highlightApptId,
   };
 
   const VIEWS: { id: ViewMode; label: string; icon: ReactNode }[] = [

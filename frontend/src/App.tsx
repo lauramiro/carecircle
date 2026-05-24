@@ -22,10 +22,12 @@ import AiQaPage from './pages/ai/AiQaPage';
 import AiQaTestPage from './pages/ai/AiQaTestPage';
 import AdministrationLogPage from './pages/groups/AdministrationLogPage';
 import SettingsPage from './pages/SettingsPage';
+import { usePushNotifications } from './hooks/push/usePushNotifications';
 
 function App() {
   const { session, loading } = useAuth();
   const isAuthenticated = !!session?.user?.email_confirmed_at;
+  usePushNotifications(isAuthenticated);
 
   if (loading) {
     return (

@@ -30,6 +30,7 @@ export default function AddMedicationForm({
     errors,
     updateField,
     setScheduleType,
+    setCourseDurationMode,
     setDailyMode,
     setSpecificTime,
     addSpecificTime,
@@ -225,6 +226,7 @@ export default function AddMedicationForm({
             values={values}
             errors={errors}
             setScheduleType={setScheduleType}
+            setCourseDurationMode={setCourseDurationMode}
             setDailyMode={setDailyMode}
             updateField={updateField}
             setSpecificTime={setSpecificTime}
@@ -241,36 +243,6 @@ export default function AddMedicationForm({
               </p>
             ) : null;
           })()}
-        </div>
-
-        <div className="md:col-span-2">
-          <label
-            htmlFor={`${formId}-start-date`}
-            className="text-xs font-bold"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            Start date <span style={{ color: 'var(--color-status-critical)' }}>*</span>
-          </label>
-          <input
-            id={`${formId}-start-date`}
-            type="date"
-            value={values.startDate}
-            onChange={(e) => updateField('startDate', e.target.value)}
-            onBlur={() => touchField('startDate')}
-            aria-invalid={Boolean(errors.startDate)}
-            aria-describedby={errors.startDate ? `${formId}-start-date-error` : undefined}
-            className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-            style={fieldStyle(Boolean(errors.startDate))}
-          />
-          {errors.startDate && (
-            <p
-              id={`${formId}-start-date-error`}
-              className="mt-1 text-xs"
-              style={{ color: 'var(--color-status-critical)' }}
-            >
-              {errors.startDate}
-            </p>
-          )}
         </div>
 
         <MedicationAdditionalFields

@@ -62,6 +62,8 @@ Never commit real `.env`, `.env.development`, or `.env.production` files.
 
 **Alerts pipeline:** Full design is in [`medication_schedule_checklist_push_notification_sms_alert_design.md`](../medication_schedule_checklist_push_notification_sms_alert_design.md) at the repo root.
 
+**SMS cancellation (CC-102):** With `SUPABASE_SERVICE_ROLE_KEY` set, the API subscribes to Supabase Realtime `UPDATE` events on `checklist_items`. When a row becomes **given** or **skipped**, any open alert for that checklist item is cancelled in `missed_medications_alert` (`cancelled_at`, `cancellation_reason=acknowledged`). The SMS dispatch cron also re-checks acknowledgement before sending. After Twilio has accepted a message (`sms_sent_at` set), it cannot be recalled.
+
 Environment validation is defined in `src/config/env.schema.ts` using Zod. If any required variable is missing or invalid, the app throws during bootstrap and refuses to start.
 
 Use `AppConfigService` when reading configuration in application code:

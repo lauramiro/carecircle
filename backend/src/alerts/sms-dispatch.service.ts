@@ -21,7 +21,6 @@ export class SmsDispatchService {
     const alerts = await this.alertRepo.findSmsDueAlerts(20);
 
     for (const alert of alerts) {
-      console.log('processAlert', alert.id);
       try {
         await this.processAlert(alert);
       } catch (err) {

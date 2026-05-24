@@ -33,6 +33,7 @@ export type Database = {
           post_appointment_notes: string | null
           provider_id: string | null
           provider_name: string | null
+          reminder_offsets: number[] | null
           reminder_sent: boolean | null
           reminder_sent_at: string | null
           start_time: string
@@ -60,6 +61,7 @@ export type Database = {
           post_appointment_notes?: string | null
           provider_id?: string | null
           provider_name?: string | null
+          reminder_offsets?: number[] | null
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
           start_time: string
@@ -87,6 +89,7 @@ export type Database = {
           post_appointment_notes?: string | null
           provider_id?: string | null
           provider_name?: string | null
+          reminder_offsets?: number[] | null
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
           start_time?: string
@@ -394,10 +397,18 @@ export type Database = {
         Row: {
           checklist_id: string
           created_at: string | null
+          dosage_unit: string | null
+          dose: number | null
           given_at: string | null
+          given_by_carer_id: string | null
           given_by_user_id: string | null
+          given_notes: string | null
           id: string
           medication_id: string
+          medication_name: string | null
+          overdue_hours: number | null
+          overdue_minutes: number | null
+          scheduled_time: string | null
           skip_notes: string | null
           skip_reason: string | null
           status: string
@@ -409,10 +420,18 @@ export type Database = {
         Insert: {
           checklist_id: string
           created_at?: string | null
+          dosage_unit?: string | null
+          dose?: number | null
           given_at?: string | null
+          given_by_carer_id?: string | null
           given_by_user_id?: string | null
+          given_notes?: string | null
           id?: string
           medication_id: string
+          medication_name?: string | null
+          overdue_hours?: number | null
+          overdue_minutes?: number | null
+          scheduled_time?: string | null
           skip_notes?: string | null
           skip_reason?: string | null
           status?: string
@@ -424,10 +443,18 @@ export type Database = {
         Update: {
           checklist_id?: string
           created_at?: string | null
+          dosage_unit?: string | null
+          dose?: number | null
           given_at?: string | null
+          given_by_carer_id?: string | null
           given_by_user_id?: string | null
+          given_notes?: string | null
           id?: string
           medication_id?: string
+          medication_name?: string | null
+          overdue_hours?: number | null
+          overdue_minutes?: number | null
+          scheduled_time?: string | null
           skip_notes?: string | null
           skip_reason?: string | null
           status?: string
@@ -442,6 +469,13 @@ export type Database = {
             columns: ["checklist_id"]
             isOneToOne: false
             referencedRelation: "daily_medication_checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_given_by_carer_id_fkey"
+            columns: ["given_by_carer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -612,6 +646,48 @@ export type Database = {
           },
         ]
       }
+      handover_journal_entries: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          group_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          group_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_journal_entries_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "handover_journal_entries_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_group"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invites: {
         Row: {
           created_at: string
@@ -737,7 +813,7 @@ export type Database = {
       }
       medication_confirmations: {
         Row: {
-          carer_id: string
+          caregiver_id: string
           checklist_item_id: string
           confirmed_at_utc: string
           created_at: string
@@ -746,7 +822,7 @@ export type Database = {
           photo_url: string
         }
         Insert: {
-          carer_id: string
+          caregiver_id: string
           checklist_item_id: string
           confirmed_at_utc?: string
           created_at?: string
@@ -755,7 +831,7 @@ export type Database = {
           photo_url: string
         }
         Update: {
-          carer_id?: string
+          caregiver_id?: string
           checklist_item_id?: string
           confirmed_at_utc?: string
           created_at?: string
@@ -765,8 +841,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "medication_confirmations_carer_id_fkey"
-            columns: ["carer_id"]
+            foreignKeyName: "medication_confirmations_caregiver_id_fkey"
+            columns: ["caregiver_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -834,60 +910,6 @@ export type Database = {
           },
           {
             foreignKeyName: "medication_logs_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      medication_schedules: {
-        Row: {
-          created_at: string | null
-          days_of_week: string
-          id: string
-          is_active: boolean | null
-          medication_id: string
-          patient_id: string
-          time_of_day: string
-          updated_at: string | null
-          window_end: string
-          window_start: string
-        }
-        Insert: {
-          created_at?: string | null
-          days_of_week: string
-          id?: string
-          is_active?: boolean | null
-          medication_id: string
-          patient_id: string
-          time_of_day: string
-          updated_at?: string | null
-          window_end: string
-          window_start: string
-        }
-        Update: {
-          created_at?: string | null
-          days_of_week?: string
-          id?: string
-          is_active?: boolean | null
-          medication_id?: string
-          patient_id?: string
-          time_of_day?: string
-          updated_at?: string | null
-          window_end?: string
-          window_start?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "medication_schedules_medication_id_fkey"
-            columns: ["medication_id"]
-            isOneToOne: false
-            referencedRelation: "medications"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "medication_schedules_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
@@ -1488,6 +1510,123 @@ export type Database = {
           },
         ]
       }
+      weekly_shift_assignment_history: {
+        Row: {
+          assigned_caregiver_id: string | null
+          assignment_id: string | null
+          changed_at: string
+          changed_by: string
+          group_id: string
+          id: string
+          previous_caregiver_id: string | null
+          shift_date: string
+          shift_slot: string
+        }
+        Insert: {
+          assigned_caregiver_id?: string | null
+          assignment_id?: string | null
+          changed_at?: string
+          changed_by: string
+          group_id: string
+          id?: string
+          previous_caregiver_id?: string | null
+          shift_date: string
+          shift_slot: string
+        }
+        Update: {
+          assigned_caregiver_id?: string | null
+          assignment_id?: string | null
+          changed_at?: string
+          changed_by?: string
+          group_id?: string
+          id?: string
+          previous_caregiver_id?: string | null
+          shift_date?: string
+          shift_slot?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_shift_assignment_history_assigned_caregiver_id_fkey"
+            columns: ["assigned_caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_shift_assignment_history_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_shift_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_shift_assignment_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_shift_assignment_history_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_group"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_shift_assignment_history_previous_caregiver_id_fkey"
+            columns: ["previous_caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_shift_assignments: {
+        Row: {
+          assigned_caregiver_id: string | null
+          created_at: string
+          group_id: string
+          id: string
+          shift_date: string
+          shift_slot: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_caregiver_id?: string | null
+          created_at?: string
+          group_id: string
+          id?: string
+          shift_date: string
+          shift_slot: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_caregiver_id?: string | null
+          created_at?: string
+          group_id?: string
+          id?: string
+          shift_date?: string
+          shift_slot?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_shift_assignments_assigned_caregiver_id_fkey"
+            columns: ["assigned_caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_shift_assignments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_group"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       upcoming_appointments: {
@@ -1589,10 +1728,6 @@ export type Database = {
       is_caregiver_for: { Args: { p_patient_id: string }; Returns: boolean }
       is_email_registered: { Args: { p_email: string }; Returns: boolean }
       is_group_member: { Args: { check_group_id: string }; Returns: boolean }
-      update_invite_status: {
-        Args: { p_invite_id: string; p_status: string }
-        Returns: Json
-      }
       verify_profile_trigger: {
         Args: never
         Returns: {

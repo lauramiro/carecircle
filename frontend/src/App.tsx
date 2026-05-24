@@ -14,6 +14,12 @@ import PatientProfilePage from './pages/groups/PatientProfilePage';
 import AddMedicationPage from './pages/medications/AddMedicationPage';
 import MedicationsSchedulePage from './pages/medications/MedicationsSchedulePage';
 import MedicationChecklistPage from './pages/checklist/MedicationChecklistPage';
+import GroupJournalPage from './pages/groups/GroupJournalPage';
+import AppointmentsPage from './pages/appointments/AppointmentsPage';
+import AppointmentFormPage from './pages/appointments/AppointmentFormPage';
+import AiQaPage from './pages/ai/AiQaPage';
+import AiQaTestPage from './pages/ai/AiQaTestPage';
+import AdministrationLogPage from './pages/groups/AdministrationLogPage';
 
 function App() {
   const { session, loading } = useAuth();
@@ -59,13 +65,20 @@ function App() {
           <Route path="groups/list" element={<GroupsListPage />} />
           <Route path="groups/:groupId" element={<GroupDetailPage />} />
           <Route path="groups/:groupId/medications" element={<MedicationsSchedulePage />} />
+          <Route path="groups/:groupId/journal" element={<GroupJournalPage />} />
           <Route path="groups/:groupId/profile" element={<PatientProfilePage />} />
           <Route path="groups/:groupId/medications/add" element={<AddMedicationPage />} />
           <Route path="groups/:groupId/checklist" element={<MedicationChecklistPage />} />
+          <Route path="groups/:groupId/administration-log" element={<AdministrationLogPage />} />
+          <Route path="groups/:groupId/appointments" element={<AppointmentsPage />} />
+          <Route path="groups/:groupId/appointments/new" element={<AppointmentFormPage />} />
+          <Route path="groups/:groupId/appointments/:appointmentId/edit" element={<AppointmentFormPage />} />
+          <Route path="groups/:groupId/ai-assistant" element={<AiQaPage />} />
         </Route>
         <Route
           path="*"
           element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />}
+        
         />
       </Routes>
     </BrowserRouter>

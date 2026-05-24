@@ -16,6 +16,7 @@ const groupHookMock = vi.hoisted(() => ({
     error: null as string | null,
     group: {
       id: 'group-care-001',
+      patientId: 'patient-1',
       name: 'Dad Care Circle',
       description: 'Daily support and medication coordination for Dad.',
       role: 'Admin' as const,
@@ -24,6 +25,7 @@ const groupHookMock = vi.hoisted(() => ({
         { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'Admin' as const, joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' as const },
         { id: 'member-2', name: 'John', email: 'john@example.com', role: 'Member' as const, joinedAt: '2025-05-13T10:20:00.000Z', status: 'Suspended' as const },
       ],
+      gpContacts: [],
     } as Group,
   },
 }));
@@ -62,6 +64,7 @@ describe('GroupDetailPage', () => {
       error: null,
       group: {
         id: 'group-care-001',
+        patientId: 'patient-1',
         name: 'Dad Care Circle',
         description: 'Daily support and medication coordination for Dad.',
         role: 'Admin',
@@ -70,6 +73,7 @@ describe('GroupDetailPage', () => {
           { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'Admin', joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' },
           { id: 'member-2', name: 'John', email: 'john@example.com', role: 'Member', joinedAt: '2025-05-13T10:20:00.000Z', status: 'Suspended' },
         ],
+        gpContacts: [],
       } as Group,
     };
   });
@@ -101,6 +105,7 @@ describe('GroupDetailPage', () => {
       error: null,
       group: {
         id: 'group-care-005',
+        patientId: 'patient-5',
         name: 'Medication Helpers',
         description: 'Shared medication reminders across the family.',
         role: 'Admin',
@@ -113,6 +118,7 @@ describe('GroupDetailPage', () => {
           joinedAt: '2025-01-21T16:10:00.000Z',
           status: 'Active' as const,
         })),
+        gpContacts: [],
       } as Group,
     };
 
@@ -201,6 +207,7 @@ describe('GroupDetailPage', () => {
       error: null,
       group: {
         id: 'group-care-002',
+        patientId: 'patient-2',
         name: 'Mum Recovery Team',
         description: 'Post-surgery care planning and appointment tracking.',
         role: 'Member',
@@ -209,6 +216,7 @@ describe('GroupDetailPage', () => {
           { id: 'member-4', name: 'Amara', email: 'amara@example.com', role: 'Admin', joinedAt: '2025-04-28T13:30:00.000Z', status: 'Active' },
           { id: 'member-5', name: 'Sarah', email: 'sarah@example.com', role: 'Member', joinedAt: '2025-04-29T09:15:00.000Z', status: 'Active' },
         ],
+        gpContacts: [],
       } as Group,
     };
 
@@ -225,6 +233,7 @@ describe('GroupDetailPage', () => {
       error: null,
       group: {
         id: 'group-care-002',
+        patientId: 'patient-2',
         name: 'Mum Recovery Team',
         description: 'Post-surgery care planning and appointment tracking.',
         role: 'Member',

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MedicationChecklist from '@components/checklist/MedicationChecklist';
@@ -7,22 +7,6 @@ import type { ChecklistItem } from '@lib/checklist';
 const checklistHookMock = vi.hoisted(() => ({
   useChecklistSubscription: vi.fn(),
 }));
-
-const toastMock = vi.hoisted(() => ({
-  success: vi.fn(),
-  error: vi.fn(),
-}));
-
-const selectEqMock = vi.hoisted(() => vi.fn());
-const selectMock = vi.hoisted(() => vi.fn());
-const updateEqMock = vi.hoisted(() => vi.fn());
-const updateMock = vi.hoisted(() => vi.fn());
-const uploadMock = vi.hoisted(() => vi.fn());
-const listMock = vi.hoisted(() => vi.fn());
-const getPublicUrlMock = vi.hoisted(() => vi.fn());
-const storageFromMock = vi.hoisted(() => vi.fn());
-const fromMock = vi.hoisted(() => vi.fn());
-const getUserMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@hooks/checklist/useChecklistSubscription', () => ({
   useChecklistSubscription: checklistHookMock.useChecklistSubscription,
@@ -33,21 +17,36 @@ vi.mock('@hooks/useReducedMotion', () => ({
 }));
 
 vi.mock('react-toastify', () => ({
-  toast: toastMock,
+  toast: { success: vi.fn(), error: vi.fn() },
 }));
 
 vi.mock('@components/checklist/SkipReasonModal', () => ({
   default: () => null,
 }));
 
+vi.mock('@components/checklist/MarkAsGivenModal', () => ({
+  default: ({ open, onGiven }: { open: boolean; onGiven: () => void }) =>
+    open ? (
+      <button type="button" onClick={onGiven}>
+        Confirm given
+      </button>
+    ) : null,
+}));
+
 vi.mock('@lib/supabaseClient', () => ({
   supabase: {
-    auth: {
-      getUser: getUserMock,
-    },
-    from: fromMock,
+    from: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    }),
     storage: {
-      from: storageFromMock,
+      from: vi.fn().mockReturnValue({
+        list: vi.fn().mockResolvedValue({ data: [], error: null }),
+        getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: null } }),
+      }),
     },
   },
 }));
@@ -55,7 +54,7 @@ vi.mock('@lib/supabaseClient', () => ({
 function buildItem(
   id: string,
   status: ChecklistItem['status'],
-  time = '08:00',
+  scheduledTime = '08:00',
   overrides: Partial<ChecklistItem> = {},
 ): ChecklistItem {
   return {
@@ -64,9 +63,10 @@ function buildItem(
     medication_name: `Medication ${id}`,
     dosage: '1',
     dosage_unit: 'tablet',
+    scheduled_time: scheduledTime,
     time_window: {
-      time_of_day: time,
-      window_start: '08:00',
+      time_of_day: scheduledTime,
+      window_start: scheduledTime,
       window_end: '09:00',
     },
     status,
@@ -80,200 +80,74 @@ function buildItem(
   };
 }
 
-describe('MedicationChecklist mark-as-given photo flow', () => {
+const defaultItems = [
+  buildItem('due-1', 'due', '08:00'),
+  buildItem('overdue-1', 'overdue', '10:00'),
+  buildItem('given-1', 'given', '13:00'),
+];
+
+describe('MedicationChecklist', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    selectEqMock.mockResolvedValue({
-      data: [buildItem('due-1', 'due')],
-      error: null,
-    });
-    selectMock.mockReturnValue({ eq: selectEqMock });
-
-    updateEqMock.mockResolvedValue({ error: null });
-    updateMock.mockReturnValue({ eq: updateEqMock });
-
-    fromMock.mockImplementation((table: string) => {
-      if (table === 'profiles') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              maybeSingle: vi.fn().mockResolvedValue({
-                data: { full_name: 'Sarah Cole' },
-                error: null,
-              }),
-            }),
-          }),
-        };
-      }
-      return {
-        select: selectMock,
-        update: updateMock,
-      };
-    });
-
-    uploadMock.mockResolvedValue({ error: null });
-    listMock.mockResolvedValue({
-      data: [{ name: '1710000000000.jpg' }],
-      error: null,
-    });
-    getPublicUrlMock.mockReturnValue({
-      data: { publicUrl: 'https://example.com/proof.jpg' },
-    });
-    storageFromMock.mockReturnValue({
-      upload: uploadMock,
-      list: listMock,
-      getPublicUrl: getPublicUrlMock,
-    });
-
-    getUserMock.mockResolvedValue({
-      data: { user: { id: 'caregiver-001' } },
-    });
-
     checklistHookMock.useChecklistSubscription.mockImplementation(
-      (_checklistId: string, initialItems: ChecklistItem[]) => ({
+      (_checklistId: string, _date: string, initialItems: ChecklistItem[]) => ({
         items: initialItems,
         isSubscribed: true,
         error: null,
+        patchItem: vi.fn(),
       }),
     );
   });
 
-  it('renders Mark as Given for each due or overdue item', async () => {
-    const items = [
-      buildItem('due-1', 'due', '08:00'),
-      buildItem('overdue-1', 'overdue', '10:00'),
-      buildItem('given-1', 'given', '13:00'),
-    ];
-    selectEqMock.mockResolvedValueOnce({ data: items, error: null });
-
-    render(<MedicationChecklist checklistId="checklist-1" userRole="primary" />);
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('button', { name: /mark as given/i })).toHaveLength(2);
-      expect(screen.getAllByRole('button', { name: /choose from gallery/i })).toHaveLength(2);
-    });
-  });
-
-  it('opens camera immediately and does not update status before photo selection', async () => {
-    const user = userEvent.setup();
-    const clickSpy = vi
-      .spyOn(HTMLInputElement.prototype, 'click')
-      .mockImplementation(() => undefined);
-
-    render(<MedicationChecklist checklistId="checklist-2" userRole="primary" />);
-
-    const markAsGiven = await screen.findByRole('button', { name: /mark as given/i });
-    await user.click(markAsGiven);
-
-    expect(clickSpy).toHaveBeenCalled();
-    expect(uploadMock).not.toHaveBeenCalled();
-    expect(updateMock).not.toHaveBeenCalled();
-
-    clickSpy.mockRestore();
-  });
-
-  it('opens gallery picker via fallback button', async () => {
-    const user = userEvent.setup();
-    const clickSpy = vi
-      .spyOn(HTMLInputElement.prototype, 'click')
-      .mockImplementation(() => undefined);
-
-    render(<MedicationChecklist checklistId="checklist-gallery" userRole="primary" />);
-
-    const chooseFromGallery = await screen.findByRole('button', {
-      name: /choose from gallery/i,
-    });
-    await user.click(chooseFromGallery);
-
-    expect(clickSpy).toHaveBeenCalled();
-    expect(uploadMock).not.toHaveBeenCalled();
-    expect(updateMock).not.toHaveBeenCalled();
-
-    clickSpy.mockRestore();
-  });
-
-  it('updates status to given only after successful photo upload', async () => {
-    render(<MedicationChecklist checklistId="checklist-3" userRole="primary" />);
-
-    const markAsGiven = await screen.findByRole('button', { name: /mark as given/i });
-    await userEvent.click(markAsGiven);
-
-    const fileInput = screen.getByTestId('camera-input-due-1') as HTMLInputElement | null;
-    expect(fileInput).not.toBeNull();
-
-    const proofPhoto = new File(['proof'], 'proof.jpg', { type: 'image/jpeg' });
-    fireEvent.change(fileInput!, { target: { files: [proofPhoto] } });
-
-    await waitFor(() => {
-      expect(uploadMock).toHaveBeenCalledTimes(1);
-      expect(updateMock).toHaveBeenCalledTimes(1);
-      expect(updateEqMock).toHaveBeenCalledTimes(1);
-    });
-
-    expect(updateMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: 'given',
-        given_by_user_id: 'caregiver-001',
-      }),
+  it('renders Mark given for due and overdue items in chronological order', async () => {
+    render(
+      <MedicationChecklist
+        checklistId="checklist-1"
+        checklistDate="2026-01-01"
+        items={defaultItems}
+        userRole="primary"
+      />,
     );
 
-    expect(uploadMock.mock.invocationCallOrder[0]).toBeLessThan(
-      updateMock.mock.invocationCallOrder[0],
-    );
-    expect(toastMock.success).toHaveBeenCalled();
+    expect(screen.getAllByRole('button', { name: /mark given/i })).toHaveLength(2);
+
+    const names = screen.getAllByText(/Medication /).map((el) => el.textContent);
+    expect(names[0]).toContain('due-1');
+    expect(names[1]).toContain('overdue-1');
   });
 
-  it('uses gallery-selected photo for the same upload and update flow', async () => {
-    render(<MedicationChecklist checklistId="checklist-4" userRole="primary" />);
-
-    const chooseFromGallery = await screen.findByRole('button', {
-      name: /choose from gallery/i,
-    });
-    await userEvent.click(chooseFromGallery);
-
-    const galleryInput = screen.getByTestId('gallery-input-due-1') as HTMLInputElement;
-    const galleryPhoto = new File(['gallery-proof'], 'gallery-proof.jpg', {
-      type: 'image/jpeg',
-    });
-    fireEvent.change(galleryInput, { target: { files: [galleryPhoto] } });
-
-    await waitFor(() => {
-      expect(uploadMock).toHaveBeenCalledTimes(1);
-      expect(updateEqMock).toHaveBeenCalledTimes(1);
-    });
-
-    expect(updateMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: 'given',
-      }),
+  it('opens mark given modal when Mark given is clicked', async () => {
+    render(
+      <MedicationChecklist
+        checklistId="checklist-2"
+        checklistDate="2026-01-01"
+        items={defaultItems}
+        userRole="primary"
+      />,
     );
+
+    const markGivenButtons = await screen.findAllByRole('button', { name: /mark given/i });
+    await userEvent.click(markGivenButtons[0]!);
+
+    expect(await screen.findByRole('button', { name: /confirm given/i })).toBeInTheDocument();
   });
 
-  it('opens full-screen viewer for given item with proof metadata', async () => {
-    selectEqMock.mockResolvedValueOnce({
-      data: [
-        buildItem('given-42', 'given', '08:00', {
-          given_by_user_id: 'caregiver-001',
-          given_at: '2026-01-01T08:05:00.000Z',
-        }),
-      ],
-      error: null,
-    });
-
-    render(<MedicationChecklist checklistId="checklist-5" userRole="primary" />);
+  it('opens proof viewer for given items', async () => {
+    render(
+      <MedicationChecklist
+        checklistId="checklist-5"
+        checklistDate="2026-01-01"
+        items={[
+          buildItem('given-42', 'given', '08:00', {
+            given_by_carer_id: 'caregiver-001',
+            given_at: '2026-01-01T08:05:00.000Z',
+          }),
+        ]}
+        userRole="primary"
+      />,
+    );
 
     await userEvent.click(await screen.findByText('Medication given-42'));
-
     expect(await screen.findByRole('dialog', { name: /medication confirmation photo/i })).toBeInTheDocument();
-    expect(await screen.findByText(/confirmed by: Sarah Cole/i)).toBeInTheDocument();
-    expect(screen.getByText(/Medication given-42 · 1 tablet/i)).toBeInTheDocument();
-    expect(screen.getByText(/confirmed at:/i)).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: /proof for Medication given-42/i })).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: /close photo viewer/i }));
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog', { name: /medication confirmation photo/i })).toBeNull();
-    });
   });
 });

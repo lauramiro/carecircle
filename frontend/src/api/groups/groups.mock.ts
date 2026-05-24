@@ -3,9 +3,11 @@ import type { GPContact, Group, GroupSummary } from './groups.types';
 const mockGroups: Group[] = [
   {
     id: 'group-care-001',
+    patientId: 'patient-mock-001',
     name: 'Dad Care Circle',
     description: 'Daily support and medication coordination for Dad.',
     role: 'Admin',
+    canSchedule: true,
     createdAt: '2025-05-12T09:00:00.000Z',
     patientId: 'patient-001',
     members: [
@@ -30,9 +32,11 @@ const mockGroups: Group[] = [
   },
   {
     id: 'group-care-002',
+    patientId: 'patient-mock-002',
     name: 'Mum Recovery Team',
     description: 'Post-surgery care planning and appointment tracking.',
     role: 'Member',
+    canSchedule: true,
     createdAt: '2025-04-28T13:30:00.000Z',
     patientId: 'patient-002',
     members: [
@@ -52,9 +56,11 @@ const mockGroups: Group[] = [
   },
   {
     id: 'group-care-003',
+    patientId: 'patient-mock-003',
     name: 'Grandpa Wellness',
     description: 'Weekly wellness checks and shared notes for Grandpa.',
     role: 'Admin',
+    canSchedule: true,
     createdAt: '2025-03-19T11:45:00.000Z',
     patientId: 'patient-003',
     members: [
@@ -65,9 +71,11 @@ const mockGroups: Group[] = [
   },
   {
     id: 'group-care-004',
+    patientId: 'patient-mock-004',
     name: 'Aunt May Support',
     description: 'Care shift coordination for Aunt May and her neighbours.',
     role: 'Member',
+    canSchedule: true,
     createdAt: '2025-02-05T08:15:00.000Z',
     patientId: 'patient-004',
     members: [
@@ -81,9 +89,11 @@ const mockGroups: Group[] = [
   },
   {
     id: 'group-care-005',
+    patientId: 'patient-mock-005',
     name: 'Medication Helpers',
     description: 'Shared medication reminders across the family.',
     role: 'Admin',
+    canSchedule: true,
     createdAt: '2025-01-21T16:10:00.000Z',
     patientId: 'patient-005',
     members: [

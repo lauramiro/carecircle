@@ -37,18 +37,30 @@ Never commit real `.env`, `.env.development`, or `.env.production` files.
 | --- | --- | --- | --- |
 | `NODE_ENV` | Yes | `development`, `production`, `test` | Runtime environment. Used for env file priority and environment-specific behavior. |
 | `PORT` | Yes | `1`-`65535` | Port the NestJS HTTP server listens on. |
-| `SUPABASE_URL` | Yes | URL | Supabase project URL. |
-| `SUPABASE_ANON_KEY` | Yes | string | Supabase anon (public) API key. |
-| `SUPABASE_SERVICE_ROLE_KEY` | No | string | **Server-only.** Enables loading carer phone numbers for missed-medication SMS (CC-101). **Never expose to clients or commit.** |
-| `INTERNAL_MISSED_MED_SMS_KEY` | No | string | Shared secret for `POST /api/internal/missed-medication/push-dispatched`. Send header `x-carecircle-internal-key: <value>`. If unset, the endpoint returns 503. |
+| `SUPABASE_URL` | Yes | URL | Supabase project URL (Dashboard → Settings → API). |
+| `SUPABASE_ANON_KEY` | Yes | string | Supabase **anon** (public) key — safe for the browser. |
+| `SUPABASE_SERVICE_ROLE_KEY` | No* | string | **Server-only.** Required for checklist materialization, overdue detection, and alert crons (bypasses RLS). **Never expose to clients or commit.** |
+| `FRONTEND_PUBLIC_URL` | No | URL | Base URL for push/SMS deep links (e.g. `http://localhost:5173`). |
+| `VAPID_PUBLIC_KEY` | No | string | Web Push public key. Generate: `npx web-push generate-vapid-keys` (from `backend/`). |
+| `VAPID_PRIVATE_KEY` | No | string | Web Push private key — **server only, never commit.** |
+| `VAPID_SUBJECT` | No | string | `mailto:…` or `https://…` contact for push services. |
+| `CRON_ENABLED` | No | `true` / `false` | Set `false` to disable Nest schedule crons (tests). Default: enabled. |
+| `SMS_FALLBACK_DELAY_MINUTES` | No | `1`–`60` | Minutes after push before SMS fallback (default `10`). |
+| `MATERIALIZATION_BATCH_SIZE` | No | `1`–`500` | Max checklist rows inserted per batch (default `100`). |
 | `TWILIO_ACCOUNT_SID` | No | string | Twilio Account SID. **Never commit.** Required to send SMS. |
 | `TWILIO_AUTH_TOKEN` | No | string | Twilio Auth Token. **Never commit.** |
 | `TWILIO_FROM_NUMBER` | No | E.164 | Sender number registered with Twilio (e.g. `+15551234567`). |
 | `TWILIO_DEV_TEST_TO_NUMBER` | No | E.164 | Default recipient for `POST /api/dev/sms/test` in `development` only. |
 
-**Twilio (CC-100):** Store credentials only in environment variables or your secrets manager. The dev-only endpoint `POST /api/dev/sms/test` sends a generic connectivity message (no patient or medication content) so delivery logs do not capture sensitive medical data. Profile phone numbers in the database should be validated as E.164 before save (see `src/common/validation/e164.ts`).
+\*Strongly recommended before enabling alert crons; optional until then for local API-only work.
 
-**Missed-medication SMS (CC-101):** After your push worker sends a missed-medication alert, call `POST /api/internal/missed-medication/push-dispatched` with the shared internal key so the backend schedules fallback SMS 10 minutes later. The SMS body uses the patient’s **first name only**, plus medication name, dose, and overdue minutes — not a full profile or medication list. Set `SUPABASE_SERVICE_ROLE_KEY` to load family members’ E.164 numbers from `care_givers` / `profiles`.
+**Supabase keys:** Use **anon** in the frontend only. The backend crons and `SupabaseAdminService` use **service role** for writes to `checklist_items`, `missed_medications_alert`, etc. Legacy env name `SUPABASE_SERVICE_KEY` is still accepted once at bootstrap (mapped to `SUPABASE_SERVICE_ROLE_KEY`); prefer the role key name in new `.env` files.
+
+**VAPID:** Install `web-push` if needed (`npm install web-push`), then run `npx web-push generate-vapid-keys`. Put the public key in backend env and expose the same public key to the frontend for `pushManager.subscribe`.
+
+**Twilio (CC-100):** Store credentials only in environment variables or your secrets manager. The dev-only endpoint `POST /api/dev/sms/test` sends a generic connectivity message (no patient or medication content). Profile phone numbers should be E.164 (see `src/common/validation/e164.ts`).
+
+**Alerts pipeline:** Full design is in [`medication_schedule_checklist_push_notification_sms_alert_design.md`](../medication_schedule_checklist_push_notification_sms_alert_design.md) at the repo root.
 
 Environment validation is defined in `src/config/env.schema.ts` using Zod. If any required variable is missing or invalid, the app throws during bootstrap and refuses to start.
 

@@ -64,7 +64,16 @@ export async function addAppointment(payload: AddAppointmentPayload): Promise<Ap
 }
 
 export async function editAppointment(id: string, changes: EditAppointmentPayload): Promise<Appointment> {
-  const update: Record<string, unknown> = {};
+  const update: Partial<{
+    title: string;
+    start_time: string;
+    end_time: string;
+    attendees: string[];
+    provider_name: string | null;
+    location: string | null;
+    notes: string | null;
+    post_appointment_notes: string | null;
+  }> = {};
   if (changes.title !== undefined) update.title = changes.title;
   if (changes.startTime !== undefined) {
     update.start_time = changes.startTime;

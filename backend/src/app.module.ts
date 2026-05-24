@@ -13,6 +13,8 @@ import { AppThrottlingModule } from './throttling/throttling.module';
 import { AiModule } from './ai/ai.module';
 import { InvitesModule } from './invites/invites.module';
 
+import { SmsModule } from './sms/sms.module';
+
 @Module({
   imports: [
     AppConfigModule,
@@ -21,6 +23,7 @@ import { InvitesModule } from './invites/invites.module';
     AppThrottlingModule,
     InvitesModule,
     AiModule,
+    SmsModule,
   ],
   controllers: [AppController],
   providers: [

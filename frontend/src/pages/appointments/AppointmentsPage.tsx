@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { CalendarDays, Clock, LayoutList, MapPin, Plus, Stethoscope, Trash2, UserCheck } from 'lucide-react';
+import { CalendarDays, Clock, LayoutList, MapPin, Plus, Repeat2, Stethoscope, Trash2, UserCheck } from 'lucide-react';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import PageHeader from '../../components/ui/PageHeader';
-import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
+import { LoadingPanel } from '../../components/ui/ContentPanel';
 import { useAppointments } from '../../hooks/appointments/useAppointments';
-import type { Appointment } from '../../api/appointments/appointments.types';
+import type { Appointment, EditScope, RecurrenceRule } from '../../api/appointments/appointments.types';
 
 type ViewMode = 'list' | 'week' | 'month';
 
@@ -78,6 +78,12 @@ function weekLabel(start: Date): string {
   );
 }
 
+function recurrenceLabel(rule: RecurrenceRule): string {
+  if (rule === 'weekly') return 'Weekly';
+  if (rule === 'fortnightly') return 'Every 2 weeks';
+  return 'Monthly';
+}
+
 // ─── time-grid positioning ────────────────────────────────────────────────────
 
 interface Positioned {
@@ -129,9 +135,9 @@ interface AppointmentCardProps {
   canEdit: boolean;
   groupId: string;
   memberName: (id: string | null) => string;
-  navigate: ReturnType<typeof useNavigate>;
   isSubmitting: boolean;
   deletingId: string | null;
+  onEdit: (appt: Appointment) => void;
   onDelete: (appt: Appointment) => void;
   dimPast?: boolean;
 }
@@ -139,11 +145,10 @@ interface AppointmentCardProps {
 function AppointmentCard({
   appt,
   canEdit,
-  groupId,
   memberName,
-  navigate,
   isSubmitting,
   deletingId,
+  onEdit,
   onDelete,
   dimPast = false,
 }: AppointmentCardProps) {
@@ -157,9 +162,20 @@ function AppointmentCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="font-bold truncate" style={{ color: 'var(--color-text-primary)', fontSize: '15px' }}>
-            {appt.title}
-          </p>
+          <div className="flex items-center gap-2 min-w-0">
+            <p className="font-bold truncate" style={{ color: 'var(--color-text-primary)', fontSize: '15px' }}>
+              {appt.title}
+            </p>
+            {appt.recurrenceRule && (
+              <span
+                className="flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+                style={{ background: 'color-mix(in srgb, var(--color-primary) 10%, white)', color: 'var(--color-primary)' }}
+              >
+                <Repeat2 size={9} strokeWidth={2.5} />
+                {recurrenceLabel(appt.recurrenceRule)}
+              </span>
+            )}
+          </div>
           <div className="mt-2 space-y-1">
             <div className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
               <CalendarDays size={13} strokeWidth={1.8} />
@@ -200,7 +216,7 @@ function AppointmentCard({
           <div className="flex flex-col gap-1.5 shrink-0">
             <button
               type="button"
-              onClick={() => navigate(`/groups/${groupId}/appointments/${appt.id}/edit`)}
+              onClick={() => onEdit(appt)}
               className="text-xs px-2.5 py-1 rounded border"
               style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
             >
@@ -230,9 +246,9 @@ interface ViewProps {
   canEdit: boolean;
   groupId: string;
   memberName: (id: string | null) => string;
-  navigate: ReturnType<typeof useNavigate>;
   isSubmitting: boolean;
   deletingId: string | null;
+  onEdit: (appt: Appointment) => void;
   onDelete: (appt: Appointment) => void;
 }
 
@@ -277,7 +293,7 @@ function ListView({ appointments, ...rest }: ViewProps) {
 
 // ─── WeekTimeGridView ─────────────────────────────────────────────────────────
 
-function WeekTimeGridView({ appointments, canEdit, groupId, memberName, navigate, isSubmitting, deletingId, onDelete }: ViewProps) {
+function WeekTimeGridView({ appointments, canEdit, groupId, memberName, isSubmitting, deletingId, onEdit, onDelete }: ViewProps) {
   const today = new Date();
   const [weekStart, setWeekStart] = useState(() => weekMonday(today));
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
@@ -312,7 +328,6 @@ function WeekTimeGridView({ appointments, canEdit, groupId, memberName, navigate
 
   const totalHeight = (hourEnd - hourStart) * HOUR_HEIGHT;
 
-  // Memoize positioned appointments for all 7 days at once
   const positionedByDay = useMemo(() => {
     return days.map(day => {
       const dayAppts = appointments.filter(a => isSameDay(new Date(a.startTime), day));
@@ -320,7 +335,6 @@ function WeekTimeGridView({ appointments, canEdit, groupId, memberName, navigate
     });
   }, [appointments, days, hourStart]);
 
-  // Scroll to current time on mount and when week changes to the current week
   useEffect(() => {
     if (!scrollContainerRef.current) return;
     const isCurrentWeek = isSameDay(weekStart, weekMonday(today)) ||
@@ -332,7 +346,6 @@ function WeekTimeGridView({ appointments, canEdit, groupId, memberName, navigate
     scrollContainerRef.current.scrollTop = offset;
   }, [weekStart, hourStart, hourEnd]);
 
-  // Clear selected appointment if it was deleted
   useEffect(() => {
     if (selectedAppt && !appointments.find(a => a.id === selectedAppt.id)) {
       setSelectedAppt(null);
@@ -387,7 +400,7 @@ function WeekTimeGridView({ appointments, canEdit, groupId, memberName, navigate
       {/* Grid container */}
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
         <div style={{ minWidth: '560px' }}>
-          {/* Day headers — not scrollable */}
+          {/* Day headers */}
           <div className="flex border-b" style={{ borderColor: 'var(--color-border)' }}>
             <div style={{ width: '44px', flexShrink: 0 }} />
             {days.map((day, i) => {
@@ -413,10 +426,7 @@ function WeekTimeGridView({ appointments, canEdit, groupId, memberName, navigate
           </div>
 
           {/* Scrollable time area */}
-          <div
-            ref={scrollContainerRef}
-            style={{ maxHeight: '480px', overflowY: 'auto' }}
-          >
+          <div ref={scrollContainerRef} style={{ maxHeight: '480px', overflowY: 'auto' }}>
             <div className="flex">
               {/* Hour labels */}
               <div style={{ width: '44px', flexShrink: 0 }}>
@@ -448,34 +458,21 @@ function WeekTimeGridView({ appointments, canEdit, groupId, memberName, navigate
                       background: isToday ? 'rgba(99,102,241,0.03)' : 'white',
                     }}
                   >
-                    {/* Hour grid lines */}
                     {gridHours.map(h => (
                       <div
                         key={h}
                         className="absolute w-full border-t"
-                        style={{
-                          top: `${(h - hourStart) * HOUR_HEIGHT}px`,
-                          borderColor: 'var(--color-border)',
-                          opacity: 0.6,
-                        }}
+                        style={{ top: `${(h - hourStart) * HOUR_HEIGHT}px`, borderColor: 'var(--color-border)', opacity: 0.6 }}
                       />
                     ))}
 
-                    {/* Current time indicator */}
                     {isToday && showNowLine && (
-                      <div
-                        className="absolute w-full z-10 pointer-events-none"
-                        style={{ top: `${nowTop}px` }}
-                      >
-                        <div
-                          className="absolute -left-1 -translate-y-1/2 w-2 h-2 rounded-full"
-                          style={{ background: 'var(--color-primary)' }}
-                        />
+                      <div className="absolute w-full z-10 pointer-events-none" style={{ top: `${nowTop}px` }}>
+                        <div className="absolute -left-1 -translate-y-1/2 w-2 h-2 rounded-full" style={{ background: 'var(--color-primary)' }} />
                         <div className="w-full border-t-2" style={{ borderColor: 'var(--color-primary)' }} />
                       </div>
                     )}
 
-                    {/* Appointment blocks */}
                     {positioned.map(({ appt, top, height, leftPct, widthPct }) => {
                       const { time } = formatDateTime(appt.startTime);
                       const past = isPast(appt.startTime);
@@ -498,7 +495,10 @@ function WeekTimeGridView({ appointments, canEdit, groupId, memberName, navigate
                             outlineOffset: '1px',
                           }}
                         >
-                          <div className="font-semibold truncate leading-tight">{appt.title}</div>
+                          <div className="font-semibold truncate leading-tight flex items-center gap-0.5">
+                            {appt.recurrenceRule && <Repeat2 size={9} strokeWidth={2.5} className="shrink-0" />}
+                            <span className="truncate">{appt.title}</span>
+                          </div>
                           {height >= 36 && <div className="opacity-80 truncate">{time}</div>}
                         </button>
                       );
@@ -511,7 +511,6 @@ function WeekTimeGridView({ appointments, canEdit, groupId, memberName, navigate
         </div>
       </div>
 
-      {/* Selected appointment detail */}
       {selectedAppt && (
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <AppointmentCard
@@ -519,9 +518,9 @@ function WeekTimeGridView({ appointments, canEdit, groupId, memberName, navigate
             canEdit={canEdit}
             groupId={groupId}
             memberName={memberName}
-            navigate={navigate}
             isSubmitting={isSubmitting}
             deletingId={deletingId}
+            onEdit={onEdit}
             onDelete={onDelete}
             dimPast
           />
@@ -539,7 +538,7 @@ function WeekTimeGridView({ appointments, canEdit, groupId, memberName, navigate
 
 // ─── MonthGridView ────────────────────────────────────────────────────────────
 
-function MonthGridView({ appointments, canEdit, groupId, memberName, navigate, isSubmitting, deletingId, onDelete }: ViewProps) {
+function MonthGridView({ appointments, canEdit, groupId, memberName, isSubmitting, deletingId, onEdit, onDelete }: ViewProps) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -596,49 +595,21 @@ function MonthGridView({ appointments, canEdit, groupId, memberName, navigate, i
   return (
     <div>
       <div className="mb-4 flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={prevMonth}
-          className="rounded-lg border px-3 py-1.5 text-sm font-medium"
-          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-        >
-          &larr;
-        </button>
+        <button type="button" onClick={prevMonth} className="rounded-lg border px-3 py-1.5 text-sm font-medium" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>&larr;</button>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            {monthLabel(year, month)}
-          </span>
-          <button
-            type="button"
-            onClick={goToToday}
-            className="rounded border px-2 py-0.5 text-xs font-semibold"
-            style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
-          >
-            Today
-          </button>
+          <span className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{monthLabel(year, month)}</span>
+          <button type="button" onClick={goToToday} className="rounded border px-2 py-0.5 text-xs font-semibold" style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}>Today</button>
         </div>
-        <button
-          type="button"
-          onClick={nextMonth}
-          className="rounded-lg border px-3 py-1.5 text-sm font-medium"
-          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-        >
-          &rarr;
-        </button>
+        <button type="button" onClick={nextMonth} className="rounded-lg border px-3 py-1.5 text-sm font-medium" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>&rarr;</button>
       </div>
 
       <div className="grid grid-cols-7 mb-1">
         {DAY_LABELS.map(d => (
-          <div key={d} className="text-center text-xs font-semibold py-1" style={{ color: 'var(--color-text-hint)' }}>
-            {d}
-          </div>
+          <div key={d} className="text-center text-xs font-semibold py-1" style={{ color: 'var(--color-text-hint)' }}>{d}</div>
         ))}
       </div>
 
-      <div
-        className="grid grid-cols-7 gap-px rounded-xl overflow-hidden border"
-        style={{ borderColor: 'var(--color-border)', background: 'var(--color-border)' }}
-      >
+      <div className="grid grid-cols-7 gap-px rounded-xl overflow-hidden border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-border)' }}>
         {cells.map((day, idx) => {
           if (day === null) return <div key={`blank-${idx}`} className="bg-white min-h-[52px]" />;
 
@@ -648,6 +619,7 @@ function MonthGridView({ appointments, canEdit, groupId, memberName, navigate, i
           const isToday = isSameDay(cellDate, today);
           const isSelected = selectedDate ? isSameDay(cellDate, selectedDate) : false;
           const isPastDay = isBeforeDay(cellDate, today);
+          const hasRecurring = dayAppts.some(a => a.recurrenceRule);
 
           return (
             <button
@@ -661,7 +633,6 @@ function MonthGridView({ appointments, canEdit, groupId, memberName, navigate, i
                 cursor: count > 0 ? 'pointer' : 'default',
               }}
             >
-              {/* Day number */}
               <span
                 className="text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full"
                 style={{
@@ -672,29 +643,26 @@ function MonthGridView({ appointments, canEdit, groupId, memberName, navigate, i
                 {day}
               </span>
 
-              {/* Appointment count badge */}
               {count > 0 && (
-                count === 1 ? (
-                  // Single dot for one appointment
-                  <span
-                    className="mt-1 w-1.5 h-1.5 rounded-full"
-                    style={{ background: isSelected ? 'white' : 'var(--color-primary)' }}
-                  />
-                ) : (
-                  // Pill badge with count for multiple
-                  <span
-                    className="mt-1 flex items-center justify-center rounded-full text-[10px] font-bold leading-none"
-                    style={{
-                      minWidth: '16px',
-                      height: '16px',
-                      padding: '0 4px',
-                      background: isSelected ? 'rgba(255,255,255,0.25)' : 'var(--color-primary)',
-                      color: isSelected ? 'white' : 'white',
-                    }}
-                  >
-                    {count > 9 ? '9+' : count}
-                  </span>
-                )
+                <div className="mt-1 flex items-center gap-0.5">
+                  {count === 1 ? (
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: isSelected ? 'white' : 'var(--color-primary)' }} />
+                  ) : (
+                    <span
+                      className="flex items-center justify-center rounded-full text-[10px] font-bold leading-none"
+                      style={{ minWidth: '16px', height: '16px', padding: '0 4px', background: isSelected ? 'rgba(255,255,255,0.25)' : 'var(--color-primary)', color: 'white' }}
+                    >
+                      {count > 9 ? '9+' : count}
+                    </span>
+                  )}
+                  {hasRecurring && (
+                    <Repeat2
+                      size={8}
+                      strokeWidth={2.5}
+                      style={{ color: isSelected ? 'white' : 'var(--color-primary)', opacity: 0.7 }}
+                    />
+                  )}
+                </div>
               )}
             </button>
           );
@@ -702,9 +670,7 @@ function MonthGridView({ appointments, canEdit, groupId, memberName, navigate, i
       </div>
 
       {!hasAnyThisMonth && (
-        <p className="mt-6 text-sm" style={{ color: 'var(--color-text-hint)' }}>
-          No appointments this month.
-        </p>
+        <p className="mt-6 text-sm" style={{ color: 'var(--color-text-hint)' }}>No appointments this month.</p>
       )}
 
       {selectedDate && selectedDayAppts.length > 0 && (
@@ -720,9 +686,9 @@ function MonthGridView({ appointments, canEdit, groupId, memberName, navigate, i
                 canEdit={canEdit}
                 groupId={groupId}
                 memberName={memberName}
-                navigate={navigate}
                 isSubmitting={isSubmitting}
                 deletingId={deletingId}
+                onEdit={onEdit}
                 onDelete={onDelete}
                 dimPast
               />
@@ -732,10 +698,72 @@ function MonthGridView({ appointments, canEdit, groupId, memberName, navigate, i
       )}
 
       {selectedDate && selectedDayAppts.length === 0 && (
-        <p className="mt-6 text-sm" style={{ color: 'var(--color-text-hint)' }}>
-          No appointments on this day.
-        </p>
+        <p className="mt-6 text-sm" style={{ color: 'var(--color-text-hint)' }}>No appointments on this day.</p>
       )}
+    </div>
+  );
+}
+
+// ─── ScopeDialog ──────────────────────────────────────────────────────────────
+
+interface ScopeDialogState {
+  appt: Appointment;
+  action: 'edit' | 'delete';
+}
+
+interface ScopeDialogProps {
+  dialog: ScopeDialogState;
+  onConfirm: (scope: EditScope) => void;
+  onDismiss: () => void;
+}
+
+function ScopeDialog({ dialog, onConfirm, onDismiss }: ScopeDialogProps) {
+  const isEdit = dialog.action === 'edit';
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.4)' }}
+      onClick={onDismiss}
+    >
+      <div
+        className="rounded-xl bg-white shadow-xl mx-4 w-full max-w-sm p-6"
+        onClick={e => e.stopPropagation()}
+      >
+        <h3 className="text-base font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+          {isEdit ? 'Edit recurring appointment' : 'Cancel recurring appointment'}
+        </h3>
+        <p className="text-sm mb-5 truncate" style={{ color: 'var(--color-text-secondary)' }}>
+          "{dialog.appt.title}"
+        </p>
+
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => onConfirm('this')}
+            className="w-full rounded-lg border px-4 py-2.5 text-left text-sm font-semibold transition-colors hover:bg-gray-50"
+            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+          >
+            This appointment only
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm('future')}
+            className="w-full rounded-lg border px-4 py-2.5 text-left text-sm font-semibold transition-colors hover:bg-gray-50"
+            style={{ borderColor: isEdit ? 'var(--color-primary)' : 'var(--color-status-critical)', color: isEdit ? 'var(--color-primary)' : 'var(--color-status-critical)' }}
+          >
+            This and all future appointments
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="mt-4 w-full text-center text-xs"
+          style={{ color: 'var(--color-text-hint)' }}
+        >
+          Dismiss
+        </button>
+      </div>
     </div>
   );
 }
@@ -750,6 +778,7 @@ export default function AppointmentsPage() {
   const { appointments, loading, isSubmitting, deleteAppointment } = useAppointments(patientId);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [scopeDialog, setScopeDialog] = useState<ScopeDialogState | null>(null);
 
   if (!groupId) return <Navigate to="/groups/list" replace />;
 
@@ -766,12 +795,46 @@ export default function AppointmentsPage() {
 
   const canEdit = group.canSchedule;
 
+  function handleEdit(appt: Appointment) {
+    if (appt.recurrenceRule) {
+      setScopeDialog({ appt, action: 'edit' });
+    } else {
+      navigate(`/groups/${groupId}/appointments/${appt.id}/edit`);
+    }
+  }
+
   async function handleDelete(appt: Appointment) {
+    if (appt.recurrenceRule) {
+      setScopeDialog({ appt, action: 'delete' });
+      return;
+    }
     if (!window.confirm(`Cancel appointment "${appt.title}"?`)) return;
     setDeletingId(appt.id);
     try {
       await deleteAppointment(appt.id);
       toast.success('Appointment cancelled');
+    } catch {
+      toast.error('Failed to cancel appointment');
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function handleScopeConfirm(scope: EditScope) {
+    if (!scopeDialog) return;
+    const { appt, action } = scopeDialog;
+    setScopeDialog(null);
+
+    if (action === 'edit') {
+      navigate(`/groups/${groupId}/appointments/${appt.id}/edit?scope=${scope}`);
+      return;
+    }
+
+    // delete
+    setDeletingId(appt.id);
+    try {
+      await deleteAppointment(appt.id, scope, appt.recurrenceSeriesId, appt.startTime);
+      toast.success(scope === 'future' ? 'Appointments cancelled' : 'Appointment cancelled');
     } catch {
       toast.error('Failed to cancel appointment');
     } finally {
@@ -789,9 +852,9 @@ export default function AppointmentsPage() {
     canEdit,
     groupId,
     memberName,
-    navigate,
     isSubmitting,
     deletingId,
+    onEdit: handleEdit,
     onDelete: handleDelete,
   };
 
@@ -823,10 +886,7 @@ export default function AppointmentsPage() {
         }
       />
 
-      <div
-        className="mb-6 inline-flex rounded-lg border overflow-hidden"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
+      <div className="mb-6 inline-flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
         {VIEWS.map(v => (
           <button
             key={v.id}
@@ -853,6 +913,14 @@ export default function AppointmentsPage() {
         <WeekTimeGridView {...sharedProps} />
       ) : (
         <MonthGridView {...sharedProps} />
+      )}
+
+      {scopeDialog && (
+        <ScopeDialog
+          dialog={scopeDialog}
+          onConfirm={scope => void handleScopeConfirm(scope)}
+          onDismiss={() => setScopeDialog(null)}
+        />
       )}
     </section>
   );

@@ -4,6 +4,8 @@ import type {
   Appointment,
   AppointmentStatus,
   EditAppointmentPayload,
+  EditScope,
+  RecurrenceRule,
 } from './appointments.types';
 
 function fromRow(row: Record<string, unknown>): Appointment {
@@ -23,7 +25,25 @@ function fromRow(row: Record<string, unknown>): Appointment {
     createdBy: (row.created_by as string) ?? null,
     createdAt: (row.created_at as string) ?? null,
     updatedAt: (row.updated_at as string) ?? null,
+    recurrenceRule: (row.recurrence_rule as RecurrenceRule) ?? null,
+    recurrenceSeriesId: (row.recurrence_series_id as string) ?? null,
   };
+}
+
+// Generate all occurrence dates for a recurring series (1 year of occurrences).
+function generateSeriesDates(startTime: Date, rule: RecurrenceRule): Date[] {
+  const counts: Record<RecurrenceRule, number> = { weekly: 52, fortnightly: 26, monthly: 12 };
+  const results: Date[] = [];
+  const current = new Date(startTime);
+  for (let i = 0; i < counts[rule]; i++) {
+    results.push(new Date(current));
+    if (rule === 'monthly') {
+      current.setMonth(current.getMonth() + 1);
+    } else {
+      current.setDate(current.getDate() + (rule === 'weekly' ? 7 : 14));
+    }
+  }
+  return results;
 }
 
 export async function getAppointmentsByPatient(patientId: string): Promise<Appointment[]> {
@@ -42,28 +62,53 @@ export async function addAppointment(payload: AddAppointmentPayload): Promise<Ap
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
+  const baseRow = {
+    patient_id: payload.patientId,
+    title: payload.title,
+    attendees: [payload.attendingCarerId],
+    provider_name: payload.specialistName ?? null,
+    location: payload.location ?? null,
+    notes: payload.preVisitNotes ?? null,
+    status: 'scheduled',
+    created_by: user.id,
+    recurrence_rule: payload.recurrenceRule ?? null,
+  };
+
+  if (!payload.recurrenceRule) {
+    const { data, error } = await supabase
+      .from('appointments')
+      .insert({ ...baseRow, start_time: payload.startTime, end_time: payload.startTime })
+      .select('*')
+      .single();
+    if (error) throw new Error(error.message);
+    return fromRow(data as Record<string, unknown>);
+  }
+
+  const seriesId = crypto.randomUUID();
+  const dates = generateSeriesDates(new Date(payload.startTime), payload.recurrenceRule);
+  const rows = dates.map(d => ({
+    ...baseRow,
+    start_time: d.toISOString(),
+    end_time: d.toISOString(),
+    recurrence_series_id: seriesId,
+  }));
+
   const { data, error } = await supabase
     .from('appointments')
-    .insert({
-      patient_id: payload.patientId,
-      title: payload.title,
-      start_time: payload.startTime,
-      end_time: payload.startTime,
-      attendees: [payload.attendingCarerId],
-      provider_name: payload.specialistName ?? null,
-      location: payload.location ?? null,
-      notes: payload.preVisitNotes ?? null,
-      status: 'scheduled',
-      created_by: user.id,
-    })
+    .insert(rows)
     .select('*')
-    .single();
+    .order('start_time', { ascending: true });
 
   if (error) throw new Error(error.message);
-  return fromRow(data as Record<string, unknown>);
+  return fromRow((data as Record<string, unknown>[])[0]);
 }
 
-export async function editAppointment(id: string, changes: EditAppointmentPayload): Promise<Appointment> {
+export async function editAppointment(
+  id: string,
+  changes: EditAppointmentPayload,
+  scope: EditScope = 'this',
+  appointment?: Appointment,
+): Promise<Appointment> {
   const update: Partial<{
     title: string;
     start_time: string;
@@ -93,14 +138,71 @@ export async function editAppointment(id: string, changes: EditAppointmentPayloa
     .single();
 
   if (error) throw new Error(error.message);
+
+  if (scope === 'future' && appointment?.recurrenceSeriesId) {
+    const { recurrenceSeriesId, startTime: originalStartTime } = appointment;
+
+    // Apply non-time field changes to all future occurrences in one query.
+    const futureFieldUpdate = { ...update };
+    delete futureFieldUpdate.start_time;
+    delete futureFieldUpdate.end_time;
+    if (Object.keys(futureFieldUpdate).length > 0) {
+      await supabase
+        .from('appointments')
+        .update(futureFieldUpdate)
+        .eq('recurrence_series_id', recurrenceSeriesId)
+        .gt('start_time', originalStartTime)
+        .neq('status', 'cancelled');
+    }
+
+    // When the time-of-day changes, update each future occurrence individually to
+    // preserve its own date while adopting the new hour/minute.
+    if (changes.startTime !== undefined) {
+      const newTime = new Date(changes.startTime);
+      const { data: futureRows } = await supabase
+        .from('appointments')
+        .select('id, start_time')
+        .eq('recurrence_series_id', recurrenceSeriesId)
+        .gt('start_time', originalStartTime)
+        .neq('status', 'cancelled');
+
+      if (futureRows && futureRows.length > 0) {
+        await Promise.all(
+          (futureRows as { id: string; start_time: string }[]).map(row => {
+            const d = new Date(row.start_time);
+            d.setHours(newTime.getHours(), newTime.getMinutes(), 0, 0);
+            const iso = d.toISOString();
+            return supabase
+              .from('appointments')
+              .update({ start_time: iso, end_time: iso })
+              .eq('id', row.id);
+          }),
+        );
+      }
+    }
+  }
+
   return fromRow(data as Record<string, unknown>);
 }
 
-export async function deleteAppointment(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('appointments')
-    .update({ status: 'cancelled' })
-    .eq('id', id);
-
-  if (error) throw new Error(error.message);
+export async function deleteAppointment(
+  id: string,
+  scope: EditScope = 'this',
+  seriesId?: string | null,
+  startTime?: string,
+): Promise<void> {
+  if (scope === 'future' && seriesId && startTime) {
+    const { error } = await supabase
+      .from('appointments')
+      .update({ status: 'cancelled' })
+      .eq('recurrence_series_id', seriesId)
+      .gte('start_time', startTime);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase
+      .from('appointments')
+      .update({ status: 'cancelled' })
+      .eq('id', id);
+    if (error) throw new Error(error.message);
+  }
 }

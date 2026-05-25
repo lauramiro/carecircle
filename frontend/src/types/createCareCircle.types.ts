@@ -1,6 +1,7 @@
 export type CreateCareCircleFormValues = {
   groupName: string;
   groupDescription: string;
+  preferredTimezone: string;
   patientFullName: string;
   dateOfBirth: string;
   gender: string;

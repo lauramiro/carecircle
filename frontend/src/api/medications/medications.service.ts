@@ -1,50 +1,60 @@
-import { supabase } from '../../lib/supabaseClient';
-import type { Json } from '../../lib/database.types';
+import { parseDosageString } from '@lib/dosage';
+import { normalizeTime } from '@lib/time';
+import { supabase } from '@lib/supabaseClient';
+import type { MedicationRow } from '@lib/supabaseTables';
+import { medicationFromRow } from './medication.mapper';
 import type {
   AddMedicationPayload,
   EditMedicationPayload,
   Medication,
-  MedicationFrequency,
-  MedicationStatus,
-  MedicationTimeWindow,
-  MedicationUnit,
 } from './medications.types';
 
-function fromRow(row: Record<string, unknown>): Medication {
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+
+async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
+  const url = apiBaseUrl ? `${apiBaseUrl}${path}` : path;
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Request failed (${response.status})`);
+  }
+  return response;
+}
+
+function normalizeTimes(times: string[] | null | undefined): string[] | null {
+  if (!times?.length) return null;
+  return times.map(normalizeTime);
+}
+
+function buildCourseFields(payload: {
+  scheduleType: string;
+  perpetual?: boolean;
+  endDate?: string;
+  totalDoses?: number;
+}) {
+  if (payload.scheduleType === 'as_needed') return {};
   return {
-    id: row.id as string,
-    patientId: row.patient_id as string,
-    medicationName: row.medication_name as string,
-    genericName: (row.generic_name as string) ?? null,
-    dosage: `${row.dose as number} ${row.unit as string}`,
-    form: (row.form as string) ?? null,
-    prescribedBy: (row.prescribed_by as string) ?? null,
-    prescribedDate: (row.prescribed_date as string) ?? null,
-    prescriptionNumber: (row.prescription_number as string) ?? null,
-    frequency: row.schedule_type as MedicationFrequency,
-    timeOfDay: (row.time_windows as MedicationTimeWindow[]) ?? null,
-    specificTimes: (row.specific_times as string[]) ?? null,
-    instructions: (row.instructions as string) ?? null,
-    route: (row.route as string) ?? null,
-    takeWithFood: (row.take_with_food as boolean) ?? null,
-    startDate: row.start_date as string,
-    endDate: (row.end_date as string) ?? null,
-    status: row.status as MedicationStatus,
-    discontinuedDate: (row.discontinued_date as string) ?? null,
-    discontinuedReason: (row.discontinued_reason as string) ?? null,
-    refillsRemaining: (row.refills_remaining as number) ?? null,
-    lastRefillDate: (row.last_refill_date as string) ?? null,
-    pharmacy: (row.pharmacy as string) ?? null,
-    pharmacyPhone: (row.pharmacy_phone as string) ?? null,
-    sideEffects: (row.side_effects as string[]) ?? null,
-    notes: (row.notes as string) ?? null,
-    version: (row.version as number) ?? 1,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
+    perpetual: payload.perpetual ?? false,
+    endDate: payload.endDate,
+    totalDoses: payload.totalDoses,
   };
 }
 
+function rowFromApi(data: Record<string, unknown>): Medication {
+  return medicationFromRow(data as MedicationRow);
+}
+
 export async function getMedicationsByPatient(patientId: string): Promise<Medication[]> {
+  if (!patientId.trim()) {
+    throw new Error('patient_id is required to load medications.');
+  }
+
   const { data, error } = await supabase
     .from('medications')
     .select('*')
@@ -52,84 +62,97 @@ export async function getMedicationsByPatient(patientId: string): Promise<Medica
     .not('status', 'in', '("archived","superseded")');
 
   if (error) throw new Error(error.message);
-  return (data as Record<string, unknown>[]).map(fromRow);
+  return (data as MedicationRow[]).map(medicationFromRow);
 }
 
-export async function addMedication(payload: AddMedicationPayload): Promise<Medication> {
-  const parts = payload.dosage.split(' ');
-  const dose = parseFloat(parts[0] ?? '0');
-  const unit = (parts[1] ?? 'mg') as MedicationUnit;
-
-  const { data, error } = await supabase
-    .from('medications')
-    .insert({
-      patient_id: payload.patientId,
-      medication_name: payload.medicationName,
-      dose,
-      unit,
-      schedule_type: payload.frequency,
-      time_windows: payload.timeOfDay as unknown as Json,
-      start_date: payload.startDate,
-    })
-    .select('*')
-    .single();
-
-  if (error) throw new Error(error.message);
-  return fromRow(data as Record<string, unknown>);
-}
-
-export async function editMedication(id: string, changes: EditMedicationPayload): Promise<Medication> {
-  const rpcChanges: Record<string, unknown> = {};
-  if (changes.medicationName !== undefined) rpcChanges.medication_name = changes.medicationName;
-  if (changes.dosage !== undefined) rpcChanges.dosage = changes.dosage;
-  if (changes.frequency !== undefined) rpcChanges.frequency = changes.frequency;
-  if (changes.timeOfDay !== undefined) rpcChanges.time_of_day = changes.timeOfDay;
-  if (changes.instructions !== undefined) rpcChanges.instructions = changes.instructions;
-  if (changes.notes !== undefined) rpcChanges.notes = changes.notes;
-
-  const { data, error } = await supabase.rpc('edit_medication', {
-    p_id: id,
-    p_changes: rpcChanges as unknown as Json,
+export async function addMedication(
+  groupId: string,
+  payload: AddMedicationPayload,
+): Promise<Medication> {
+  const { dose, unit } = parseDosageString(payload.dosage);
+  const course = buildCourseFields({
+    scheduleType: payload.scheduleType,
+    perpetual: payload.perpetual,
+    endDate: payload.endDate,
+    totalDoses: payload.totalDoses,
   });
 
-  if (error) throw new Error(error.message);
-  return fromRow(data as Record<string, unknown>);
+  const response = await apiFetch(`/api/groups/${groupId}/medications`, {
+    method: 'POST',
+    body: JSON.stringify({
+      patientId: payload.patientId,
+      medicationName: payload.medicationName,
+      dose,
+      unit,
+      startDate: payload.startDate,
+      scheduleType: payload.scheduleType,
+      specificTimes: normalizeTimes(payload.specificTimes),
+      intervalHours: payload.intervalHours ?? undefined,
+      daysOfWeek: payload.daysOfWeek ?? undefined,
+      dayOfMonth: payload.dayOfMonth ?? undefined,
+      ...course,
+      form: payload.form,
+      route: payload.route,
+      instructions: payload.instructions,
+      takeWithFood: payload.takeWithFood,
+    }),
+  });
+
+  return rowFromApi(await response.json());
 }
 
-export async function pauseMedication(id: string): Promise<Medication> {
-  const { data, error } = await supabase
-    .from('medications')
-    .update({ status: 'paused' })
-    .eq('id', id)
-    .select('*')
-    .single();
+export async function editMedication(
+  groupId: string,
+  id: string,
+  changes: EditMedicationPayload,
+): Promise<Medication> {
+  const body: Record<string, unknown> = {};
+  if (changes.medicationName !== undefined) body.medicationName = changes.medicationName;
+  if (changes.dosage !== undefined) {
+    const { dose, unit } = parseDosageString(changes.dosage);
+    body.dose = dose;
+    body.unit = unit;
+  }
+  if (changes.scheduleType !== undefined) body.scheduleType = changes.scheduleType;
+  if (changes.specificTimes !== undefined) body.specificTimes = normalizeTimes(changes.specificTimes);
+  if (changes.intervalHours !== undefined) body.intervalHours = changes.intervalHours;
+  if (changes.daysOfWeek !== undefined) body.daysOfWeek = changes.daysOfWeek;
+  if (changes.dayOfMonth !== undefined) body.dayOfMonth = changes.dayOfMonth;
+  if (changes.startDate !== undefined) body.startDate = changes.startDate;
+  if (changes.perpetual !== undefined) body.perpetual = changes.perpetual;
+  if (changes.endDate !== undefined) body.endDate = changes.endDate;
+  if (changes.totalDoses !== undefined) body.totalDoses = changes.totalDoses;
 
-  if (error) throw new Error(error.message);
-  return fromRow(data as Record<string, unknown>);
+  const response = await apiFetch(`/api/groups/${groupId}/medications/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+
+  return rowFromApi(await response.json());
 }
 
-export async function activateMedication(id: string): Promise<Medication> {
-  const { data, error } = await supabase
-    .from('medications')
-    .update({ status: 'active' })
-    .eq('id', id)
-    .select('*')
-    .single();
-
-  if (error) throw new Error(error.message);
-  return fromRow(data as Record<string, unknown>);
+export async function pauseMedication(groupId: string, id: string): Promise<Medication> {
+  const response = await apiFetch(`/api/groups/${groupId}/medications/${id}/pause`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  return rowFromApi(await response.json());
 }
 
-export async function archiveMedication(id: string): Promise<Medication> {
-  const { data, error } = await supabase
-    .from('medications')
-    .update({ status: 'archived' })
-    .eq('id', id)
-    .select('*')
-    .single();
+export async function activateMedication(groupId: string, id: string): Promise<Medication> {
+  const response = await apiFetch(`/api/groups/${groupId}/medications/${id}/activate`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  return rowFromApi(await response.json());
+}
 
-  if (error) throw new Error(error.message);
-  return fromRow(data as Record<string, unknown>);
+export async function archiveMedication(groupId: string, id: string): Promise<Medication> {
+  const response = await apiFetch(`/api/groups/${groupId}/medications/${id}/archive`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  return rowFromApi(await response.json());
 }
 
 export async function deleteMedication(id: string): Promise<never> {
@@ -147,5 +170,5 @@ export async function checkDuplicateName(patientId: string, name: string): Promi
     .limit(1);
 
   if (error) throw new Error(error.message);
-  return (data as unknown[]).length > 0;
+  return (data?.length ?? 0) > 0;
 }

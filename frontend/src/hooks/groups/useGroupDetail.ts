@@ -32,8 +32,10 @@ export function useGroupDetail(groupId: string | undefined): UseGroupDetailResul
 
         setGroup(result);
         setError(result ? null : 'Group not found.');
-      } catch {
-        if (active) setError('Unable to load group details. Please try again.');
+      } catch (err) {
+        if (active) {
+          setError(err instanceof Error ? err.message : 'Unable to load group details. Please try again.');
+        }
       } finally {
         if (active) setLoading(false);
       }

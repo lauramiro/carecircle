@@ -10,6 +10,7 @@ import {
   GENDER_OPTIONS,
   RELATIONSHIP_OPTIONS,
 } from '@constants/createCareCircle.constants';
+import { getIanaTimezoneOptions } from '@lib/ianaTimezones';
 import { supabase } from '@lib/supabaseClient';
 import type { Database } from '@lib/database.types';
 import type { CreateCareCircleFormValues } from '@typings/createCareCircle.types';
@@ -57,6 +58,11 @@ export default function CreateGroupPage() {
   const relationshipField = register('relationship', {
     validate: v => v !== '' || 'Select your relationship to the patient.',
   });
+  const preferredTimezoneField = register('preferredTimezone', {
+    required: 'Select a preferred group time zone.',
+  });
+
+  const timezoneOptions = getIanaTimezoneOptions();
 
   const onSubmit = async (data: CreateCareCircleFormValues) => {
     setLoading(true);
@@ -149,6 +155,7 @@ export default function CreateGroupPage() {
           ...(descriptionTrimmed ? { description: descriptionTrimmed } : {}),
           patient_id: patient.id,
           primary_caregiver_id: user.id,
+          preferred_timezone: data.preferredTimezone,
         })
         .select('id')
         .single();
@@ -271,6 +278,44 @@ export default function CreateGroupPage() {
             className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
           />
+        </div>
+
+        <div className="mb-5">
+          <label
+            htmlFor="preferredTimezone"
+            className="text-xs font-bold"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            Preferred group time zone
+            <RequiredMark />
+          </label>
+          <select
+            id="preferredTimezone"
+            {...preferredTimezoneField}
+            onChange={e => {
+              preferredTimezoneField.onChange(e);
+              clearErrors('preferredTimezone');
+            }}
+            className="mt-2 h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none"
+            style={{
+              borderColor: inputBorder(errors.preferredTimezone?.message),
+              color: 'var(--color-text-primary)',
+            }}
+          >
+            {timezoneOptions.map(opt => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-2 text-xs" style={{ color: 'var(--color-text-hint)' }}>
+            Used for medication schedules, overdue detection, and checklist times for this circle.
+          </p>
+          {errors.preferredTimezone && (
+            <p className="mt-2 text-xs" style={{ color: 'var(--color-status-critical)' }}>
+              {errors.preferredTimezone.message}
+            </p>
+          )}
         </div>
 
         <p className="mb-4 mt-8 text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--color-text-secondary)' }}>

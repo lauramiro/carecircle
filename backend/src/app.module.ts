@@ -10,6 +10,15 @@ import { TraceMiddleware } from './common/trace-context/trace.middleware';
 import { AppConfigModule } from './config/app-config.module';
 import { LoggerModule } from './logger/logger.module';
 import { AppThrottlingModule } from './throttling/throttling.module';
+import { AiModule } from './ai/ai.module';
+import { InvitesModule } from './invites/invites.module';
+import { SmsModule } from './sms/sms.module';
+import { SupabaseAdminModule } from './integrations/supabase-admin.module';
+import { ChecklistModule } from './checklist/checklist.module';
+import { AlertsModule } from './alerts/alerts.module';
+import { MedicationsModule } from './medications/medications.module';
+import { CronModule } from './cron/cron.module';
+import { RemindersModule } from './reminders/reminders.module';
 
 @Module({
   imports: [
@@ -17,6 +26,15 @@ import { AppThrottlingModule } from './throttling/throttling.module';
     TraceContextModule,
     LoggerModule,
     AppThrottlingModule,
+    SupabaseAdminModule,
+    InvitesModule,
+    AiModule,
+    SmsModule,
+    ChecklistModule,
+    AlertsModule,
+    MedicationsModule,
+    CronModule,
+    RemindersModule,
   ],
   controllers: [AppController],
   providers: [

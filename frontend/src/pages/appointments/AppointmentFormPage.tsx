@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { useAppointments } from '../../hooks/appointments/useAppointments';
-import type { AddAppointmentPayload, EditAppointmentPayload } from '../../api/appointments/appointments.types';
+import type {
+  AddAppointmentPayload,
+  EditAppointmentPayload,
+  EditScope,
+  RecurrenceRule,
+} from '../../api/appointments/appointments.types';
 
 function toLocalDateTimeInputs(iso: string): { date: string; time: string } {
   const d = new Date(iso);
@@ -26,6 +31,8 @@ interface FormErrors {
 
 export default function AppointmentFormPage() {
   const { groupId, appointmentId } = useParams();
+  const [searchParams] = useSearchParams();
+  const scope = (searchParams.get('scope') ?? 'this') as EditScope;
   const navigate = useNavigate();
   const { group, loading: groupLoading } = useGroupDetail(groupId);
   const patientId = group?.patientId ?? '';
@@ -43,6 +50,7 @@ export default function AppointmentFormPage() {
   const [location, setLocation] = useState('');
   const [preVisitNotes, setPreVisitNotes] = useState('');
   const [postVisitNotes, setPostVisitNotes] = useState('');
+  const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule | ''>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [initialized, setInitialized] = useState(false);
 
@@ -79,6 +87,7 @@ export default function AppointmentFormPage() {
   if (isEdit && !apptLoading && !existing) return <Navigate to={`/groups/${groupId}/appointments`} replace />;
 
   const appointmentIsPast = existing ? new Date(existing.startTime) < new Date() : false;
+  const editingAllFuture = isEdit && scope === 'future' && Boolean(existing?.recurrenceRule);
 
   function validate(): boolean {
     const next: FormErrors = {};
@@ -109,8 +118,8 @@ export default function AppointmentFormPage() {
         if (appointmentIsPast) {
           changes.postVisitNotes = postVisitNotes.trim() || null;
         }
-        await editAppointment(existing.id, changes);
-        toast.success('Appointment updated');
+        await editAppointment(existing.id, changes, scope, existing);
+        toast.success(editingAllFuture ? 'All future occurrences updated' : 'Appointment updated');
       } else {
         const payload: AddAppointmentPayload = {
           patientId,
@@ -120,9 +129,10 @@ export default function AppointmentFormPage() {
           specialistName: specialistName.trim() || undefined,
           location: location.trim() || undefined,
           preVisitNotes: preVisitNotes.trim() || undefined,
+          recurrenceRule: recurrenceRule || undefined,
         };
         await addAppointment(payload);
-        toast.success('Appointment created');
+        toast.success(recurrenceRule ? 'Recurring appointments created' : 'Appointment created');
       }
       navigate(`/groups/${groupId}/appointments`);
     } catch (err) {
@@ -171,6 +181,15 @@ export default function AppointmentFormPage() {
       </div>
 
       <div className="max-w-xl">
+        {editingAllFuture && (
+          <div
+            className="mb-4 rounded-lg border px-4 py-3 text-sm font-medium"
+            style={{ borderColor: 'var(--color-primary)', background: 'color-mix(in srgb, var(--color-primary) 8%, white)', color: 'var(--color-primary)' }}
+          >
+            Editing all future occurrences from this date. Time changes apply to all; date changes apply to this occurrence only.
+          </div>
+        )}
+
         <div className="rounded-xl border bg-white p-6" style={{ borderColor: 'var(--color-border)' }}>
           <form onSubmit={e => void handleSubmit(e)} noValidate>
             <div className="space-y-5">
@@ -260,6 +279,23 @@ export default function AppointmentFormPage() {
                   style={inputStyle}
                 />
               </div>
+
+              {/* Recurrence — new appointments only */}
+              {!isEdit && (
+                <div>
+                  <label style={labelStyle}>Recurrence</label>
+                  <select
+                    value={recurrenceRule}
+                    onChange={e => setRecurrenceRule(e.target.value as RecurrenceRule | '')}
+                    style={inputStyle}
+                  >
+                    <option value="">Does not repeat</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="fortnightly">Every 2 weeks</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+              )}
 
               {/* Pre-visit notes */}
               <div>

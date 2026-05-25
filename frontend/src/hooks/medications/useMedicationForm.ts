@@ -450,7 +450,7 @@ export function useMedicationForm() {
       instructions: values.instructions.trim() || null,
       takeWithFood: values.takeWithFood ? true : null,
       endDate: values.courseDurationMode === 'end_date' ? values.endDate || null : null,
-      perpetual: values.courseDurationMode === 'perpetual' ? true : null,
+      perpetual: values.courseDurationMode === 'perpetual' ? true : undefined,
       totalDoses:
         values.courseDurationMode === 'total_doses' && values.totalDoses !== ''
           ? Number(values.totalDoses)

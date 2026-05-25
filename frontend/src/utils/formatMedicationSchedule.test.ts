@@ -54,7 +54,7 @@ describe('getSchedulePreview', () => {
       specificTimes: [],
       daysOfWeek: [],
       dayOfMonth: '',
-    } as MedicationFormValues;
+    } as unknown as MedicationFormValues;
 
     expect(getSchedulePreview(values)).toBe('Every 2h from 06:00');
   });

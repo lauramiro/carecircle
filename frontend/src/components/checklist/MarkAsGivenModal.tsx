@@ -24,7 +24,7 @@ interface MarkAsGivenModalProps {
 
 export default function MarkAsGivenModal({
   item,
-  checklistDate,
+  checklistDate: _checklistDate,
   open,
   onGiven,
   onCancel,

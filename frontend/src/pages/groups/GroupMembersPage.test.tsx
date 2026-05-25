@@ -20,6 +20,7 @@ const groupHookMock = vi.hoisted(() => ({
       name: 'Dad Care Circle',
       description: 'Daily support and medication coordination for Dad.',
       role: 'Admin' as const,
+      canSchedule: true,
       createdAt: '2025-05-12T09:00:00.000Z',
       members: [
         { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'Admin' as const, joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' as const },
@@ -68,6 +69,7 @@ describe('GroupMembersPage', () => {
         name: 'Dad Care Circle',
         description: 'Daily support and medication coordination for Dad.',
         role: 'Admin',
+        canSchedule: true,
         createdAt: '2025-05-12T09:00:00.000Z',
         members: [
           { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'Admin', joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' },
@@ -102,6 +104,7 @@ describe('GroupMembersPage', () => {
         name: 'Medication Helpers',
         description: 'Shared medication reminders across the family.',
         role: 'Admin',
+        canSchedule: true,
         createdAt: '2025-01-21T16:10:00.000Z',
         members: Array.from({ length: 8 }, (_, index) => ({
           id: `member-${index}`,
@@ -146,6 +149,7 @@ describe('GroupMembersPage', () => {
         name: 'Mum Recovery Team',
         description: 'Post-surgery care planning and appointment tracking.',
         role: 'Member',
+        canSchedule: true,
         createdAt: '2025-04-28T13:30:00.000Z',
         members: [
           { id: 'member-4', name: 'Amara', email: 'amara@example.com', role: 'Admin', joinedAt: '2025-04-28T13:30:00.000Z', status: 'Active' },

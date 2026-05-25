@@ -105,9 +105,17 @@ export class PushDispatchService {
   }
 
   async sendToUsers(userIds: string[], payload: GenericPushPayload): Promise<void> {
-    if (!this.vapidConfigured || userIds.length === 0) return;
+    if (!this.vapidConfigured) {
+      this.logger.warn('sendToUsers_skipped: VAPID not configured');
+      return;
+    }
+    if (userIds.length === 0) return;
 
     const subscriptions = await this.pushSubRepo.findByUserIds(userIds);
+    if (subscriptions.length === 0) {
+      this.logger.warn(`sendToUsers_no_subscriptions userIds=${userIds.join(',')}`);
+      return;
+    }
     await Promise.all(
       subscriptions.map(async (sub) => {
         if (sub.platform !== 'web_push' || !sub.p256dh || !sub.auth) return;

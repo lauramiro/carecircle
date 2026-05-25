@@ -1,4 +1,4 @@
-import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -193,6 +193,7 @@ describe('DashboardLayout', () => {
         name: 'Dad Care Circle',
         description: 'Daily support',
         role: 'Admin',
+        canSchedule: true,
         createdAt: '2025-05-12T09:00:00.000Z',
         members: [],
         gpContacts: [],

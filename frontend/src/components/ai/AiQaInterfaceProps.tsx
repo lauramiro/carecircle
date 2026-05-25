@@ -33,7 +33,7 @@ async function mockAiResponse(question: string, _patientId: string): Promise<{ a
 export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
 

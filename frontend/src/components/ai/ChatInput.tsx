@@ -9,7 +9,7 @@ interface ChatInputProps {
 
 export default function ChatInput({
   onSendMessage,
-  isLoading,
+  isLoading: _isLoading,
   disabled = false,
 }: ChatInputProps) {
   const [input, setInput] = useState('');

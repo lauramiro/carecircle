@@ -8,6 +8,18 @@ import type {
   RecurrenceRule,
 } from './appointments.types';
 
+/** Default length when the UI only captures a single start time (DB requires end_time > start_time). */
+const DEFAULT_APPOINTMENT_DURATION_MS = 60 * 60 * 1000;
+
+function endTimeFromStart(startTime: string, durationMs = DEFAULT_APPOINTMENT_DURATION_MS): string {
+  return new Date(new Date(startTime).getTime() + durationMs).toISOString();
+}
+
+function durationMsBetween(startTime: string, endTime: string): number {
+  const ms = new Date(endTime).getTime() - new Date(startTime).getTime();
+  return ms > 0 ? ms : DEFAULT_APPOINTMENT_DURATION_MS;
+}
+
 function fromRow(row: Record<string, unknown>): Appointment {
   const attendees = row.attendees as string[] | null;
   return {
@@ -71,13 +83,17 @@ export async function addAppointment(payload: AddAppointmentPayload): Promise<Ap
     notes: payload.preVisitNotes ?? null,
     status: 'scheduled',
     created_by: user.id,
-    recurrence_rule: payload.recurrenceRule ?? null,
+    ...(payload.recurrenceRule ? { recurrence_rule: payload.recurrenceRule } : {}),
   };
 
   if (!payload.recurrenceRule) {
     const { data, error } = await supabase
       .from('appointments')
-      .insert({ ...baseRow, start_time: payload.startTime, end_time: payload.startTime })
+      .insert({
+        ...baseRow,
+        start_time: payload.startTime,
+        end_time: endTimeFromStart(payload.startTime),
+      })
       .select('*')
       .single();
     if (error) throw new Error(error.message);
@@ -86,12 +102,16 @@ export async function addAppointment(payload: AddAppointmentPayload): Promise<Ap
 
   const seriesId = crypto.randomUUID();
   const dates = generateSeriesDates(new Date(payload.startTime), payload.recurrenceRule);
-  const rows = dates.map(d => ({
-    ...baseRow,
-    start_time: d.toISOString(),
-    end_time: d.toISOString(),
-    recurrence_series_id: seriesId,
-  }));
+  const rows = dates.map(d => {
+    const startIso = d.toISOString();
+    return {
+      ...baseRow,
+      recurrence_rule: payload.recurrenceRule,
+      start_time: startIso,
+      end_time: endTimeFromStart(startIso),
+      recurrence_series_id: seriesId,
+    };
+  });
 
   const { data, error } = await supabase
     .from('appointments')
@@ -121,8 +141,11 @@ export async function editAppointment(
   }> = {};
   if (changes.title !== undefined) update.title = changes.title;
   if (changes.startTime !== undefined) {
+    const durationMs = appointment
+      ? durationMsBetween(appointment.startTime, appointment.endTime)
+      : DEFAULT_APPOINTMENT_DURATION_MS;
     update.start_time = changes.startTime;
-    update.end_time = changes.startTime;
+    update.end_time = endTimeFromStart(changes.startTime, durationMs);
   }
   if (changes.attendingCarerId !== undefined) update.attendees = [changes.attendingCarerId];
   if (changes.specialistName !== undefined) update.provider_name = changes.specialistName;
@@ -171,10 +194,16 @@ export async function editAppointment(
           (futureRows as { id: string; start_time: string }[]).map(row => {
             const d = new Date(row.start_time);
             d.setHours(newTime.getHours(), newTime.getMinutes(), 0, 0);
-            const iso = d.toISOString();
+            const startIso = d.toISOString();
+            const durationMs = appointment
+              ? durationMsBetween(appointment.startTime, appointment.endTime)
+              : DEFAULT_APPOINTMENT_DURATION_MS;
             return supabase
               .from('appointments')
-              .update({ start_time: iso, end_time: iso })
+              .update({
+                start_time: startIso,
+                end_time: endTimeFromStart(startIso, durationMs),
+              })
               .eq('id', row.id);
           }),
         );

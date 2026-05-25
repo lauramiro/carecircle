@@ -18,7 +18,7 @@ export default function AiQaTestPage() {
           ))}
         </select>
       </div>
-      <AiQaInterface patientId={patientId} />
+      <AiQaInterface groupId={patientId} />
     </div>
   );
 }

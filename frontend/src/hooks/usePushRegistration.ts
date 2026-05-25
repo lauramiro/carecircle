@@ -83,7 +83,11 @@ export async function registerWebPushForUser(userId: string): Promise<void> {
 
   const keyResponse = await fetch('/api/push/vapid-public-key');
   if (!keyResponse.ok) {
-    throw new Error('Could not load push configuration from the server.');
+    throw new Error(
+      keyResponse.status === 404
+        ? 'Push API not found. Start the CareCircle backend (npm run start:dev in backend/, default port 3001) and restart the Vite dev server.'
+        : 'Could not load push configuration from the server.',
+    );
   }
 
   const { publicKey } = (await keyResponse.json()) as { publicKey: string | null };
@@ -91,13 +95,18 @@ export async function registerWebPushForUser(userId: string): Promise<void> {
     throw new Error('Push notifications are not configured on the server.');
   }
 
-  let subscription = await registration.pushManager.getSubscription();
-  if (!subscription) {
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey),
-    });
+  const applicationServerKey = urlBase64ToUint8Array(publicKey);
+
+  // Replace any existing subscription so keys always match the server's VAPID pair.
+  const existing = await registration.pushManager.getSubscription();
+  if (existing) {
+    await existing.unsubscribe();
   }
+
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey,
+  });
 
   await syncSubscriptionToBackend(userId, subscription);
 }

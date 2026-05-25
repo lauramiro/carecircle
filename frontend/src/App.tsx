@@ -19,7 +19,6 @@ import GroupJournalPage from './pages/groups/GroupJournalPage';
 import AppointmentsPage from './pages/appointments/AppointmentsPage';
 import AppointmentFormPage from './pages/appointments/AppointmentFormPage';
 import AiQaPage from './pages/ai/AiQaPage';
-import AiQaTestPage from './pages/ai/AiQaTestPage';
 import AdministrationLogPage from './pages/groups/AdministrationLogPage';
 import SettingsPage from './pages/SettingsPage';
 import { usePushNotifications } from './hooks/push/usePushNotifications';

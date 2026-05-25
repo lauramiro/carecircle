@@ -675,13 +675,13 @@ export default function DashboardLayout() {
               type="button"
               aria-label={
                 pushRegistration.status === 'registered'
-                  ? 'Medication notifications enabled'
-                  : 'Enable medication notifications'
+                  ? 'Notifications enabled'
+                  : 'Enable notifications'
               }
               title={
                 pushRegistration.status === 'registered'
-                  ? 'Medication notifications enabled'
-                  : pushRegistration.errorMessage ?? 'Enable browser notifications for overdue medication alerts'
+                  ? 'Notifications enabled'
+                  : pushRegistration.errorMessage ?? 'Enable browser notifications for medication and appointment alerts'
               }
               onClick={() => void pushRegistration.register()}
               disabled={pushRegistration.status === 'prompting' || pushRegistration.status === 'unsupported'}
@@ -709,11 +709,11 @@ export default function DashboardLayout() {
                 >
                   <div>
                     <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                      Enable medication alerts
+                      Enable notifications
                     </p>
                     <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                       {pushRegistration.errorMessage ??
-                        'Allow browser notifications to get push alerts when a dose becomes overdue.'}
+                        'Allow browser notifications for overdue medication alerts and appointment reminders (24h and 1h before). The backend must be running locally.'}
                     </p>
                   </div>
                   <button

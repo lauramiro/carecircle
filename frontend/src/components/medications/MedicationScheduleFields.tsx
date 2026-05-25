@@ -41,7 +41,7 @@ export default function MedicationScheduleFields({
   setCourseDurationMode,
   setDailyMode,
   updateField,
-  setSpecificTime,
+  setSpecificTime: _setSpecificTime,
   addSpecificTime,
   removeSpecificTime,
   toggleDayOfWeek,
@@ -273,7 +273,6 @@ export default function MedicationScheduleFields({
             formId={formId}
             times={values.specificTimes}
             error={errors.specificTimes}
-            setTime={setSpecificTime}
             addTime={addSpecificTime}
             removeTime={removeSpecificTime}
           />
@@ -290,7 +289,6 @@ export default function MedicationScheduleFields({
             formId={formId}
             times={values.specificTimes}
             error={errors.specificTimes}
-            setTime={setSpecificTime}
             addTime={addSpecificTime}
             removeTime={removeSpecificTime}
           />
@@ -334,7 +332,6 @@ export default function MedicationScheduleFields({
             formId={formId}
             times={values.specificTimes}
             error={errors.specificTimes}
-            setTime={setSpecificTime}
             addTime={addSpecificTime}
             removeTime={removeSpecificTime}
           />

@@ -88,13 +88,14 @@ export default function GroupMembersPage() {
     managedMembers?.groupId === group.id ? managedMembers.members : group.members;
   const canInvite = group.role === 'Admin' && members.length < 8;
   const canManageMembers = group.role === 'Admin';
+  const currentGroupId = group.id;
 
   function confirmPendingAction() {
     if (!pendingAction) return;
 
     if (pendingAction.type === 'remove') {
       setManagedMembers({
-        groupId: group.id,
+        groupId: currentGroupId,
         members: members.filter((member) => member.id !== pendingAction.member.id),
       });
       toast.success(`${pendingAction.member.name} removed from group`);
@@ -102,7 +103,7 @@ export default function GroupMembersPage() {
 
     if (pendingAction.type === 'role') {
       setManagedMembers({
-        groupId: group.id,
+        groupId: currentGroupId,
         members: members.map((member) =>
           member.id === pendingAction.member.id
             ? { ...member, role: pendingAction.role }
@@ -114,7 +115,7 @@ export default function GroupMembersPage() {
 
     if (pendingAction.type === 'status') {
       setManagedMembers({
-        groupId: group.id,
+        groupId: currentGroupId,
         members: members.map((member) =>
           member.id === pendingAction.member.id
             ? { ...member, status: pendingAction.status }

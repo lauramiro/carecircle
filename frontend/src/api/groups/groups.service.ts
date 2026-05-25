@@ -131,21 +131,21 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     .eq('group_id', groupId)
     .maybeSingle();
 
-  const userRole = mapRole(membership.role_in_care);
+  const userRole = mapRole(membership.role_in_care ?? '');
   const canSchedule = membership.can_schedule === true;
 
   const members: GroupMember[] = (groupData.care_givers ?? []).map(m => ({
     id: m.caregiver_id,
     name: m.profiles?.full_name || 'Unknown',
-    email: m.profiles.email,
-    role: mapRole(m.role_in_care),
+    email: m.profiles?.email ?? '',
+    role: mapRole(m.role_in_care ?? ''),
     joinedAt: m.joined_at,
     status: m.status === 'active' ? 'Active' : 'Suspended',
   }));
 
   return {
     id: groupData.id,
-    name: groupData.name,
+    name: groupData.name ?? '',
     description: groupData.description ?? '',
     role: userRole,
     createdAt: groupData.created_at ?? new Date().toISOString(),
@@ -172,7 +172,7 @@ function parseCreateGroupInviteRow(data: unknown): InviteResult | null {
   };
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000').replace(
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001').replace(
   /\/$/,
   '',
 );

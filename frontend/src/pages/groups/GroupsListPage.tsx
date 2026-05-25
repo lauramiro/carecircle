@@ -6,7 +6,7 @@ import EmptyState from '@components/ui/EmptyState';
 import { ErrorPanel } from '@components/ui/ContentPanel';
 import PageHeader from '@components/ui/PageHeader';
 import { useGroups } from '@hooks/groups/useGroups';
-import { formatDate, formatMemberCount, truncateText } from '@utils/formatters';
+import { formatDate, formatMemberCount } from '@utils/formatters';
 import { getInitialsFromLabel } from '@utils/greeting';
 import {
   CARD_VARIANTS,

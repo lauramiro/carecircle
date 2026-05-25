@@ -52,6 +52,7 @@ describe('usePushRegistration', () => {
     });
     getSubscriptionMock.mockResolvedValue(null);
     subscribeMock.mockResolvedValue({
+      unsubscribe: vi.fn().mockResolvedValue(true),
       toJSON: () => ({
         endpoint: 'https://push.example/sub/1',
         keys: { p256dh: 'p256dh-key', auth: 'auth-key' },
@@ -122,15 +123,23 @@ describe('usePushRegistration', () => {
 });
 
 describe('registerWebPushForUser', () => {
-  it('reuses an existing browser subscription', async () => {
+  it('replaces an existing browser subscription before syncing', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
+    const unsubscribeMock = vi.fn().mockResolvedValue(true);
     const existing = {
+      unsubscribe: unsubscribeMock,
       toJSON: () => ({
         endpoint: 'https://push.example/existing',
         keys: { p256dh: 'existing-p256dh', auth: 'existing-auth' },
       }),
     };
+    const subscribeMock = vi.fn().mockResolvedValue({
+      toJSON: () => ({
+        endpoint: 'https://push.example/new',
+        keys: { p256dh: 'new-p256dh', auth: 'new-auth' },
+      }),
+    });
 
     Object.defineProperty(globalThis, 'Notification', {
       configurable: true,
@@ -142,13 +151,13 @@ describe('registerWebPushForUser', () => {
         register: vi.fn().mockResolvedValue({
           pushManager: {
             getSubscription: vi.fn().mockResolvedValue(existing),
-            subscribe: vi.fn(),
+            subscribe: subscribeMock,
           },
         }),
         ready: Promise.resolve({
           pushManager: {
             getSubscription: vi.fn().mockResolvedValue(existing),
-            subscribe: vi.fn(),
+            subscribe: subscribeMock,
           },
         }),
       },
@@ -163,11 +172,13 @@ describe('registerWebPushForUser', () => {
 
     await registerWebPushForUser('user-123');
 
+    expect(unsubscribeMock).toHaveBeenCalledOnce();
+    expect(subscribeMock).toHaveBeenCalledOnce();
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/push/subscriptions',
       expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining('https://push.example/existing'),
+        body: expect.stringContaining('https://push.example/new'),
       }),
     );
   });

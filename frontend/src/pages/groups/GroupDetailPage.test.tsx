@@ -1,10 +1,4 @@
-import {
-  render,
-  screen,
-  waitForElementToBeRemoved,
-  within,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Group } from '../../api/groups/groups.types';
@@ -20,6 +14,7 @@ const groupHookMock = vi.hoisted(() => ({
       name: 'Dad Care Circle',
       description: 'Daily support and medication coordination for Dad.',
       role: 'Admin' as const,
+      canSchedule: true,
       createdAt: '2025-05-12T09:00:00.000Z',
       members: [
         { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'Admin' as const, joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' as const },
@@ -56,6 +51,7 @@ describe('GroupDetailPage', () => {
         name: 'Dad Care Circle',
         description: 'Daily support and medication coordination for Dad.',
         role: 'Admin',
+        canSchedule: true,
         createdAt: '2025-05-12T09:00:00.000Z',
         members: [
           { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'Admin', joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' },

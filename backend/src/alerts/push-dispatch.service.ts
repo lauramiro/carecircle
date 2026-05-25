@@ -9,6 +9,12 @@ export interface PushDispatchResult {
   allFailed: boolean;
 }
 
+export interface GenericPushPayload {
+  title: string;
+  body: string;
+  url: string;
+}
+
 @Injectable()
 export class PushDispatchService {
   private readonly logger = new Logger(PushDispatchService.name);
@@ -96,5 +102,28 @@ export class PushDispatchService {
     }
 
     return { log, allFailed: successCount === 0 };
+  }
+
+  async sendToUsers(userIds: string[], payload: GenericPushPayload): Promise<void> {
+    if (!this.vapidConfigured || userIds.length === 0) return;
+
+    const subscriptions = await this.pushSubRepo.findByUserIds(userIds);
+    await Promise.all(
+      subscriptions.map(async (sub) => {
+        if (sub.platform !== 'web_push' || !sub.p256dh || !sub.auth) return;
+        try {
+          await webpush.sendNotification(
+            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+            JSON.stringify({ title: payload.title, body: payload.body, data: { url: payload.url } }),
+          );
+        } catch (err: unknown) {
+          const statusCode =
+            typeof err === 'object' && err !== null && 'statusCode' in err
+              ? Number((err as { statusCode: unknown }).statusCode)
+              : undefined;
+          this.logger.warn(`push_failed sub=${sub.id} status=${statusCode ?? 'unknown'}`);
+        }
+      }),
+    );
   }
 }

@@ -1,5 +1,16 @@
+// CareCircle Service Worker — push notifications
+// Handles incoming push events and notification click deep-links.
+
 self.addEventListener('push', (event) => {
-  const data = event.data?.json() ?? {};
+  if (!event.data) return;
+
+  let data = {};
+  try {
+    data = event.data.json();
+  } catch {
+    data = { title: 'CareCircle', body: event.data.text() };
+  }
+
   const title = data.title ?? 'CareCircle';
   const body = data.body ?? '';
   const url = data.data?.url ?? '/';
@@ -7,24 +18,26 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      data: { url },
       icon: '/vite.svg',
+      data: { url },
     }),
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification.data?.url ?? '/';
+  const targetUrl = event.notification.data?.url ?? '/';
+
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      for (const client of clients) {
-        if ('focus' in client) {
-          client.navigate(url);
-          return client.focus();
+    clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        for (const client of windowClients) {
+          if (new URL(client.url).origin === self.location.origin) {
+            return client.focus().then((c) => c.navigate(targetUrl));
+          }
         }
-      }
-      if (self.clients.openWindow) return self.clients.openWindow(url);
-    }),
+        return clients.openWindow(targetUrl);
+      }),
   );
 });

@@ -1,4 +1,5 @@
 import type { CreateCareCircleFormValues } from '../types/createCareCircle.types';
+import { detectBrowserTimezone } from '../lib/ianaTimezones';
 
 export const RELATIONSHIP_OPTIONS = [
   { value: '', label: 'Select relationship' },
@@ -37,6 +38,7 @@ export const BLOOD_TYPE_OPTIONS = [
 export const CREATE_CARE_CIRCLE_DEFAULT_VALUES: CreateCareCircleFormValues = {
   groupName: '',
   groupDescription: '',
+  preferredTimezone: detectBrowserTimezone(),
   patientFullName: '',
   dateOfBirth: '',
   gender: '',

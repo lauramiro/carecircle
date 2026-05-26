@@ -1,29 +1,70 @@
-import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { CalendarDays, Users, ClipboardList, NotebookText } from 'lucide-react';
-import { toast } from 'react-toastify';
-import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import {
+  CalendarDays,
+  ClipboardList,
+  NotebookText,
+  Plus,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import GPContactSection from '../../components/groups/GPContactSection';
-import GroupMembersTable from '../../components/groups/GroupMembersTable';
 import GroupRoleBadge from '../../components/groups/GroupRoleBadge';
-import InviteMemberModal from '../../components/groups/InviteMemberModal';
-import MemberActionConfirmationModal from '../../components/groups/MemberActionConfirmationModal';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { useGPContacts } from '../../hooks/groups/useGPContacts';
-import { formatDate } from '../../utils/formatters';
-import {
-  CTA_ATTENTION_ANIMATION,
-  STATIC_CTA_ATTENTION_ANIMATION,
-  TRANSITIONS,
-} from '../../lib/animation.constants';
+import { formatDate, formatMemberCount } from '../../utils/formatters';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 
+interface StatTileProps {
+  icon: ReactNode;
+  label: string;
+  value: ReactNode;
+  href?: string;
+}
 
-type PendingMemberAction =
-  | { type: 'remove'; member: GroupMember }
-  | { type: 'role'; member: GroupMember; role: GroupRole }
-  | { type: 'status'; member: GroupMember; status: GroupMember['status'] };
+function StatTile({ icon, label, value, href }: StatTileProps) {
+  const content = (
+    <>
+      <div className="flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+        {icon}
+        <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--color-text-secondary)' }}>
+          {label}
+        </span>
+      </div>
+      <div className="mt-2 text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
+        {value}
+      </div>
+    </>
+  );
+
+  const className = 'rounded-xl border px-4 py-3 text-left transition-colors hover:border-[var(--color-primary)]';
+
+  if (href) {
+    return (
+      <Link
+        to={href}
+        className={className}
+        style={{
+          borderColor: 'var(--color-border)',
+          backgroundColor: 'var(--color-bg)',
+          textDecoration: 'none',
+        }}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div
+      className={className}
+      style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)' }}
+    >
+      {content}
+    </div>
+  );
+}
 
 export default function GroupDetailPage() {
   const { groupId } = useParams();
@@ -37,14 +78,6 @@ export default function GroupDetailPage() {
     removeGP,
   } = useGPContacts(groupId ?? '', group?.gpContacts ?? []);
   const shouldReduceMotion = useReducedMotion();
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [managedMembers, setManagedMembers] = useState<{
-    groupId: string;
-    members: GroupMember[];
-  } | null>(null);
-  const [pendingAction, setPendingAction] = useState<PendingMemberAction | null>(
-    null,
-  );
 
   if (!groupId) return <Navigate to="/groups/list" replace />;
 
@@ -83,327 +116,124 @@ export default function GroupDetailPage() {
     );
   }
 
-  const currentGroup = group;
-  console.log('Group object:', currentGroup);
-  const members =
-    managedMembers?.groupId === currentGroup.id
-      ? managedMembers.members
-      : currentGroup.members;
-  const canInvite = members.length < 8;
-  const canManageMembers = currentGroup.role === 'Admin';
-
-  function getConfirmationCopy(action: PendingMemberAction | null) {
-    if (!action) {
-      return { title: '', message: '', confirmLabel: '' };
-    }
-
-    if (action.type === 'remove') {
-      return {
-        title: 'Remove member?',
-        message: `${action.member.name} will lose access to this group and will need a new invite to join again.`,
-        confirmLabel: 'Remove',
-      };
-    }
-
-    if (action.type === 'role') {
-      return {
-        title: 'Change member role?',
-        message: `${action.member.name} will be assigned the ${action.role} role in this group.`,
-        confirmLabel: 'Change Role',
-      };
-    }
-
-    return {
-      title: action.status === 'Suspended' ? 'Suspend member?' : 'Reactivate member?',
-      message:
-        action.status === 'Suspended'
-          ? `${action.member.name} will be suspended from this group until an admin reactivates them.`
-          : `${action.member.name} will regain access to this group.`,
-      confirmLabel: action.status === 'Suspended' ? 'Suspend' : 'Reactivate',
-    };
-  }
-
-  function confirmPendingAction() {
-    if (!pendingAction) return;
-
-    if (pendingAction.type === 'remove') {
-      setManagedMembers({
-        groupId: currentGroup.id,
-        members: members.filter((member) => member.id !== pendingAction.member.id),
-
-      });
-      toast.success(`${pendingAction.member.name} removed from group`);
-    }
-
-    if (pendingAction.type === 'role') {
-      setManagedMembers({
-        groupId: currentGroup.id,
-        members: members.map((member) =>
-          member.id === pendingAction.member.id
-            ? { ...member, role: pendingAction.role }
-            : member,
-        ),
-      });
-      toast.success(`${pendingAction.member.name} is now ${pendingAction.role}`);
-    }
-
-    if (pendingAction.type === 'status') {
-      setManagedMembers({
-        groupId: currentGroup.id,
-        members: members.map((member) =>
-          member.id === pendingAction.member.id
-            ? { ...member, status: pendingAction.status }
-            : member,
-        ),
-      });
-      toast.success(
-        pendingAction.status === 'Suspended'
-          ? `${pendingAction.member.name} suspended`
-          : `${pendingAction.member.name} reactivated`,
-      );
-    }
-
-    setPendingAction(null);
-  }
-
-  const confirmationCopy = getConfirmationCopy(pendingAction);
-  
+  const members = group.members;
+  const canManageMembers = group.role === 'Admin';
+  const basePath = `/groups/${group.id}`;
 
   return (
-    <section>
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1
-            style={{
-              color: 'var(--color-text-primary)',
-              fontSize: '26px',
-              fontWeight: 800,
-              letterSpacing: '-0.03em',
-              margin: 0,
-            }}
-          >
-            {currentGroup.name}
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            {currentGroup.description}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <motion.button
-            type="button"
-            onClick={() => navigate(`/groups/${currentGroup.id}/administration-log`)}
-            className="h-10 rounded-lg border px-4 text-sm font-bold"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          >
-            Administration log
-          </motion.button>
-          <motion.button
-            type="button"
-            onClick={() => navigate(`/groups/${currentGroup.id}/journal`)}
-            className="h-10 rounded-lg border px-4 text-sm font-bold"
-            style={{
-              borderColor: 'var(--color-border)',
-              color: 'var(--color-text-secondary)',
-            }}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          >
-            Handover Journal
-          </motion.button>
-          <motion.button
-            type="button"
-            onClick={() => navigate(`/groups/${currentGroup.id}/checklist`)}
-            className="h-10 rounded-lg px-4 text-sm font-bold text-white"
-            style={{
-              backgroundColor: 'var(--color-primary)',
-            }}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          >
-            Daily checklist
-          </motion.button>
-          <motion.button
-            type="button"
-            onClick={() => navigate(`/groups/${currentGroup.id}/appointments`)}
-            className="h-10 rounded-lg border px-4 text-sm font-bold"
-            style={{
-              borderColor: 'var(--color-border)',
-              color: 'var(--color-text-secondary)',
-            }}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          >
-            Appointments
-          </motion.button>
-          <motion.button
-            type="button"
-            onClick={() => navigate(`/groups/${currentGroup.id}/medications`)}
-            className="h-10 rounded-lg border px-4 text-sm font-bold"
-            style={{
-              borderColor: 'var(--color-border)',
-              color: 'var(--color-text-secondary)',
-            }}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          >
-            View Schedule
-          </motion.button>
-          <motion.button
-            type="button"
-            onClick={() => navigate(`/groups/${currentGroup.id}/medications/add`)}
-            className="h-10 rounded-lg border px-4 text-sm font-bold"
-            style={{
-              borderColor: 'var(--color-primary)',
-              color: 'var(--color-primary)',
-            }}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          >
-            Add Medication
-          </motion.button>
-          <motion.button
-            type="button"
-            onClick={() => navigate(`/groups/${currentGroup.id}/hospital-summary`)}
-            className="h-10 rounded-lg px-4 text-sm font-bold text-white"
-            style={{
-              backgroundColor: 'var(--color-primary)',
-            }}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          >
-            Hospital Summary
-          </motion.button>
-          {canInvite && (
-            // A one-shot cue draws attention to the primary next action without looping.
-            <motion.button
-              type="button"
-              onClick={() => setInviteOpen(true)}
-              className="h-10 rounded-lg px-4 text-sm font-bold text-white"
-              style={{ backgroundColor: 'var(--color-primary)' }}
-              animate={
-                shouldReduceMotion
-                  ? STATIC_CTA_ATTENTION_ANIMATION
-                  : CTA_ATTENTION_ANIMATION
-              }
-              transition={{ ...TRANSITIONS.modal, delay: 0.35 }}
-              whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+    <section className="space-y-6">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1
+              className="truncate"
+              style={{
+                color: 'var(--color-text-primary)',
+                fontSize: '28px',
+                fontWeight: 800,
+                letterSpacing: '-0.03em',
+                margin: 0,
+              }}
             >
-              Invite Member
-            </motion.button>
-          )}
-        </div>
-        
-        <motion.button
-          type="button"
-           onClick={() => {
-             console.log('AI Assistant clicked. groupId:', groupId, 'patientId:', group.patientId);
-             navigate(`/groups/${groupId}/ai-assistant`, { state: { groupId } }); }}
-          className="h-10 rounded-lg border px-4 text-sm font-bold"
-          style={{
-            borderColor: 'var(--color-primary)',
-            color: 'var(--color-primary)',
-          }}
-          whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          >
-            🤖 AI Assistant
-          </motion.button>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-
-        <article
-          className="rounded-xl border bg-white p-5"
-          style={{ borderColor: 'var(--color-border)' }}
-        >
-          <NotebookText size={20} strokeWidth={1.9} color="var(--color-primary)" />
-          <p className="mt-3 text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
-            Handover
-          </p>
-          <p className="mt-1 text-sm font-bold">
-            {currentGroup.role === 'Observer' ? 'Read-only journal access' : 'Write and review journal entries'}
-          </p>
-        </article>
-
-        <article
-          className="rounded-xl border bg-white p-5"
-          style={{ borderColor: 'var(--color-border)' }}
-        >
-          <CalendarDays size={20} strokeWidth={1.9} color="var(--color-primary)" />
-          <p className="mt-3 text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
-            Created
-          </p>
-          <p className="mt-1 text-sm font-bold">{formatDate(currentGroup.createdAt)}</p>
-        </article>
-
-        <article
-          className="rounded-xl border bg-white p-5"
-          style={{ borderColor: 'var(--color-border)' }}
-        >
-          <Users size={20} strokeWidth={1.9} color="var(--color-primary)" />
-          <p className="mt-3 text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
-            Members
-          </p>
-          <p className="mt-1 text-sm font-bold">{members.length}</p>
-        </article>
-
-        <article
-          className="rounded-xl border bg-white p-5"
-          style={{ borderColor: 'var(--color-border)' }}
-        >
-          <p className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
-            Your Role
-          </p>
-          <div className="mt-3">
-            <GroupRoleBadge role={currentGroup.role} />
+              {group.name}
+            </h1>
+            <GroupRoleBadge role={group.role} />
           </div>
-        </article>
-      </div>
+          {group.description ? (
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+              {group.description}
+            </p>
+          ) : null}
+          <p className="mt-2 text-xs font-medium" style={{ color: 'var(--color-text-hint)' }}>
+            Created {formatDate(group.createdAt)} · {formatMemberCount(members.length)}
+          </p>
+        </div>
+      </header>
 
-      {/* Today's Medications button */}
-      <div className="mt-6 mb-2">
-        <button
-          type="button"
-          onClick={() => navigate(`/groups/${currentGroup.id}/checklist`)}
-          className="flex items-center gap-2 h-10 rounded-lg px-4 text-sm font-bold text-white"
-          style={{ backgroundColor: 'var(--color-primary)' }}
+      <article
+        className="overflow-hidden rounded-2xl border bg-white"
+        style={{ borderColor: 'var(--color-border)' }}
+      >
+        <div
+          className="border-b px-6 py-5"
+          style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-primary-light)' }}
         >
-          <ClipboardList size={16} strokeWidth={1.9} />
-          Today's Medications
-        </button>
-      </div>
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <p
+                className="text-[11px] font-bold uppercase tracking-wide"
+                style={{ color: 'var(--color-primary)' }}
+              >
+                Today&apos;s care
+              </p>
+              <h2 className="mt-1 text-lg font-extrabold" style={{ color: 'var(--color-text-primary)' }}>
+                Medication checklist
+              </h2>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                Review due doses, mark medications as given, and stay on top of the daily schedule.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <motion.button
+                type="button"
+                onClick={() => navigate(`${basePath}/checklist`)}
+                className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-white"
+                style={{ backgroundColor: 'var(--color-primary)' }}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+              >
+                <ClipboardList size={16} strokeWidth={2} />
+                Today&apos;s medications
+              </motion.button>
+              {canManageMembers && (
+                <motion.button
+                  type="button"
+                  onClick={() => navigate(`${basePath}/medications/add`)}
+                  className="inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-bold"
+                  style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+                >
+                  <Plus size={16} strokeWidth={2} />
+                  Add medication
+                </motion.button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-3 p-6 sm:grid-cols-2 xl:grid-cols-4">
+          <StatTile
+            icon={<Users size={16} strokeWidth={2} />}
+            label="Members"
+            value={members.length}
+            href={`${basePath}/members`}
+          />
+          <StatTile
+            icon={<CalendarDays size={16} strokeWidth={2} />}
+            label="Created"
+            value={formatDate(group.createdAt)}
+          />
+          <StatTile
+            icon={<NotebookText size={16} strokeWidth={2} />}
+            label="Handover"
+            value={group.role === 'Observer' ? 'Read-only access' : 'Read & write'}
+          />
+          <StatTile
+            icon={<Sparkles size={16} strokeWidth={2} />}
+            label="GP contacts"
+            value={gpContacts.length}
+          />
+        </div>
+      </article>
 
       <GPContactSection
-        groupId={currentGroup.id}
+        groupId={group.id}
         gpContacts={gpContacts}
-        userRole={currentGroup.role}
+        userRole={group.role}
         isSubmitting={gpContactSubmitting}
         onAddGP={addGP}
         onUpdateGP={updateGP}
         onRemoveGP={removeGP}
-      />
-
-      <GroupMembersTable
-        members={members}
-        canManageMembers={canManageMembers}
-        onRemoveMember={(member) => setPendingAction({ type: 'remove', member })}
-        onRoleChange={(member, role) =>
-          setPendingAction({ type: 'role', member, role })
-        }
-        onStatusChange={(member, status) =>
-          setPendingAction({ type: 'status', member, status })
-        }
-      />
-
-      <MemberActionConfirmationModal
-        open={Boolean(pendingAction)}
-        title={confirmationCopy.title}
-        message={confirmationCopy.message}
-        confirmLabel={confirmationCopy.confirmLabel}
-        onCancel={() => setPendingAction(null)}
-        onConfirm={confirmPendingAction}
-      />
-
-      <InviteMemberModal
-        groupId={currentGroup.id}
-        groupName={currentGroup.name}
-        open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
       />
     </section>
   );

@@ -1,7 +1,6 @@
-import type { Json } from '@lib/database.types';
-import { supabase } from '@lib/supabaseClient';
 import { parseDosageString } from '@lib/dosage';
 import { normalizeTime } from '@lib/time';
+import { supabase } from '@lib/supabaseClient';
 import type { MedicationRow } from '@lib/supabaseTables';
 import { medicationFromRow } from './medication.mapper';
 import type {
@@ -10,27 +9,45 @@ import type {
   Medication,
 } from './medications.types';
 
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+
+async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
+  const url = apiBaseUrl ? `${apiBaseUrl}${path}` : path;
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Request failed (${response.status})`);
+  }
+  return response;
+}
+
 function normalizeTimes(times: string[] | null | undefined): string[] | null {
   if (!times?.length) return null;
   return times.map(normalizeTime);
 }
 
-function optionalInsertFields(payload: AddMedicationPayload) {
+function buildCourseFields(payload: {
+  scheduleType: string;
+  perpetual?: boolean;
+  endDate?: string;
+  totalDoses?: number;
+}) {
+  if (payload.scheduleType === 'as_needed') return {};
   return {
-    ...(payload.form && { form: payload.form }),
-    ...(payload.route && { route: payload.route }),
-    ...(payload.instructions && { instructions: payload.instructions }),
-    ...(payload.takeWithFood != null && { take_with_food: payload.takeWithFood }),
-    ...(payload.endDate && { end_date: payload.endDate }),
-    ...(payload.prescribedDate && { prescribed_date: payload.prescribedDate }),
-    ...(payload.prescriptionNumber && { prescription_number: payload.prescriptionNumber }),
-    ...(payload.pharmacy && { pharmacy: payload.pharmacy }),
-    ...(payload.pharmacyPhone && { pharmacy_phone: payload.pharmacyPhone }),
-    ...(payload.refillsRemaining != null && { refills_remaining: payload.refillsRemaining }),
-    ...(payload.lastRefillDate && { last_refill_date: payload.lastRefillDate }),
-    ...(payload.sideEffects?.length && { side_effects: payload.sideEffects }),
-    ...(payload.notes && { notes: payload.notes }),
+    perpetual: payload.perpetual ?? false,
+    endDate: payload.endDate,
+    totalDoses: payload.totalDoses,
   };
+}
+
+function rowFromApi(data: Record<string, unknown>): Medication {
+  return medicationFromRow(data as MedicationRow);
 }
 
 export async function getMedicationsByPatient(patientId: string): Promise<Medication[]> {
@@ -48,103 +65,94 @@ export async function getMedicationsByPatient(patientId: string): Promise<Medica
   return (data as MedicationRow[]).map(medicationFromRow);
 }
 
-export async function addMedication(payload: AddMedicationPayload): Promise<Medication> {
+export async function addMedication(
+  groupId: string,
+  payload: AddMedicationPayload,
+): Promise<Medication> {
   const { dose, unit } = parseDosageString(payload.dosage);
-
-  const { data, error } = await supabase
-    .from('medications')
-    .insert({
-      patient_id: payload.patientId,
-      medication_name: payload.medicationName,
-      dose,
-      unit: unit as 'mg' | 'ml' | 'mcg' | 'units',
-      start_date: payload.startDate,
-      schedule_type: payload.scheduleType,
-      specific_times: normalizeTimes(payload.specificTimes),
-      interval_hours: payload.intervalHours ?? null,
-      days_of_week: payload.daysOfWeek ?? null,
-      day_of_month: payload.dayOfMonth ?? null,
-      status: 'active',
-      ...optionalInsertFields(payload),
-    })
-    .select('*')
-    .single();
-
-  if (error) throw new Error(error.message);
-  return medicationFromRow(data);
-}
-
-export async function editMedication(id: string, changes: EditMedicationPayload): Promise<Medication> {
-  const rpcChanges: Record<string, Json> = {};
-  if (changes.medicationName !== undefined) rpcChanges.medication_name = changes.medicationName;
-  if (changes.dosage !== undefined) {
-    const { dose, unit } = parseDosageString(changes.dosage);
-    rpcChanges.dose = dose;
-    rpcChanges.unit = unit;
-  }
-  if (changes.scheduleType !== undefined) rpcChanges.schedule_type = changes.scheduleType;
-  if (changes.specificTimes !== undefined) rpcChanges.specific_times = normalizeTimes(changes.specificTimes);
-  if (changes.intervalHours !== undefined) rpcChanges.interval_hours = changes.intervalHours;
-  if (changes.daysOfWeek !== undefined) rpcChanges.days_of_week = changes.daysOfWeek;
-  if (changes.dayOfMonth !== undefined) rpcChanges.day_of_month = changes.dayOfMonth;
-  if (changes.startDate !== undefined) rpcChanges.start_date = changes.startDate;
-  if (changes.form !== undefined) rpcChanges.form = changes.form;
-  if (changes.route !== undefined) rpcChanges.route = changes.route;
-  if (changes.instructions !== undefined) rpcChanges.instructions = changes.instructions;
-  if (changes.takeWithFood !== undefined) rpcChanges.take_with_food = changes.takeWithFood;
-  if (changes.endDate !== undefined) rpcChanges.end_date = changes.endDate;
-  if (changes.prescribedDate !== undefined) rpcChanges.prescribed_date = changes.prescribedDate;
-  if (changes.prescriptionNumber !== undefined) rpcChanges.prescription_number = changes.prescriptionNumber;
-  if (changes.pharmacy !== undefined) rpcChanges.pharmacy = changes.pharmacy;
-  if (changes.pharmacyPhone !== undefined) rpcChanges.pharmacy_phone = changes.pharmacyPhone;
-  if (changes.refillsRemaining !== undefined) rpcChanges.refills_remaining = changes.refillsRemaining;
-  if (changes.lastRefillDate !== undefined) rpcChanges.last_refill_date = changes.lastRefillDate;
-  if (changes.sideEffects !== undefined) rpcChanges.side_effects = changes.sideEffects;
-  if (changes.notes !== undefined) rpcChanges.notes = changes.notes;
-
-  const { data, error } = await supabase.rpc('edit_medication', {
-    p_id: id,
-    p_changes: rpcChanges,
+  const course = buildCourseFields({
+    scheduleType: payload.scheduleType,
+    perpetual: payload.perpetual,
+    endDate: payload.endDate,
+    totalDoses: payload.totalDoses,
   });
 
-  if (error) throw new Error(error.message);
-  return medicationFromRow(data as MedicationRow);
+  const response = await apiFetch(`/api/groups/${groupId}/medications`, {
+    method: 'POST',
+    body: JSON.stringify({
+      patientId: payload.patientId,
+      medicationName: payload.medicationName,
+      dose,
+      unit,
+      startDate: payload.startDate,
+      scheduleType: payload.scheduleType,
+      specificTimes: normalizeTimes(payload.specificTimes),
+      intervalHours: payload.intervalHours ?? undefined,
+      daysOfWeek: payload.daysOfWeek ?? undefined,
+      dayOfMonth: payload.dayOfMonth ?? undefined,
+      ...course,
+      form: payload.form,
+      route: payload.route,
+      instructions: payload.instructions,
+      takeWithFood: payload.takeWithFood,
+    }),
+  });
+
+  return rowFromApi(await response.json());
 }
 
-export async function pauseMedication(id: string): Promise<Medication> {
-  const { data, error } = await supabase
-    .from('medications')
-    .update({ status: 'paused' })
-    .eq('id', id)
-    .select('*')
-    .single();
+export async function editMedication(
+  groupId: string,
+  id: string,
+  changes: EditMedicationPayload,
+): Promise<Medication> {
+  const body: Record<string, unknown> = {};
+  if (changes.medicationName !== undefined) body.medicationName = changes.medicationName;
+  if (changes.dosage !== undefined) {
+    const { dose, unit } = parseDosageString(changes.dosage);
+    body.dose = dose;
+    body.unit = unit;
+  }
+  if (changes.scheduleType !== undefined) body.scheduleType = changes.scheduleType;
+  if (changes.specificTimes !== undefined) body.specificTimes = normalizeTimes(changes.specificTimes);
+  if (changes.intervalHours !== undefined) body.intervalHours = changes.intervalHours;
+  if (changes.daysOfWeek !== undefined) body.daysOfWeek = changes.daysOfWeek;
+  if (changes.dayOfMonth !== undefined) body.dayOfMonth = changes.dayOfMonth;
+  if (changes.startDate !== undefined) body.startDate = changes.startDate;
+  if (changes.perpetual !== undefined) body.perpetual = changes.perpetual;
+  if (changes.endDate !== undefined) body.endDate = changes.endDate;
+  if (changes.totalDoses !== undefined) body.totalDoses = changes.totalDoses;
 
-  if (error) throw new Error(error.message);
-  return medicationFromRow(data);
+  const response = await apiFetch(`/api/groups/${groupId}/medications/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+
+  return rowFromApi(await response.json());
 }
 
-export async function activateMedication(id: string): Promise<Medication> {
-  const { data, error } = await supabase
-    .from('medications')
-    .update({ status: 'active' })
-    .eq('id', id)
-    .select('*')
-    .single();
-
-  if (error) throw new Error(error.message);
-  return medicationFromRow(data);
+export async function pauseMedication(groupId: string, id: string): Promise<Medication> {
+  const response = await apiFetch(`/api/groups/${groupId}/medications/${id}/pause`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  return rowFromApi(await response.json());
 }
 
-export async function archiveMedication(id: string): Promise<Medication> {
-  const { data, error } = await supabase
-    .from('medications')
-    .update({ status: 'archived' })
-    .eq('id', id)
-    .select('*')
-    .single();
+export async function activateMedication(groupId: string, id: string): Promise<Medication> {
+  const response = await apiFetch(`/api/groups/${groupId}/medications/${id}/activate`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  return rowFromApi(await response.json());
+}
 
-  if (error) throw new Error(error.message);
-  return medicationFromRow(data);
+export async function archiveMedication(groupId: string, id: string): Promise<Medication> {
+  const response = await apiFetch(`/api/groups/${groupId}/medications/${id}/archive`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  return rowFromApi(await response.json());
 }
 
 export async function deleteMedication(id: string): Promise<never> {

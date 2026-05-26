@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage';
 import InvitePage from './pages/InvitePage';
 import CreateGroupPage from './pages/groups/CreateGroupPage';
 import GroupDetailPage from './pages/groups/GroupDetailPage';
+import GroupMembersPage from './pages/groups/GroupMembersPage';
 import GroupsListPage from './pages/groups/GroupsListPage';
 import GroupInvite from './pages/GroupInvite';
 import PatientProfilePage from './pages/groups/PatientProfilePage';
@@ -18,12 +19,14 @@ import GroupJournalPage from './pages/groups/GroupJournalPage';
 import AppointmentsPage from './pages/appointments/AppointmentsPage';
 import AppointmentFormPage from './pages/appointments/AppointmentFormPage';
 import AiQaPage from './pages/ai/AiQaPage';
-import AiQaTestPage from './pages/ai/AiQaTestPage';
 import AdministrationLogPage from './pages/groups/AdministrationLogPage';
+import SettingsPage from './pages/SettingsPage';
+import { usePushNotifications } from './hooks/push/usePushNotifications';
 
 function App() {
   const { session, loading } = useAuth();
   const isAuthenticated = !!session?.user?.email_confirmed_at;
+  usePushNotifications(isAuthenticated);
 
   if (loading) {
     return (
@@ -61,9 +64,11 @@ function App() {
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="groups/create" element={<CreateGroupPage />} />
           <Route path="groups/list" element={<GroupsListPage />} />
           <Route path="groups/:groupId" element={<GroupDetailPage />} />
+          <Route path="groups/:groupId/members" element={<GroupMembersPage />} />
           <Route path="groups/:groupId/medications" element={<MedicationsSchedulePage />} />
           <Route path="groups/:groupId/journal" element={<GroupJournalPage />} />
           <Route path="groups/:groupId/profile" element={<PatientProfilePage />} />

@@ -3,10 +3,13 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: light;
   --color-primary:              #4A6FA5;
   --color-primary-light:        #EDF3FA;
   --color-primary-dark:         #2F4F73;
   --color-bg:                   #F7F8FA;
+  --color-bg-page:              #F5F8FC;
+  --color-bg-muted:             #F8FBFF;
   --color-card:                 #FFFFFF;
   --color-accent-soft:          #E8EEF5;
   --color-accent-warm:          #F3EAE6;
@@ -24,12 +27,86 @@
   --color-status-critical-bg:   #FBF0F0;
   --color-status-skipped:       #5A6880;
   --color-status-skipped-bg:    #E8EEF5;
+  --color-nav-active-text:      #FFFFFF;
+  --color-overlay:              rgba(15, 23, 42, 0.4);
+  --color-input-bg:             var(--color-card);
+  --color-bg-disabled:          #EEF2F7;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --color-primary:              #7EB3E8;
+  --color-primary-light:        #1A2940;
+  --color-primary-dark:         #A8CCF0;
+  --color-bg:                   #0F1419;
+  --color-bg-page:              #0B0F14;
+  --color-bg-muted:             #151B24;
+  --color-card:                 #171D27;
+  --color-accent-soft:          #1E2633;
+  --color-accent-warm:          #2A2220;
+  --color-ai:                   #7EB3E8;
+  --color-border:               #2A3444;
+  --color-border-focus:         #7EB3E8;
+  --color-text-primary:         #E8EEF5;
+  --color-text-secondary:       #9AA8BC;
+  --color-text-hint:            #6B778A;
+  --color-status-given:         #7EB3E8;
+  --color-status-given-bg:      #1A2940;
+  --color-status-overdue:       #E0A65C;
+  --color-status-overdue-bg:    #2D2418;
+  --color-status-critical:      #E07A7A;
+  --color-status-critical-bg:   #2D1A1A;
+  --color-status-skipped:       #9AA8BC;
+  --color-status-skipped-bg:    #1E2633;
+  --color-nav-active-text:      #FFFFFF;
+  --color-overlay:              rgba(0, 0, 0, 0.55);
+  --color-input-bg:             #1F2633;
+  --color-bg-disabled:          #1A2230;
+}
+
+[data-theme='dark'] .bg-white {
+  background-color: var(--color-card);
+}
+
+[data-theme='dark'] .bg-white\/80 {
+  background-color: color-mix(in srgb, var(--color-card) 80%, transparent);
 }
 
 body {
   background-color: var(--color-bg);
   color: var(--color-text-primary);
   font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+textarea,
+select {
+  background-color: var(--color-input-bg);
+  color: var(--color-text-primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-hint);
+  opacity: 1;
+}
+
+[data-theme='dark'] input[type='date'],
+[data-theme='dark'] input[type='time'],
+[data-theme='dark'] input[type='datetime-local'],
+[data-theme='dark'] select {
+  color-scheme: dark;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-input-bg) inset;
+  -webkit-text-fill-color: var(--color-text-primary);
+  caret-color: var(--color-text-primary);
+  transition: background-color 9999s ease-out 0s;
 }
 
 @keyframes carecircle-shimmer {

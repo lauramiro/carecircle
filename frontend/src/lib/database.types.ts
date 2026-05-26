@@ -33,6 +33,8 @@ export type Database = {
           post_appointment_notes: string | null
           provider_id: string | null
           provider_name: string | null
+          recurrence_rule: string | null
+          recurrence_series_id: string | null
           reminder_offsets: number[] | null
           reminder_sent: boolean | null
           reminder_sent_at: string | null
@@ -61,6 +63,8 @@ export type Database = {
           post_appointment_notes?: string | null
           provider_id?: string | null
           provider_name?: string | null
+          recurrence_rule?: string | null
+          recurrence_series_id?: string | null
           reminder_offsets?: number[] | null
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
@@ -89,6 +93,8 @@ export type Database = {
           post_appointment_notes?: string | null
           provider_id?: string | null
           provider_name?: string | null
+          recurrence_rule?: string | null
+          recurrence_series_id?: string | null
           reminder_offsets?: number[] | null
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
@@ -274,13 +280,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "care_circle_members_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "care_group_primary_caregiver_id_fkey"
             columns: ["primary_caregiver_id"]
             isOneToOne: false
@@ -408,6 +407,8 @@ export type Database = {
           medication_name: string | null
           overdue_hours: number | null
           overdue_minutes: number | null
+          overdue_at: string | null
+          scheduled_at: string | null
           scheduled_time: string | null
           skip_notes: string | null
           skip_reason: string | null
@@ -431,6 +432,8 @@ export type Database = {
           medication_name?: string | null
           overdue_hours?: number | null
           overdue_minutes?: number | null
+          overdue_at?: string | null
+          scheduled_at?: string | null
           scheduled_time?: string | null
           skip_notes?: string | null
           skip_reason?: string | null
@@ -454,6 +457,8 @@ export type Database = {
           medication_name?: string | null
           overdue_hours?: number | null
           overdue_minutes?: number | null
+          overdue_at?: string | null
+          scheduled_at?: string | null
           scheduled_time?: string | null
           skip_notes?: string | null
           skip_reason?: string | null
@@ -1728,6 +1733,10 @@ export type Database = {
       is_caregiver_for: { Args: { p_patient_id: string }; Returns: boolean }
       is_email_registered: { Args: { p_email: string }; Returns: boolean }
       is_group_member: { Args: { check_group_id: string }; Returns: boolean }
+      update_invite_status: {
+        Args: { p_invite_id: string; p_status: string }
+        Returns: { group_id: string }
+      }
       verify_profile_trigger: {
         Args: never
         Returns: {

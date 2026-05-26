@@ -22,6 +22,8 @@ export interface Medication {
   takeWithFood: boolean | null;
   startDate: string;
   endDate: string | null;
+  perpetual?: boolean;
+  totalDoses?: number | null;
   status: MedicationStatus;
   discontinuedDate: string | null;
   discontinuedReason: string | null;
@@ -42,6 +44,8 @@ export type MedicationOptionalFields = {
   instructions?: string;
   takeWithFood?: boolean;
   endDate?: string;
+  perpetual?: boolean;
+  totalDoses?: number;
   prescribedDate?: string;
   prescriptionNumber?: string;
   pharmacy?: string;
@@ -80,6 +84,8 @@ export type EditMedicationPayload = Partial<
     | 'instructions'
     | 'takeWithFood'
     | 'endDate'
+    | 'perpetual'
+    | 'totalDoses'
     | 'prescribedDate'
     | 'prescriptionNumber'
     | 'pharmacy'
@@ -120,6 +126,9 @@ export const DAY_LABELS: Record<number, string> = {
 export const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 export const INTERVAL_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: 'Every 1 hour' },
+  { value: 2, label: 'Every 2 hours' },
+  { value: 3, label: 'Every 3 hours' },
   { value: 4, label: 'Every 4 hours' },
   { value: 6, label: 'Every 6 hours' },
   { value: 8, label: 'Every 8 hours' },

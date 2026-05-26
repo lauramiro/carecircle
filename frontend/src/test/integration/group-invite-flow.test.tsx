@@ -171,6 +171,7 @@ function buildAdminGroupWithMembers(memberCount: number): Group {
     name: 'CareCircle Family Group',
     description: 'A shared care group.',
     role: 'Admin',
+    canSchedule: true,
     createdAt: '2025-05-12T09:00:00.000Z',
     patientId: 'patient-care-001',
     members: Array.from({ length: memberCount }, (_, index) => ({

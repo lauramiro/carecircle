@@ -71,7 +71,7 @@ describe('GroupsListPage', () => {
     // expect(screen.getByText('group-care-001')).toBeInTheDocument(); // Flaky/removed from UI
     expect(screen.getByText('Admin')).toBeInTheDocument();
     expect(screen.getByText('12 May 2025')).toBeInTheDocument();
-    expect(screen.getByText('Daily support and medication…')).toBeInTheDocument();
+    expect(screen.getByText(/Daily support and medication coordination for Dad\./)).toBeInTheDocument();
   });
 
   it('navigates to group detail when a card is clicked', async () => {

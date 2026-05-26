@@ -9,7 +9,7 @@ interface ChatInputProps {
 
 export default function ChatInput({
   onSendMessage,
-  isLoading,
+  isLoading: _isLoading,
   disabled = false,
 }: ChatInputProps) {
   const [input, setInput] = useState('');
@@ -43,7 +43,7 @@ export default function ChatInput({
           className="w-full px-4 py-3 rounded-lg border resize-none focus:outline-none focus:ring-2"
           style={{
             borderColor: 'var(--color-border)',
-            backgroundColor: disabled ? 'var(--color-bg-disabled)' : '#ffffff',
+            backgroundColor: disabled ? 'var(--color-bg-disabled)' : 'var(--color-input-bg)',
             color: 'var(--color-text-primary)',
             fontFamily: 'Plus Jakarta Sans, sans-serif',
             fontSize: '14px',

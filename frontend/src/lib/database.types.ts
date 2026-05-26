@@ -1356,6 +1356,7 @@ export type Database = {
           overwhelm_level: number
           sleep_quality: number
           social_connection: number
+          support_message_dismissed_at: string | null
           stress_level: number
           submitted_at: string
           week_start: string
@@ -1368,6 +1369,7 @@ export type Database = {
           overwhelm_level: number
           sleep_quality: number
           social_connection: number
+          support_message_dismissed_at?: string | null
           stress_level: number
           submitted_at?: string
           week_start?: string
@@ -1380,6 +1382,7 @@ export type Database = {
           overwhelm_level?: number
           sleep_quality?: number
           social_connection?: number
+          support_message_dismissed_at?: string | null
           stress_level?: number
           submitted_at?: string
           week_start?: string

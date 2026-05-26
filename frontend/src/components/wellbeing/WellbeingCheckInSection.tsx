@@ -57,11 +57,14 @@ export default function WellbeingCheckInSection() {
   const {
     canSubmitCheckIn,
     checkIns,
+    dismissSupportMessage,
     error,
     hasCurrentWeekCheckIn,
+    isDismissingSupportMessage,
     isLoading,
     isPrimaryCarer,
     isSubmitting,
+    supportTrigger,
     submitCheckIn,
   } = useWellbeingCheckIns();
   const [form, setForm] = useState<CreateWellbeingCheckInInput>(INITIAL_FORM);
@@ -125,6 +128,41 @@ export default function WellbeingCheckInSection() {
       ) : (
         <div className="mt-4 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.85fr)]">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {supportTrigger ? (
+              <div
+                className="rounded-xl border p-4"
+                style={{
+                  borderColor: 'var(--color-status-overdue)',
+                  backgroundColor: 'var(--color-status-overdue-bg)',
+                }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                      It looks like the last two weeks have been especially heavy.
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                      This is a private prompt for you only. Consider redistributing some upcoming shifts,
+                      reaching out to carers&apos; support organisations, or booking your own GP appointment
+                      if you need extra support.
+                    </p>
+                    <p className="mt-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                      Latest average score: {supportTrigger.averageScore.toFixed(1)} / 5.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void dismissSupportMessage()}
+                    disabled={isDismissingSupportMessage}
+                    className="rounded-lg border px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-70"
+                    style={{ borderColor: 'var(--color-status-overdue)', color: 'var(--color-text-primary)' }}
+                  >
+                    {isDismissingSupportMessage ? 'Dismissing...' : 'Dismiss'}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
             {QUESTIONS.map((question) => (
               <fieldset key={question.key} className="rounded-xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
                 <legend className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>

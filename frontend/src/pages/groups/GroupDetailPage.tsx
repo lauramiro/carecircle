@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { CalendarDays,  Hash, HeartPulse, Users, ClipboardList, NotebookText } from 'lucide-react';
+import { CalendarDays, Users, ClipboardList, NotebookText } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
 import GPContactSection from '../../components/groups/GPContactSection';
@@ -257,6 +257,17 @@ export default function GroupDetailPage() {
             whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
           >
             Add Medication
+          </motion.button>
+          <motion.button
+            type="button"
+            onClick={() => navigate(`/groups/${currentGroup.id}/hospital-summary`)}
+            className="h-10 rounded-lg px-4 text-sm font-bold text-white"
+            style={{
+              backgroundColor: 'var(--color-primary)',
+            }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+          >
+            Hospital Summary
           </motion.button>
           {canInvite && (
             // A one-shot cue draws attention to the primary next action without looping.

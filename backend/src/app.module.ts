@@ -12,6 +12,7 @@ import { LoggerModule } from './logger/logger.module';
 import { AppThrottlingModule } from './throttling/throttling.module';
 import { AiModule } from './ai/ai.module';
 import { InvitesModule } from './invites/invites.module';
+import { HospitalSummaryModule } from './hospital-summary/hospital-summary.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { InvitesModule } from './invites/invites.module';
     AppThrottlingModule,
     InvitesModule,
     AiModule,
+    HospitalSummaryModule,
   ],
   controllers: [AppController],
   providers: [

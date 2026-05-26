@@ -1,5 +1,6 @@
 import { Moon, Sun, Bell, CircleUserRound, Shield } from 'lucide-react';
 import type { ReactNode } from 'react';
+import WellbeingCheckInSection from '../components/wellbeing/WellbeingCheckInSection';
 import PageHeader from '../components/ui/PageHeader';
 import { useTheme, type Theme } from '../contexts/ThemeContext';
 
@@ -156,6 +157,10 @@ export default function SettingsPage() {
             </div>
           </div>
         </article>
+
+        <div className="xl:col-span-2">
+          <WellbeingCheckInSection />
+        </div>
       </div>
     </section>
   );

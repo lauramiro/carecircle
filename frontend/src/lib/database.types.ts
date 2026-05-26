@@ -1347,6 +1347,53 @@ export type Database = {
         }
         Relationships: []
       }
+      primary_carer_wellbeing_checkins: {
+        Row: {
+          carer_id: string
+          composite_score: number
+          id: string
+          overall_mood: number
+          overwhelm_level: number
+          sleep_quality: number
+          social_connection: number
+          stress_level: number
+          submitted_at: string
+          week_start: string
+        }
+        Insert: {
+          carer_id: string
+          composite_score?: number
+          id?: string
+          overall_mood: number
+          overwhelm_level: number
+          sleep_quality: number
+          social_connection: number
+          stress_level: number
+          submitted_at?: string
+          week_start?: string
+        }
+        Update: {
+          carer_id?: string
+          composite_score?: number
+          id?: string
+          overall_mood?: number
+          overwhelm_level?: number
+          sleep_quality?: number
+          social_connection?: number
+          stress_level?: number
+          submitted_at?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "primary_carer_wellbeing_checkins_carer_id_fkey"
+            columns: ["carer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assigned_to: string | null

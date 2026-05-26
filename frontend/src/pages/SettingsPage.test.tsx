@@ -1,7 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('../components/wellbeing/WellbeingCheckInSection', () => ({
+  default: () => <div>Weekly wellbeing check-in section</div>,
+}));
+
 import SettingsPage from './SettingsPage';
 import { ThemeProvider } from '../contexts/ThemeContext';
 
@@ -26,6 +31,7 @@ describe('SettingsPage', () => {
     renderPage();
 
     expect(screen.getByText('Appearance')).toBeInTheDocument();
+    expect(screen.getByText('Weekly wellbeing check-in section')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /light mode/i })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: /dark mode/i })).toHaveAttribute('aria-pressed', 'false');
   });

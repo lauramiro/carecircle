@@ -3,6 +3,8 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import MedicationDetailsModal from '../../components/medications/MedicationDetailsModal';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { useMedications } from '../../hooks/medications/useMedications';
+import PageHeader from '../../components/ui/PageHeader';
+import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
 import { formatMedicationSchedule, getMedicationTimesToday } from '../../utils/formatMedicationSchedule';
 import type { Medication } from '../../api/medications/medications.types';
 
@@ -14,20 +16,15 @@ export default function MedicationsSchedulePage() {
   const [detailsMed, setDetailsMed] = useState<Medication | null>(null);
   const patientId = group?.patientId ?? '';
   const { medications, loading: medsLoading, isSubmitting, pauseMedication, activateMedication, archiveMedication } =
-    useMedications(patientId);
+    useMedications(patientId, groupId ?? '');
 
   if (!groupId) return <Navigate to="/groups/list" replace />;
 
   if (groupLoading) {
     return (
       <section>
-        <h1 className="text-2xl font-extrabold">Medication Schedule</h1>
-        <div
-          className="mt-6 rounded-xl border bg-white p-6 text-sm"
-          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-        >
-          Loading...
-        </div>
+        <PageHeader title="Medication schedule" subtitle="View and manage scheduled medications." />
+        <LoadingPanel message="Loading group…" />
       </section>
     );
   }
@@ -37,17 +34,8 @@ export default function MedicationsSchedulePage() {
   if (groupError) {
     return (
       <section>
-        <h1 className="text-2xl font-extrabold">Medication Schedule</h1>
-        <div
-          className="mt-6 rounded-xl border p-6 text-sm"
-          style={{
-            borderColor: 'var(--color-status-critical)',
-            backgroundColor: 'var(--color-status-critical-bg)',
-            color: 'var(--color-status-critical)',
-          }}
-        >
-          {groupError}
-        </div>
+        <PageHeader title="Medication schedule" subtitle="View and manage scheduled medications." />
+        <ErrorPanel message={groupError} />
       </section>
     );
   }
@@ -84,48 +72,36 @@ export default function MedicationsSchedulePage() {
 
   return (
     <section>
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <h1
-          style={{
-            color: 'var(--color-text-primary)',
-            fontSize: '26px',
-            fontWeight: 800,
-            letterSpacing: '-0.03em',
-            margin: 0,
-          }}
-        >
-          {group.name} Medication Schedule
-        </h1>
-
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => navigate(`/groups/${groupId}/checklist`)}
-            className="h-10 rounded-lg px-4 text-sm font-bold text-white"
-            style={{ backgroundColor: 'var(--color-primary)' }}
-          >
-            Daily checklist
-          </button>
-          {isAdmin && (
+      <PageHeader
+        eyebrow="Care group"
+        title="Medication schedule"
+        subtitle={`Manage doses and timings for ${group.name}.`}
+        actions={
+          <>
             <button
               type="button"
-              onClick={() => navigate(`/groups/${groupId}/medications/add`)}
-              className="h-10 rounded-lg px-4 text-sm font-bold text-white"
+              onClick={() => navigate(`/groups/${groupId}/checklist`)}
+              className="inline-flex h-10 items-center rounded-lg px-4 text-sm font-bold text-white"
               style={{ backgroundColor: 'var(--color-primary)' }}
             >
-              Add medication
+              Daily checklist
             </button>
-          )}
-        </div>
-      </div>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => navigate(`/groups/${groupId}/medications/add`)}
+                className="inline-flex h-10 items-center rounded-lg border px-4 text-sm font-bold"
+                style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+              >
+                Add medication
+              </button>
+            )}
+          </>
+        }
+      />
 
       {medsLoading ? (
-        <div
-          className="rounded-xl border bg-white p-6 text-sm"
-          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-        >
-          Loading medications...
-        </div>
+        <LoadingPanel message="Loading medications..." />
       ) : visibleMeds.length === 0 ? (
         <div
           className="rounded-xl border bg-white p-8 text-center"

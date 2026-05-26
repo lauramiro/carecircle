@@ -16,7 +16,7 @@ export default function AddMedicationPage() {
   const { group, loading: groupLoading, error: groupError } = useGroupDetail(groupId);
   const patientId = group?.patientId ?? '';
   const { medications, loading: medsLoading, isSubmitting, addMedication, editMedication, pauseMedication, activateMedication, archiveMedication } =
-    useMedications(patientId);
+    useMedications(patientId, groupId ?? '');
   const location = useLocation();
   const [editingMed, setEditingMed] = useState<Medication | null>(null);
   const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);

@@ -50,6 +50,8 @@ function makeAppt(overrides: Partial<Appointment> = {}): Appointment {
     createdBy: null,
     createdAt: '2026-05-01T00:00:00.000Z',
     updatedAt: '2026-05-01T00:00:00.000Z',
+    recurrenceRule: null,
+    recurrenceSeriesId: null,
     ...overrides,
   };
 }

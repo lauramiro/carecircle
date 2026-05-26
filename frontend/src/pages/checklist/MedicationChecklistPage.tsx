@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Navigate, Link, useParams } from 'react-router-dom';
+import { Navigate, Link, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import MedicationChecklist from '../../components/checklist/MedicationChecklist';
 import DateNavigation from '../../components/checklist/DateNavigation';
 import { loadDailyChecklist } from '../../api/checklist/dailyChecklist.service';
 import type { ChecklistItem } from '../../lib/checklist';
-import { toLocalDateString } from '../../lib/dates';
+import { parseLocalDateString, toLocalDateString } from '../../lib/dates';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
+import PageHeader from '../../components/ui/PageHeader';
+import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
 
 function mapChecklistUserRole(groupRole: string): 'primary' | 'secondary' | 'observer' {
   if (groupRole === 'Admin') return 'primary';
@@ -16,7 +18,12 @@ function mapChecklistUserRole(groupRole: string): 'primary' | 'secondary' | 'obs
 
 export default function MedicationChecklistPage() {
   const { groupId } = useParams();
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [searchParams] = useSearchParams();
+  const highlightItemId = searchParams.get('item') ?? undefined;
+  const dateParam = searchParams.get('date');
+  const [selectedDate, setSelectedDate] = useState(() =>
+    dateParam ? parseLocalDateString(dateParam) : new Date(),
+  );
   const { group, loading: groupLoading, error: groupError } = useGroupDetail(groupId);
   const [checklistView, setChecklistView] = useState<{ id: string; date: string } | null>(null);
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
@@ -25,6 +32,12 @@ export default function MedicationChecklistPage() {
 
   const selectedDateStr = useMemo(() => toLocalDateString(selectedDate), [selectedDate]);
   const patientId = group?.patientId ?? '';
+
+  useEffect(() => {
+    if (dateParam) {
+      setSelectedDate(parseLocalDateString(dateParam));
+    }
+  }, [dateParam]);
 
   useEffect(() => {
     const requestId = ++loadRequestRef.current;
@@ -75,15 +88,8 @@ export default function MedicationChecklistPage() {
   if (groupLoading) {
     return (
       <section>
-        <h1 style={{ color: 'var(--color-text-primary)', fontSize: '26px', fontWeight: 800, margin: 0 }}>
-          Daily medication checklist
-        </h1>
-        <div
-          className="mt-6 rounded-xl border bg-white p-6 text-sm"
-          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-        >
-          Loading group…
-        </div>
+        <PageHeader title="Daily medication checklist" subtitle="Track doses and mark medications as given." />
+        <LoadingPanel message="Loading group…" />
       </section>
     );
   }
@@ -91,19 +97,8 @@ export default function MedicationChecklistPage() {
   if (groupError || !group) {
     return (
       <section>
-        <h1 style={{ color: 'var(--color-text-primary)', fontSize: '26px', fontWeight: 800, margin: 0 }}>
-          Daily medication checklist
-        </h1>
-        <div
-          className="mt-6 rounded-xl border p-6 text-sm"
-          style={{
-            borderColor: 'var(--color-status-critical)',
-            backgroundColor: 'var(--color-status-critical-bg)',
-            color: 'var(--color-status-critical)',
-          }}
-        >
-          {groupError ?? 'Group not found.'}
-        </div>
+        <PageHeader title="Daily medication checklist" subtitle="Track doses and mark medications as given." />
+        <ErrorPanel message={groupError ?? 'Group not found.'} />
       </section>
     );
   }
@@ -113,18 +108,13 @@ export default function MedicationChecklistPage() {
 
   return (
     <section>
-      <p className="mb-1 text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--color-text-hint)' }}>
-        Care group
-      </p>
-      <h1 style={{ color: 'var(--color-text-primary)', fontSize: '26px', fontWeight: 800, margin: 0 }}>
-        {group.name}
-      </h1>
-      <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-        Mark each dose as given (on time or late), skip with a reason, or add optional notes and photo proof.
-        Use the arrows to browse other weeks.
-      </p>
+      <PageHeader
+        eyebrow="Care group"
+        title={group.name}
+        subtitle="Mark each dose as given, skip with a reason, or add optional notes and photo proof. Use the arrows to browse other days."
+      />
 
-      <div className="mt-6">
+      <div className="mt-2">
         <DateNavigation selectedDate={selectedDate} onDateChange={setSelectedDate} />
       </div>
 
@@ -155,6 +145,7 @@ export default function MedicationChecklistPage() {
           items={checklistItems}
           onItemsChange={setChecklistItems}
           loadingLabel={`Loading checklist for ${selectedDateStr}…`}
+          highlightItemId={highlightItemId}
         />
       )}
     </section>

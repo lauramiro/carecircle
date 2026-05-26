@@ -10,6 +10,8 @@ import type {
   AddAppointmentPayload,
   Appointment,
   EditAppointmentPayload,
+  EditScope,
+  RecurrenceRule,
 } from '../../api/appointments/appointments.types';
 
 function fromRealtimeRow(row: Record<string, unknown>): Appointment {
@@ -29,6 +31,8 @@ function fromRealtimeRow(row: Record<string, unknown>): Appointment {
     createdBy: (row.created_by as string) ?? null,
     createdAt: (row.created_at as string) ?? null,
     updatedAt: (row.updated_at as string) ?? null,
+    recurrenceRule: (row.recurrence_rule as RecurrenceRule) ?? null,
+    recurrenceSeriesId: (row.recurrence_series_id as string) ?? null,
   };
 }
 
@@ -107,37 +111,66 @@ export function useAppointments(patientId: string) {
     setIsSubmitting(true);
     try {
       const created = await addAppointmentService(payload);
-      setAppointments(prev =>
-        [...prev, created].sort((a, b) => a.startTime.localeCompare(b.startTime)),
-      );
+      // For recurring appointments the realtime subscription inserts each occurrence;
+      // for one-off appointments we add the single returned row optimistically.
+      if (!payload.recurrenceRule) {
+        setAppointments(prev =>
+          [...prev, created].sort((a, b) => a.startTime.localeCompare(b.startTime)),
+        );
+      }
+      // Recurring occurrences arrive via realtime INSERT events.
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  async function editAppointment(id: string, changes: EditAppointmentPayload): Promise<void> {
+  async function editAppointment(
+    id: string,
+    changes: EditAppointmentPayload,
+    scope: EditScope = 'this',
+    appointment?: Appointment,
+  ): Promise<void> {
     setIsSubmitting(true);
     try {
-      const updated = await editAppointmentService(id, changes);
-      setAppointments(prev =>
-        prev
-          .map(a => (a.id === id ? updated : a))
-          .sort((a, b) => a.startTime.localeCompare(b.startTime)),
-      );
+      const updated = await editAppointmentService(id, changes, scope, appointment);
+      if (scope === 'future') {
+        // Bulk reload to pick up all modified future occurrences.
+        const data = await getAppointmentsByPatient(patientId);
+        setAppointments(data);
+      } else {
+        setAppointments(prev =>
+          prev
+            .map(a => (a.id === id ? updated : a))
+            .sort((a, b) => a.startTime.localeCompare(b.startTime)),
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  async function deleteAppointment(id: string): Promise<void> {
+  async function deleteAppointment(
+    id: string,
+    scope: EditScope = 'this',
+    seriesId?: string | null,
+    startTime?: string,
+  ): Promise<void> {
     setIsSubmitting(true);
     try {
-      await deleteAppointmentService(id);
-      setAppointments(prev => prev.filter(a => a.id !== id));
+      await deleteAppointmentService(id, scope, seriesId, startTime);
+      if (scope === 'future' && seriesId && startTime) {
+        setAppointments(prev =>
+          prev.filter(
+            a => !(a.recurrenceSeriesId === seriesId && a.startTime >= startTime),
+          ),
+        );
+      } else {
+        setAppointments(prev => prev.filter(a => a.id !== id));
+      }
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  return { appointments, loading, error, isSubmitting, addAppointment, editAppointment, deleteAppointment };
+  return { appointments, loading, error, isSubmitting, load, addAppointment, editAppointment, deleteAppointment };
 }

@@ -10,6 +10,7 @@ import type {
 } from '../../api/medications/medications.types';
 
 export type DailyMode = 'specific_times' | 'interval';
+export type CourseDurationMode = 'perpetual' | 'end_date' | 'total_doses' | '';
 
 export interface MedicationFormValues {
   name: string;
@@ -28,6 +29,9 @@ export interface MedicationFormValues {
   instructions: string;
   takeWithFood: boolean;
   endDate: string;
+  courseDurationMode: CourseDurationMode;
+  perpetual: boolean;
+  totalDoses: string;
   prescribedDate: string;
   prescriptionNumber: string;
   pharmacy: string;
@@ -52,6 +56,8 @@ export type MedicationFormErrors = Partial<
     | 'dayOfMonth'
     | 'startDate'
     | 'endDate'
+    | 'perpetual'
+    | 'totalDoses'
     | 'refillsRemaining',
     string
   >
@@ -78,6 +84,9 @@ const emptyValues: MedicationFormValues = {
   instructions: '',
   takeWithFood: false,
   endDate: '',
+  courseDurationMode: 'perpetual',
+  perpetual: true,
+  totalDoses: '',
   prescribedDate: '',
   prescriptionNumber: '',
   pharmacy: '',
@@ -114,7 +123,11 @@ function buildOptionalFields(values: MedicationFormValues) {
 
   if (values.takeWithFood) optional.takeWithFood = true;
 
-  if (values.endDate) optional.endDate = values.endDate;
+  if (values.courseDurationMode === 'perpetual') optional.perpetual = true;
+  if (values.courseDurationMode === 'end_date' && values.endDate) optional.endDate = values.endDate;
+  if (values.courseDurationMode === 'total_doses' && values.totalDoses !== '') {
+    optional.totalDoses = Number(values.totalDoses);
+  }
   if (values.prescribedDate) optional.prescribedDate = values.prescribedDate;
 
   const prescriptionNumber = values.prescriptionNumber.trim();
@@ -188,6 +201,23 @@ function validateAll(values: MedicationFormValues): MedicationFormErrors {
     }
   }
 
+  if (st !== 'as_needed') {
+    if (!values.courseDurationMode) {
+      errors.perpetual = 'Choose exactly one: ongoing (perpetual), end date, or total doses';
+    } else if (values.courseDurationMode === 'end_date') {
+      if (!values.endDate) errors.endDate = 'End date is required';
+    } else if (values.courseDurationMode === 'total_doses') {
+      if (values.totalDoses === '') {
+        errors.totalDoses = 'Total doses is required';
+      } else {
+        const total = Number(values.totalDoses);
+        if (isNaN(total) || total < 1 || !Number.isInteger(total)) {
+          errors.totalDoses = 'Total doses must be a whole number of 1 or more';
+        }
+      }
+    }
+  }
+
   if (values.endDate && values.startDate && values.endDate < values.startDate) {
     errors.endDate = 'End date cannot be before start date';
   }
@@ -218,11 +248,46 @@ export function useMedicationForm() {
       ...current,
       scheduleType: type,
       dailyMode: type === 'daily' ? (current.dailyMode || 'specific_times') : '',
+      ...(type !== 'as_needed' && current.scheduleType === 'as_needed'
+        ? {
+            courseDurationMode: 'perpetual' as CourseDurationMode,
+            perpetual: true,
+            endDate: '',
+            totalDoses: '',
+          }
+        : {}),
     }));
+    setErrors((current) => {
+      const next = { ...current };
+      delete next.scheduleType;
+      return next;
+    });
+  }
+
+  function setCourseDurationMode(mode: CourseDurationMode) {
+    setValues((current) => ({
+      ...current,
+      courseDurationMode: mode,
+      perpetual: mode === 'perpetual',
+      endDate: mode === 'end_date' ? current.endDate : '',
+      totalDoses: mode === 'total_doses' ? current.totalDoses : '',
+    }));
+    setErrors((current) => {
+      const next = { ...current };
+      delete next.perpetual;
+      if (mode !== 'end_date') delete next.endDate;
+      if (mode !== 'total_doses') delete next.totalDoses;
+      return next;
+    });
   }
 
   function setDailyMode(mode: DailyMode) {
     setValues((current) => ({ ...current, dailyMode: mode }));
+    setErrors((current) => {
+      const next = { ...current };
+      delete next.dailyMode;
+      return next;
+    });
   }
 
   function setSpecificTime(index: number, time: string) {
@@ -281,6 +346,15 @@ export function useMedicationForm() {
       dayOfMonth: med.dayOfMonth ?? '',
     };
 
+    const courseDurationMode: CourseDurationMode =
+      med.endDate != null && med.endDate !== ''
+        ? 'end_date'
+        : med.totalDoses != null
+          ? 'total_doses'
+          : med.scheduleType === 'as_needed'
+            ? ''
+            : 'perpetual';
+
     setValues({
       name: med.medicationName,
       dose: String(dose),
@@ -291,6 +365,12 @@ export function useMedicationForm() {
       instructions: med.instructions ?? '',
       takeWithFood: med.takeWithFood === true,
       endDate: med.endDate ?? '',
+      courseDurationMode,
+      perpetual:
+        courseDurationMode === 'perpetual' ||
+        (med.perpetual ??
+          (med.scheduleType !== 'as_needed' && !med.endDate && med.totalDoses == null)),
+      totalDoses: med.totalDoses != null ? String(med.totalDoses) : '',
       prescribedDate: med.prescribedDate ?? '',
       prescriptionNumber: med.prescriptionNumber ?? '',
       pharmacy: med.pharmacy ?? '',
@@ -369,7 +449,12 @@ export function useMedicationForm() {
       route: values.route.trim() || null,
       instructions: values.instructions.trim() || null,
       takeWithFood: values.takeWithFood ? true : null,
-      endDate: values.endDate || null,
+      endDate: values.courseDurationMode === 'end_date' ? values.endDate || null : null,
+      perpetual: values.courseDurationMode === 'perpetual' ? true : undefined,
+      totalDoses:
+        values.courseDurationMode === 'total_doses' && values.totalDoses !== ''
+          ? Number(values.totalDoses)
+          : null,
       prescribedDate: values.prescribedDate || null,
       prescriptionNumber: values.prescriptionNumber.trim() || null,
       pharmacy: values.pharmacy.trim() || null,
@@ -432,6 +517,7 @@ export function useMedicationForm() {
     errors,
     updateField,
     setScheduleType,
+    setCourseDurationMode,
     setDailyMode,
     setSpecificTime,
     addSpecificTime,

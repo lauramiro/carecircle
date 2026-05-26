@@ -1,5 +1,9 @@
 export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled';
 
+export type RecurrenceRule = 'weekly' | 'fortnightly' | 'monthly';
+
+export type EditScope = 'this' | 'future';
+
 export interface Appointment {
   id: string;
   patientId: string;
@@ -15,6 +19,8 @@ export interface Appointment {
   createdBy: string | null;
   createdAt: string | null;
   updatedAt: string | null;
+  recurrenceRule: RecurrenceRule | null;
+  recurrenceSeriesId: string | null;
 }
 
 export interface AddAppointmentPayload {
@@ -25,6 +31,7 @@ export interface AddAppointmentPayload {
   specialistName?: string;
   location?: string;
   preVisitNotes?: string;
+  recurrenceRule?: RecurrenceRule;
 }
 
 export interface EditAppointmentPayload {

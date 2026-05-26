@@ -81,7 +81,7 @@ describe('useMedications', () => {
   });
 
   it('does not fetch when patientId is empty', async () => {
-    const { result } = renderHook(() => useMedications(''));
+    const { result } = renderHook(() => useMedications('', 'group-1'));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -95,7 +95,7 @@ describe('useMedications', () => {
     const med = makeMed();
     mockGetMedications.mockResolvedValue([med]);
 
-    const { result } = renderHook(() => useMedications('patient-1'));
+    const { result } = renderHook(() => useMedications('patient-1', 'group-1'));
 
     expect(result.current.loading).toBe(true);
 
@@ -110,7 +110,7 @@ describe('useMedications', () => {
   it('sets error message when load fails', async () => {
     mockGetMedications.mockRejectedValue(new Error('network error'));
 
-    const { result } = renderHook(() => useMedications('patient-1'));
+    const { result } = renderHook(() => useMedications('patient-1', 'group-1'));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -123,7 +123,7 @@ describe('useMedications', () => {
   it('returns an empty medications array when the patient has no medications', async () => {
     mockGetMedications.mockResolvedValue([]);
 
-    const { result } = renderHook(() => useMedications('patient-1'));
+    const { result } = renderHook(() => useMedications('patient-1', 'group-1'));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -138,7 +138,7 @@ describe('useMedications', () => {
     mockGetMedications.mockResolvedValue([existing]);
     mockAdd.mockResolvedValue(created);
 
-    const { result } = renderHook(() => useMedications('patient-1'));
+    const { result } = renderHook(() => useMedications('patient-1', 'group-1'));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
@@ -154,7 +154,7 @@ describe('useMedications', () => {
     mockAdd.mockReturnValue(new Promise<Medication>((res) => { resolveAdd = res; }));
     mockGetMedications.mockResolvedValue([]);
 
-    const { result } = renderHook(() => useMedications('patient-1'));
+    const { result } = renderHook(() => useMedications('patient-1', 'group-1'));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     act(() => {
@@ -176,7 +176,7 @@ describe('useMedications', () => {
     mockGetMedications.mockResolvedValue([v1]);
     mockEdit.mockResolvedValue(v2);
 
-    const { result } = renderHook(() => useMedications('patient-1'));
+    const { result } = renderHook(() => useMedications('patient-1', 'group-1'));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
@@ -194,7 +194,7 @@ describe('useMedications', () => {
     mockGetMedications.mockResolvedValue([active]);
     mockPause.mockResolvedValue(paused);
 
-    const { result } = renderHook(() => useMedications('patient-1'));
+    const { result } = renderHook(() => useMedications('patient-1', 'group-1'));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
@@ -210,7 +210,7 @@ describe('useMedications', () => {
     mockGetMedications.mockResolvedValue([paused]);
     mockActivate.mockResolvedValue(active);
 
-    const { result } = renderHook(() => useMedications('patient-1'));
+    const { result } = renderHook(() => useMedications('patient-1', 'group-1'));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
@@ -226,7 +226,7 @@ describe('useMedications', () => {
     mockGetMedications.mockResolvedValue([active]);
     mockArchive.mockResolvedValue(archived);
 
-    const { result } = renderHook(() => useMedications('patient-1'));
+    const { result } = renderHook(() => useMedications('patient-1', 'group-1'));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {

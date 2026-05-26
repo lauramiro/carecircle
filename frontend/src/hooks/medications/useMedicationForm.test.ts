@@ -162,3 +162,99 @@ describe('useMedicationForm — Scenario 1: adding a medication (all required fi
     expect(result.current.errors).toEqual({});
   });
 });
+
+describe('useMedicationForm — course duration (perpetual / end date / total doses)', () => {
+  it('requires exactly one course duration mode for scheduled medications', () => {
+    const { result } = renderHook(() => useMedicationForm());
+
+    act(() => {
+      result.current.updateField('name', 'Metformin');
+      result.current.updateField('dose', '500');
+      result.current.updateField('unit', 'mg');
+      result.current.updateField('startDate', '2025-01-01');
+      result.current.setScheduleType('daily');
+      result.current.setDailyMode('specific_times');
+      result.current.addSpecificTime('08:00');
+      result.current.setCourseDurationMode('');
+    });
+
+    let valid: boolean;
+    act(() => {
+      valid = result.current.validateForm();
+    });
+
+    expect(valid!).toBe(false);
+    expect(result.current.errors.perpetual).toContain('Choose exactly one');
+  });
+
+  it('toPayload includes perpetual flag when ongoing is selected', () => {
+    const { result } = renderHook(() => useMedicationForm());
+
+    act(() => {
+      result.current.updateField('name', 'Metformin');
+      result.current.updateField('dose', '500');
+      result.current.updateField('unit', 'mg');
+      result.current.updateField('startDate', '2025-01-01');
+      result.current.setScheduleType('daily');
+      result.current.setDailyMode('specific_times');
+      result.current.addSpecificTime('08:00');
+      result.current.setCourseDurationMode('perpetual');
+    });
+
+    expect(result.current.toPayload('patient-1')).toMatchObject({
+      perpetual: true,
+      scheduleType: 'daily',
+    });
+  });
+
+  it('toPayload includes endDate when fixed end date mode is selected', () => {
+    const { result } = renderHook(() => useMedicationForm());
+
+    act(() => {
+      result.current.updateField('name', 'Metformin');
+      result.current.updateField('dose', '500');
+      result.current.updateField('unit', 'mg');
+      result.current.updateField('startDate', '2025-01-01');
+      result.current.setScheduleType('daily');
+      result.current.setDailyMode('specific_times');
+      result.current.addSpecificTime('08:00');
+      result.current.setCourseDurationMode('end_date');
+      result.current.updateField('endDate', '2025-12-31');
+    });
+
+    expect(result.current.toPayload('patient-1')).toMatchObject({
+      endDate: '2025-12-31',
+    });
+    expect(result.current.toPayload('patient-1').perpetual).toBeUndefined();
+  });
+
+  it('toPayload includes totalDoses when total planned doses mode is selected', () => {
+    const { result } = renderHook(() => useMedicationForm());
+
+    act(() => {
+      result.current.updateField('name', 'Metformin');
+      result.current.updateField('dose', '500');
+      result.current.updateField('unit', 'mg');
+      result.current.updateField('startDate', '2025-01-01');
+      result.current.setScheduleType('daily');
+      result.current.setDailyMode('specific_times');
+      result.current.addSpecificTime('08:00');
+      result.current.setCourseDurationMode('total_doses');
+      result.current.updateField('totalDoses', '30');
+    });
+
+    expect(result.current.toPayload('patient-1')).toMatchObject({
+      totalDoses: 30,
+    });
+  });
+
+  it('clears scheduleType error when a schedule is selected without stale validation', () => {
+    const { result } = renderHook(() => useMedicationForm());
+
+    act(() => {
+      result.current.setScheduleType('daily');
+    });
+
+    expect(result.current.errors.scheduleType).toBeUndefined();
+  });
+});

@@ -1,4 +1,9 @@
-import type { AddAppointmentPayload, Appointment, EditAppointmentPayload } from './appointments.types';
+import type {
+  AddAppointmentPayload,
+  Appointment,
+  EditAppointmentPayload,
+  EditScope,
+} from './appointments.types';
 
 function makeAppt(
   overrides: Partial<Appointment> & Pick<Appointment, 'id' | 'patientId' | 'title' | 'startTime' | 'attendingCarerId'>,
@@ -13,6 +18,8 @@ function makeAppt(
     createdBy: 'member-1',
     createdAt: '2026-05-01T08:00:00.000Z',
     updatedAt: '2026-05-01T08:00:00.000Z',
+    recurrenceRule: null,
+    recurrenceSeriesId: null,
     ...overrides,
   };
 }
@@ -89,12 +96,18 @@ export async function addAppointment(payload: AddAppointmentPayload): Promise<Ap
     createdBy: null,
     createdAt: now,
     updatedAt: now,
+    recurrenceRule: payload.recurrenceRule ?? null,
+    recurrenceSeriesId: payload.recurrenceRule ? `series-${Date.now()}` : null,
   };
   mockAppointments.push(appt);
   return delay({ ...appt });
 }
 
-export async function editAppointment(id: string, changes: EditAppointmentPayload): Promise<Appointment> {
+export async function editAppointment(
+  id: string,
+  changes: EditAppointmentPayload,
+  _scope: EditScope = 'this',
+): Promise<Appointment> {
   const appt = mockAppointments.find((a) => a.id === id);
   if (!appt) throw new Error(`Appointment ${id} not found`);
 
@@ -110,7 +123,10 @@ export async function editAppointment(id: string, changes: EditAppointmentPayloa
   return delay({ ...appt });
 }
 
-export async function deleteAppointment(id: string): Promise<void> {
+export async function deleteAppointment(
+  id: string,
+  _scope: EditScope = 'this',
+): Promise<void> {
   const appt = mockAppointments.find((a) => a.id === id);
   if (!appt) throw new Error(`Appointment ${id} not found`);
   appt.status = 'cancelled';

@@ -27,6 +27,8 @@ export interface ChecklistItem {
   overdue_minutes?: number | null;
   skip_reason?: string | null;
   skip_notes?: string | null;
+  scheduled_at?: string | null;
+  overdue_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -88,6 +90,8 @@ export function rowToChecklistItem(row: ChecklistItemRow): ChecklistItem {
     overdue_minutes: row.overdue_minutes,
     skip_reason: row.skip_reason,
     skip_notes: row.skip_notes,
+    scheduled_at: row.scheduled_at ?? null,
+    overdue_at: row.overdue_at ?? null,
     created_at: row.created_at ?? new Date().toISOString(),
     updated_at: row.updated_at ?? new Date().toISOString(),
   };

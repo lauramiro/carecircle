@@ -60,8 +60,6 @@ function makeMed(overrides: Partial<Medication>): Medication {
     intervalHours: null,
     daysOfWeek: null,
     dayOfMonth: null,
-    frequency: null,
-    timeOfDay: null,
     instructions: null,
     route: null,
     takeWithFood: null,
@@ -124,7 +122,7 @@ describe('MedicationsSchedulePage', () => {
 
   it('shows the Paused badge on paused medications', () => {
     medsHookMock.value.medications = [
-      makeMed({ id: 'med-1', medicationName: 'Metformin', status: 'paused', timeOfDay: ['Morning'] }),
+      makeMed({ id: 'med-1', medicationName: 'Metformin', status: 'paused' }),
     ];
     renderPage();
 

@@ -1,7 +1,8 @@
-import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Group } from '../../api/groups/groups.types';
 import DashboardLayout from './DashboardLayout';
 
 const authMock = vi.hoisted(() => ({
@@ -13,11 +14,23 @@ const authMock = vi.hoisted(() => ({
   },
 }));
 
+const groupDetailHookMock = vi.hoisted(() => ({
+  value: {
+    loading: false,
+    error: null as string | null,
+    group: null as Group | null,
+  },
+}));
+
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     session: authMock.session,
     signOut: authMock.signOut,
   }),
+}));
+
+vi.mock('../../hooks/groups/useGroupDetail', () => ({
+  useGroupDetail: () => groupDetailHookMock.value,
 }));
 
 function renderLayout(
@@ -37,6 +50,7 @@ function renderLayout(
               </div>
             }
           />
+          <Route path="settings" element={<div>Settings content</div>} />
           <Route path="groups/create" element={<div>Create group content</div>} />
           <Route
             path="groups/list"
@@ -48,6 +62,7 @@ function renderLayout(
             }
           />
           <Route path="groups/:groupId" element={<div>Group detail content</div>} />
+          <Route path="groups/:groupId/checklist" element={<div>Checklist content</div>} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -58,6 +73,11 @@ describe('DashboardLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.sessionStorage.clear();
+    groupDetailHookMock.value = {
+      loading: false,
+      error: null,
+      group: null,
+    };
   });
 
   it('renders the dashboard navigation and outlet content', () => {
@@ -65,7 +85,8 @@ describe('DashboardLayout', () => {
 
     expect(screen.getByText('CareCircle')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /groups/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^groups$/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument();
     expect(screen.getByText('Dashboard content')).toBeInTheDocument();
     expect(screen.getByText('caregiver@example.com')).toBeInTheDocument();
   });
@@ -130,32 +151,73 @@ describe('DashboardLayout', () => {
     expect(screen.getByRole('button', { name: /go forward/i })).toBeDisabled();
   });
 
-  it('opens and closes the groups dropdown', async () => {
+  it('auto-expands the groups submenu on group routes', () => {
+    renderLayout(['/groups/list']);
+
+    expect(screen.getByRole('link', { name: /all groups/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /create group/i })).toBeInTheDocument();
+  });
+
+  it('opens and closes the groups dropdown with the toggle button', async () => {
     const user = userEvent.setup();
     renderLayout();
 
-    await user.click(screen.getByRole('button', { name: /groups/i }));
+    await user.click(screen.getByRole('button', { name: /toggle groups menu/i }));
 
+    expect(screen.getByRole('link', { name: /all groups/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /create group/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /list groups/i })).toBeInTheDocument();
 
-    await user.click(document.body);
+    await user.click(screen.getByRole('button', { name: /toggle groups menu/i }));
 
     await waitForElementToBeRemoved(() =>
       screen.queryByRole('link', { name: /create group/i }),
     );
   });
 
-  it('closes the groups dropdown with escape', async () => {
+  it('navigates to all groups when the groups link is clicked', async () => {
     const user = userEvent.setup();
     renderLayout();
 
-    const groupsButton = screen.getByRole('button', { name: /groups/i });
-    await user.click(groupsButton);
-    await user.keyboard('{Escape}');
+    await user.click(screen.getByRole('link', { name: /^groups$/i }));
 
-    await waitFor(() => {
-      expect(screen.queryByRole('link', { name: /list groups/i })).not.toBeInTheDocument();
-    });
+    expect(screen.getByText('Groups list content')).toBeInTheDocument();
+  });
+
+  it('shows current care circle navigation when viewing a group', () => {
+    groupDetailHookMock.value = {
+      loading: false,
+      error: null,
+      group: {
+        id: 'group-care-001',
+        patientId: 'patient-1',
+        name: 'Dad Care Circle',
+        description: 'Daily support',
+        role: 'Admin',
+        canSchedule: true,
+        createdAt: '2025-05-12T09:00:00.000Z',
+        members: [],
+        gpContacts: [],
+      },
+    };
+
+    renderLayout(['/groups/group-care-001/checklist']);
+
+    expect(screen.getByText('Current care circle')).toBeInTheDocument();
+    expect(screen.getAllByText('Dad Care Circle').length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: /today's medications/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view profile/i })).toHaveAttribute(
+      'href',
+      '/groups/group-care-001/profile',
+    );
+    expect(screen.getByText('Checklist content')).toBeInTheDocument();
+  });
+
+  it('opens the mobile navigation drawer', async () => {
+    const user = userEvent.setup();
+    renderLayout();
+
+    await user.click(screen.getByRole('button', { name: /open navigation/i }));
+
+    expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument();
   });
 });

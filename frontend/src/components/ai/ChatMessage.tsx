@@ -1,5 +1,5 @@
-import { CheckCircle2, AlertCircle, Clock } from 'lucide-react';
-import MarkdownContent from './MarkDownContent';
+import { AlertCircle, Clock } from 'lucide-react';
+import MarkdownContent from './MarkdownContent';
 import type { ConversationMessage } from './types';
 
 interface ChatMessageProps {

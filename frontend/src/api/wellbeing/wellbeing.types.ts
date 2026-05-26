@@ -8,6 +8,7 @@ export interface WellbeingCheckIn {
   socialConnection: number;
   overallMood: number;
   compositeScore: number;
+  supportMessageDismissedAt: string | null;
 }
 
 export interface CreateWellbeingCheckInInput {
@@ -16,4 +17,11 @@ export interface CreateWellbeingCheckInInput {
   overwhelmLevel: number;
   socialConnection: number;
   overallMood: number;
+}
+
+export interface WellbeingSupportTrigger {
+  checkInId: string;
+  triggerWeekStart: string;
+  compositeScore: number;
+  averageScore: number;
 }

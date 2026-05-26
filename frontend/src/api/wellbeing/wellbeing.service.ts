@@ -1,8 +1,14 @@
 import type { Database } from '../../lib/database.types';
 import { supabase } from '../../lib/supabaseClient';
-import type { CreateWellbeingCheckInInput, WellbeingCheckIn } from './wellbeing.types';
+import type {
+  CreateWellbeingCheckInInput,
+  WellbeingCheckIn,
+  WellbeingSupportTrigger,
+} from './wellbeing.types';
 
 type WellbeingCheckInRow = Database['public']['Tables']['primary_carer_wellbeing_checkins']['Row'];
+
+export const WELLBEING_SUPPORT_THRESHOLD_AVERAGE = 2.5;
 
 export function getCurrentWeekStartIso(now = new Date()): string {
   const utcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
@@ -22,6 +28,48 @@ function mapWellbeingCheckIn(row: WellbeingCheckInRow): WellbeingCheckIn {
     socialConnection: row.social_connection,
     overallMood: row.overall_mood,
     compositeScore: row.composite_score,
+    supportMessageDismissedAt: row.support_message_dismissed_at,
+  };
+}
+
+export function getWellbeingAverageScore(checkIn: WellbeingCheckIn): number {
+  return checkIn.compositeScore / 5;
+}
+
+export function isBelowWellbeingThreshold(checkIn: WellbeingCheckIn): boolean {
+  return getWellbeingAverageScore(checkIn) <= WELLBEING_SUPPORT_THRESHOLD_AVERAGE;
+}
+
+export function areConsecutiveWellbeingWeeks(
+  laterWeekStart: string,
+  earlierWeekStart: string,
+): boolean {
+  const later = new Date(`${laterWeekStart}T00:00:00.000Z`).getTime();
+  const earlier = new Date(`${earlierWeekStart}T00:00:00.000Z`).getTime();
+  return later - earlier === 7 * 24 * 60 * 60 * 1000;
+}
+
+export function getActiveWellbeingSupportTrigger(
+  checkIns: WellbeingCheckIn[],
+): WellbeingSupportTrigger | null {
+  if (checkIns.length < 2) return null;
+
+  const [latestCheckIn, previousCheckIn] = [...checkIns].sort((left, right) =>
+    right.weekStart.localeCompare(left.weekStart),
+  );
+
+  if (!isBelowWellbeingThreshold(latestCheckIn)) return null;
+  if (!isBelowWellbeingThreshold(previousCheckIn)) return null;
+  if (!areConsecutiveWellbeingWeeks(latestCheckIn.weekStart, previousCheckIn.weekStart)) {
+    return null;
+  }
+  if (latestCheckIn.supportMessageDismissedAt) return null;
+
+  return {
+    checkInId: latestCheckIn.id,
+    triggerWeekStart: latestCheckIn.weekStart,
+    compositeScore: latestCheckIn.compositeScore,
+    averageScore: getWellbeingAverageScore(latestCheckIn),
   };
 }
 
@@ -91,4 +139,16 @@ export async function createWellbeingCheckIn(
   }
 
   return mapWellbeingCheckIn(data as WellbeingCheckInRow);
+}
+
+export async function dismissWellbeingSupportMessage(checkInId: string): Promise<void> {
+  const userId = await getCurrentUserId();
+
+  const { error } = await supabase
+    .from('primary_carer_wellbeing_checkins')
+    .update({ support_message_dismissed_at: new Date().toISOString() })
+    .eq('id', checkInId)
+    .eq('carer_id', userId);
+
+  if (error) throw new Error(error.message);
 }

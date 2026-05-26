@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  areConsecutiveWellbeingWeeks,
   createWellbeingCheckIn,
+  dismissWellbeingSupportMessage,
+  getActiveWellbeingSupportTrigger,
+  getWellbeingAverageScore,
   getCurrentUserWellbeingCheckIns,
   getCurrentWeekStartIso,
+  isBelowWellbeingThreshold,
   isCurrentUserPrimaryCarer,
 } from './wellbeing.service';
 
@@ -50,6 +55,7 @@ describe('wellbeing service', () => {
           social_connection: 4,
           overall_mood: 5,
           composite_score: 18,
+          support_message_dismissed_at: null,
         },
       ],
       error: null,
@@ -71,6 +77,7 @@ describe('wellbeing service', () => {
         socialConnection: 4,
         overallMood: 5,
         compositeScore: 18,
+        supportMessageDismissedAt: null,
       },
     ]);
   });
@@ -88,6 +95,7 @@ describe('wellbeing service', () => {
         social_connection: 4,
         overall_mood: 4,
         composite_score: 20,
+        support_message_dismissed_at: null,
       },
       error: null,
     });
@@ -122,5 +130,118 @@ describe('wellbeing service', () => {
 
   it('calculates the monday week start in UTC', () => {
     expect(getCurrentWeekStartIso(new Date('2026-05-27T12:00:00.000Z'))).toBe('2026-05-25');
+  });
+
+  it('detects an active support trigger after two consecutive low-score weeks', () => {
+    const trigger = getActiveWellbeingSupportTrigger([
+      {
+        id: 'check-in-2',
+        submittedAt: '2026-05-26T09:30:00.000Z',
+        weekStart: '2026-05-25',
+        sleepQuality: 2,
+        stressLevel: 4,
+        overwhelmLevel: 4,
+        socialConnection: 2,
+        overallMood: 2,
+        compositeScore: 12,
+        supportMessageDismissedAt: null,
+      },
+      {
+        id: 'check-in-1',
+        submittedAt: '2026-05-19T09:30:00.000Z',
+        weekStart: '2026-05-18',
+        sleepQuality: 2,
+        stressLevel: 4,
+        overwhelmLevel: 4,
+        socialConnection: 2,
+        overallMood: 2,
+        compositeScore: 12,
+        supportMessageDismissedAt: null,
+      },
+    ]);
+
+    expect(trigger).toEqual({
+      checkInId: 'check-in-2',
+      triggerWeekStart: '2026-05-25',
+      compositeScore: 12,
+      averageScore: 2.4,
+    });
+  });
+
+  it('does not trigger support messaging when weeks are not consecutive or were dismissed', () => {
+    expect(
+      getActiveWellbeingSupportTrigger([
+        {
+          id: 'check-in-2',
+          submittedAt: '2026-05-26T09:30:00.000Z',
+          weekStart: '2026-05-25',
+          sleepQuality: 2,
+          stressLevel: 4,
+          overwhelmLevel: 4,
+          socialConnection: 2,
+          overallMood: 2,
+          compositeScore: 12,
+          supportMessageDismissedAt: '2026-05-26T10:00:00.000Z',
+        },
+        {
+          id: 'check-in-1',
+          submittedAt: '2026-05-19T09:30:00.000Z',
+          weekStart: '2026-05-18',
+          sleepQuality: 2,
+          stressLevel: 4,
+          overwhelmLevel: 4,
+          socialConnection: 2,
+          overallMood: 2,
+          compositeScore: 12,
+          supportMessageDismissedAt: null,
+        },
+      ]),
+    ).toBeNull();
+
+    expect(areConsecutiveWellbeingWeeks('2026-05-25', '2026-05-11')).toBe(false);
+  });
+
+  it('derives the normalized average threshold correctly', () => {
+    expect(
+      isBelowWellbeingThreshold({
+        id: 'check-in-3',
+        submittedAt: '2026-06-01T09:30:00.000Z',
+        weekStart: '2026-06-01',
+        sleepQuality: 2,
+        stressLevel: 4,
+        overwhelmLevel: 4,
+        socialConnection: 2,
+        overallMood: 2,
+        compositeScore: 12,
+        supportMessageDismissedAt: null,
+      }),
+    ).toBe(true);
+    expect(
+      getWellbeingAverageScore({
+        id: 'check-in-3',
+        submittedAt: '2026-06-01T09:30:00.000Z',
+        weekStart: '2026-06-01',
+        sleepQuality: 2,
+        stressLevel: 4,
+        overwhelmLevel: 4,
+        socialConnection: 2,
+        overallMood: 2,
+        compositeScore: 12,
+        supportMessageDismissedAt: null,
+      }),
+    ).toBe(2.4);
+  });
+
+  it('dismisses the support message for the authenticated user', async () => {
+    const eqCarer = vi.fn().mockResolvedValue({ error: null });
+    const eqId = vi.fn().mockReturnValue({ eq: eqCarer });
+    const update = vi.fn().mockReturnValue({ eq: eqId });
+
+    fromMock.mockReturnValue({ update });
+
+    await expect(dismissWellbeingSupportMessage('check-in-2')).resolves.toBeUndefined();
+    expect(update).toHaveBeenCalledWith({
+      support_message_dismissed_at: expect.any(String),
+    });
   });
 });

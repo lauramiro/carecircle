@@ -8,6 +8,9 @@ import { LoadingPanel } from '../components/ui/ContentPanel';
 import GroupRoleBadge from '../components/groups/GroupRoleBadge';
 import MedicationSummaryWidget from '../components/dashboard/MedicationSummaryWidget';
 import OnDutyCarerWidget from '../components/dashboard/OnDutyCarerWidget';
+import NextAppointmentWidget from '../components/dashboard/NextAppointmentWidget';
+import LatestJournalEntryWidget from '../components/dashboard/LatestJournalEntryWidget';
+import AiInsightWidget from '../components/dashboard/AiInsightWidget';
 import { useAuth } from '../contexts/AuthContext';
 import { useGroups } from '../hooks/groups/useGroups';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -90,17 +93,36 @@ export default function DashboardPage() {
       />
 
       {primaryGroup && (
-        <div className="grid gap-4 md:grid-cols-2">
-          <MedicationSummaryWidget
-            groupId={primaryGroup.id}
-            patientId={primaryGroup.patientId}
-            groupName={primaryGroup.name}
-          />
-          <OnDutyCarerWidget
-            groupId={primaryGroup.id}
-            groupName={primaryGroup.name}
-          />
-        </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
+            <MedicationSummaryWidget
+              groupId={primaryGroup.id}
+              patientId={primaryGroup.patientId}
+              groupName={primaryGroup.name}
+            />
+            <OnDutyCarerWidget
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <NextAppointmentWidget
+              patientId={primaryGroup.patientId}
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+            <LatestJournalEntryWidget
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+            <AiInsightWidget
+              patientId={primaryGroup.patientId}
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+          </div>
+        </>
       )}
 
       <motion.div

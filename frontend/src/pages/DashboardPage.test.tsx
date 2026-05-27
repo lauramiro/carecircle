@@ -12,6 +12,18 @@ vi.mock('../components/dashboard/OnDutyCarerWidget', () => ({
   default: () => <div data-testid="on-duty-carer-widget" />,
 }));
 
+vi.mock('../components/dashboard/NextAppointmentWidget', () => ({
+  default: () => <div data-testid="next-appointment-widget" />,
+}));
+
+vi.mock('../components/dashboard/LatestJournalEntryWidget', () => ({
+  default: () => <div data-testid="latest-journal-entry-widget" />,
+}));
+
+vi.mock('../components/dashboard/AiInsightWidget', () => ({
+  default: () => <div data-testid="ai-insight-widget" />,
+}));
+
 const authMock = vi.hoisted(() => ({
   session: {
     user: {
@@ -77,7 +89,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Active groups')).toBeInTheDocument();
     expect(screen.getByText('Groups you manage')).toBeInTheDocument();
     expect(screen.getByText('Total members')).toBeInTheDocument();
-    expect(screen.getByText('Dad Care Circle')).toBeInTheDocument();
+    expect(screen.getAllByText('Dad Care Circle').length).toBeGreaterThan(0);
   });
 
   it('renders both care status widgets for the first group', () => {
@@ -89,6 +101,9 @@ describe('DashboardPage', () => {
 
     expect(screen.getByTestId('medication-summary-widget')).toBeInTheDocument();
     expect(screen.getByTestId('on-duty-carer-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('next-appointment-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('latest-journal-entry-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('ai-insight-widget')).toBeInTheDocument();
   });
 
   it('does not render widgets when there are no groups', () => {
@@ -101,5 +116,8 @@ describe('DashboardPage', () => {
 
     expect(screen.queryByTestId('medication-summary-widget')).not.toBeInTheDocument();
     expect(screen.queryByTestId('on-duty-carer-widget')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('next-appointment-widget')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('latest-journal-entry-widget')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ai-insight-widget')).not.toBeInTheDocument();
   });
 });

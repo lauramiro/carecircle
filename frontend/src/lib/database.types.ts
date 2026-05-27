@@ -250,7 +250,6 @@ export type Database = {
           description: string | null
           id: string
           name: string | null
-          patient_id: string
           preferred_timezone: string | null
           primary_caregiver_id: string
           role: Database["public"]["Enums"]["group_member_role"]
@@ -261,7 +260,6 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string | null
-          patient_id: string
           preferred_timezone?: string | null
           primary_caregiver_id: string
           role?: Database["public"]["Enums"]["group_member_role"]
@@ -272,7 +270,6 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string | null
-          patient_id?: string
           preferred_timezone?: string | null
           primary_caregiver_id?: string
           role?: Database["public"]["Enums"]["group_member_role"]

@@ -37,6 +37,7 @@ export interface GroupSummary {
   role: GroupRole;
   createdAt: string;
   memberCount: number;
+  patientId: string;
 }
 
 export interface InvitePayload {

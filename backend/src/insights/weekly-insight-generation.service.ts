@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { supabase } from '../lib/supabase';
+import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
 
 export type InsightType =
   | 'pain_trend'
@@ -51,6 +51,8 @@ interface ShiftAssignmentRow {
 export class WeeklyInsightGenerationService {
   private readonly logger = new Logger(WeeklyInsightGenerationService.name);
 
+  constructor(private readonly supabase: SupabaseAdminClient) {}
+
   private readonly groundingInstruction =
     'Ground all insights exclusively in the patient\'s care data from the previous 7 days. Do not invent details or general medical advice.';
 
@@ -60,7 +62,7 @@ export class WeeklyInsightGenerationService {
     this.logger.debug(this.groundingInstruction);
 
     try {
-      const { data: patients, error } = await supabase
+      const { data: patients, error } = await this.supabase.getClient()
         .from('patients')
         .select('id, group_id')
         .eq('status', 'active');
@@ -144,7 +146,7 @@ export class WeeklyInsightGenerationService {
   }
 
   private async getJournalEntries(groupId: string, since: Date): Promise<JournalEntryRow[]> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase.getClient()
       .from('handover_journal_entries')
       .select('created_at, content')
       .eq('group_id', groupId)
@@ -165,7 +167,7 @@ export class WeeklyInsightGenerationService {
   }
 
   private async getMedicationLogs(patientId: string, since: Date): Promise<MedicationLogRow[]> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase.getClient()
       .from('medication_logs')
       .select('status, scheduled_time, actual_time, notes')
       .eq('patient_id', patientId)
@@ -189,7 +191,7 @@ export class WeeklyInsightGenerationService {
 
   private async getShiftAssignments(groupId: string, since: Date): Promise<ShiftAssignmentRow[]> {
     const sinceDate = since.toISOString().split('T')[0];
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase.getClient()
       .from('weekly_shift_assignments')
       .select('shift_date, shift_slot, assigned_caregiver_id')
       .eq('group_id', groupId)
@@ -372,7 +374,7 @@ export class WeeklyInsightGenerationService {
       source: 'weekly_digest',
     }));
 
-    const { error } = await supabase.from('ai_insights').insert(rows);
+    const { error } = await this.supabase.getClient().from('ai_insights').insert(rows);
     if (error) {
       this.logger.error(`Failed to persist weekly insights for patient ${digest.patientId}:`, error);
     }

@@ -15,3 +15,4 @@ export type ChecklistItemUpdate = TablesUpdate<'checklist_items'>;
 export type DailyChecklistRow = Tables<'daily_medication_checklists'>;
 export type DailyChecklistInsert = TablesInsert<'daily_medication_checklists'>;
 export type MedicationRow = Tables<'medications'>;
+export type WeeklyShiftAssignmentRow = Tables<'weekly_shift_assignments'>;

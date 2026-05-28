@@ -115,6 +115,7 @@ export class HospitalSummaryService {
 
       // Step 6: Get AI flagged patterns (if any exist)
       const flaggedPatterns = await this.getFlaggedPatterns(patientId);
+      console.log('[assembleHospitalSummary] flaggedPatterns length:', flaggedPatterns.length);
 
       // Assemble complete data object
       const summaryData: HospitalSummaryData = {

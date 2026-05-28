@@ -12,6 +12,7 @@ import { LoggerModule } from './logger/logger.module';
 import { AppThrottlingModule } from './throttling/throttling.module';
 import { AiModule } from './ai/ai.module';
 import { InvitesModule } from './invites/invites.module';
+import { HospitalSummaryModule } from './hospital-summary/hospital-summary.module';
 import { SmsModule } from './sms/sms.module';
 import { SupabaseAdminModule } from './integrations/supabase-admin.module';
 import { ChecklistModule } from './checklist/checklist.module';
@@ -29,6 +30,7 @@ import { RemindersModule } from './reminders/reminders.module';
     SupabaseAdminModule,
     InvitesModule,
     AiModule,
+    HospitalSummaryModule,
     SmsModule,
     ChecklistModule,
     AlertsModule,

@@ -199,7 +199,7 @@ describe('CreateGroupPage', () => {
         patient_id: 'patient-123',
         caregiver_id: 'test-user-id',
         relationship: 'parent',
-        role_in_care: 'Primary Carer',
+        role_in_care: 'primary_carer',
         can_view_medical: true,
         can_schedule: true,
         can_communicate: true,

@@ -22,6 +22,7 @@ import AiQaPage from './pages/ai/AiQaPage';
 import AdministrationLogPage from './pages/groups/AdministrationLogPage';
 import SettingsPage from './pages/SettingsPage';
 import { usePushNotifications } from './hooks/push/usePushNotifications';
+import { HospitalSummaryPDF } from './components/hospital-summary/HospitalSummaryPDF';
 
 function App() {
   const { session, loading } = useAuth();
@@ -79,6 +80,8 @@ function App() {
           <Route path="groups/:groupId/appointments/new" element={<AppointmentFormPage />} />
           <Route path="groups/:groupId/appointments/:appointmentId/edit" element={<AppointmentFormPage />} />
           <Route path="groups/:groupId/ai-assistant" element={<AiQaPage />} />
+          <Route path="/groups/:groupId/hospital-summary" element={<HospitalSummaryPDF />} />
+
         </Route>
         <Route
           path="*"

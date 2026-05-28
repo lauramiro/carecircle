@@ -281,31 +281,40 @@ export class HospitalSummaryService {
   /**
    * Fetch and summarize 7-day care notes
    */
-  private async getCareNotesSummary(patientId: string): Promise<CareNoteEntry[]> {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+ private async getCareNotesSummary(patientId: string): Promise<CareNoteEntry[]> {
+  // First, get the group_id for this patient
+  const { data: patient, error: patientError } = await supabase
+    .from('patients')
+    .select('group_id')
+    .eq('id', patientId)
+    .single();
 
-    const { data, error } = await supabase
-      .from('care_notes')
-      .select('created_at, content, tone')
-      .eq('patient_id', patientId)
-      .gte('created_at', sevenDaysAgo.toISOString())
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching care notes:', error);
-      return [];
-    }
-
-    return (
-      data?.map((note) => ({
-        date: new Date(note.created_at).toISOString().split('T')[0],
-        content: note.content,
-        tone: note.tone || 'neutral',
-      })) || []
-    );
+  if (patientError || !patient?.group_id) {
+    console.error('Could not find group_id for patient:', patientError);
+    return [];
   }
 
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const { data, error } = await supabase
+    .from('handover_journal_entries')
+    .select('created_at, content')
+    .eq('group_id', patient.group_id)
+    .gte('created_at', sevenDaysAgo.toISOString())
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching care notes:', error);
+    return [];
+  }
+
+  return (data?.map((note) => ({
+    date: new Date(note.created_at).toISOString().split('T')[0],
+    // Remove any leading tone tag like [NEUTRAL], [POSITIVE], [CONCERNING]
+    content: note.content.replace(/^\[[A-Z]+\]\s*/, ''),
+  })) || []);
+}
   /**
    * Fetch AI-flagged patterns or insights
    */

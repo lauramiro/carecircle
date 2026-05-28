@@ -214,8 +214,7 @@ export class PDFGenerationService {
     }
 
     data.careNotesSummary.forEach((note) => {
-      const dateLabel = `${note.date} [${note.tone?.toUpperCase() || 'NEUTRAL'}]`;
-      doc.fontSize(11).font('Helvetica-Bold').text(dateLabel, { indent: 20 });
+      doc.fontSize(11).font('Helvetica-Bold').text(note.date, { indent: 20 });
       doc
         .fontSize(10)
         .font('Helvetica')

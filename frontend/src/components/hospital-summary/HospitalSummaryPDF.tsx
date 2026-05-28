@@ -1,29 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Download, Share2, Loader2, AlertCircle } from 'lucide-react';
+import { Download, Share2, Loader2, AlertCircle, FileText } from 'lucide-react';
 import axios from 'axios';
- 
+
 export function HospitalSummaryPDF() {
   const { groupId } = useParams<{ groupId: string }>();
-  const groupName = groupId || 'group';
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedPdf, setGeneratedPdf] = useState<Blob | null>(null);
- 
+
   const generatePDF = async () => {
     setIsGenerating(true);
     setError(null);
- 
+
     try {
-      // Call backend endpoint to generate PDF
       const response = await axios.post(
         `/api/hospital-summary/generate-pdf`,
         { groupId },
-        {
-          responseType: 'blob',
-        },
+        { responseType: 'blob' }
       );
- 
       setGeneratedPdf(response.data);
     } catch (err: any) {
       const errorMessage =
@@ -33,51 +28,44 @@ export function HospitalSummaryPDF() {
       setIsGenerating(false);
     }
   };
- 
+
   const downloadPDF = () => {
     if (!generatedPdf) return;
- 
     const url = window.URL.createObjectURL(generatedPdf);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `hospital-summary-${groupName}-${new Date().toISOString().split('T')[0]}.pdf`;
+    a.download = `hospital-summary-${groupId || 'group'}-${new Date().toISOString().split('T')[0]}.pdf`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
- 
+
   const sharePDF = async () => {
     if (!generatedPdf) return;
- 
     try {
-      // Create File object from Blob
       const file = new File(
         [generatedPdf],
-        `hospital-summary-${groupName}.pdf`,
+        `hospital-summary-${groupId || 'group'}.pdf`,
         { type: 'application/pdf' }
       );
- 
-      // Check if Web Share API is available
       if (navigator.share) {
         await navigator.share({
-          title: `Hospital Visit Summary - ${groupName}`,
+          title: `Hospital Visit Summary - ${groupId || 'Group'}`,
           text: 'Care profile summary for hospital/emergency department',
           files: [file],
         });
       } else {
-        // Fallback: Copy download link to clipboard
         alert('Share API not supported. Please download the PDF instead.');
         downloadPDF();
       }
     } catch (err: any) {
-      // User cancelled share or error occurred
       if (err.name !== 'AbortError') {
         setError('Failed to share PDF. Please try downloading instead.');
       }
     }
   };
- 
+
   const handleRetry = () => {
     setError(null);
     setGeneratedPdf(null);
@@ -90,179 +78,151 @@ export function HospitalSummaryPDF() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
- 
-  return (
-    <div style={{ padding: '20px' }}>
-      <h2 style={{ color: 'var(--color-text-primary)', marginBottom: '16px' }}>
-        Hospital Visit Summary
-      </h2>
- 
-      {!generatedPdf ? (
-        // Initial state: Generate button
-        <button
-          onClick={generatePDF}
-          disabled={isGenerating}
-          style={{
-            backgroundColor: 'var(--color-primary)',
-            color: '#ffffff',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            cursor: isGenerating ? 'not-allowed' : 'pointer',
-            opacity: isGenerating ? 0.7 : 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '14px',
-            fontWeight: 500,
-          }}
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 size={18} className="animate-spin" />
-              Generating PDF...
-            </>
-          ) : (
-            <>
-              <Download size={18} />
-              Generate PDF Summary
-            </>
-          )}
-        </button>
-      ) : (
-        // PDF generated: Show download & share buttons
-        <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              onClick={downloadPDF}
-              style={{
-                backgroundColor: 'var(--color-primary)',
-                color: '#ffffff',
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '14px',
-                fontWeight: 500,
-              }}
-            >
-              <Download size={18} />
-              Download PDF
-            </button>
- 
-            <button
-              onClick={sharePDF}
-              style={{
-                backgroundColor: 'var(--color-primary)',
-                color: '#ffffff',
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '14px',
-                fontWeight: 500,
-              }}
-            >
-              <Share2 size={18} />
-              Share
-            </button>
-          </div>
- 
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '12px', margin: 0 }}>
-            PDF generated successfully. Ready to download or share.
-          </p>
 
-          {/* PDF Preview */}
-          <div style={{ marginTop: 12 }}>
-            <h4 style={{ margin: '8px 0' }}>Preview</h4>
-            <div
-              style={{
-                border: '1px solid var(--color-border)',
-                borderRadius: 8,
-                overflow: 'hidden',
-                height: 600,
-                background: '#fff',
-              }}
-            >
-              {generatedPdf ? (
-                <object
-                  data={window.URL.createObjectURL(generatedPdf)}
-                  type="application/pdf"
-                  width="100%"
-                  height="100%"
-                >
-                  <p>PDF preview not available. Please download the file.</p>
-                </object>
-              ) : (
-                <p style={{ padding: 12 }}>No preview available.</p>
-              )}
-            </div>
-          </div>
+  return (
+    <div className="space-y-6">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <h1
+            className="text-[28px] font-extrabold tracking-tight"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            Hospital Visit Summary
+          </h1>
+          <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            Generate a PDF summary of medications, GP contacts, and care notes for hospital visits.
+          </p>
         </div>
-      )}
- 
-      {error && (
+      </header>
+
+      <article
+        className="overflow-hidden rounded-2xl border bg-white"
+        style={{ borderColor: 'var(--color-border)' }}
+      >
         <div
-          style={{
-            marginTop: '16px',
-            backgroundColor: 'var(--color-status-overdue-bg)',
-            border: '1px solid var(--color-status-overdue)',
-            borderRadius: '8px',
-            padding: '12px 16px',
-            display: 'flex',
-            gap: '12px',
-            alignItems: 'flex-start',
-          }}
+          className="border-b px-6 py-5"
+          style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-primary-light)' }}
         >
-          <AlertCircle
-            size={20}
-            style={{ color: 'var(--color-status-overdue)', flexShrink: 0 }}
-          />
-          <div>
-            <p
-              style={{
-                color: 'var(--color-status-overdue)',
-                margin: 0,
-                fontSize: '14px',
-                fontWeight: 500,
-              }}
-            >
-              Error
-            </p>
-            <p
-              style={{
-                color: 'var(--color-text-primary)',
-                margin: '4px 0 0 0',
-                fontSize: '13px',
-              }}
-            >
-              {error}
-            </p>
-            <button
-              onClick={handleRetry}
-              style={{
-                marginTop: '8px',
-                backgroundColor: 'var(--color-status-overdue)',
-                color: '#ffffff',
-                border: 'none',
-                padding: '6px 12px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: 500,
-              }}
-            >
-              Retry
-            </button>
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p
+                className="text-[11px] font-bold uppercase tracking-wide"
+                style={{ color: 'var(--color-primary)' }}
+              >
+                Hospital ready
+              </p>
+              <h2 className="mt-1 text-lg font-extrabold" style={{ color: 'var(--color-text-primary)' }}>
+                Patient summary
+              </h2>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                Includes current medications, GP contacts, and recent care notes.
+              </p>
+            </div>
+
+            {!generatedPdf ? (
+              <button
+                onClick={generatePDF}
+                disabled={isGenerating}
+                className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-white"
+                style={{ backgroundColor: 'var(--color-primary)' }}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <FileText size={16} />
+                    Generate PDF
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={downloadPDF}
+                  className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-white"
+                  style={{ backgroundColor: 'var(--color-primary)' }}
+                >
+                  <Download size={16} />
+                  Download
+                </button>
+                <button
+                  onClick={sharePDF}
+                  className="inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-bold"
+                  style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+                >
+                  <Share2 size={16} />
+                  Share
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      )}
+
+        <div className="p-6">
+          {error && (
+            <div
+              className="mb-6 rounded-xl border p-4 text-sm"
+              style={{
+                borderColor: 'var(--color-status-critical)',
+                backgroundColor: 'var(--color-status-critical-bg)',
+                color: 'var(--color-status-critical)',
+              }}
+            >
+              <div className="flex items-start gap-2">
+                <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Error</p>
+                  <p className="text-sm mt-1">{error}</p>
+                  <button
+                    onClick={handleRetry}
+                    className="mt-2 rounded-lg px-3 py-1 text-xs font-bold text-white"
+                    style={{ backgroundColor: 'var(--color-status-critical)' }}
+                  >
+                    Try again
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {generatedPdf && (
+            <div className="space-y-4">
+              <div
+                className="rounded-xl border bg-white p-4 text-center"
+                style={{ borderColor: 'var(--color-border)' }}
+              >
+                <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                  PDF generated successfully. Ready to download or share.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="mb-2 text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                  Preview
+                </h3>
+                <div
+                  className="overflow-hidden rounded-xl border"
+                  style={{ borderColor: 'var(--color-border)', height: '500px' }}
+                >
+                  <object
+                    data={window.URL.createObjectURL(generatedPdf)}
+                    type="application/pdf"
+                    width="100%"
+                    height="100%"
+                  >
+                    <p className="p-4 text-center" style={{ color: 'var(--color-text-secondary)' }}>
+                      PDF preview not available. Please download the file.
+                    </p>
+                  </object>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </article>
     </div>
   );
 }

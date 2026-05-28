@@ -87,7 +87,7 @@ export class WeeklyInsightGenerationService {
     }
   }
 
-  private async generateInsightsForPatient(
+  public async generateInsightsForPatient(
     patient: ActivePatientRow,
   ): Promise<WeeklyInsightDigest | null> {
     const sevenDaysAgo = new Date();
@@ -362,19 +362,17 @@ export class WeeklyInsightGenerationService {
   private async storeInsights(digest: WeeklyInsightDigest) {
     const rows = digest.insightCards.map((card) => ({
       patient_id: digest.patientId,
-      week_ending_date: digest.weekEndingDate,
       insight_type: card.insightType,
       observation: card.observation,
-      suggested_action: card.suggestedAction,
       severity: card.severity,
-      generated_at: card.generatedAt,
       is_active: true,
-      source: 'weekly_digest',
+      created_at: new Date().toISOString(),
     }));
-
     const { error } = await supabase.from('ai_insights').insert(rows);
     if (error) {
-      this.logger.error(`Failed to persist weekly insights for patient ${digest.patientId}:`, error);
+      console.error('❌ storeInsights failed:', error);
+    } else {
+      console.log('✅ Stored', rows.length, 'insights');
     }
   }
 }

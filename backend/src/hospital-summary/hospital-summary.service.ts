@@ -115,6 +115,7 @@ export class HospitalSummaryService {
 
       // Step 6: Get AI flagged patterns (if any exist)
       const flaggedPatterns = await this.getFlaggedPatterns(patientId);
+      console.log('[assembleHospitalSummary] flaggedPatterns length:', flaggedPatterns.length);
 
       // Assemble complete data object
       const summaryData: HospitalSummaryData = {
@@ -309,28 +310,33 @@ export class HospitalSummaryService {
   /**
    * Fetch AI-flagged patterns or insights
    */
+
   private async getFlaggedPatterns(patientId: string): Promise<FlaggedPattern[]> {
-    const { data, error } = await supabase
-      .from('ai_insights')
-      .select('insight_type, observation, severity')
-      .eq('patient_id', patientId)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(5); // Limit to 5 most recent patterns
+  console.log('🔍 Fetching flagged patterns for patient:', patientId);
+  const { data, error } = await supabase
+    .from('ai_insights')
+    .select('insight_type, observation, severity')
+    .eq('patient_id', patientId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+    .limit(5);
 
-    if (error) {
-      console.error('Error fetching flagged patterns:', error);
-      return [];
-    }
-
-    return (
-      data?.map((pattern) => ({
-        type: pattern.insight_type,
-        observation: pattern.observation,
-        severity: pattern.severity || 'low',
-      })) || []
-    );
+  if (error) {
+    console.error('[getFlaggedPatterns] Error:', error);
+    return [];
   }
+  console.log(`[getFlaggedPatterns] Raw data:`, data);
+  const mapped = data?.map(pattern => ({
+    type: pattern.insight_type,
+    observation: pattern.observation,
+    severity: pattern.severity || 'low',
+  })) || [];
+  console.log(`[getFlaggedPatterns] Mapped:`, mapped);
+  return mapped;
 }
+}
+
+ 
+
 
 

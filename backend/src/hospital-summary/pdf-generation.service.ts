@@ -55,6 +55,18 @@ export class PDFGenerationService {
   }
 
   // ========================================================================
+  // Helper: ensure enough space on page
+  // ========================================================================
+
+  private ensureSpace(doc: any, neededLines: number = 5): void {
+    // Estimate ~16pt per line, plus small buffer; leave 80pt for footer
+    const neededHeight = neededLines * 16;
+    if (doc.y + neededHeight > this.PAGE_HEIGHT - 80) {
+      doc.addPage();
+    }
+  }
+
+  // ========================================================================
   // PDF Building Methods
   // ========================================================================
 
@@ -90,7 +102,6 @@ export class PDFGenerationService {
     const details = [
       { label: 'Full Name:', value: data.fullName },
       { label: 'Date of Birth:', value: data.dateOfBirth },
-      { label: 'Patient ID:', value: data.patientId },
     ];
 
     this.addDetailRows(doc, details);
@@ -107,7 +118,9 @@ export class PDFGenerationService {
       return;
     }
 
-    data.medications.forEach((med, idx) => {
+    for (let idx = 0; idx < data.medications.length; idx++) {
+      const med = data.medications[idx];
+      this.ensureSpace(doc, 4); // medication line + two details lines + spacing
       const medText = `${idx + 1}. ${med.name} ${med.dose}${med.unit}, ${med.frequency}`;
       const startDateText = `Started: ${med.startDate}`;
       const lastGivenText = med.lastGivenTimestamp
@@ -118,7 +131,7 @@ export class PDFGenerationService {
       doc.fontSize(10).font('Helvetica').text(startDateText, { indent: 40 });
       doc.fontSize(10).font('Helvetica').text(lastGivenText, { indent: 40 });
       doc.moveDown(0.5);
-    });
+    }
 
     doc.moveDown();
   }
@@ -135,6 +148,7 @@ export class PDFGenerationService {
     }
 
     data.conditions.forEach((condition, idx) => {
+      this.ensureSpace(doc, 1);
       doc
         .fontSize(11)
         .font('Helvetica')
@@ -156,6 +170,7 @@ export class PDFGenerationService {
     }
 
     data.allergies.forEach((allergy, idx) => {
+      this.ensureSpace(doc, 1);
       doc
         .fontSize(11)
         .font('Helvetica')
@@ -176,7 +191,8 @@ export class PDFGenerationService {
       return;
     }
 
-    data.gpContacts.forEach((gp) => {
+    for (const gp of data.gpContacts) {
+      this.ensureSpace(doc, 3);
       const gpName = `${gp.name} (${gp.specialty})`;
       doc.fontSize(11).font('Helvetica-Bold').text(gpName, { indent: 20 });
 
@@ -195,9 +211,8 @@ export class PDFGenerationService {
           indent: 40,
         });
       }
-
       doc.moveDown(0.5);
-    });
+    }
 
     doc.moveDown();
   }
@@ -206,50 +221,46 @@ export class PDFGenerationService {
     this.addSectionTitle(doc, '7-DAY CARE NOTES SUMMARY');
 
     if (data.careNotesSummary.length === 0) {
-      doc.fontSize(11).font('Helvetica').text('No recent care notes.', {
-        indent: 20,
-      });
+      doc.fontSize(11).font('Helvetica').text('No recent care notes.', { indent: 20 });
       doc.moveDown();
       return;
     }
 
-    data.careNotesSummary.forEach((note) => {
-      const dateLabel = `${note.date} [${note.tone?.toUpperCase() || 'NEUTRAL'}]`;
-      doc.fontSize(11).font('Helvetica-Bold').text(dateLabel, { indent: 20 });
-      doc
-        .fontSize(10)
-        .font('Helvetica')
-        .text(note.content, { indent: 40, width: this.PAGE_WIDTH - 2 * this.MARGIN - 40 });
+    for (const note of data.careNotesSummary) {
+      this.ensureSpace(doc, 3); // date line + content (~2 lines) + spacing
+      doc.fontSize(11).font('Helvetica-Bold').text(note.date, { indent: 20 });
+      doc.fontSize(10).font('Helvetica').text(note.content, {
+        indent: 40,
+        width: this.PAGE_WIDTH - 2 * this.MARGIN - 40,
+      });
       doc.moveDown(0.5);
-    });
-
+    }
     doc.moveDown();
   }
 
   private addFlaggedPatterns(doc: any, data: HospitalSummaryData) {
-    if (data.flaggedPatterns.length === 0) {
-      return;
-    }
+    if (data.flaggedPatterns.length === 0) return;
 
+    this.ensureSpace(doc, 3); // ensure space for title + at least one pattern
     this.addSectionTitle(doc, 'FLAGGED PATTERNS');
 
-    data.flaggedPatterns.forEach((pattern) => {
+    for (const pattern of data.flaggedPatterns) {
+      this.ensureSpace(doc, 2); // pattern label + observation line
       const severityColor = this.getSeverityColor(pattern.severity);
       const patternLabel = `[${pattern.severity.toUpperCase()}] ${pattern.type}`;
-
       doc.fontSize(11).font('Helvetica-Bold').fillColor(severityColor).text(patternLabel, {
         indent: 20,
       });
-
       doc
         .fillColor('black')
         .fontSize(10)
         .font('Helvetica')
-        .text(pattern.observation, { indent: 40, width: this.PAGE_WIDTH - 2 * this.MARGIN - 40 });
-
+        .text(pattern.observation, {
+          indent: 40,
+          width: this.PAGE_WIDTH - 2 * this.MARGIN - 40,
+        });
       doc.moveDown(0.5);
-    });
-
+    }
     doc.moveDown();
   }
 
@@ -259,6 +270,7 @@ export class PDFGenerationService {
     for (let i = 0; i < pages; i++) {
       doc.switchToPage(i);
 
+      // Watermark
       doc
         .opacity(0.1)
         .fontSize(60)
@@ -276,12 +288,14 @@ export class PDFGenerationService {
 
       doc.opacity(1);
 
+      // Footer line
       const footerY = this.PAGE_HEIGHT - 60;
       doc
         .moveTo(this.MARGIN, footerY - 10)
         .lineTo(this.PAGE_WIDTH - this.MARGIN, footerY - 10)
         .stroke();
 
+      // Disclaimer text
       doc
         .fontSize(8)
         .font('Helvetica')
@@ -291,6 +305,7 @@ export class PDFGenerationService {
           align: 'left',
         });
 
+      // Page number
       doc
         .fontSize(9)
         .text(`Page ${i + 1} of ${pages}`, this.MARGIN, this.PAGE_HEIGHT - 20, {
@@ -305,21 +320,19 @@ export class PDFGenerationService {
   // ========================================================================
 
   private addSectionTitle(doc: any, title: string) {
-    if (doc.y > this.PAGE_HEIGHT - 150) {
+    // If there isn't enough room for the title line + at least one content line, add a new page
+    if (doc.y > this.PAGE_HEIGHT - 80) {
       doc.addPage();
     }
-
     doc
       .fontSize(14)
       .font('Helvetica-Bold')
       .fillColor('black')
       .text(title);
-
     doc
       .moveTo(this.MARGIN, doc.y)
       .lineTo(this.PAGE_WIDTH - this.MARGIN, doc.y)
       .stroke();
-
     doc.moveDown(0.5);
   }
 
@@ -327,7 +340,8 @@ export class PDFGenerationService {
     const labelWidth = 120;
     const startX = this.MARGIN + 20;
 
-    details.forEach((detail) => {
+    for (const detail of details) {
+      this.ensureSpace(doc, 2);
       const labelX = startX;
       const valueX = startX + labelWidth;
 
@@ -345,7 +359,7 @@ export class PDFGenerationService {
         });
 
       doc.moveDown(1.5);
-    });
+    }
 
     doc.moveDown(0.5);
   }

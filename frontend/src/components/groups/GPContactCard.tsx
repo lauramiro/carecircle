@@ -53,8 +53,12 @@ export default function GPContactCard({
       await onUpdate(contact.id, data);
       toast.success('GP contact updated successfully');
       setMode('read');
-    } catch {
-      toast.error('Something went wrong. Please try again.');
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Something went wrong. Please try again.';
+      toast.error(message);
     }
   }
 
@@ -62,8 +66,12 @@ export default function GPContactCard({
     try {
       await onRemove(contact.id);
       toast.success('GP contact removed');
-    } catch {
-      toast.error('Something went wrong. Please try again.');
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Something went wrong. Please try again.';
+      toast.error(message);
     }
   }
 

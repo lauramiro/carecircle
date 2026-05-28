@@ -7,6 +7,8 @@ vi.mock('axios', () => ({
   },
 }));
 
+const fromMock = vi.hoisted(() => vi.fn());
+
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
     auth: {
@@ -16,24 +18,10 @@ vi.mock('../../lib/supabaseClient', () => ({
       invoke: vi.fn(),
     },
     rpc: vi.fn(),
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: {
-          patient_id: 'group-care-001',
-          joined_at: '2023-01-01T00:00:00.000Z',
-          role_in_care: 'Admin',
-          patients: { full_name: 'Dad', notes: '' }
-        },
-        error: null,
-      }),
-      order: vi.fn().mockReturnThis(),
-    })),
+    from: fromMock,
   },
 }));
 
-// We also globally mock the groupsService module so it behaves the same as the old mocked behavior for getGroups which isn't easy to fully test via deep database mocks
 vi.mock('./groups.service', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./groups.service')>();
   const mock = await import('./groups.mock');
@@ -55,10 +43,32 @@ import {
   updateGPContact,
 } from './groups.service';
 
+function mockPatientLookup(patientId = 'patient-1') {
+  fromMock.mockImplementation((table: string) => {
+    if (table === 'patients') {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: patientId }, error: null }),
+          }),
+        }),
+      };
+    }
+    return {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+  });
+}
+
 describe('groups service', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(axios.post).mockReset();
     vi.mocked(axios.isAxiosError).mockReturnValue(false);
+    fromMock.mockReset();
   });
 
   it('returns group summaries', async () => {
@@ -165,32 +175,119 @@ describe('groups service', () => {
     ).rejects.toThrow('Resend rejected the request');
   });
 
-  it('adds, updates, and removes GP contacts', async () => {
-    const addedContact = await addGPContact('group-care-003', {
+  it('adds, updates, and removes GP contacts via gp_contacts table', async () => {
+    const gpRow = {
+      id: 'gp-new-1',
+      name: 'Dr. Test GP',
+      phone: '+44 20 0000 0000',
+      address: 'Test Practice',
+      specialty: 'General Practice',
+      email: null,
+    };
+
+    const updatedRow = {
+      ...gpRow,
+      name: 'Dr. Updated GP',
+      phone: '+44 20 0000 9999',
+      address: 'Updated Practice',
+    };
+
+    let gpUpdateCalls = 0;
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'patients') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'patient-1' }, error: null }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'gp_contacts') {
+        return {
+          insert: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: gpRow, error: null }),
+            }),
+          }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  select: vi.fn().mockReturnValue({
+                    maybeSingle: vi.fn().mockImplementation(async () => {
+                      gpUpdateCalls += 1;
+                      if (gpUpdateCalls === 1) {
+                        return { data: updatedRow, error: null };
+                      }
+                      return { data: { id: gpRow.id }, error: null };
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+
+    const addedContact = await addGPContact('group-care-001', {
       gpName: 'Dr. Test GP',
       phoneNumber: '+44 20 0000 0000',
       practiceName: 'Test Practice',
     });
 
     expect(addedContact).toMatchObject({
-      id: expect.any(String),
+      id: 'gp-new-1',
       gpName: 'Dr. Test GP',
+      phoneNumber: '+44 20 0000 0000',
+      practiceName: 'Test Practice',
     });
 
-    const updatedContact = await updateGPContact('group-care-003', addedContact.id, {
+    const updatedContact = await updateGPContact('group-care-001', addedContact.id, {
       gpName: 'Dr. Updated GP',
       phoneNumber: '+44 20 0000 9999',
       practiceName: 'Updated Practice',
     });
 
     expect(updatedContact).toMatchObject({
-      id: addedContact.id,
+      id: 'gp-new-1',
       gpName: 'Dr. Updated GP',
       phoneNumber: '+44 20 0000 9999',
+      practiceName: 'Updated Practice',
+    });
+
+    await expect(removeGPContact('group-care-001', addedContact.id)).resolves.toBeUndefined();
+  });
+
+  it('throws when adding a GP contact without a name', async () => {
+    mockPatientLookup();
+
+    await expect(
+      addGPContact('group-care-001', { phoneNumber: '+44 20 0000 0000' }),
+    ).rejects.toThrow('GP name is required');
+  });
+
+  it('throws when no patient exists for the care group', async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'patients') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+        };
+      }
+      throw new Error(`Unexpected table: ${table}`);
     });
 
     await expect(
-      removeGPContact('group-care-003', addedContact.id),
-    ).resolves.toBeUndefined();
+      addGPContact('group-care-001', { gpName: 'Dr. Test GP' }),
+    ).rejects.toThrow('Patient not found for this care group');
   });
 });

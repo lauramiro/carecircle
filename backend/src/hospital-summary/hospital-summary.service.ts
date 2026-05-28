@@ -282,61 +282,65 @@ export class HospitalSummaryService {
   /**
    * Fetch and summarize 7-day care notes
    */
-  private async getCareNotesSummary(patientId: string): Promise<CareNoteEntry[]> {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+ private async getCareNotesSummary(patientId: string): Promise<CareNoteEntry[]> {
+  // First, get the group_id for this patient
+  const { data: patient, error: patientError } = await supabase
+    .from('patients')
+    .select('group_id')
+    .eq('id', patientId)
+    .single();
 
+  if (patientError || !patient?.group_id) {
+    console.error('Could not find group_id for patient:', patientError);
+    return [];
+  }
+
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const { data, error } = await supabase
+    .from('handover_journal_entries')
+    .select('created_at, content')
+    .eq('group_id', patient.group_id)
+    .gte('created_at', sevenDaysAgo.toISOString())
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching care notes:', error);
+    return [];
+  }
+
+  return (data?.map((note) => ({
+    date: new Date(note.created_at).toISOString().split('T')[0],
+    // Remove any leading tone tag like [NEUTRAL], [POSITIVE], [CONCERNING]
+    content: note.content.replace(/^\[[A-Z]+\]\s*/, ''),
+  })) || []);
+}
+  /**
+   * Fetch AI-flagged patterns or insights
+   */
+  private async getFlaggedPatterns(patientId: string): Promise<FlaggedPattern[]> {
     const { data, error } = await supabase
-      .from('care_notes')
-      .select('created_at, content, tone')
+      .from('ai_insights')
+      .select('insight_type, observation, severity')
       .eq('patient_id', patientId)
-      .gte('created_at', sevenDaysAgo.toISOString())
-      .order('created_at', { ascending: false });
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(5); // Limit to 5 most recent patterns
 
     if (error) {
-      console.error('Error fetching care notes:', error);
+      console.error('Error fetching flagged patterns:', error);
       return [];
     }
 
     return (
-      data?.map((note) => ({
-        date: new Date(note.created_at).toISOString().split('T')[0],
-        content: note.content,
-        tone: note.tone || 'neutral',
+      data?.map((pattern) => ({
+        type: pattern.insight_type,
+        observation: pattern.observation,
+        severity: pattern.severity || 'low',
       })) || []
     );
   }
-
-  /**
-   * Fetch AI-flagged patterns or insights
-   */
-
-  private async getFlaggedPatterns(patientId: string): Promise<FlaggedPattern[]> {
-  console.log('🔍 Fetching flagged patterns for patient:', patientId);
-  const { data, error } = await supabase
-    .from('ai_insights')
-    .select('insight_type, observation, severity')
-    .eq('patient_id', patientId)
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-    .limit(5);
-
-  if (error) {
-    console.error('[getFlaggedPatterns] Error:', error);
-    return [];
-  }
-  console.log(`[getFlaggedPatterns] Raw data:`, data);
-  const mapped = data?.map(pattern => ({
-    type: pattern.insight_type,
-    observation: pattern.observation,
-    severity: pattern.severity || 'low',
-  })) || [];
-  console.log(`[getFlaggedPatterns] Mapped:`, mapped);
-  return mapped;
 }
-}
-
- 
-
 
 

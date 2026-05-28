@@ -12,6 +12,7 @@ import { usePatientForm } from '../../hooks/groups/usePatientForm';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { getErrorMessage } from '../../utils/helper';
+import WellbeingTrendCharts from '../../components/checkins/WellbeingTrendCharts';
 
 const inputStyle = (hasError: boolean) => ({
   width: '100%',
@@ -51,6 +52,7 @@ export default function PatientProfilePage() {
 
   const { group, loading: groupLoading } = useGroupDetail(groupId);
   const isAdmin = group?.role === 'Admin';
+  const isObserver = group?.role === 'Observer';
 
   const {
     values, chronicConditions, allergies, errors,
@@ -635,6 +637,15 @@ export default function PatientProfilePage() {
 
         </form>
       </div>
+
+      {/* Wellbeing trend charts — shown once a patientId is resolved */}
+      {patientId && group?.id && (
+        <WellbeingTrendCharts
+          patientId={patientId}
+          groupId={group.id}
+          isObserver={isObserver}
+        />
+      )}
 
       <style>{`
         button:hover .avatar-overlay { opacity: 1 !important; }

@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabaseClient';
+import { format, subDays } from 'date-fns';
 import type { UpsertCheckinPayload, WellbeingCheckin } from './checkins.types';
 
 type CheckinRow = {
@@ -87,4 +88,28 @@ export async function upsertCheckin(
 
   if (error) throw new Error(error.message);
   return fromRow(data as CheckinRow);
+}
+
+/**
+ * Fetches the wellbeing check-in history for a patient over the last `days` calendar days.
+ * Results are ordered ascending by checkin_date so they plot left-to-right on a chart.
+ */
+export async function getCheckinHistory(
+  patientId: string,
+  groupId: string,
+  days: 7 | 30,
+): Promise<WellbeingCheckin[]> {
+  const today = new Date();
+  const fromDate = format(subDays(today, days - 1), 'yyyy-MM-dd');
+
+  const { data, error } = await supabase
+    .from('patient_wellbeing_checkins')
+    .select(checkinSelect)
+    .eq('patient_id', patientId)
+    .eq('group_id', groupId)
+    .gte('checkin_date', fromDate)
+    .order('checkin_date', { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as CheckinRow[]).map(fromRow);
 }

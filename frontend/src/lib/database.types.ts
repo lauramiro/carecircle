@@ -1287,6 +1287,73 @@ export type Database = {
           },
         ]
       }
+      patient_wellbeing_checkins: {
+        Row: {
+          id: string
+          patient_id: string
+          group_id: string
+          caregiver_id: string
+          created_at: string
+          updated_at: string
+          checkin_date: string
+          mood: number
+          appetite: string
+          mobility: string
+          pain_level: number
+          notes: string | null
+        }
+        Insert: {
+          id?: string
+          patient_id: string
+          group_id: string
+          caregiver_id: string
+          created_at?: string
+          updated_at?: string
+          checkin_date: string
+          mood: number
+          appetite: string
+          mobility: string
+          pain_level: number
+          notes?: string | null
+        }
+        Update: {
+          id?: string
+          patient_id?: string
+          group_id?: string
+          caregiver_id?: string
+          created_at?: string
+          updated_at?: string
+          checkin_date?: string
+          mood?: number
+          appetite?: string
+          mobility?: string
+          pain_level?: number
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_wellbeing_checkins_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_wellbeing_checkins_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_group"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_wellbeing_checkins_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: Json | null

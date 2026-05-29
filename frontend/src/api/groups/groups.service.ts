@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { INVITE_TYPES } from '../../services/inviteService';
 import { supabase } from '../../lib/supabaseClient';
-import * as groupsMock from './groups.mock';
+import type { GPContactInsert, GPContactRow, GPContactUpdate } from '../../lib/supabaseTables';
 import type {
   GroupMember,
   GPContact,
@@ -28,6 +28,75 @@ type CareGiverMembershipRow = {
   role_in_care: string | null;
   can_schedule: boolean | null;
 };
+
+type GPContactListRow = Pick<
+  GPContactRow,
+  'id' | 'name' | 'phone' | 'address' | 'specialty' | 'email'
+>;
+
+function rowToGPContact(row: GPContactListRow): GPContact {
+  return {
+    id: row.id,
+    gpName: row.name,
+    phoneNumber: row.phone ?? undefined,
+    practiceName: row.address ?? undefined,
+    specialty: row.specialty ?? undefined,
+    email: row.email ?? undefined,
+  };
+}
+
+function payloadToRowFields(data: Omit<GPContact, 'id'>): Pick<
+  GPContactInsert,
+  'name' | 'phone' | 'address' | 'specialty' | 'email'
+> {
+  const name = data.gpName?.trim();
+  if (!name) {
+    throw new Error('GP name is required');
+  }
+
+  return {
+    name,
+    phone: data.phoneNumber?.trim() || null,
+    address: data.practiceName?.trim() || null,
+    specialty: data.specialty?.trim() || 'General Practice',
+    email: data.email?.trim() || null,
+  };
+}
+
+async function getPatientIdForGroup(groupId: string): Promise<string> {
+  const { data, error } = await supabase
+    .from('patients')
+    .select('id')
+    .eq('group_id', groupId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error resolving patient for group:', error);
+    throw new Error('Failed to load patient for this care group');
+  }
+
+  if (!data?.id) {
+    throw new Error('Patient not found for this care group');
+  }
+
+  return data.id;
+}
+
+async function fetchGPContactsForPatient(patientId: string): Promise<GPContact[]> {
+  const { data, error } = await supabase
+    .from('gp_contacts')
+    .select('id, name, phone, address, specialty, email')
+    .eq('patient_id', patientId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching GP contacts:', error);
+    return [];
+  }
+
+  return (data ?? []).map(rowToGPContact);
+}
 
 export function mapRole(role: string): GroupRole {
   switch (role) {
@@ -143,6 +212,10 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     status: m.status === 'active' ? 'Active' : 'Suspended',
   }));
 
+  const gpContacts = patientRow?.id
+    ? await fetchGPContactsForPatient(patientRow.id)
+    : [];
+
   return {
     id: groupData.id,
     name: groupData.name ?? '',
@@ -151,7 +224,7 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     createdAt: groupData.created_at ?? new Date().toISOString(),
     canSchedule,
     members,
-    gpContacts: [],
+    gpContacts,
     patientId: patientRow?.id ?? '',
   };
 }
@@ -253,7 +326,25 @@ export async function addGPContact(
   groupId: string,
   data: Omit<GPContact, 'id'>,
 ): Promise<GPContact> {
-  return groupsMock.addGPContact(groupId, data);
+  const patientId = await getPatientIdForGroup(groupId);
+  const rowFields = payloadToRowFields(data);
+
+  const { data: inserted, error } = await supabase
+    .from('gp_contacts')
+    .insert({
+      patient_id: patientId,
+      ...rowFields,
+      is_active: true,
+    } satisfies GPContactInsert)
+    .select('id, name, phone, address, specialty, email')
+    .single();
+
+  if (error || !inserted) {
+    console.error('addGPContact:', error);
+    throw new Error(error?.message || 'Unable to add GP contact');
+  }
+
+  return rowToGPContact(inserted);
 }
 
 export async function updateGPContact(
@@ -261,9 +352,50 @@ export async function updateGPContact(
   gpId: string,
   data: Omit<GPContact, 'id'>,
 ): Promise<GPContact> {
-  return groupsMock.updateGPContact(groupId, gpId, data);
+  const patientId = await getPatientIdForGroup(groupId);
+  const rowFields = payloadToRowFields(data);
+
+  const { data: updated, error } = await supabase
+    .from('gp_contacts')
+    .update(rowFields satisfies GPContactUpdate)
+    .eq('id', gpId)
+    .eq('patient_id', patientId)
+    .eq('is_active', true)
+    .select('id, name, phone, address, specialty, email')
+    .maybeSingle();
+
+  if (error) {
+    console.error('updateGPContact:', error);
+    throw new Error(error.message || 'Unable to update GP contact');
+  }
+
+  if (!updated) {
+    throw new Error(
+      'GP contact could not be updated. You may not have permission, or the contact was removed.',
+    );
+  }
+
+  return rowToGPContact(updated);
 }
 
 export async function removeGPContact(groupId: string, gpId: string): Promise<void> {
-  return groupsMock.removeGPContact(groupId, gpId);
+  const patientId = await getPatientIdForGroup(groupId);
+
+  const { data: removed, error } = await supabase
+    .from('gp_contacts')
+    .update({ is_active: false } satisfies GPContactUpdate)
+    .eq('id', gpId)
+    .eq('patient_id', patientId)
+    .eq('is_active', true)
+    .select('id')
+    .maybeSingle();
+
+  if (error) {
+    console.error('removeGPContact:', error);
+    throw new Error(error.message || 'Unable to remove GP contact');
+  }
+
+  if (!removed) {
+    throw new Error('GP contact not found');
+  }
 }

@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { addDays, format } from 'date-fns';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { AppConfigService } from '../config/app-config.service';
 import { PushDispatchService } from '../alerts/push-dispatch.service';
 import { GmailMailerService } from '../email/gmail-mailer.service';
@@ -7,6 +9,10 @@ import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
 
 const REMINDER_OFFSETS_MINUTES = [1440, 60] as const; // 24 h, 1 h
 const WINDOW_MINUTES = 5; // cron runs every 5 min; look ±5 min around each target
+const WELLBEING_REMINDER_TYPE = 'wellbeing_checkin_reminder';
+const WELLBEING_REMINDER_TITLE = 'Weekly wellbeing check-in';
+const WELLBEING_REMINDER_BODY =
+  'How are you doing this week? Take 2 minutes for your wellbeing check-in';
 
 interface AppointmentRow {
   id: string;
@@ -28,6 +34,21 @@ interface PatientRow {
   group_id: string;
 }
 
+interface PrimaryCarerMembershipRow {
+  caregiver_id: string;
+  group_id: string;
+}
+
+interface ProfilePreferenceRow {
+  id: string;
+  preferences: Record<string, unknown> | null;
+}
+
+interface CareGroupTimezoneRow {
+  id: string;
+  preferred_timezone: string | null;
+}
+
 @Injectable()
 export class RemindersService {
   private readonly logger = new Logger(RemindersService.name);
@@ -41,16 +62,74 @@ export class RemindersService {
 
   @Cron('*/5 * * * *')
   async runReminderCheck(): Promise<void> {
+    await this.runReminderCheckAt(new Date());
+  }
+
+  async runReminderCheckAt(now: Date): Promise<void> {
     if (!this.appConfig.cronsEnabled) return;
     if (!this.supabase.isEnabled()) {
       this.logger.warn('reminders_cron_skipped: supabase service role not configured');
       return;
     }
-    const now = new Date();
     for (const offsetMinutes of REMINDER_OFFSETS_MINUTES) {
       await this.processOffset(now, offsetMinutes).catch((err) =>
         this.logger.warn(`reminders_offset_failed offset=${offsetMinutes}`, err),
       );
+    }
+    await this.processWeeklyWellbeingReminders(now).catch((err) =>
+      this.logger.warn('wellbeing_reminders_failed', err),
+    );
+  }
+
+  private async processWeeklyWellbeingReminders(now: Date): Promise<void> {
+    const memberships = await this.fetchPrimaryCarerMemberships();
+    if (!memberships.length) return;
+
+    const groupIds = [...new Set(memberships.map((membership) => membership.group_id))];
+    const caregiverIds = [...new Set(memberships.map((membership) => membership.caregiver_id))];
+
+    const [groupTimezones, profiles] = await Promise.all([
+      this.fetchCareGroupTimezones(groupIds),
+      this.fetchProfilePreferences(caregiverIds),
+    ]);
+
+    const timezoneByGroupId = new Map(
+      groupTimezones.map((group) => [group.id, group.preferred_timezone ?? 'UTC']),
+    );
+    const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
+
+    for (const membership of memberships) {
+      const timezone = timezoneByGroupId.get(membership.group_id) ?? 'UTC';
+      const profile = profileById.get(membership.caregiver_id);
+
+      if (!this.isWeeklyWellbeingReminderEnabled(profile?.preferences)) {
+        continue;
+      }
+
+      const weekStart = this.getCurrentWeekStartForTimezone(now, timezone);
+      if (!this.isWithinWeeklyReminderWindow(now, timezone, weekStart)) {
+        continue;
+      }
+
+      const reminderKey = `${membership.caregiver_id}:${weekStart}`;
+      const alreadySent = await this.hasExistingNotification(
+        membership.caregiver_id,
+        WELLBEING_REMINDER_TYPE,
+        reminderKey,
+      );
+      if (alreadySent) {
+        continue;
+      }
+
+      const alreadySubmitted = await this.hasCurrentWeekWellbeingCheckIn(
+        membership.caregiver_id,
+        weekStart,
+      );
+      if (alreadySubmitted) {
+        continue;
+      }
+
+      await this.sendWeeklyWellbeingReminder(membership.caregiver_id, reminderKey);
     }
   }
 
@@ -196,5 +275,162 @@ export class RemindersService {
       return null;
     }
     return data as PatientRow | null;
+  }
+
+  private async fetchPrimaryCarerMemberships(): Promise<PrimaryCarerMembershipRow[]> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('care_givers')
+      .select('caregiver_id, group_id')
+      .eq('status', 'active')
+      .eq('role_in_care', 'primary_carer');
+
+    if (error) {
+      this.logger.warn(`fetch_primary_carers_failed ${error.message}`);
+      return [];
+    }
+
+    return (data ?? []) as PrimaryCarerMembershipRow[];
+  }
+
+  private async fetchCareGroupTimezones(groupIds: string[]): Promise<CareGroupTimezoneRow[]> {
+    if (!groupIds.length) return [];
+
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('care_group')
+      .select('id, preferred_timezone')
+      .in('id', groupIds);
+
+    if (error) {
+      this.logger.warn(`fetch_care_group_timezones_failed ${error.message}`);
+      return [];
+    }
+
+    return (data ?? []) as CareGroupTimezoneRow[];
+  }
+
+  private async fetchProfilePreferences(userIds: string[]): Promise<ProfilePreferenceRow[]> {
+    if (!userIds.length) return [];
+
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('profiles')
+      .select('id, preferences')
+      .in('id', userIds);
+
+    if (error) {
+      this.logger.warn(`fetch_profile_preferences_failed ${error.message}`);
+      return [];
+    }
+
+    return (data ?? []) as ProfilePreferenceRow[];
+  }
+
+  private isWeeklyWellbeingReminderEnabled(
+    preferences: Record<string, unknown> | null | undefined,
+  ): boolean {
+    if (!preferences) return true;
+
+    const notifications =
+      typeof preferences.notifications === 'object' && preferences.notifications !== null
+        ? (preferences.notifications as Record<string, unknown>)
+        : null;
+    const reminderValue = notifications?.weeklyWellbeingReminderEnabled;
+
+    return reminderValue !== false;
+  }
+
+  private getCurrentWeekStartForTimezone(now: Date, timezone: string): string {
+    const zonedNow = toZonedTime(now, timezone);
+    const startOfToday = new Date(
+      zonedNow.getFullYear(),
+      zonedNow.getMonth(),
+      zonedNow.getDate(),
+      12,
+      0,
+      0,
+      0,
+    );
+    const offsetFromMonday = (zonedNow.getDay() + 6) % 7;
+    return format(addDays(startOfToday, -offsetFromMonday), 'yyyy-MM-dd');
+  }
+
+  private isWithinWeeklyReminderWindow(now: Date, timezone: string, weekStart: string): boolean {
+    const targetUtc = fromZonedTime(`${weekStart}T09:00:00`, timezone);
+    const diffMs = now.getTime() - targetUtc.getTime();
+
+    return diffMs >= 0 && diffMs < WINDOW_MINUTES * 60_000;
+  }
+
+  private async hasExistingNotification(
+    userId: string,
+    type: string,
+    relatedEntityId: string,
+  ): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('notifications')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('type', type)
+      .eq('related_entity_id', relatedEntityId)
+      .limit(1);
+
+    if (error) {
+      this.logger.warn(`fetch_existing_notification_failed user=${userId} ${error.message}`);
+      return false;
+    }
+
+    return (data?.length ?? 0) > 0;
+  }
+
+  private async hasCurrentWeekWellbeingCheckIn(userId: string, weekStart: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('primary_carer_wellbeing_checkins')
+      .select('id')
+      .eq('carer_id', userId)
+      .eq('week_start', weekStart)
+      .limit(1);
+
+    if (error) {
+      this.logger.warn(`fetch_wellbeing_checkin_failed user=${userId} ${error.message}`);
+      return false;
+    }
+
+    return (data?.length ?? 0) > 0;
+  }
+
+  private async sendWeeklyWellbeingReminder(userId: string, reminderKey: string): Promise<void> {
+    const frontendUrl = (this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173').replace(
+      /\/$/,
+      '',
+    );
+    const actionUrl = `${frontendUrl}/settings#wellbeing-checkin`;
+
+    const { error } = await this.supabase.getClient().from('notifications').insert({
+      user_id: userId,
+      type: WELLBEING_REMINDER_TYPE,
+      title: WELLBEING_REMINDER_TITLE,
+      body: WELLBEING_REMINDER_BODY,
+      action_url: actionUrl,
+      related_entity_type: 'wellbeing_checkin',
+      related_entity_id: reminderKey,
+      sent_via: ['push'],
+    });
+
+    if (error) {
+      this.logger.warn(`insert_wellbeing_notification_failed user=${userId} ${error.message}`);
+      return;
+    }
+
+    await this.pushDispatch
+      .sendToUsers([userId], {
+        title: WELLBEING_REMINDER_TITLE,
+        body: WELLBEING_REMINDER_BODY,
+        url: actionUrl,
+      })
+      .catch((err) => this.logger.warn(`wellbeing_push_failed user=${userId}`, err));
   }
 }

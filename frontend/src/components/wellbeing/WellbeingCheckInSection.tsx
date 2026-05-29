@@ -92,7 +92,11 @@ export default function WellbeingCheckInSection() {
   }
 
   return (
-    <article className="rounded-2xl border bg-white p-5" style={{ borderColor: 'var(--color-border)' }}>
+    <article
+      id="wellbeing-checkin"
+      className="rounded-2xl border bg-white p-5"
+      style={{ borderColor: 'var(--color-border)', scrollMarginTop: '1.5rem' }}
+    >
       <div className="flex items-start gap-3">
         <span
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"

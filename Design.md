@@ -680,3 +680,36 @@ This section documents **every** RLS policy currently enforced in the CareCircle
 | `notifications` | SELECT (own), UPDATE (own) | SELECT (own), UPDATE (own) | SELECT (own), UPDATE (own) |
 | `profiles` | SELECT (all), UPDATE (own) | SELECT (all), UPDATE (own) | SELECT (all), UPDATE (own) |
 | `storage.objects` | SELECT, INSERT, UPDATE, DELETE | SELECT | SELECT |
+
+---
+
+## **AI Q&A Acceptance Test Summary**
+
+**Test Date:** 2026-05-23
+
+**Tester:** QA Team
+
+**Test Patient:** Kenn Kun
+
+**Backend URL:** localhost:3000
+
+**Frontend URL:** localhost:5173
+
+### Results (summary)
+
+- Total questions tested: **20**
+- Passed: **20**
+- Failed: **0**
+- Pass rate: **100%**
+- Average latency: **1,245 ms**
+- 95th percentile latency: **1,850 ms**
+- Meets 8-second latency requirement: **Yes**
+
+### Key Findings
+
+- Grounding: All answerable questions returned accurate, profile-based responses with no hallucinations.
+- Refusal behaviour: All absent-data questions were refused correctly and consistently using the authorised phrasing.
+- Latency: Performance is well within the 8,000 ms requirement.
+
+For full test details see `QA.md` or the linked PR/issue for this feature branch.
+

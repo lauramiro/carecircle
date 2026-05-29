@@ -1,30 +1,62 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabaseClient';
-import type { ChecklistItem } from '../../lib/checklist';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '@lib/supabaseClient';
+import { rowToChecklistItem, type ChecklistItem } from '@lib/checklist';
+import type { ChecklistItemPatch } from '@api/checklist/checklist.types';
+import type { ChecklistItemRow } from '@lib/supabaseTables';
 
 interface UseChecklistSubscriptionResult {
   items: ChecklistItem[];
   isSubscribed: boolean;
   error: string | null;
+  patchItem: (id: string, patch: ChecklistItemPatch) => void;
+}
+
+export type { ChecklistItemPatch } from '@api/checklist/checklist.types';
+
+function itemFromRealtimeRow(row: ChecklistItemRow): ChecklistItem {
+  return rowToChecklistItem(row);
 }
 
 export function useChecklistSubscription(
   checklistId: string,
+  _checklistDate: string,
   initialItems: ChecklistItem[],
+  onItemsChange?: (items: ChecklistItem[]) => void,
 ): UseChecklistSubscriptionResult {
-  const [items, setItems] = useState<ChecklistItem[]>(initialItems);
+  const [items, setItems] = useState(initialItems);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const itemsRef = useRef(initialItems);
+  const onItemsChangeRef = useRef(onItemsChange);
 
-  // Sync when parent loads or refetches items (defer to avoid set-state-in-effect lint)
+  onItemsChangeRef.current = onItemsChange;
+
   useEffect(() => {
-    queueMicrotask(() => {
-      setItems(initialItems);
-    });
+    itemsRef.current = initialItems;
+    setItems(initialItems);
   }, [initialItems]);
+
+  const commitItems = useCallback((updater: (prev: ChecklistItem[]) => ChecklistItem[]) => {
+    const next = updater(itemsRef.current);
+    itemsRef.current = next;
+    setItems(next);
+    onItemsChangeRef.current?.(next);
+  }, []);
+
+  const patchItem = useCallback(
+    (id: string, patch: ChecklistItemPatch) => {
+      commitItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+      );
+    },
+    [commitItems],
+  );
 
   useEffect(() => {
     if (!checklistId) return;
+
+    setIsSubscribed(false);
+    setError(null);
 
     const channel = supabase
       .channel(`checklist-${checklistId}`)
@@ -36,25 +68,35 @@ export function useChecklistSubscription(
           table: 'checklist_items',
           filter: `checklist_id=eq.${checklistId}`,
         },
-        payload => {
+        (payload) => {
           if (payload.eventType === 'UPDATE') {
-            setItems(prev =>
-              prev.map(item =>
-                item.id === payload.new.id
-                  ? { ...item, ...payload.new }
-                  : item,
+            const row = payload.new as ChecklistItemRow;
+            commitItems((prev) =>
+              prev.map((item) =>
+                item.id === row.id ? itemFromRealtimeRow(row) : item,
               ),
             );
+            return;
           }
+
           if (payload.eventType === 'INSERT') {
-            setItems(prev => [...prev, payload.new as ChecklistItem]);
+            const row = payload.new as ChecklistItemRow;
+            const inserted = itemFromRealtimeRow(row);
+            commitItems((prev) => {
+              if (prev.some((item) => item.id === inserted.id)) {
+                return prev;
+              }
+              return [...prev, inserted];
+            });
+            return;
           }
+
           if (payload.eventType === 'DELETE') {
-            setItems(prev => prev.filter(item => item.id !== payload.old.id));
+            commitItems((prev) => prev.filter((item) => item.id !== payload.old.id));
           }
         },
       )
-      .subscribe(status => {
+      .subscribe((status) => {
         if (status === 'SUBSCRIBED') setIsSubscribed(true);
         if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
           setIsSubscribed(false);
@@ -65,7 +107,7 @@ export function useChecklistSubscription(
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [checklistId]);
+  }, [checklistId, commitItems]);
 
-  return { items, isSubscribed, error };
+  return { items, isSubscribed, error, patchItem };
 }

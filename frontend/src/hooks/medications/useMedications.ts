@@ -7,19 +7,31 @@ import {
   activateMedication as activateMedicationService,
   archiveMedication as archiveMedicationService,
   getMedicationsByPatient,
-} from '../../api/medications/medications.mock';
+} from '../../api/medications/medications.service';
 
-export function useMedications(patientId: string) {
+export function useMedications(patientId: string, groupId: string) {
   const [medications, setMedications] = useState<Medication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!patientId) {
+      setMedications([]);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     void (async () => {
-      await Promise.resolve();
+      if (!patientId) {
+        setMedications([]);
+        setLoading(false);
+        setError(null);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
@@ -40,7 +52,7 @@ export function useMedications(patientId: string) {
   async function addMedication(payload: AddMedicationPayload): Promise<void> {
     setIsSubmitting(true);
     try {
-      const created = await addMedicationService(payload);
+      const created = await addMedicationService(groupId, payload);
       setMedications((current) => [...current, created]);
     } finally {
       setIsSubmitting(false);
@@ -50,7 +62,7 @@ export function useMedications(patientId: string) {
   async function editMedication(id: string, changes: EditMedicationPayload): Promise<void> {
     setIsSubmitting(true);
     try {
-      const next = await editMedicationService(id, changes);
+      const next = await editMedicationService(groupId, id, changes);
       setMedications((current) =>
         current.map((m) => (m.id === id ? next : m)),
       );
@@ -62,7 +74,7 @@ export function useMedications(patientId: string) {
   async function pauseMedication(id: string): Promise<void> {
     setIsSubmitting(true);
     try {
-      const updated = await pauseMedicationService(id);
+      const updated = await pauseMedicationService(groupId, id);
       setMedications((current) =>
         current.map((m) => (m.id === updated.id ? updated : m)),
       );
@@ -74,7 +86,7 @@ export function useMedications(patientId: string) {
   async function activateMedication(id: string): Promise<void> {
     setIsSubmitting(true);
     try {
-      const updated = await activateMedicationService(id);
+      const updated = await activateMedicationService(groupId, id);
       setMedications((current) =>
         current.map((m) => (m.id === updated.id ? updated : m)),
       );
@@ -86,7 +98,7 @@ export function useMedications(patientId: string) {
   async function archiveMedication(id: string): Promise<void> {
     setIsSubmitting(true);
     try {
-      const updated = await archiveMedicationService(id);
+      const updated = await archiveMedicationService(groupId, id);
       setMedications((current) =>
         current.map((m) => (m.id === updated.id ? updated : m)),
       );

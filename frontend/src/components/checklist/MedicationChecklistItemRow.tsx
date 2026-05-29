@@ -1,87 +1,40 @@
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { toast } from 'react-toastify';
-import { supabase } from '@lib/supabaseClient';
 import type { ChecklistItem } from '@lib/checklist';
+import type { ChecklistItemPatch } from '@api/checklist/checklist.types';
 import SkipReasonModal from '@components/checklist/SkipReasonModal';
+import MarkAsGivenModal from '@components/checklist/MarkAsGivenModal';
 import MedicationProofViewerModal from '@components/checklist/MedicationProofViewerModal';
 import { CHECKLIST_PROOF_BUCKET, STATUS_STYLES } from '@components/checklist/medicationChecklist.constants';
+import { supabase } from '@lib/supabaseClient';
+import { toast } from 'react-toastify';
 
 interface MedicationChecklistItemRowProps {
   item: ChecklistItem;
+  checklistDate: string;
   disabled: boolean;
   shouldReduceMotion: boolean;
+  onItemPatch: (id: string, patch: ChecklistItemPatch) => void;
 }
 
 export default function MedicationChecklistItemRow({
   item,
+  checklistDate,
   disabled,
   shouldReduceMotion,
+  onItemPatch,
 }: MedicationChecklistItemRowProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [showMarkGivenModal, setShowMarkGivenModal] = useState(false);
   const [showSkipModal, setShowSkipModal] = useState(false);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [viewerPhotoUrl, setViewerPhotoUrl] = useState<string | null>(null);
   const [viewerCaregiverName, setViewerCaregiverName] = useState<string>('Unknown carer');
   const [viewerLoading, setViewerLoading] = useState(false);
-  const cameraInputRef = useRef<HTMLInputElement | null>(null);
-  const galleryInputRef = useRef<HTMLInputElement | null>(null);
 
   const isTerminal = item.status === 'given' || item.status === 'skipped';
   const isEditable = !isTerminal && !disabled;
   const isGiven = item.status === 'given';
   const style = STATUS_STYLES[item.status];
-
-  const handleOpenCamera = () => {
-    if (!isEditable) return;
-    cameraInputRef.current?.click();
-  };
-
-  const handleOpenGallery = () => {
-    if (!isEditable) return;
-    galleryInputRef.current?.click();
-  };
-
-  const handleProofSelected = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-
-    if (!file || !isEditable) return;
-
-    setIsLoading(true);
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const ext = file.name.split('.').pop() || 'jpg';
-      const objectPath = `checklist-proofs/${item.id}/${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from(CHECKLIST_PROOF_BUCKET)
-        .upload(objectPath, file, {
-          upsert: false,
-          contentType: file.type,
-        });
-
-      if (uploadError) throw uploadError;
-
-      const { error } = await supabase
-        .from('checklist_items')
-        .update({
-          status: 'given',
-          given_at: new Date().toISOString(),
-          given_by_user_id: user?.id,
-        })
-        .eq('id', item.id);
-      if (error) throw error;
-
-      toast.success(`${item.medication_name} marked as given.`);
-    } catch {
-      toast.error('Could not upload proof photo. Try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleOpenViewer = async () => {
     if (!isGiven) return;
@@ -94,35 +47,26 @@ export default function MedicationChecklistItemRow({
       const folderPath = `checklist-proofs/${item.id}`;
       const { data: files, error: listError } = await supabase.storage
         .from(CHECKLIST_PROOF_BUCKET)
-        .list(folderPath, {
-          limit: 20,
-          sortBy: { column: 'name', order: 'desc' },
-        });
+        .list(folderPath, { limit: 20, sortBy: { column: 'name', order: 'desc' } });
 
-      if (listError) throw listError;
-
-      const firstFile = files?.[0];
-      if (firstFile?.name) {
+      if (!listError && files?.[0]?.name) {
         const { data } = supabase.storage
           .from(CHECKLIST_PROOF_BUCKET)
-          .getPublicUrl(`${folderPath}/${firstFile.name}`);
-        if (data?.publicUrl) {
-          setViewerPhotoUrl(data.publicUrl);
-        }
+          .getPublicUrl(`${folderPath}/${files[0].name}`);
+        if (data?.publicUrl) setViewerPhotoUrl(data.publicUrl);
       }
 
-      if (item.given_by_user_id) {
+      const carerId = item.given_by_carer_id ?? item.given_by_user_id;
+      if (carerId) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('full_name')
-          .eq('id', item.given_by_user_id)
+          .eq('id', carerId)
           .maybeSingle();
-        if (profile?.full_name) {
-          setViewerCaregiverName(profile.full_name);
-        }
+        if (profile?.full_name) setViewerCaregiverName(profile.full_name);
       }
     } catch {
-      toast.error('Could not load confirmation photo.');
+      toast.error('Could not load confirmation details.');
     } finally {
       setViewerLoading(false);
     }
@@ -130,6 +74,10 @@ export default function MedicationChecklistItemRow({
 
   const localConfirmationTime = item.given_at ? new Date(item.given_at).toLocaleString() : 'Unknown time';
   const doseText = `${item.dosage} ${item.dosage_unit}`;
+  const overdueText =
+    item.overdue_hours != null || item.overdue_minutes != null
+      ? ` (${item.overdue_hours ?? 0}h ${item.overdue_minutes ?? 0}m late)`
+      : '';
 
   return (
     <>
@@ -147,62 +95,39 @@ export default function MedicationChecklistItemRow({
             {item.medication_name}
           </p>
           <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
-            {item.dosage} {item.dosage_unit} · {item.time_window.time_of_day}
+            {item.dosage} {item.dosage_unit} · {item.scheduled_time}
+            {item.given_notes ? ` · ${item.given_notes}` : ''}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={(event) => void handleProofSelected(event)}
-            data-testid={`camera-input-${item.id}`}
-            className="hidden"
-          />
-          <input
-            ref={galleryInputRef}
-            type="file"
-            accept="image/*"
-            onChange={(event) => void handleProofSelected(event)}
-            data-testid={`gallery-input-${item.id}`}
-            className="hidden"
-          />
-          <span className="rounded-full px-3 py-1 text-xs font-bold" style={{ backgroundColor: style.bg, color: style.color }}>
-            {style.label}
+          <span
+            className="rounded-full px-3 py-1 text-xs font-bold"
+            style={{ backgroundColor: style.bg, color: style.color }}
+          >
+            {style.label}{overdueText && item.status === 'given' ? overdueText : ''}
           </span>
 
           {isEditable && (
             <>
-              <div className="flex flex-col gap-1">
-                <motion.button
-                  type="button"
-                  onClick={handleOpenCamera}
-                  disabled={isLoading}
-                  className="h-8 rounded-lg px-3 text-xs font-bold text-white disabled:opacity-60"
-                  style={{ backgroundColor: 'var(--color-primary)' }}
-                  whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-                >
-                  {isLoading ? 'Uploading...' : 'Mark as Given'}
-                </motion.button>
-                <motion.button
-                  type="button"
-                  onClick={handleOpenGallery}
-                  disabled={isLoading}
-                  className="h-8 rounded-lg border px-3 text-xs font-bold disabled:opacity-60"
-                  style={{
-                    borderColor: 'var(--color-border)',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                  whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-                >
-                  Choose from gallery
-                </motion.button>
-              </div>
+              <motion.button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMarkGivenModal(true);
+                }}
+                className="h-8 rounded-lg px-3 text-xs font-bold text-white"
+                style={{ backgroundColor: 'var(--color-primary)' }}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+              >
+                Mark given
+              </motion.button>
               <button
                 type="button"
-                onClick={() => setShowSkipModal(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSkipModal(true);
+                }}
                 className="h-8 rounded-lg border px-3 text-xs font-bold"
                 style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
               >
@@ -213,12 +138,28 @@ export default function MedicationChecklistItemRow({
         </div>
       </motion.div>
 
+      {showMarkGivenModal && (
+        <MarkAsGivenModal
+          item={item}
+          checklistDate={checklistDate}
+          open={showMarkGivenModal}
+          onGiven={(patch) => {
+            onItemPatch(item.id, patch);
+            setShowMarkGivenModal(false);
+          }}
+          onCancel={() => setShowMarkGivenModal(false)}
+        />
+      )}
+
       {showSkipModal && (
         <SkipReasonModal
           itemId={item.id}
           medicationName={item.medication_name}
           open={showSkipModal}
-          onSkipped={() => setShowSkipModal(false)}
+          onSkipped={(patch) => {
+            onItemPatch(item.id, patch);
+            setShowSkipModal(false);
+          }}
           onCancel={() => setShowSkipModal(false)}
         />
       )}

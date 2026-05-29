@@ -94,6 +94,7 @@ describe('CreateGroupPage', () => {
       screen.getByText(/only fields marked with a red asterisk are required/i),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/circle name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/preferred group time zone/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/patient full name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/date of birth/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/chronic conditions/i)).toBeInTheDocument();
@@ -185,10 +186,11 @@ describe('CreateGroupPage', () => {
     expect(careGroupInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Mum Care Team',
-        patient_id: 'patient-123',
         primary_caregiver_id: 'test-user-id',
+        preferred_timezone: expect.any(String),
       }),
     );
+    expect(careGroupInsert.mock.calls[0][0]).not.toHaveProperty('patient_id');
     expect(careGroupInsert.mock.calls[0][0]).not.toHaveProperty('description');
 
     expect(careGiversInsert).toHaveBeenCalledWith(
@@ -197,7 +199,7 @@ describe('CreateGroupPage', () => {
         patient_id: 'patient-123',
         caregiver_id: 'test-user-id',
         relationship: 'parent',
-        role_in_care: 'Primary Carer',
+        role_in_care: 'primary_carer',
         can_view_medical: true,
         can_schedule: true,
         can_communicate: true,
@@ -243,10 +245,11 @@ describe('CreateGroupPage', () => {
       expect.objectContaining({
         name: 'Mum Care Team',
         description: 'Family coordination hub',
-        patient_id: 'patient-123',
         primary_caregiver_id: 'test-user-id',
+        preferred_timezone: expect.any(String),
       }),
     );
+    expect(careGroupInsert.mock.calls[0][0]).not.toHaveProperty('patient_id');
   });
 
   it('shows error toast when creation fails', async () => {

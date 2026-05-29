@@ -17,6 +17,7 @@ const groupHookMock = vi.hoisted(() => ({
       name: 'Dad Care Circle',
       description: 'Daily support and medication coordination for Dad.',
       role: 'Member' as const,
+      canSchedule: true,
       createdAt: '2025-05-12T09:00:00.000Z',
       members: [],
       gpContacts: [],
@@ -96,6 +97,7 @@ describe('GroupJournalPage', () => {
         name: 'Dad Care Circle',
         description: 'Daily support and medication coordination for Dad.',
         role: 'Member',
+        canSchedule: true,
         createdAt: '2025-05-12T09:00:00.000Z',
         members: [],
         gpContacts: [],
@@ -132,6 +134,7 @@ describe('GroupJournalPage', () => {
     renderPage();
 
     expect(screen.getByText('Handover Journal')).toBeInTheDocument();
+    expect(screen.getByText('Handover journal')).toBeInTheDocument();
     expect(screen.getByText('Sarah Doe')).toBeInTheDocument();
     expect(
       screen.getByText('Medication given. GP call still needed tomorrow morning.'),
@@ -294,6 +297,7 @@ describe('GroupJournalPage', () => {
         name: 'Dad Care Circle',
         description: 'Daily support and medication coordination for Dad.',
         role: 'Observer',
+        canSchedule: false,
         createdAt: '2025-05-12T09:00:00.000Z',
         members: [],
         gpContacts: [],

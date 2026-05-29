@@ -6,6 +6,8 @@ export interface GPContact {
   gpName?: string;
   phoneNumber?: string;
   practiceName?: string;
+  specialty?: string;
+  email?: string;
 }
 
 export interface GroupMember {
@@ -22,9 +24,11 @@ export interface Group {
   name: string;
   description: string;
   role: GroupRole;
+  canSchedule: boolean;
   createdAt: string;
   members: GroupMember[];
   gpContacts: GPContact[];
+  /** Care recipient / patient this circle manages — used for medication & log queries */
   patientId: string;
 }
 
@@ -40,6 +44,7 @@ export interface GroupSummary {
 export interface InvitePayload {
   groupId: string;
   email: string;
+  groupName: string;
 }
 
 export interface InviteResult {

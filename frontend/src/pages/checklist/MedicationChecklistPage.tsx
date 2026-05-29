@@ -1,54 +1,85 @@
-import { useEffect, useState } from 'react';
-import { Navigate, Link, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Navigate, Link, useParams, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import MedicationChecklist from '../../components/checklist/MedicationChecklist';
 import DateNavigation from '../../components/checklist/DateNavigation';
-import { fetchDailyChecklistId } from '../../api/checklist/dailyChecklist.service';
+import { loadDailyChecklist } from '../../api/checklist/dailyChecklist.service';
+import type { ChecklistItem } from '../../lib/checklist';
+import { parseLocalDateString, toLocalDateString } from '../../lib/dates';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
+import PageHeader from '../../components/ui/PageHeader';
+import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
 
-function toLocalDateString(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+function mapChecklistUserRole(groupRole: string): 'primary' | 'secondary' | 'observer' {
+  if (groupRole === 'Admin') return 'primary';
+  if (groupRole === 'Observer') return 'observer';
+  return 'secondary';
 }
 
 export default function MedicationChecklistPage() {
   const { groupId } = useParams();
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [searchParams] = useSearchParams();
+  const highlightItemId = searchParams.get('item') ?? undefined;
+  const dateParam = searchParams.get('date');
+  const [selectedDate, setSelectedDate] = useState(() =>
+    dateParam ? parseLocalDateString(dateParam) : new Date(),
+  );
   const { group, loading: groupLoading, error: groupError } = useGroupDetail(groupId);
-  const [checklistId, setChecklistId] = useState<string | null>(null);
+  const [checklistView, setChecklistView] = useState<{ id: string; date: string } | null>(null);
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [resolvingChecklist, setResolvingChecklist] = useState(true);
+  const loadRequestRef = useRef(0);
+
+  const selectedDateStr = useMemo(() => toLocalDateString(selectedDate), [selectedDate]);
+  const patientId = group?.patientId ?? '';
 
   useEffect(() => {
+    if (dateParam) {
+      setSelectedDate(parseLocalDateString(dateParam));
+    }
+  }, [dateParam]);
+
+  useEffect(() => {
+    const requestId = ++loadRequestRef.current;
     let active = true;
 
     void (async () => {
-      await Promise.resolve();
-
-      if (!group?.patientId || !groupId) {
-        if (!active) return;
-        setChecklistId(null);
+      if (!patientId || !groupId) {
+        if (!active || requestId !== loadRequestRef.current) return;
+        setChecklistView(null);
+        setChecklistItems([]);
         setResolvingChecklist(false);
         return;
       }
 
       setResolvingChecklist(true);
-      const dateStr = toLocalDateString(selectedDate);
 
-      const id = await fetchDailyChecklistId({
-        patientId: group.patientId,
-        groupId,
-        checklistDate: dateStr,
-      });
-      if (!active) return;
-      setChecklistId(id);
-      setResolvingChecklist(false);
+      try {
+        const { checklistId, items } = await loadDailyChecklist({
+          patientId,
+          groupId,
+          checklistDate: selectedDateStr,
+        });
+
+        if (!active || requestId !== loadRequestRef.current) return;
+        setChecklistView(checklistId ? { id: checklistId, date: selectedDateStr } : null);
+        setChecklistItems(items);
+      } catch {
+        if (!active || requestId !== loadRequestRef.current) return;
+        toast.error('Failed to load checklist. Please try again.');
+        setChecklistView(null);
+        setChecklistItems([]);
+      } finally {
+        if (active && requestId === loadRequestRef.current) {
+          setResolvingChecklist(false);
+        }
+      }
     })();
 
     return () => {
       active = false;
     };
-  }, [group?.patientId, groupId, selectedDate]);
+  }, [patientId, groupId, selectedDateStr]);
 
   if (!groupId) {
     return <Navigate to="/groups/list" replace />;
@@ -57,23 +88,8 @@ export default function MedicationChecklistPage() {
   if (groupLoading) {
     return (
       <section>
-        <h1
-          style={{
-            color: 'var(--color-text-primary)',
-            fontSize: '26px',
-            fontWeight: 800,
-            letterSpacing: '-0.03em',
-            margin: 0,
-          }}
-        >
-          Daily medication checklist
-        </h1>
-        <div
-          className="mt-6 rounded-xl border bg-white p-6 text-sm"
-          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-        >
-          Loading group…
-        </div>
+        <PageHeader title="Daily medication checklist" subtitle="Track doses and mark medications as given." />
+        <LoadingPanel message="Loading group…" />
       </section>
     );
   }
@@ -81,79 +97,56 @@ export default function MedicationChecklistPage() {
   if (groupError || !group) {
     return (
       <section>
-        <h1
-          style={{
-            color: 'var(--color-text-primary)',
-            fontSize: '26px',
-            fontWeight: 800,
-            letterSpacing: '-0.03em',
-            margin: 0,
-          }}
-        >
-          Daily medication checklist
-        </h1>
-        <div
-          className="mt-6 rounded-xl border p-6 text-sm"
-          style={{
-            borderColor: 'var(--color-status-critical)',
-            backgroundColor: 'var(--color-status-critical-bg)',
-            color: 'var(--color-status-critical)',
-          }}
-        >
-          {groupError ?? 'Group not found.'}
-        </div>
+        <PageHeader title="Daily medication checklist" subtitle="Track doses and mark medications as given." />
+        <ErrorPanel message={groupError ?? 'Group not found.'} />
       </section>
     );
   }
 
-  const checklistUserRole = group.role === 'Admin' ? 'primary' : 'secondary';
+  const checklistUserRole = mapChecklistUserRole(group.role);
+  const isChecklistStale = checklistView !== null && checklistView.date !== selectedDateStr;
 
   return (
     <section>
-      <p className="mb-1 text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--color-text-hint)' }}>
-        Care group
-      </p>
-      <h1
-        style={{
-          color: 'var(--color-text-primary)',
-          fontSize: '26px',
-          fontWeight: 800,
-          letterSpacing: '-0.03em',
-          margin: 0,
-        }}
-      >
-        {group.name}
-      </h1>
-      <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-        Mark each dose as given with a photo, or skip with a reason. Use the arrows or pills to review the last seven
-        days.
-      </p>
+      <PageHeader
+        eyebrow="Care group"
+        title={group.name}
+        subtitle="Mark each dose as given, skip with a reason, or add optional notes and photo proof. Use the arrows to browse other days."
+      />
 
-      <div className="mt-6">
+      <div className="mt-2">
         <DateNavigation selectedDate={selectedDate} onDateChange={setSelectedDate} />
       </div>
 
-      {resolvingChecklist ? (
+      {resolvingChecklist && !checklistView ? (
         <div
           className="rounded-xl border bg-white p-6 text-sm"
           style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
         >
-          Loading checklist for {toLocalDateString(selectedDate)}…
+          Loading checklist for {selectedDateStr}…
         </div>
-      ) : !checklistId ? (
+      ) : !checklistView ? (
         <div
           className="rounded-xl border bg-white p-6 text-sm"
           style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
         >
-          No checklist exists for this day yet. This usually appears after the nightly checklist job runs for active
-          medications, or once medications are saved for this patient. You can still review the{' '}
+          No checklist exists for this day yet. Add medications in the{' '}
           <Link to={`/groups/${groupId}/medications`} className="font-bold" style={{ color: 'var(--color-primary)' }}>
             medication schedule
           </Link>
           .
         </div>
       ) : (
-        <MedicationChecklist checklistId={checklistId} userRole={checklistUserRole} />
+        <MedicationChecklist
+          checklistId={checklistView.id}
+          checklistDate={checklistView.date}
+          userRole={checklistUserRole}
+          isLoading={resolvingChecklist || isChecklistStale}
+          items={checklistItems}
+          onItemsChange={setChecklistItems}
+          loadingLabel={`Loading checklist for ${selectedDateStr}…`}
+          highlightItemId={highlightItemId}
+        />
       )}
     </section>
   );

@@ -1,44 +1,76 @@
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '@lib/supabaseClient';
+import { rowToChecklistItem, type ChecklistItem } from '@lib/checklist';
 
-/** Until `database.types.ts` includes checklist tables, query without the strict `Database` generic. */
-function dailyChecklistsTable() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table missing from generated `Database`
-  return (supabase as any).from('daily_medication_checklists');
-}
+export { getCurrentCarerProfileId, markChecklistItemGiven, skipChecklistItem } from './checklistMutations.service';
 
-/**
- * Resolves the `daily_medication_checklists` row for a calendar day.
- * Tries `patient_id` first, then `family_id` (some deployments key the checklist by care group id).
- */
-export async function fetchDailyChecklistId(params: {
+export async function getOrCreateDailyChecklistId(params: {
   patientId: string;
   groupId: string;
   checklistDate: string;
 }): Promise<string | null> {
   const { patientId, groupId, checklistDate } = params;
 
-  const { data: byPatient, error: patientErr } = await dailyChecklistsTable()
+  if (!patientId.trim()) {
+    throw new Error('patient_id is required to load or create a daily checklist.');
+  }
+
+  const { data: existing, error: lookupErr } = await supabase
+    .from('daily_medication_checklists')
     .select('id')
     .eq('checklist_date', checklistDate)
     .eq('patient_id', patientId)
     .maybeSingle();
 
-  if (patientErr) {
-    console.error('[fetchDailyChecklistId] patient_id lookup failed', patientErr);
-  } else if (byPatient?.id) {
-    return byPatient.id;
+  if (lookupErr) {
+    throw new Error(lookupErr.message ?? 'Failed to look up daily checklist.');
   }
 
-  const { data: byFamily, error: familyErr } = await dailyChecklistsTable()
+  if (existing?.id) return existing.id;
+
+  const { data: created, error: insertErr } = await supabase
+    .from('daily_medication_checklists')
+    .insert({
+      id: crypto.randomUUID(),
+      patient_id: patientId,
+      group_id: groupId,
+      checklist_date: checklistDate,
+      status: 'active',
+    })
     .select('id')
-    .eq('checklist_date', checklistDate)
-    .eq('family_id', groupId)
-    .maybeSingle();
+    .single();
 
-  if (familyErr) {
-    console.error('[fetchDailyChecklistId] family_id lookup failed', familyErr);
-    return null;
+  if (insertErr) {
+    throw new Error(insertErr.message ?? 'Failed to create daily checklist.');
   }
 
-  return byFamily?.id ?? null;
+  return created.id;
+}
+
+export async function fetchChecklistItems(
+  checklistId: string,
+  _checklistDate: string,
+): Promise<ChecklistItem[]> {
+  const { data, error } = await supabase
+    .from('checklist_items')
+    .select('*')
+    .eq('checklist_id', checklistId)
+    .neq('status', 'archived');
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row) => rowToChecklistItem(row));
+}
+
+export async function loadDailyChecklist(params: {
+  patientId: string;
+  groupId: string;
+  checklistDate: string;
+}): Promise<{ checklistId: string | null; items: ChecklistItem[] }> {
+  const checklistId = await getOrCreateDailyChecklistId(params);
+  if (!checklistId) {
+    return { checklistId: null, items: [] };
+  }
+
+  const items = await fetchChecklistItems(checklistId, params.checklistDate);
+  return { checklistId, items };
 }

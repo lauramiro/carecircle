@@ -10,6 +10,8 @@ import { formatLocalDateTime } from '../../utils/formatters';
 import { getErrorMessage } from '../../utils/helper';
 import { useAuth } from '../../contexts/AuthContext';
 import type { JournalEntry } from '../../api/journal/journal.types';
+import PageHeader from '../../components/ui/PageHeader';
+import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
 
 const JOURNAL_EDIT_WINDOW_MS = 60 * 60 * 1000;
 
@@ -129,6 +131,8 @@ export default function GroupJournalPage() {
         >
           Loading journal...
         </div>
+        <PageHeader title="Handover journal" subtitle="Write and review shift handover notes." />
+        <LoadingPanel message="Loading journal..." />
       </section>
     );
   }
@@ -147,6 +151,8 @@ export default function GroupJournalPage() {
         >
           {groupError ?? 'Group not found.'}
         </div>
+        <PageHeader title="Handover journal" subtitle="Write and review shift handover notes." />
+        <ErrorPanel message={groupError ?? 'Group not found.'} />
       </section>
     );
   }
@@ -208,6 +214,11 @@ export default function GroupJournalPage() {
           </p>
         </div>
       </div>
+      <PageHeader
+        eyebrow="Care group"
+        title="Handover journal"
+        subtitle={`Record shift handovers for ${group.name} so the next carer can pick up quickly.`}
+      />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
         <article

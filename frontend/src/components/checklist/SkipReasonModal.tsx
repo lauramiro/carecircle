@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { XIcon } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { supabase } from '../../lib/supabaseClient';
+import type { ChecklistItemPatch } from '@api/checklist/checklist.types';
+import { skipChecklistItem } from '@api/checklist/dailyChecklist.service';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import {
   MODAL_BACKDROP_VARIANTS,
@@ -23,7 +24,7 @@ interface SkipReasonModalProps {
   itemId: string;
   medicationName: string;
   open: boolean;
-  onSkipped: () => void;
+  onSkipped: (patch: ChecklistItemPatch) => void;
   onCancel: () => void;
 }
 
@@ -57,22 +58,11 @@ export default function SkipReasonModal({
 
     setSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('checklist_items')
-        .update({
-          status: 'skipped',
-          skip_reason: reason,
-          skip_notes: notes.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', itemId);
-
-      if (error) throw error;
-
+      const patch = await skipChecklistItem({ itemId, reason, notes });
       toast.success(`${medicationName} marked as skipped.`);
       setReason('');
       setNotes('');
-      onSkipped();
+      onSkipped(patch);
     } catch {
       toast.error('Could not skip medication. Please try again.');
     } finally {

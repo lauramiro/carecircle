@@ -3,11 +3,6 @@ import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useMedicationForm } from './useMedicationForm';
 
-// ---------------------------------------------------------------------------
-// Scenario 1: adding a medication — all required fields must be present and
-// the form must reject incomplete or invalid input before submission.
-// ---------------------------------------------------------------------------
-
 describe('useMedicationForm — Scenario 1: adding a medication (all required fields)', () => {
   it('validateForm returns false and sets errors for every field when the form is empty', () => {
     const { result } = renderHook(() => useMedicationForm());
@@ -21,19 +16,20 @@ describe('useMedicationForm — Scenario 1: adding a medication (all required fi
     expect(result.current.errors.name).toBe('Medication name is required');
     expect(result.current.errors.dose).toBe('Dose is required');
     expect(result.current.errors.unit).toBe('Unit is required');
-    expect(result.current.errors.frequency).toBe('Frequency is required');
-    expect(result.current.errors.timeWindows).toBe('At least one time window must be selected');
+    expect(result.current.errors.scheduleType).toBe('Schedule is required');
   });
 
-  it('validateForm returns true when all required fields are filled with valid values', () => {
+  it('validateForm returns true when all required fields are filled (daily specific times)', () => {
     const { result } = renderHook(() => useMedicationForm());
 
     act(() => {
       result.current.updateField('name', 'Metformin');
       result.current.updateField('dose', '500');
       result.current.updateField('unit', 'mg');
-      result.current.updateField('frequency', 'twice_daily');
-      result.current.toggleTimeWindow('Morning');
+      result.current.updateField('startDate', '2025-01-01');
+      result.current.setScheduleType('daily');
+      result.current.setDailyMode('specific_times');
+      result.current.addSpecificTime('08:00');
     });
 
     let valid: boolean;
@@ -97,15 +93,17 @@ describe('useMedicationForm — Scenario 1: adding a medication (all required fi
     expect(result.current.errors.name).toBe('Medication name is required');
   });
 
-  it('toPayload formats dosage as "dose unit" and uses today as startDate', () => {
+  it('toPayload formats dosage as "dose unit" and includes scheduleType and specificTimes', () => {
     const { result } = renderHook(() => useMedicationForm());
 
     act(() => {
       result.current.updateField('name', 'Amlodipine');
       result.current.updateField('dose', '5');
       result.current.updateField('unit', 'mg');
-      result.current.updateField('frequency', 'once_daily');
-      result.current.toggleTimeWindow('Morning');
+      result.current.updateField('startDate', '2025-01-01');
+      result.current.setScheduleType('daily');
+      result.current.setDailyMode('specific_times');
+      result.current.addSpecificTime('08:00');
     });
 
     const payload = result.current.toPayload('patient-123');
@@ -113,35 +111,38 @@ describe('useMedicationForm — Scenario 1: adding a medication (all required fi
     expect(payload.patientId).toBe('patient-123');
     expect(payload.medicationName).toBe('Amlodipine');
     expect(payload.dosage).toBe('5 mg');
-    expect(payload.frequency).toBe('once_daily');
-    expect(payload.timeOfDay).toEqual(['Morning']);
+    expect(payload.scheduleType).toBe('daily');
+    expect(payload.specificTimes).toEqual(['08:00']);
     expect(payload.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
-  it('toggleTimeWindow keeps time windows in canonical order (Morning → Afternoon → Evening → Night)', () => {
+  it('addSpecificTime keeps duplicates out of validation but allows multiple distinct times', () => {
     const { result } = renderHook(() => useMedicationForm());
 
     act(() => {
-      result.current.toggleTimeWindow('Night');
-      result.current.toggleTimeWindow('Morning');
-      result.current.toggleTimeWindow('Afternoon');
+      result.current.setScheduleType('daily');
+      result.current.setDailyMode('specific_times');
+      result.current.addSpecificTime('08:00');
+      result.current.addSpecificTime('18:00');
     });
 
-    expect(result.current.values.timeWindows).toEqual(['Morning', 'Afternoon', 'Night']);
+    expect(result.current.values.specificTimes).toEqual(['08:00', '18:00']);
   });
 
-  it('toggleTimeWindow removes an already-selected window when toggled again', () => {
+  it('removeSpecificTime removes a time by index', () => {
     const { result } = renderHook(() => useMedicationForm());
 
     act(() => {
-      result.current.toggleTimeWindow('Morning');
-      result.current.toggleTimeWindow('Evening');
+      result.current.setScheduleType('daily');
+      result.current.setDailyMode('specific_times');
+      result.current.addSpecificTime('08:00');
+      result.current.addSpecificTime('18:00');
     });
     act(() => {
-      result.current.toggleTimeWindow('Morning');
+      result.current.removeSpecificTime(0);
     });
 
-    expect(result.current.values.timeWindows).toEqual(['Evening']);
+    expect(result.current.values.specificTimes).toEqual(['18:00']);
   });
 
   it('reset clears all values and errors', () => {
@@ -159,5 +160,101 @@ describe('useMedicationForm — Scenario 1: adding a medication (all required fi
     expect(result.current.values.name).toBe('');
     expect(result.current.values.dose).toBe('');
     expect(result.current.errors).toEqual({});
+  });
+});
+
+describe('useMedicationForm — course duration (perpetual / end date / total doses)', () => {
+  it('requires exactly one course duration mode for scheduled medications', () => {
+    const { result } = renderHook(() => useMedicationForm());
+
+    act(() => {
+      result.current.updateField('name', 'Metformin');
+      result.current.updateField('dose', '500');
+      result.current.updateField('unit', 'mg');
+      result.current.updateField('startDate', '2025-01-01');
+      result.current.setScheduleType('daily');
+      result.current.setDailyMode('specific_times');
+      result.current.addSpecificTime('08:00');
+      result.current.setCourseDurationMode('');
+    });
+
+    let valid: boolean;
+    act(() => {
+      valid = result.current.validateForm();
+    });
+
+    expect(valid!).toBe(false);
+    expect(result.current.errors.perpetual).toContain('Choose exactly one');
+  });
+
+  it('toPayload includes perpetual flag when ongoing is selected', () => {
+    const { result } = renderHook(() => useMedicationForm());
+
+    act(() => {
+      result.current.updateField('name', 'Metformin');
+      result.current.updateField('dose', '500');
+      result.current.updateField('unit', 'mg');
+      result.current.updateField('startDate', '2025-01-01');
+      result.current.setScheduleType('daily');
+      result.current.setDailyMode('specific_times');
+      result.current.addSpecificTime('08:00');
+      result.current.setCourseDurationMode('perpetual');
+    });
+
+    expect(result.current.toPayload('patient-1')).toMatchObject({
+      perpetual: true,
+      scheduleType: 'daily',
+    });
+  });
+
+  it('toPayload includes endDate when fixed end date mode is selected', () => {
+    const { result } = renderHook(() => useMedicationForm());
+
+    act(() => {
+      result.current.updateField('name', 'Metformin');
+      result.current.updateField('dose', '500');
+      result.current.updateField('unit', 'mg');
+      result.current.updateField('startDate', '2025-01-01');
+      result.current.setScheduleType('daily');
+      result.current.setDailyMode('specific_times');
+      result.current.addSpecificTime('08:00');
+      result.current.setCourseDurationMode('end_date');
+      result.current.updateField('endDate', '2025-12-31');
+    });
+
+    expect(result.current.toPayload('patient-1')).toMatchObject({
+      endDate: '2025-12-31',
+    });
+    expect(result.current.toPayload('patient-1').perpetual).toBeUndefined();
+  });
+
+  it('toPayload includes totalDoses when total planned doses mode is selected', () => {
+    const { result } = renderHook(() => useMedicationForm());
+
+    act(() => {
+      result.current.updateField('name', 'Metformin');
+      result.current.updateField('dose', '500');
+      result.current.updateField('unit', 'mg');
+      result.current.updateField('startDate', '2025-01-01');
+      result.current.setScheduleType('daily');
+      result.current.setDailyMode('specific_times');
+      result.current.addSpecificTime('08:00');
+      result.current.setCourseDurationMode('total_doses');
+      result.current.updateField('totalDoses', '30');
+    });
+
+    expect(result.current.toPayload('patient-1')).toMatchObject({
+      totalDoses: 30,
+    });
+  });
+
+  it('clears scheduleType error when a schedule is selected without stale validation', () => {
+    const { result } = renderHook(() => useMedicationForm());
+
+    act(() => {
+      result.current.setScheduleType('daily');
+    });
+
+    expect(result.current.errors.scheduleType).toBeUndefined();
   });
 });

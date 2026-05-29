@@ -1,0 +1,26 @@
+import type { Database } from './database.types';
+
+export type Tables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Row'];
+
+export type TablesInsert<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Insert'];
+
+export type TablesUpdate<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Update'];
+
+export type ChecklistItemRow = Tables<'checklist_items'>;
+export type ChecklistItemInsert = TablesInsert<'checklist_items'>;
+export type ChecklistItemUpdate = TablesUpdate<'checklist_items'>;
+export type DailyChecklistRow = Tables<'daily_medication_checklists'>;
+export type DailyChecklistInsert = TablesInsert<'daily_medication_checklists'>;
+export type MedicationRow = Tables<'medications'>;
+export type PatientRow = Tables<'patients'>;
+export type PatientInsert = TablesInsert<'patients'>;
+export type PatientUpdate = TablesUpdate<'patients'>;
+export type CareGroupRow = Tables<'care_group'>;
+export type CareGroupInsert = TablesInsert<'care_group'>;
+export type CareGroupUpdate = TablesUpdate<'care_group'>;
+export type GPContactRow = Tables<'gp_contacts'>;
+export type GPContactInsert = TablesInsert<'gp_contacts'>;
+export type GPContactUpdate = TablesUpdate<'gp_contacts'>;

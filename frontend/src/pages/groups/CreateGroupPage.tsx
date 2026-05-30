@@ -12,12 +12,10 @@ import {
 } from '@constants/createCareCircle.constants';
 import { getIanaTimezoneOptions } from '@lib/ianaTimezones';
 import { supabase } from '@lib/supabaseClient';
-import type { Database } from '@lib/database.types';
+import type { CareGroupInsert, PatientInsert } from '@lib/supabaseTables';
 import type { CreateCareCircleFormValues } from '@typings/createCareCircle.types';
 import { parseCommaSeparatedList, pickDefinedStrings } from '@utils/createCareCircleForm';
 import { ROLE } from '@typings/role-enum';
-
-type PatientInsert = Database['public']['Tables']['patients']['Insert'];
 
 export type { CreateCareCircleFormValues } from '@typings/createCareCircle.types';
 
@@ -171,7 +169,8 @@ export default function CreateGroupPage() {
           ...(descriptionTrimmed ? { description: descriptionTrimmed } : {}),
           primary_caregiver_id: user.id,
           preferred_timezone: data.preferredTimezone,
-        })
+          role: ROLE.PRIMARY_CAREGIVER,
+        } satisfies CareGroupInsert)
         .select('id')
         .single();
 

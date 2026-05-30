@@ -6,6 +6,8 @@ export interface GPContact {
   gpName?: string;
   phoneNumber?: string;
   practiceName?: string;
+  specialty?: string;
+  email?: string;
 }
 
 export interface GroupMember {

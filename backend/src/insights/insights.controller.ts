@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
+import { Controller, Get, Post, Param, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { supabase } from '../lib/supabase';
+import { WeeklyInsightGenerationService } from './weekly-insight-generation.service';
 
-@Controller('api/insights')
+@Controller('insights')
 export class InsightsController {
   private readonly logger = new Logger(InsightsController.name);
 
@@ -23,6 +24,7 @@ export class InsightsController {
 
     return data.id;
   }
+
 
   @Get('group/:groupId')
   async getInsightsForGroup(@Param('groupId') groupId: string) {

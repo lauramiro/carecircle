@@ -365,6 +365,7 @@ export default function WellbeingCheckinPanel({
       </AnimatePresence>
 
       <article
+        id="wellbeing-checkin"
         className="rounded-xl border bg-white p-5"
         style={{ borderColor: 'var(--color-border)' }}
       >

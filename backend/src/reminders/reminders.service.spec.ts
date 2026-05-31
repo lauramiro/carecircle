@@ -62,6 +62,11 @@ function createTableQuery(tableName: string, state: {
     maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
   };
 
+  if (tableName === 'care_group') {
+    chain.then = (resolve: (value: { data: unknown[]; error: null }) => unknown) =>
+      Promise.resolve({ data: state.careGroups ?? [], error: null }).then(resolve);
+  }
+
   if (tableName === 'care_givers') {
     chain.eq = vi.fn().mockImplementation((column: string, value: unknown) => {
       if (column === 'role_in_care' && value === 'primary_carer') {
@@ -183,5 +188,218 @@ describe('RemindersService wellbeing reminders', () => {
 
     expect(insertedNotifications).toHaveLength(0);
     expect(pushDispatch.sendToUsers).not.toHaveBeenCalled();
+  });
+});
+
+function createEveningNudgeMocks(options: {
+  careGroups: Array<{ id: string; preferred_timezone: string }>;
+  patient?: { id: string; full_name: string; group_id: string } | null;
+  eveningAssignee?: string | null;
+  patientCheckins?: unknown[];
+  notifications?: unknown[];
+  profilePreferences?: Record<string, unknown> | null;
+}) {
+  const insertedNotifications: unknown[] = [];
+
+  const supabase = {
+    isEnabled: vi.fn().mockReturnValue(true),
+    getClient: vi.fn().mockReturnValue({
+      from: vi.fn((tableName: string) => {
+        if (tableName === 'care_group') {
+          return {
+            select: vi.fn().mockResolvedValue({ data: options.careGroups, error: null }),
+          };
+        }
+        if (tableName === 'patients') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({ data: options.patient ?? null, error: null }),
+              }),
+            }),
+          };
+        }
+        if (tableName === 'weekly_shift_assignments') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockReturnValue({
+                    maybeSingle: vi.fn().mockResolvedValue({
+                      data: options.eveningAssignee
+                        ? { assigned_caregiver_id: options.eveningAssignee }
+                        : null,
+                      error: null,
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (tableName === 'patient_wellbeing_checkins') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockResolvedValue({
+                    data: options.patientCheckins ?? [],
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (tableName === 'notifications') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockReturnValue({
+                    limit: vi.fn().mockResolvedValue({
+                      data: (options.notifications ?? []).filter(
+                        (notification) =>
+                          (notification as { related_entity_id?: string }).related_entity_id,
+                      ),
+                      error: null,
+                    }),
+                  }),
+                }),
+              }),
+            }),
+            insert: vi.fn().mockImplementation((payload: unknown) => {
+              insertedNotifications.push(payload);
+              return createQueryResult(null);
+            }),
+          };
+        }
+        if (tableName === 'profiles') {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
+                data: options.profilePreferences
+                  ? [{ id: options.eveningAssignee, preferences: options.profilePreferences }]
+                  : [{ id: options.eveningAssignee, preferences: null }],
+                error: null,
+              }),
+            }),
+          };
+        }
+        if (tableName === 'appointments') {
+          return {
+            select: vi.fn().mockReturnValue({
+              gte: vi.fn().mockReturnValue({
+                lte: vi.fn().mockReturnValue({
+                  not: vi.fn().mockReturnValue({
+                    gt: vi.fn().mockResolvedValue({ data: [], error: null }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (tableName === 'care_givers') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          };
+        }
+        return createTableQuery(tableName, {
+          memberships: [],
+          profiles: [],
+          careGroups: options.careGroups,
+          notifications: options.notifications ?? [],
+          checkIns: [],
+          insertedNotifications,
+        });
+      }),
+    }),
+  };
+
+  return { supabase, insertedNotifications };
+}
+
+describe('RemindersService evening patient wellbeing nudges', () => {
+  const pushDispatch = {
+    sendToUsers: vi.fn().mockResolvedValue(undefined),
+  };
+  const mailer = {
+    isConfigured: vi.fn().mockReturnValue(false),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('sends the evening nudge at 8pm local when no check-in exists', async () => {
+    const { supabase, insertedNotifications } = createEveningNudgeMocks({
+      careGroups: [{ id: 'group-1', preferred_timezone: 'Europe/London' }],
+      patient: { id: 'patient-1', full_name: 'Jane Doe', group_id: 'group-1' },
+      eveningAssignee: 'carer-1',
+      profilePreferences: { notifications: { eveningPatientCheckinNudgeEnabled: true } },
+    });
+
+    const service = new RemindersService(
+      pushDispatch as never,
+      mailer as never,
+      { cronsEnabled: true, config: { FRONTEND_PUBLIC_URL: 'https://app.example.com' } } as never,
+      supabase as never,
+    );
+
+    await service.runReminderCheckAt(new Date('2026-06-01T19:01:00.000Z'));
+
+    expect(insertedNotifications).toHaveLength(1);
+    expect(insertedNotifications[0]).toEqual(
+      expect.objectContaining({
+        user_id: 'carer-1',
+        type: 'patient_wellbeing_checkin_nudge',
+        body: "Jane's daily wellbeing check-in hasn't been completed yet",
+        action_url: 'https://app.example.com/groups/group-1/journal#wellbeing-checkin',
+      }),
+    );
+  });
+
+  it('skips the evening nudge when a patient check-in already exists', async () => {
+    const { supabase, insertedNotifications } = createEveningNudgeMocks({
+      careGroups: [{ id: 'group-1', preferred_timezone: 'Europe/London' }],
+      patient: { id: 'patient-1', full_name: 'Jane Doe', group_id: 'group-1' },
+      eveningAssignee: 'carer-1',
+      patientCheckins: [{ id: 'checkin-1' }],
+    });
+
+    const service = new RemindersService(
+      pushDispatch as never,
+      mailer as never,
+      { cronsEnabled: true, config: { FRONTEND_PUBLIC_URL: 'https://app.example.com' } } as never,
+      supabase as never,
+    );
+
+    await service.runReminderCheckAt(new Date('2026-06-01T19:01:00.000Z'));
+
+    expect(insertedNotifications).toHaveLength(0);
+    expect(pushDispatch.sendToUsers).not.toHaveBeenCalled();
+  });
+
+  it('skips the evening nudge when no evening shift is assigned', async () => {
+    const { supabase, insertedNotifications } = createEveningNudgeMocks({
+      careGroups: [{ id: 'group-1', preferred_timezone: 'Europe/London' }],
+      patient: { id: 'patient-1', full_name: 'Jane Doe', group_id: 'group-1' },
+      eveningAssignee: null,
+    });
+
+    const service = new RemindersService(
+      pushDispatch as never,
+      mailer as never,
+      { cronsEnabled: true, config: { FRONTEND_PUBLIC_URL: 'https://app.example.com' } } as never,
+      supabase as never,
+    );
+
+    await service.runReminderCheckAt(new Date('2026-06-01T19:01:00.000Z'));
+
+    expect(insertedNotifications).toHaveLength(0);
   });
 });

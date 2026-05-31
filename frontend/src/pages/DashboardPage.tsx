@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { AlertTriangle, ArrowRight, FolderOpen, Plus, Shield, Users } from 'lucide-react';
+import { ArrowRight, FolderOpen, Plus, Shield, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader';
 import StatCard from '../components/ui/StatCard';
@@ -12,6 +12,7 @@ import NextAppointmentWidget from '../components/dashboard/NextAppointmentWidget
 import LatestJournalEntryWidget from '../components/dashboard/LatestJournalEntryWidget';
 import AiInsightWidget from '../components/dashboard/AiInsightWidget';
 import MyShiftsTodayWidget from '../components/shifts/MyShiftsTodayWidget';
+import ShiftCoverageAlerts from '../components/shifts/ShiftCoverageAlerts';
 import { useAuth } from '../contexts/AuthContext';
 import { useGroups } from '../hooks/groups/useGroups';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -245,59 +246,11 @@ export default function DashboardPage() {
         )}
       </section>
 
-      <section
-        className="rounded-2xl border bg-white p-5"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
-        <div className="flex items-center gap-3">
-          <span
-            className="flex h-10 w-10 items-center justify-center rounded-lg"
-            style={{ backgroundColor: '#fef3c7', color: '#b45309' }}
-          >
-            <AlertTriangle size={20} strokeWidth={1.9} />
-          </span>
-          <div>
-            <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              Shift coverage alerts
-            </h2>
-            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              Uncovered responsibility windows for the current week.
-            </p>
-          </div>
-        </div>
-
-        {warningsLoading ? (
-          <p className="mt-4 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Loading coverage warnings...
-          </p>
-        ) : warningsError ? (
-          <p className="mt-4 text-sm" style={{ color: 'var(--color-status-critical)' }}>
-            {warningsError}
-          </p>
-        ) : warnings.length === 0 ? (
-          <p className="mt-4 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            All shifts are covered for this week.
-          </p>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {warnings.map((warning) => (
-              <li
-                key={warning.groupId}
-                className="rounded-xl border px-4 py-3"
-                style={{ borderColor: '#fcd34d', backgroundColor: '#fffbeb' }}
-              >
-                <p className="font-semibold" style={{ color: '#92400e' }}>
-                  {warning.groupName}
-                </p>
-                <p className="text-sm" style={{ color: '#b45309' }}>
-                  {warning.unassignedCount} uncovered shift
-                  {warning.unassignedCount === 1 ? '' : 's'} this week
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <ShiftCoverageAlerts
+        warnings={warnings}
+        loading={warningsLoading}
+        error={warningsError}
+      />
     </section>
   );
 }

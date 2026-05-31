@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Group } from '../../api/groups/groups.types';
+import { ROLE } from '@typings/role-enum';
 
 const toastMock = vi.hoisted(() => ({
   success: vi.fn(),
@@ -176,7 +177,7 @@ function buildAdminGroupWithMembers(memberCount: number): Group {
     id: 'group-care-001',
     name: 'CareCircle Family Group',
     description: 'A shared care group.',
-    role: 'Admin',
+    role: 'primary_carer' as ROLE,
     canSchedule: true,
     createdAt: '2025-05-12T09:00:00.000Z',
     patientId: 'patient-care-001',
@@ -184,7 +185,7 @@ function buildAdminGroupWithMembers(memberCount: number): Group {
       id: `member-${index + 1}`,
       name: `Member ${index + 1}`,
       email: `member${index + 1}@example.com`,
-      role: index === 0 ? 'Admin' : 'Member',
+      role: index === 0 ? 'primary_carer' as ROLE : 'secondary_carer' as ROLE,
       joinedAt: '2025-05-12T09:00:00.000Z',
       status: 'Active',
     })),

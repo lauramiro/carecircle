@@ -3,7 +3,12 @@ import { motion } from 'framer-motion';
 import { Navigate, useParams } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import { toast } from 'react-toastify';
-import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
+import type { GroupMember } from '../../api/groups/groups.types';
+import { updateMemberRole } from '../../api/groups/groups.service';
+import { useAuth } from '../../contexts/AuthContext';
+import { canManageMembers, validateMemberRoleChange } from '../../lib/carePermissions';
+import { getCareRoleLabel } from '../../lib/careRole';
+import { ROLE } from '@typings/role-enum';
 import GroupMembersTable from '../../components/groups/GroupMembersTable';
 import InviteMemberModal from '../../components/groups/InviteMemberModal';
 import MemberActionConfirmationModal from '../../components/groups/MemberActionConfirmationModal';
@@ -19,7 +24,7 @@ import {
 
 type PendingMemberAction =
   | { type: 'remove'; member: GroupMember }
-  | { type: 'role'; member: GroupMember; role: GroupRole }
+  | { type: 'role'; member: GroupMember; role: ROLE }
   | { type: 'status'; member: GroupMember; status: GroupMember['status'] };
 
 function getConfirmationCopy(action: PendingMemberAction | null) {
@@ -38,7 +43,7 @@ function getConfirmationCopy(action: PendingMemberAction | null) {
   if (action.type === 'role') {
     return {
       title: 'Change member role?',
-      message: `${action.member.name} will be assigned the ${action.role} role in this group.`,
+      message: `${action.member.name} will be assigned the ${getCareRoleLabel(action.role)} role in this group.`,
       confirmLabel: 'Change Role',
     };
   }
@@ -55,7 +60,8 @@ function getConfirmationCopy(action: PendingMemberAction | null) {
 
 export default function GroupMembersPage() {
   const { groupId } = useParams();
-  const { group, loading, error } = useGroupDetail(groupId);
+  const { session } = useAuth();
+  const { group, loading, error, refetch } = useGroupDetail(groupId);
   const shouldReduceMotion = useReducedMotion();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [managedMembers, setManagedMembers] = useState<{
@@ -63,6 +69,7 @@ export default function GroupMembersPage() {
     members: GroupMember[];
   } | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingMemberAction | null>(null);
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
 
   if (!groupId) return <Navigate to="/groups/list" replace />;
 
@@ -86,37 +93,97 @@ export default function GroupMembersPage() {
 
   const members =
     managedMembers?.groupId === group.id ? managedMembers.members : group.members;
-  const canInvite = group.role === 'Admin' && members.length < 8;
-  const canManageMembers = group.role === 'Admin';
-  const currentGroupId = group.id;
+  const canInvite = canManageMembers(group.role) && members.length < 8;
+  const canManageMembersFlag = canManageMembers(group.role);
+  const currentUserId = session?.user?.id;
+  const activeGroup = group;
 
-  function confirmPendingAction() {
-    if (!pendingAction) return;
+  function handleRoleChange(member: GroupMember, role: ROLE) {
+    if (!currentUserId) {
+      toast.error('You must be signed in to change member roles.');
+      return;
+    }
+
+    const validation = validateMemberRoleChange(
+      activeGroup.role,
+      currentUserId,
+      member,
+      role,
+      members,
+    );
+
+    if (!validation.allowed) {
+      toast.error(validation.reason ?? 'Unable to change member role.');
+      return;
+    }
+
+    setPendingAction({ type: 'role', member, role });
+  }
+
+  async function confirmPendingAction() {
+    if (!pendingAction || isSubmittingAction || !group) return;
+
+    const activeGroup = group;
+    const activeMembers = members;
+
+    if (pendingAction.type === 'role') {
+      if (!currentUserId) {
+        toast.error('You must be signed in to change member roles.');
+        return;
+      }
+
+      const validation = validateMemberRoleChange(
+        activeGroup.role,
+        currentUserId,
+        pendingAction.member,
+        pendingAction.role,
+        activeMembers,
+      );
+
+      if (!validation.allowed) {
+        toast.error(validation.reason ?? 'Unable to change member role.');
+        setPendingAction(null);
+        return;
+      }
+
+      setIsSubmittingAction(true);
+
+      try {
+        await updateMemberRole(activeGroup.id, pendingAction.member.id, pendingAction.role);
+        setManagedMembers({
+          groupId: activeGroup.id,
+          members: activeMembers.map((member) =>
+            member.id === pendingAction.member.id
+              ? { ...member, role: pendingAction.role }
+              : member,
+          ),
+        });
+        await refetch();
+        toast.success(
+          `${pendingAction.member.name} is now ${getCareRoleLabel(pendingAction.role)}`,
+        );
+        setPendingAction(null);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Unable to update member role.');
+      } finally {
+        setIsSubmittingAction(false);
+      }
+
+      return;
+    }
 
     if (pendingAction.type === 'remove') {
       setManagedMembers({
-        groupId: currentGroupId,
-        members: members.filter((member) => member.id !== pendingAction.member.id),
+        groupId: activeGroup.id,
+        members: activeMembers.filter((member) => member.id !== pendingAction.member.id),
       });
       toast.success(`${pendingAction.member.name} removed from group`);
     }
 
-    if (pendingAction.type === 'role') {
-      setManagedMembers({
-        groupId: currentGroupId,
-        members: members.map((member) =>
-          member.id === pendingAction.member.id
-            ? { ...member, role: pendingAction.role }
-            : member,
-        ),
-      });
-      toast.success(`${pendingAction.member.name} is now ${pendingAction.role}`);
-    }
-
     if (pendingAction.type === 'status') {
       setManagedMembers({
-        groupId: currentGroupId,
-        members: members.map((member) =>
+        groupId: activeGroup.id,
+        members: activeMembers.map((member) =>
           member.id === pendingAction.member.id
             ? { ...member, status: pendingAction.status }
             : member,
@@ -161,9 +228,10 @@ export default function GroupMembersPage() {
       <GroupMembersTable
         embedded
         members={members}
-        canManageMembers={canManageMembers}
+        currentUserId={currentUserId}
+        canManageMembers={canManageMembersFlag}
         onRemoveMember={(member) => setPendingAction({ type: 'remove', member })}
-        onRoleChange={(member, role) => setPendingAction({ type: 'role', member, role })}
+        onRoleChange={handleRoleChange}
         onStatusChange={(member, status) => setPendingAction({ type: 'status', member, status })}
       />
 
@@ -172,8 +240,13 @@ export default function GroupMembersPage() {
         title={confirmationCopy.title}
         message={confirmationCopy.message}
         confirmLabel={confirmationCopy.confirmLabel}
-        onCancel={() => setPendingAction(null)}
-        onConfirm={confirmPendingAction}
+        isSubmitting={isSubmittingAction}
+        onCancel={() => {
+          if (!isSubmittingAction) setPendingAction(null);
+        }}
+        onConfirm={() => {
+          void confirmPendingAction();
+        }}
       />
 
       <InviteMemberModal

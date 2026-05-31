@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Group } from '../../api/groups/groups.types';
+import { ROLE } from '@typings/role-enum';
 import type { JournalEntry } from '../../api/journal/journal.types';
 import GroupJournalPage from './GroupJournalPage';
 
@@ -16,7 +17,7 @@ const groupHookMock = vi.hoisted(() => ({
       id: 'group-care-001',
       name: 'Dad Care Circle',
       description: 'Daily support and medication coordination for Dad.',
-      role: 'Member' as const,
+      role: 'secondary_carer' as ROLE,
       canSchedule: true,
       createdAt: '2025-05-12T09:00:00.000Z',
       members: [],
@@ -96,7 +97,7 @@ describe('GroupJournalPage', () => {
         id: 'group-care-001',
         name: 'Dad Care Circle',
         description: 'Daily support and medication coordination for Dad.',
-        role: 'Member',
+        role: 'secondary_carer' as ROLE,
         canSchedule: true,
         createdAt: '2025-05-12T09:00:00.000Z',
         members: [],
@@ -296,7 +297,7 @@ describe('GroupJournalPage', () => {
         id: 'group-care-001',
         name: 'Dad Care Circle',
         description: 'Daily support and medication coordination for Dad.',
-        role: 'Observer',
+        role: 'observer' as ROLE,
         canSchedule: false,
         createdAt: '2025-05-12T09:00:00.000Z',
         members: [],

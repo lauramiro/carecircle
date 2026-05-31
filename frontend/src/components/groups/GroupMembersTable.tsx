@@ -1,13 +1,15 @@
-import type { GroupMember, GroupRole } from '../../api/groups/groups.types';
+import type { GroupMember } from '../../api/groups/groups.types';
+import { getAssignableRolesForMember } from '../../lib/carePermissions';
+import { getCareRoleLabel } from '../../lib/careRole';
+import { ROLE } from '@typings/role-enum';
 import { formatDate } from '../../utils/formatters';
-
-const MANAGEABLE_ROLES: GroupRole[] = ['Admin', 'Member', 'Observer'];
 
 interface GroupMembersTableProps {
   members: GroupMember[];
+  currentUserId?: string;
   canManageMembers: boolean;
   onRemoveMember: (member: GroupMember) => void;
-  onRoleChange: (member: GroupMember, role: GroupRole) => void;
+  onRoleChange: (member: GroupMember, role: ROLE) => void;
   onStatusChange: (member: GroupMember, status: GroupMember['status']) => void;
   embedded?: boolean;
 }
@@ -32,6 +34,7 @@ function StatusPill({ status }: { status: GroupMember['status'] }) {
 
 export default function GroupMembersTable({
   members,
+  currentUserId,
   canManageMembers,
   onRemoveMember,
   onRoleChange,
@@ -89,7 +92,11 @@ export default function GroupMembersTable({
             </tr>
           </thead>
           <tbody>
-            {members.map((member) => (
+            {members.map((member) => {
+              const assignableRoles = getAssignableRolesForMember(member, currentUserId, members);
+              const roleSelectDisabled = assignableRoles.length === 1;
+
+              return (
               <tr
                 key={member.id}
                 className="border-b last:border-b-0"
@@ -112,8 +119,9 @@ export default function GroupMembersTable({
                     <select
                       aria-label={`Change role for ${member.name}`}
                       value={member.role}
+                      disabled={roleSelectDisabled}
                       onChange={(event) =>
-                        onRoleChange(member, event.target.value as GroupRole)
+                        onRoleChange(member, event.target.value as ROLE)
                       }
                       className="h-8 rounded-lg border bg-white px-2 text-xs font-bold"
                       style={{
@@ -121,13 +129,15 @@ export default function GroupMembersTable({
                         color: 'var(--color-primary)',
                       }}
                     >
-                      {MANAGEABLE_ROLES.map((role) => (
-                        <option key={role} value={role}>{role}</option>
+                      {assignableRoles.map((role) => (
+                        <option key={role} value={role}>
+                          {getCareRoleLabel(role)}
+                        </option>
                       ))}
                     </select>
                   ) : (
                     <span className="text-xs font-bold" style={{ color: 'var(--color-primary)' }}>
-                      {member.role}
+                      {getCareRoleLabel(member.role)}
                     </span>
                   )}
                 </td>
@@ -168,7 +178,8 @@ export default function GroupMembersTable({
                   </td>
                 )}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

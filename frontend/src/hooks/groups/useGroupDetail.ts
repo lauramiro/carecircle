@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getUserGroupDetails } from '../../api/groups/groups.service';
 import type { Group } from '../../api/groups/groups.types';
 
@@ -6,12 +6,18 @@ interface UseGroupDetailResult {
   group: Group | null;
   loading: boolean;
   error: string | null;
+  refetch: () => Promise<void>;
 }
 
 export function useGroupDetail(groupId: string | undefined): UseGroupDetailResult {
   const [group, setGroup] = useState<Group | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  const refetch = useCallback(async () => {
+    setReloadToken((token) => token + 1);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -46,7 +52,7 @@ export function useGroupDetail(groupId: string | undefined): UseGroupDetailResul
     return () => {
       active = false;
     };
-  }, [groupId]);
+  }, [groupId, reloadToken]);
 
-  return { group, loading, error };
+  return { group, loading, error, refetch };
 }

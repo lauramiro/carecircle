@@ -12,6 +12,7 @@ interface MemberActionConfirmationModalProps {
   title: string;
   message: string;
   confirmLabel: string;
+  isSubmitting?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -21,6 +22,7 @@ export default function MemberActionConfirmationModal({
   title,
   message,
   confirmLabel,
+  isSubmitting = false,
   onCancel,
   onConfirm,
 }: MemberActionConfirmationModalProps) {
@@ -64,6 +66,7 @@ export default function MemberActionConfirmationModal({
               <motion.button
                 type="button"
                 onClick={onCancel}
+                disabled={isSubmitting}
                 className="h-9 rounded-lg border px-4 text-xs font-bold"
                 style={{
                   borderColor: 'var(--color-border)',
@@ -76,6 +79,7 @@ export default function MemberActionConfirmationModal({
               <motion.button
                 type="button"
                 onClick={onConfirm}
+                disabled={isSubmitting}
                 className="h-9 rounded-lg px-4 text-xs font-bold text-white"
                 style={{ backgroundColor: 'var(--color-primary)' }}
                 whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}

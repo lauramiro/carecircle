@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import PageHeader from '../components/ui/PageHeader';
 import ShiftHandoverList from '../components/shifts/ShiftHandoverList';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,14 +11,20 @@ type ShiftTab = 'today' | 'upcoming' | 'history';
 export default function MyShiftsPage() {
   const { session } = useAuth();
   const { groups, loading: groupsLoading } = useGroups();
-  const primaryGroup = groups[0] ?? null;
+  const shiftGroups = useMemo(
+    () => groups.map((group) => ({ id: group.id, name: group.name })),
+    [groups],
+  );
   const caregiverId = session?.user?.id;
   const [activeTab, setActiveTab] = useState<ShiftTab>('today');
 
-  const { todayShifts, upcomingShifts, historyShifts, loading, error } = useMyShifts(
-    caregiverId,
-    primaryGroup?.id,
-  );
+  const {
+    todayByGroup,
+    upcomingByGroup,
+    historyByGroup,
+    loading,
+    error,
+  } = useMyShifts(caregiverId, shiftGroups);
 
   if (groupsLoading) {
     return (
@@ -29,10 +35,15 @@ export default function MyShiftsPage() {
     );
   }
 
-  const tabs: Array<{ id: ShiftTab; label: string; shifts: typeof todayShifts; empty: string }> = [
-    { id: 'today', label: 'Today', shifts: todayShifts, empty: 'No shifts assigned for today.' },
-    { id: 'upcoming', label: 'Upcoming', shifts: upcomingShifts, empty: 'No upcoming shifts scheduled.' },
-    { id: 'history', label: 'History', shifts: historyShifts, empty: 'No past shifts recorded yet.' },
+  const tabs: Array<{
+    id: ShiftTab;
+    label: string;
+    sections: typeof todayByGroup;
+    empty: string;
+  }> = [
+    { id: 'today', label: 'Today', sections: todayByGroup, empty: 'No shifts assigned for today.' },
+    { id: 'upcoming', label: 'Upcoming', sections: upcomingByGroup, empty: 'No upcoming shifts scheduled.' },
+    { id: 'history', label: 'History', sections: historyByGroup, empty: 'No past shifts recorded yet.' },
   ];
 
   const current = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
@@ -42,20 +53,20 @@ export default function MyShiftsPage() {
       <PageHeader
         title="My shifts"
         subtitle={
-          primaryGroup
-            ? `Shift roster and handovers for ${primaryGroup.name}.`
+          shiftGroups.length > 0
+            ? `Shift roster and handovers across ${shiftGroups.length} care ${shiftGroups.length === 1 ? 'circle' : 'circles'}.`
             : 'Join a care group to see your shift roster.'
         }
         showDate
       />
 
-      {!primaryGroup && (
+      {shiftGroups.length === 0 && (
         <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           You are not in any care groups yet.
         </p>
       )}
 
-      {primaryGroup && (
+      {shiftGroups.length > 0 && (
         <>
           <div className="flex flex-wrap gap-2">
             {tabs.map((tab) => (
@@ -84,7 +95,7 @@ export default function MyShiftsPage() {
           )}
 
           {!loading && !error && (
-            <ShiftHandoverList shifts={current.shifts} emptyMessage={current.empty} />
+            <ShiftHandoverList sections={current.sections} emptyMessage={current.empty} />
           )}
         </>
       )}

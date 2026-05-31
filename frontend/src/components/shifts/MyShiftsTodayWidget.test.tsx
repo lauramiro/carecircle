@@ -5,21 +5,47 @@ import MyShiftsTodayWidget from './MyShiftsTodayWidget';
 
 vi.mock('../../hooks/shifts/useMyShifts', () => ({
   useMyShifts: () => ({
-    todayShifts: [
+    todayByGroup: [
       {
-        id: '1',
         groupId: 'group-1',
-        shiftDate: '2026-05-20',
-        slot: 'morning',
-        assignedCaregiverId: 'user-1',
-        assigneeName: 'Sarah',
-        updatedAt: null,
-        handoverFromName: 'John',
-        handoverToName: 'Emma',
+        groupName: 'Dad Care Circle',
+        shifts: [
+          {
+            id: '1',
+            groupId: 'group-1',
+            shiftDate: '2026-05-20',
+            slot: 'morning',
+            assignedCaregiverId: 'user-1',
+            assigneeName: 'Sarah',
+            updatedAt: null,
+            handoverFromName: 'John',
+            handoverToName: 'Emma',
+          },
+        ],
+      },
+      {
+        groupId: 'group-2',
+        groupName: 'Mum Care Circle',
+        shifts: [
+          {
+            id: '2',
+            groupId: 'group-2',
+            shiftDate: '2026-05-20',
+            slot: 'evening',
+            assignedCaregiverId: 'user-1',
+            assigneeName: 'Sarah',
+            updatedAt: null,
+            handoverFromName: null,
+            handoverToName: 'Alex',
+          },
+        ],
       },
     ],
+    todayShifts: [],
     upcomingShifts: [],
     historyShifts: [],
+    upcomingByGroup: [],
+    historyByGroup: [],
     loading: false,
     error: null,
   }),
@@ -30,15 +56,22 @@ vi.mock('../../contexts/AuthContext', () => ({
 }));
 
 describe('MyShiftsTodayWidget', () => {
-  it('shows today shift handover details', () => {
+  it('shows today shifts grouped by care circle', () => {
     render(
       <MemoryRouter>
-        <MyShiftsTodayWidget groupId="group-1" groupName="Dad Care Circle" />
+        <MyShiftsTodayWidget
+          groups={[
+            { id: 'group-1', name: 'Dad Care Circle' },
+            { id: 'group-2', name: 'Mum Care Circle' },
+          ]}
+        />
       </MemoryRouter>,
     );
 
     expect(screen.getByText('My Shifts Today')).toBeInTheDocument();
+    expect(screen.getByText('Dad Care Circle')).toBeInTheDocument();
+    expect(screen.getByText('Mum Care Circle')).toBeInTheDocument();
     expect(screen.getByText(/Handover from: John/)).toBeInTheDocument();
-    expect(screen.getByText(/Handover to: Emma/)).toBeInTheDocument();
+    expect(screen.getByText(/Handover to: Alex/)).toBeInTheDocument();
   });
 });

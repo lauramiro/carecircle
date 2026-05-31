@@ -150,7 +150,7 @@ describe('GroupShiftAssignmentsPage', () => {
     expect(screen.getByText('Week view')).toBeInTheDocument();
     expect(screen.getByText('Day view')).toBeInTheDocument();
     expect(screen.getByText(/Morning \(08:00-12:00\)/)).toBeInTheDocument();
-    expect(screen.getByText(/uncovered shift/i)).toBeInTheDocument();
+    expect(screen.getByText(/sessions need coverage/i)).toBeInTheDocument();
   });
 
   it('switches to the day view tab', async () => {

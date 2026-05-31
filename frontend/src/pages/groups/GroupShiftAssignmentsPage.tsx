@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Navigate, useParams } from 'react-router-dom';
 import GroupScheduleOverview from '../../components/shifts/GroupScheduleOverview';
+import {
+  shiftAssignmentDayCardStyles,
+  shiftAssignmentHintStyles,
+  shiftAssignmentSelectStyles,
+  shiftCoverageBadgeLabel,
+  shiftCoverageBadgeStyles,
+} from '../../components/shifts/shiftAssignmentStyles';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { useWeeklyShiftAssignments } from '../../hooks/shifts/useWeeklyShiftAssignments';
 import { SHIFT_SLOT_LABELS, SHIFT_SLOTS } from '../../api/shifts/shift.types';
@@ -147,16 +154,10 @@ export default function GroupShiftAssignmentsPage() {
 
         <div
           className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold"
-          style={{
-            borderColor: uncoveredCount > 0 ? '#f59e0b' : 'var(--color-border)',
-            color: uncoveredCount > 0 ? '#92400e' : 'var(--color-text-secondary)',
-            backgroundColor: uncoveredCount > 0 ? '#fef3c7' : 'white',
-          }}
+          style={shiftCoverageBadgeStyles(uncoveredCount > 0)}
         >
           <AlertTriangle size={16} />
-          {uncoveredCount > 0
-            ? `${uncoveredCount} uncovered shift${uncoveredCount === 1 ? '' : 's'} this week`
-            : 'All standard sessions covered this week'}
+          {shiftCoverageBadgeLabel(uncoveredCount)}
         </div>
       </div>
 
@@ -271,17 +272,18 @@ export default function GroupShiftAssignmentsPage() {
                           <td
                             key={`${shiftDate}-${slot}`}
                             className="border-b px-4 py-4 align-top"
-                            style={{ borderColor: 'var(--color-border)' }}
+                            style={{
+                              borderColor: 'var(--color-border)',
+                              backgroundColor: isUnassigned
+                                ? 'var(--color-bg-muted)'
+                                : 'var(--color-card)',
+                            }}
                           >
                             <div className="space-y-2">
                               <select
                                 aria-label={`${SHIFT_SLOT_LABELS[slot]} shift on ${formatShiftDate(shiftDate)}`}
                                 className="w-full rounded-lg border px-3 py-2 text-sm"
-                                style={{
-                                  borderColor: isUnassigned ? '#f59e0b' : 'var(--color-border)',
-                                  color: 'var(--color-text-primary)',
-                                  backgroundColor: isUnassigned ? '#fffbeb' : 'white',
-                                }}
+                                style={shiftAssignmentSelectStyles(isUnassigned)}
                                 value={assignment?.assignedCaregiverId ?? ''}
                                 disabled={!canAssign || isSaving}
                                 onChange={(event) => {
@@ -302,7 +304,7 @@ export default function GroupShiftAssignmentsPage() {
                               </select>
                               <p
                                 className="text-xs font-medium"
-                                style={{ color: isUnassigned ? '#b45309' : 'var(--color-text-secondary)' }}
+                                style={shiftAssignmentHintStyles(isUnassigned)}
                               >
                                 {isSaving
                                   ? 'Saving...'
@@ -343,10 +345,7 @@ export default function GroupShiftAssignmentsPage() {
                     <article
                       key={slot}
                       className="rounded-2xl border bg-white p-4"
-                      style={{
-                        borderColor: isUnassigned ? '#fcd34d' : 'var(--color-border)',
-                        backgroundColor: isUnassigned ? '#fffbeb' : 'white',
-                      }}
+                      style={shiftAssignmentDayCardStyles(isUnassigned)}
                     >
                       <h3 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
                         {formatShiftSlotLabel(slot)}
@@ -354,7 +353,7 @@ export default function GroupShiftAssignmentsPage() {
                       <select
                         aria-label={`${SHIFT_SLOT_LABELS[slot]} on ${selectedDay}`}
                         className="mt-3 w-full rounded-lg border px-3 py-2 text-sm"
-                        style={{ borderColor: 'var(--color-border)' }}
+                        style={shiftAssignmentSelectStyles(isUnassigned)}
                         value={assignment?.assignedCaregiverId ?? ''}
                         disabled={!canAssign || isSaving}
                         onChange={(event) => {

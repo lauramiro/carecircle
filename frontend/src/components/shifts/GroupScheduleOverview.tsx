@@ -42,8 +42,12 @@ export default function GroupScheduleOverview({
           <thead>
             <tr>
               <th
-                className="sticky left-0 border-b bg-white px-3 py-2 text-left font-bold"
-                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                className="sticky left-0 border-b px-3 py-2 text-left font-bold"
+                style={{
+                  borderColor: 'var(--color-border)',
+                  color: 'var(--color-text-secondary)',
+                  backgroundColor: 'var(--color-card)',
+                }}
               >
                 Member
               </th>
@@ -52,7 +56,11 @@ export default function GroupScheduleOverview({
                   <th
                     key={`${shiftDate}-${slot}`}
                     className="border-b px-2 py-2 text-left font-semibold"
-                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                    style={{
+                      borderColor: 'var(--color-border)',
+                      color: 'var(--color-text-secondary)',
+                      backgroundColor: 'var(--color-bg-muted)',
+                    }}
                   >
                     <span className="block">{formatDayHeader(shiftDate)}</span>
                     <span className="block font-normal">{slot.slice(0, 3)}</span>
@@ -65,23 +73,36 @@ export default function GroupScheduleOverview({
             {matrix.map((row) => (
               <tr key={row.memberId}>
                 <th
-                  className="sticky left-0 border-b bg-white px-3 py-2 text-left text-sm font-semibold"
-                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                  className="sticky left-0 border-b px-3 py-2 text-left text-sm font-semibold"
+                  style={{
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                    backgroundColor: 'var(--color-card)',
+                  }}
                 >
                   {row.memberName}
                 </th>
                 {row.cells.map((cell) => {
                   const isAssigned = cell.assignedCaregiverId === row.memberId;
+
                   return (
                     <td
                       key={`${row.memberId}-${cell.shiftDate}-${cell.slot}`}
                       className="border-b px-2 py-2 text-center"
                       style={{
                         borderColor: 'var(--color-border)',
-                        backgroundColor: isAssigned ? 'var(--color-primary-light)' : 'transparent',
-                        color: isAssigned ? 'var(--color-primary)' : 'var(--color-text-hint)',
+                        backgroundColor: isAssigned
+                          ? 'var(--color-primary-light)'
+                          : 'var(--color-bg-muted)',
+                        color: isAssigned
+                          ? 'var(--color-primary)'
+                          : 'var(--color-text-hint)',
                       }}
-                      title={formatShiftSlotLabel(cell.slot)}
+                      title={
+                        isAssigned
+                          ? `${row.memberName} — ${formatShiftSlotLabel(cell.slot)}`
+                          : formatShiftSlotLabel(cell.slot)
+                      }
                     >
                       {isAssigned ? '●' : '·'}
                     </td>

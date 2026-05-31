@@ -133,6 +133,7 @@ describe('GroupJournalPage', () => {
   it('renders existing handover entries and the write form for carers', () => {
     renderPage();
 
+    expect(screen.getByText('Handover Journal')).toBeInTheDocument();
     expect(screen.getByText('Handover journal')).toBeInTheDocument();
     expect(screen.getByText('Sarah Doe')).toBeInTheDocument();
     expect(

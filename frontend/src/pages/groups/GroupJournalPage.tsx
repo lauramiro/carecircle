@@ -12,6 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import type { JournalEntry } from '../../api/journal/journal.types';
 import PageHeader from '../../components/ui/PageHeader';
 import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
+import WellbeingCheckinPanel from '../../components/checkins/WellbeingCheckinPanel';
 
 const JOURNAL_EDIT_WINDOW_MS = 60 * 60 * 1000;
 
@@ -182,74 +183,87 @@ export default function GroupJournalPage() {
       />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-        <article
-          className="rounded-xl border bg-white p-5"
-          style={{ borderColor: 'var(--color-border)' }}
-        >
-          <div className="flex items-center gap-3">
-            <BookText size={20} strokeWidth={1.9} color="var(--color-primary)" />
-            <div>
-              <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                New handover entry
-              </p>
-              <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                Timestamped automatically when saved.
-              </p>
-            </div>
-          </div>
-
-          {isObserver ? (
-            <div
-              className="mt-4 rounded-lg border p-4 text-sm"
-              style={{
-                borderColor: 'var(--color-border)',
-                backgroundColor: 'var(--color-primary-light)',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Observers can review handover notes but cannot add new entries.
-            </div>
-          ) : (
-            <form className="mt-4" onSubmit={handleSubmit}>
-              <label
-                htmlFor="handover-content"
-                className="text-xs font-bold"
-                style={{ color: 'var(--color-text-secondary)' }}
-              >
-                Shift handover note
-              </label>
-              <textarea
-                id="handover-content"
-                value={content}
-                onChange={(event) => {
-                  setContent(event.target.value);
-                  if (formError) setFormError(null);
-                }}
-                rows={7}
-                className="mt-2 w-full rounded-lg border p-3 text-sm outline-none"
-                style={{
-                  borderColor: formError ? 'var(--color-status-critical)' : 'var(--color-border)',
-                  color: 'var(--color-text-primary)',
-                }}
-                placeholder="Summarise the shift, pending tasks, and anything the next carer should know."
-              />
-              {formError && (
-                <p className="mt-2 text-sm" style={{ color: 'var(--color-status-critical)' }}>
-                  {formError}
-                </p>
-              )}
-              <motion.button
-                type="submit"
-                disabled={isSubmitting}
-                className="mt-4 h-10 rounded-lg px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-70"
-                style={{ backgroundColor: 'var(--color-primary)' }}
-                whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-              >
-                {isSubmitting ? 'Saving...' : 'Save handover entry'}
-              </motion.button>
-            </form>
+        <div className="flex flex-col gap-6">
+          {/* ── Daily wellbeing check-in ─────────────────── */}
+          {group.patientId && currentUserId && (
+            <WellbeingCheckinPanel
+              patientId={group.patientId}
+              groupId={group.id}
+              caregiverId={currentUserId}
+              isObserver={isObserver}
+            />
           )}
-        </article>
+
+          {/* ── Handover journal entry form ──────────────── */}
+          <article
+            className="rounded-xl border bg-white p-5"
+            style={{ borderColor: 'var(--color-border)' }}
+          >
+            <div className="flex items-center gap-3">
+              <BookText size={20} strokeWidth={1.9} color="var(--color-primary)" />
+              <div>
+                <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                  New handover entry
+                </p>
+                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                  Timestamped automatically when saved.
+                </p>
+              </div>
+            </div>
+
+            {isObserver ? (
+              <div
+                className="mt-4 rounded-lg border p-4 text-sm"
+                style={{
+                  borderColor: 'var(--color-border)',
+                  backgroundColor: 'var(--color-primary-light)',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
+                Observers can review handover notes but cannot add new entries.
+              </div>
+            ) : (
+              <form className="mt-4" onSubmit={handleSubmit}>
+                <label
+                  htmlFor="handover-content"
+                  className="text-xs font-bold"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  Shift handover note
+                </label>
+                <textarea
+                  id="handover-content"
+                  value={content}
+                  onChange={(event) => {
+                    setContent(event.target.value);
+                    if (formError) setFormError(null);
+                  }}
+                  rows={7}
+                  className="mt-2 w-full rounded-lg border p-3 text-sm outline-none"
+                  style={{
+                    borderColor: formError ? 'var(--color-status-critical)' : 'var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                  }}
+                  placeholder="Summarise the shift, pending tasks, and anything the next carer should know."
+                />
+                {formError && (
+                  <p className="mt-2 text-sm" style={{ color: 'var(--color-status-critical)' }}>
+                    {formError}
+                  </p>
+                )}
+                <motion.button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="mt-4 h-10 rounded-lg px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-70"
+                  style={{ backgroundColor: 'var(--color-primary)' }}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+                >
+                  {isSubmitting ? 'Saving...' : 'Save handover entry'}
+                </motion.button>
+              </form>
+            )}
+          </article>
+        </div>
 
         <div>
           <div className="mb-4 grid gap-3 rounded-xl border bg-white p-4 md:grid-cols-[minmax(0,1fr)_180px_180px]" style={{ borderColor: 'var(--color-border)' }}>

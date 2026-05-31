@@ -370,7 +370,7 @@ export class WeeklyInsightGenerationService {
       is_active: true,
       created_at: new Date().toISOString(),
     }));
-    const { error } = await supabase.from('ai_insights').insert(rows);
+    const { error } = await this.supabase.getClient().from('ai_insights').insert(rows);
     if (error) {
       console.error('❌ storeInsights failed:', error);
     } else {

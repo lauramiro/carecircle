@@ -6,8 +6,10 @@ import { WeeklyInsightGenerationService } from './weekly-insight-generation.serv
 export class InsightsController {
   private readonly logger = new Logger(InsightsController.name);
 
+  constructor(private readonly supabase: SupabaseAdminClient) {}
+
   private async resolvePatientId(groupId: string): Promise<string> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase.getClient()
       .from('patients')
       .select('id')
       .eq('group_id', groupId)
@@ -28,7 +30,7 @@ export class InsightsController {
   async getInsightsForGroup(@Param('groupId') groupId: string) {
     try {
       const patientId = await this.resolvePatientId(groupId);
-      const { data, error } = await supabase
+      const { data, error } = await this.supabase.getClient()
         .from('ai_insights')
         .select('insight_type, observation, suggested_action, severity, generated_at')
         .eq('patient_id', patientId)

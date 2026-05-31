@@ -68,6 +68,22 @@ export default function CreateGroupPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Ensure a profiles row exists before inserting the patient, which has a
+      // FK to profiles. The handle_new_user trigger creates this automatically
+      // on signup, but may not have run for existing accounts.
+      await supabase.from('profiles').upsert(
+        {
+          id: user.id,
+          email: user.email ?? '',
+          full_name:
+            (user.user_metadata?.full_name as string | undefined) ??
+            user.email?.split('@')[0] ??
+            'User',
+          role: 'caregiver',
+        },
+        { onConflict: 'id', ignoreDuplicates: true },
+      );
+
       const patientInsert: PatientInsert = {
         full_name: data.patientFullName.trim(),
         date_of_birth: data.dateOfBirth,

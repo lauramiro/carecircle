@@ -58,6 +58,40 @@ function generateSeriesDates(startTime: Date, rule: RecurrenceRule): Date[] {
   return results;
 }
 
+export interface AppointmentWithCarer extends Appointment {
+  carerName: string | null;
+}
+
+export async function getNextAppointmentForPatient(patientId: string): Promise<AppointmentWithCarer | null> {
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('*')
+    .eq('patient_id', patientId)
+    .neq('status', 'cancelled')
+    .gt('start_time', now)
+    .order('start_time', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  const appt = fromRow(data as Record<string, unknown>);
+  let carerName: string | null = null;
+
+  if (appt.attendingCarerId) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', appt.attendingCarerId)
+      .maybeSingle();
+    carerName = (profile as { full_name?: string | null } | null)?.full_name ?? null;
+  }
+
+  return { ...appt, carerName };
+}
+
 export async function getAppointmentsByPatient(patientId: string): Promise<Appointment[]> {
   const { data, error } = await supabase
     .from('appointments')

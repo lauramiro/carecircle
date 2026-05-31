@@ -16,6 +16,7 @@ import { ROLE } from '@typings/role-enum';
 type GroupListQueryRow = {
   role_in_care: string | null;
   joined_at: string;
+  patient_id: string;
   care_group: {
     id: string;
     name: string | null;
@@ -119,6 +120,7 @@ export async function getGroups(): Promise<GroupSummary[]> {
     .select(`
       role_in_care,
       joined_at,
+      patient_id,
       care_group!inner (
         id,
         name,
@@ -141,7 +143,8 @@ export async function getGroups(): Promise<GroupSummary[]> {
       description: item.care_group.description || '',
       role: mapRole(item.role_in_care ?? ''),
       createdAt: item.care_group.created_at || item.joined_at || new Date().toISOString(),
-      memberCount: 1, 
+      memberCount: 1,
+      patientId: item.patient_id,
     };
   });
 }

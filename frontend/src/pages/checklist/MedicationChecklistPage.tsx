@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import MedicationChecklist from '../../components/checklist/MedicationChecklist';
 import DateNavigation from '../../components/checklist/DateNavigation';
 import { loadDailyChecklist } from '../../api/checklist/dailyChecklist.service';
-import type { ChecklistItem } from '../../lib/checklist';
+import type { ChecklistItem, ChecklistDoseStatus } from '../../lib/checklist';
 import { parseLocalDateString, toLocalDateString } from '../../lib/dates';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import PageHeader from '../../components/ui/PageHeader';
@@ -21,6 +21,10 @@ export default function MedicationChecklistPage() {
   const [searchParams] = useSearchParams();
   const highlightItemId = searchParams.get('item') ?? undefined;
   const dateParam = searchParams.get('date');
+  const filterParam = searchParams.get('filter') as ChecklistDoseStatus | null;
+  const filterStatus = filterParam === 'overdue' || filterParam === 'due' || filterParam === 'given' || filterParam === 'skipped'
+    ? filterParam
+    : undefined;
   const [selectedDate, setSelectedDate] = useState(() =>
     dateParam ? parseLocalDateString(dateParam) : new Date(),
   );
@@ -146,6 +150,7 @@ export default function MedicationChecklistPage() {
           onItemsChange={setChecklistItems}
           loadingLabel={`Loading checklist for ${selectedDateStr}…`}
           highlightItemId={highlightItemId}
+          filterStatus={filterStatus}
         />
       )}
     </section>

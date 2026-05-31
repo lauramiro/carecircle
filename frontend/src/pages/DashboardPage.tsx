@@ -6,6 +6,11 @@ import StatCard from '../components/ui/StatCard';
 import EmptyState from '../components/ui/EmptyState';
 import { LoadingPanel } from '../components/ui/ContentPanel';
 import GroupRoleBadge from '../components/groups/GroupRoleBadge';
+import MedicationSummaryWidget from '../components/dashboard/MedicationSummaryWidget';
+import OnDutyCarerWidget from '../components/dashboard/OnDutyCarerWidget';
+import NextAppointmentWidget from '../components/dashboard/NextAppointmentWidget';
+import LatestJournalEntryWidget from '../components/dashboard/LatestJournalEntryWidget';
+import AiInsightWidget from '../components/dashboard/AiInsightWidget';
 import { useAuth } from '../contexts/AuthContext';
 import { useGroups } from '../hooks/groups/useGroups';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -27,6 +32,7 @@ export default function DashboardPage() {
   const adminGroups = groups.filter((group) => group.role === 'Admin').length;
   const totalMembers = groups.reduce((sum, group) => sum + group.memberCount, 0);
   const recentGroups = groups.slice(0, 3);
+  const primaryGroup = groups[0] ?? null;
 
   if (loading) {
     return (
@@ -85,6 +91,39 @@ export default function DashboardPage() {
           </>
         }
       />
+
+      {primaryGroup && (
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
+            <MedicationSummaryWidget
+              groupId={primaryGroup.id}
+              patientId={primaryGroup.patientId}
+              groupName={primaryGroup.name}
+            />
+            <OnDutyCarerWidget
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <NextAppointmentWidget
+              patientId={primaryGroup.patientId}
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+            <LatestJournalEntryWidget
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+            <AiInsightWidget
+              patientId={primaryGroup.patientId}
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+          </div>
+        </>
+      )}
 
       <motion.div
         className="grid gap-4 md:grid-cols-3"

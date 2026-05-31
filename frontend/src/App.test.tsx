@@ -6,9 +6,13 @@ import App from './App';
 const authMock = vi.hoisted(() => ({
   value: {
     loading: false,
-    session: null as { user: { email: string } } | null,
+    session: null as { user: { email: string; email_confirmed_at: string } } | null,
   },
 }));
+
+function authenticatedSession(email = 'user@example.com') {
+  return { user: { email, email_confirmed_at: '2026-01-01T00:00:00.000Z' } };
+}
 
 vi.mock('./contexts/AuthContext', () => ({
   useAuth: () => authMock.value,
@@ -104,7 +108,7 @@ describe('App', () => {
 
   it('renders dashboard for authenticated users on /dashboard', () => {
     setPath('/dashboard');
-    authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
+    authMock.value = { loading: false, session: authenticatedSession() };
 
     render(<App />);
 
@@ -115,7 +119,7 @@ describe('App', () => {
 
   it('redirects authenticated users from login to dashboard', () => {
     setPath('/login');
-    authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
+    authMock.value = { loading: false, session: authenticatedSession() };
 
     render(<App />);
 
@@ -126,7 +130,7 @@ describe('App', () => {
 
   it('renders invite route before generic auth routing', () => {
     setPath('/group-invite?email=user@example.com&inviteId=invite-123');
-    authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
+    authMock.value = { loading: false, session: authenticatedSession() };
 
     render(<App />);
 
@@ -143,7 +147,7 @@ describe('App', () => {
 
   it('renders create group route for authenticated users', () => {
     setPath('/groups/create');
-    authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
+    authMock.value = { loading: false, session: authenticatedSession() };
 
     render(<App />);
 
@@ -152,7 +156,7 @@ describe('App', () => {
 
   it('renders groups list route for authenticated users', () => {
     setPath('/groups/list');
-    authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
+    authMock.value = { loading: false, session: authenticatedSession() };
 
     render(<App />);
 
@@ -161,7 +165,7 @@ describe('App', () => {
 
   it('renders group detail route for authenticated users', () => {
     setPath('/groups/group-demo');
-    authMock.value = { loading: false, session: { user: { email: 'user@example.com' } } };
+    authMock.value = { loading: false, session: authenticatedSession() };
 
     render(<App />);
 

@@ -94,7 +94,7 @@ vi.mock('../../services/inviteService', async (importOriginal) => {
 });
 
 import CreateGroupPage from '../../pages/groups/CreateGroupPage';
-import GroupDetailPage from '../../pages/groups/GroupDetailPage';
+import GroupMembersPage from '../../pages/groups/GroupMembersPage';
 import InvitePage from '../../pages/InvitePage';
 
 const INVITE_ID = '550e8400-e29b-41d4-a716-446655440000';
@@ -110,11 +110,11 @@ function renderCreateGroupFlow() {
   );
 }
 
-function renderGroupDetailFlow(groupId = 'group-care-001') {
+function renderGroupMembersFlow(groupId = 'group-care-001') {
   return render(
-    <MemoryRouter initialEntries={[`/groups/${groupId}`]}>
+    <MemoryRouter initialEntries={[`/groups/${groupId}/members`]}>
       <Routes>
-        <Route path="/groups/:groupId" element={<GroupDetailPage />} />
+        <Route path="/groups/:groupId/members" element={<GroupMembersPage />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -137,6 +137,12 @@ function renderInviteFlow(search: string) {
 function memberInviteSearch(email: string, confirmation: 'true' | 'false') {
   const params = new URLSearchParams({ inviteId: INVITE_ID, email, confirmation });
   return `?${params.toString()}`;
+}
+
+function mockProfilesUpsertSuccess() {
+  return {
+    upsert: vi.fn().mockResolvedValue({ error: null }),
+  };
 }
 
 function mockPatientInsertSuccess(patientId = 'patient-123') {
@@ -226,6 +232,7 @@ describe('group invite integration flow', () => {
     const careGiverInsert = vi.fn().mockResolvedValue({ error: null });
 
     supabaseMock.from
+      .mockReturnValueOnce(mockProfilesUpsertSuccess())
       .mockReturnValueOnce(mockPatientInsertSuccess('patient-001'))
       .mockReturnValueOnce(mockGroupInsertSuccess('group-001'))
       .mockReturnValueOnce({
@@ -242,7 +249,7 @@ describe('group invite integration flow', () => {
     await user.type(screen.getByLabelText(/circle name/i), 'Mum Care Team');
     await user.type(screen.getByLabelText(/patient full name/i), 'Jane Doe');
     await user.type(screen.getByLabelText(/date of birth/i), '1955-05-01');
-    await user.type(screen.getByLabelText(/^email$/i), 'jane@example.com');
+    await user.type(screen.getByLabelText(/^email\b/i), 'jane@example.com');
     await user.selectOptions(screen.getByLabelText(/relationship to the patient/i), 'parent');
     await user.click(screen.getByRole('button', { name: /create circle/i }));
 
@@ -257,9 +264,9 @@ describe('group invite integration flow', () => {
     );
   });
 
-  it('sends an invite from the group detail page', async () => {
+  it('sends an invite from the group members page', async () => {
     const user = userEvent.setup();
-    renderGroupDetailFlow();
+    renderGroupMembersFlow();
 
     await user.click(screen.getByRole('button', { name: /invite member/i }));
     await user.type(screen.getByLabelText(/email address/i), 'newcarer@example.com');

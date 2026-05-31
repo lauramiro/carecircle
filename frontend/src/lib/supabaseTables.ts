@@ -20,3 +20,6 @@ export type PatientInsert = TablesInsert<'patients'>;
 export type CareGroupInsert = TablesInsert<'care_group'>;
 export type CareGiverInsert = TablesInsert<'care_givers'>;
 export type ProfileInsert = TablesInsert<'profiles'>;
+export type GPContactRow = Tables<'gp_contacts'>;
+export type GPContactInsert = TablesInsert<'gp_contacts'>;
+export type GPContactUpdate = TablesUpdate<'gp_contacts'>;

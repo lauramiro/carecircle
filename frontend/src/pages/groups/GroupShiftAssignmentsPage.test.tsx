@@ -24,6 +24,7 @@ const groupHookMock = vi.hoisted(() => ({
       ],
       gpContacts: [],
       patientId: 'patient-001',
+      canSchedule: true,
     } as Group,
   },
 }));
@@ -111,6 +112,7 @@ describe('GroupShiftAssignmentsPage', () => {
         ],
         gpContacts: [],
         patientId: 'patient-001',
+        canSchedule: true,
       } as Group,
     };
     shiftHookMock.value = {

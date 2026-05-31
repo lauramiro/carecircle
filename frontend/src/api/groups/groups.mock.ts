@@ -119,6 +119,7 @@ function toSummary(group: Group): GroupSummary {
     role: group.role,
     createdAt: group.createdAt,
     memberCount: group.members.length,
+    patientId: group.patientId,
   };
 }
 

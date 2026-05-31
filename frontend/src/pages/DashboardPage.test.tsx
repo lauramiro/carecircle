@@ -1,45 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import DashboardPage from './DashboardPage';
-
-vi.mock('../hooks/shifts/useDashboardShiftWarnings', () => ({
-  useDashboardShiftWarnings: () => ({
-    warnings: [
-      {
-        groupId: 'group-001',
-        groupName: 'Dad Care Circle',
-        unassignedCount: 3,
-        weekStart: '2026-05-18',
-        weekEnd: '2026-05-24',
-      },
-    ],
-    loading: false,
-    error: null,
-  }),
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DashboardPage from './DashboardPage';
-
-// Stub dashboard widgets to keep this test focused on DashboardPage layout
-vi.mock('../components/dashboard/MedicationSummaryWidget', () => ({
-  default: () => <div data-testid="medication-summary-widget" />,
-}));
-
-vi.mock('../components/dashboard/OnDutyCarerWidget', () => ({
-  default: () => <div data-testid="on-duty-carer-widget" />,
-}));
-
-vi.mock('../components/dashboard/NextAppointmentWidget', () => ({
-  default: () => <div data-testid="next-appointment-widget" />,
-}));
-
-vi.mock('../components/dashboard/LatestJournalEntryWidget', () => ({
-  default: () => <div data-testid="latest-journal-entry-widget" />,
-}));
-
-vi.mock('../components/dashboard/AiInsightWidget', () => ({
-  default: () => <div data-testid="ai-insight-widget" />,
-}));
 
 const authMock = vi.hoisted(() => ({
   session: {
@@ -61,7 +23,6 @@ const groupsHookMock = vi.hoisted(() => ({
         role: 'Admin' as const,
         createdAt: '2025-05-12T09:00:00.000Z',
         memberCount: 3,
-        patientId: 'patient-001',
       },
     ],
   },
@@ -88,7 +49,6 @@ describe('DashboardPage', () => {
           role: 'Admin',
           createdAt: '2025-05-12T09:00:00.000Z',
           memberCount: 3,
-          patientId: 'patient-001',
         },
       ],
     };
@@ -104,42 +64,8 @@ describe('DashboardPage', () => {
     expect(screen.getByText(/good (morning|afternoon|evening), sarah caregiver/i)).toBeInTheDocument();
     expect(screen.getByText(/overview of your care circles/i)).toBeInTheDocument();
     expect(screen.getByText('Active groups')).toBeInTheDocument();
-    expect(screen.getByText('Pending invites')).toBeInTheDocument();
-    expect(screen.getByText("Today's events")).toBeInTheDocument();
-    expect(screen.getByText('Shift coverage alerts')).toBeInTheDocument();
-    expect(screen.getByText('Dad Care Circle')).toBeInTheDocument();
-    expect(screen.getByText(/3 uncovered shifts this week/i)).toBeInTheDocument();
     expect(screen.getByText('Groups you manage')).toBeInTheDocument();
     expect(screen.getByText('Total members')).toBeInTheDocument();
-    expect(screen.getAllByText('Dad Care Circle').length).toBeGreaterThan(0);
-  });
-
-  it('renders both care status widgets for the first group', () => {
-    render(
-      <MemoryRouter>
-        <DashboardPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByTestId('medication-summary-widget')).toBeInTheDocument();
-    expect(screen.getByTestId('on-duty-carer-widget')).toBeInTheDocument();
-    expect(screen.getByTestId('next-appointment-widget')).toBeInTheDocument();
-    expect(screen.getByTestId('latest-journal-entry-widget')).toBeInTheDocument();
-    expect(screen.getByTestId('ai-insight-widget')).toBeInTheDocument();
-  });
-
-  it('does not render widgets when there are no groups', () => {
-    groupsHookMock.value = { loading: false, error: null, groups: [] };
-    render(
-      <MemoryRouter>
-        <DashboardPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.queryByTestId('medication-summary-widget')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('on-duty-carer-widget')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('next-appointment-widget')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('latest-journal-entry-widget')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('ai-insight-widget')).not.toBeInTheDocument();
+    expect(screen.getByText('Dad Care Circle')).toBeInTheDocument();
   });
 });

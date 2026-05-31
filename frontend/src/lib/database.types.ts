@@ -71,6 +71,8 @@ export type Database = {
           post_appointment_notes: string | null
           provider_id: string | null
           provider_name: string | null
+          recurrence_rule: Json | null
+          recurrence_series_id: string | null
           reminder_offsets: number[] | null
           reminder_sent: boolean | null
           reminder_sent_at: string | null
@@ -99,6 +101,8 @@ export type Database = {
           post_appointment_notes?: string | null
           provider_id?: string | null
           provider_name?: string | null
+          recurrence_rule?: Json | null
+          recurrence_series_id?: string | null
           reminder_offsets?: number[] | null
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
@@ -127,6 +131,8 @@ export type Database = {
           post_appointment_notes?: string | null
           provider_id?: string | null
           provider_name?: string | null
+          recurrence_rule?: Json | null
+          recurrence_series_id?: string | null
           reminder_offsets?: number[] | null
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
@@ -282,6 +288,7 @@ export type Database = {
           description: string | null
           id: string
           name: string | null
+          patient_id: string | null
           preferred_timezone: string | null
           primary_caregiver_id: string
           role: Database["public"]["Enums"]["group_member_role"]
@@ -292,6 +299,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string | null
+          patient_id?: string | null
           preferred_timezone?: string | null
           primary_caregiver_id: string
           role?: Database["public"]["Enums"]["group_member_role"]
@@ -302,6 +310,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string | null
+          patient_id?: string | null
           preferred_timezone?: string | null
           primary_caregiver_id?: string
           role?: Database["public"]["Enums"]["group_member_role"]
@@ -2200,6 +2209,10 @@ export type Database = {
       is_caregiver_for: { Args: { p_patient_id: string }; Returns: boolean }
       is_email_registered: { Args: { p_email: string }; Returns: boolean }
       is_group_member: { Args: { check_group_id: string }; Returns: boolean }
+      update_invite_status: {
+        Args: { p_invite_id: string; p_status: string }
+        Returns: undefined
+      }
       verify_profile_trigger: {
         Args: never
         Returns: {

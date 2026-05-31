@@ -32,32 +32,36 @@ export function useMedicationSummary(patientId: string, groupId: string): Medica
     setLoading(true);
     setError(null);
 
-    supabase
-      .from('daily_medication_checklists')
-      .select('id')
-      .eq('checklist_date', today)
-      .eq('patient_id', patientId)
-      .maybeSingle()
-      .then(async ({ data, error }) => {
+    async function loadSummary() {
+      try {
+        const { data, error: checklistError } = await supabase
+          .from('daily_medication_checklists')
+          .select('id')
+          .eq('checklist_date', today)
+          .eq('patient_id', patientId)
+          .maybeSingle();
+
         if (!active) return;
-        if (error) { setError('Failed to load medication data.'); return; }
+        if (checklistError) {
+          setError('Failed to load medication data.');
+          return;
+        }
         if (!data?.id) {
-          // No checklist for today yet — empty state, not an error
           setChecklistId(null);
           setItems([]);
           return;
         }
         setChecklistId(data.id);
-        try {
-          const fetched = await fetchChecklistItems(data.id, today);
-          if (active) setItems(fetched);
-        } catch {
-          if (active) setError('Failed to load medication data.');
-        }
-      })
-      .finally(() => {
+        const fetched = await fetchChecklistItems(data.id, today);
+        if (active) setItems(fetched);
+      } catch {
+        if (active) setError('Failed to load medication data.');
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    }
+
+    void loadSummary();
 
     return () => { active = false; };
   }, [patientId, groupId, today]);

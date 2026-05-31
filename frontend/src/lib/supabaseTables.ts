@@ -23,3 +23,9 @@ export type ProfileInsert = TablesInsert<'profiles'>;
 export type GPContactRow = Tables<'gp_contacts'>;
 export type GPContactInsert = TablesInsert<'gp_contacts'>;
 export type GPContactUpdate = TablesUpdate<'gp_contacts'>;
+
+/** Appointment columns used by CC-106; may be absent until migration is applied on remote. */
+export type AppointmentInsert = TablesInsert<'appointments'> & {
+  recurrence_rule?: string | null;
+  recurrence_series_id?: string | null;
+};

@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ROLE } from '@typings/role-enum';
 import DashboardPage from './DashboardPage';
 
 vi.mock('../hooks/shifts/useDashboardShiftWarnings', () => ({
@@ -61,7 +60,7 @@ const groupsHookMock = vi.hoisted(() => ({
         id: 'group-care-001',
         name: 'Dad Care Circle',
         description: 'Daily support and medication coordination for Dad.',
-        role: 'primary_carer' as ROLE,
+        role: 'primary_carer' as 'primary_carer' | 'secondary_carer' | 'observer',
         createdAt: '2025-05-12T09:00:00.000Z',
         memberCount: 3,
         patientId: 'patient-001',
@@ -88,7 +87,7 @@ describe('DashboardPage', () => {
           id: 'group-care-001',
           name: 'Dad Care Circle',
           description: 'Daily support and medication coordination for Dad.',
-          role: 'primary_carer' as ROLE,
+          role: 'primary_carer' as const,
           createdAt: '2025-05-12T09:00:00.000Z',
           memberCount: 3,
           patientId: 'patient-001',
@@ -151,7 +150,7 @@ describe('DashboardPage', () => {
           id: 'group-care-002',
           name: 'Mum',
           description: 'Desc',
-          role: 'secondary_carer' as ROLE,
+          role: 'secondary_carer' as 'primary_carer' | 'secondary_carer' | 'observer',
           createdAt: '2025-05-12T09:00:00.000Z',
           memberCount: 2,
           patientId: 'patient-002',

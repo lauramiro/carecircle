@@ -2,11 +2,13 @@ import { getGroups } from '../groups/groups.service';
 import { supabase } from '../../lib/supabaseClient';
 import type { Database } from '../../lib/database.types';
 import type {
+  GroupMemberScheduleRow,
   SaveWeeklyShiftAssignmentPayload,
-  ShiftSlot,
+  ShiftSlotValue,
   ShiftWarningSummary,
   WeeklyShiftAssignment,
 } from './shift.types';
+import { enrichAllWithHandover } from './shift.handover';
 import {
   buildWeekDates,
   countUnassignedSlots,
@@ -42,7 +44,7 @@ function mapWeeklyShiftAssignment(row: WeeklyShiftAssignmentRow): WeeklyShiftAss
     id: row.id,
     groupId: row.group_id,
     shiftDate: row.shift_date,
-    slot: row.shift_slot as ShiftSlot,
+    slot: row.shift_slot as ShiftSlotValue,
     assignedCaregiverId: row.assigned_caregiver_id,
     assigneeName: row.assignee?.full_name ?? null,
     updatedAt: row.updated_at,
@@ -127,7 +129,7 @@ export async function getWeeklyShiftWarnings(): Promise<ShiftWarningSummary[]> {
           id: null,
           groupId: row.group_id,
           shiftDate: row.shift_date,
-          slot: row.shift_slot as ShiftSlot,
+          slot: row.shift_slot as ShiftSlotValue,
           assignedCaregiverId: row.assigned_caregiver_id,
           assigneeName: null,
           updatedAt: null,
@@ -147,3 +149,64 @@ export async function getWeeklyShiftWarnings(): Promise<ShiftWarningSummary[]> {
     })
     .filter((warning) => warning.unassignedCount > 0);
 }
+
+export async function getShiftAssignmentsForRange(
+  groupId: string,
+  startDate: string,
+  endDate: string,
+): Promise<WeeklyShiftAssignment[]> {
+  const { data, error } = await supabase
+    .from('weekly_shift_assignments')
+    .select(weeklyShiftAssignmentSelect)
+    .eq('group_id', groupId)
+    .gte('shift_date', startDate)
+    .lte('shift_date', endDate)
+    .order('shift_date', { ascending: true });
+
+  if (error) {
+    console.error('getShiftAssignmentsForRange:', error);
+    throw new Error('Unable to load shift assignments');
+  }
+
+  return ((data ?? []) as WeeklyShiftAssignmentRow[]).map(mapWeeklyShiftAssignment);
+}
+
+export async function getMyShifts(
+  caregiverId: string,
+  groupId: string,
+  startDate: string,
+  endDate: string,
+): Promise<WeeklyShiftAssignment[]> {
+  const assignments = await getShiftAssignmentsForRange(groupId, startDate, endDate);
+  return assignments.filter((assignment) => assignment.assignedCaregiverId === caregiverId);
+}
+
+export function buildGroupScheduleMatrix(
+  members: Array<{ id: string; name: string }>,
+  weekStart: string,
+  assignments: WeeklyShiftAssignment[],
+): GroupMemberScheduleRow[] {
+  const weekDates = buildWeekDates(weekStart);
+  const slots = ['morning', 'afternoon', 'evening', 'overnight'] as const;
+
+  return members.map((member) => ({
+    memberId: member.id,
+    memberName: member.name,
+    cells: weekDates.flatMap((shiftDate) =>
+      slots.map((slot) => {
+        const assignment = assignments.find(
+          (row) => row.shiftDate === shiftDate && row.slot === slot,
+        );
+        const isAssigned = assignment?.assignedCaregiverId === member.id;
+        return {
+          shiftDate,
+          slot,
+          assigneeName: isAssigned ? member.name : null,
+          assignedCaregiverId: isAssigned ? member.id : null,
+        };
+      }),
+    ),
+  }));
+}
+
+export { enrichAllWithHandover };

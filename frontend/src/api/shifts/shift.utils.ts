@@ -1,4 +1,4 @@
-import type { ShiftSlot, WeeklyShiftAssignment } from './shift.types';
+import type { ShiftSlotValue, WeeklyShiftAssignment } from './shift.types';
 import { SHIFT_SLOTS } from './shift.types';
 
 export function toISODate(value: Date): string {
@@ -52,7 +52,7 @@ export function buildEmptyWeeklyAssignments(
   );
 }
 
-export function getAssignmentKey(shiftDate: string, slot: ShiftSlot): string {
+export function getAssignmentKey(shiftDate: string, slot: ShiftSlotValue): string {
   return `${shiftDate}:${slot}`;
 }
 

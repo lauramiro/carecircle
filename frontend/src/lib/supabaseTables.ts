@@ -16,3 +16,7 @@ export type DailyChecklistRow = Tables<'daily_medication_checklists'>;
 export type DailyChecklistInsert = TablesInsert<'daily_medication_checklists'>;
 export type MedicationRow = Tables<'medications'>;
 export type WeeklyShiftAssignmentRow = Tables<'weekly_shift_assignments'>;
+export type PatientInsert = TablesInsert<'patients'>;
+export type CareGroupInsert = TablesInsert<'care_group'>;
+export type CareGiverInsert = TablesInsert<'care_givers'>;
+export type ProfileInsert = TablesInsert<'profiles'>;

@@ -782,44 +782,6 @@ export type Database = {
           },
         ]
       }
-      handover_journal_entries: {
-        Row: {
-          author_id: string
-          content: string
-          created_at: string
-          group_id: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          author_id: string
-          content: string
-          created_at?: string
-          group_id: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          author_id?: string
-          content?: string
-          created_at?: string
-          group_id?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "handover_journal_entries_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "handover_journal_entries_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "care_group"
       gp_contacts: {
         Row: {
           address: string | null
@@ -864,104 +826,6 @@ export type Database = {
           },
         ]
       }
-      weekly_shift_assignment_history: {
-        Row: {
-          assigned_caregiver_id: string | null
-          assignment_id: string | null
-          changed_at: string
-          changed_by: string
-          group_id: string
-          id: string
-          previous_caregiver_id: string | null
-          shift_date: string
-          shift_slot: string
-        }
-        Insert: {
-          assigned_caregiver_id?: string | null
-          assignment_id?: string | null
-          changed_at?: string
-          changed_by: string
-          group_id: string
-          id?: string
-          previous_caregiver_id?: string | null
-          shift_date: string
-          shift_slot: string
-        }
-        Update: {
-          assigned_caregiver_id?: string | null
-          assignment_id?: string | null
-          changed_at?: string
-          changed_by?: string
-          group_id?: string
-          id?: string
-          previous_caregiver_id?: string | null
-          shift_date?: string
-          shift_slot?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "weekly_shift_assignment_history_assigned_caregiver_id_fkey"
-            columns: ["assigned_caregiver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "weekly_shift_assignment_history_assignment_id_fkey"
-            columns: ["assignment_id"]
-            isOneToOne: false
-            referencedRelation: "weekly_shift_assignments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "weekly_shift_assignment_history_changed_by_fkey"
-            columns: ["changed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "weekly_shift_assignment_history_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "care_group"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "weekly_shift_assignment_history_previous_caregiver_id_fkey"
-            columns: ["previous_caregiver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      weekly_shift_assignments: {
-        Row: {
-          assigned_caregiver_id: string | null
-          created_at: string
-          group_id: string
-          id: string
-          shift_date: string
-          shift_slot: string
-          updated_at: string
-        }
-        Insert: {
-          assigned_caregiver_id?: string | null
-          created_at?: string
-          group_id: string
-          id?: string
-          shift_date: string
-          shift_slot: string
-          updated_at?: string
-        }
-        Update: {
-          assigned_caregiver_id?: string | null
-          created_at?: string
-          group_id?: string
-          id?: string
-          shift_date?: string
-          shift_slot?: string
       handover_journal_entries: {
         Row: {
           author_id: string
@@ -989,8 +853,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "weekly_shift_assignments_assigned_caregiver_id_fkey"
-            columns: ["assigned_caregiver_id"]
             foreignKeyName: "handover_journal_entries_author_id_fkey"
             columns: ["author_id"]
             isOneToOne: false
@@ -998,7 +860,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "weekly_shift_assignments_group_id_fkey"
             foreignKeyName: "handover_journal_entries_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
@@ -1906,50 +1767,6 @@ export type Database = {
         }
         Relationships: []
       }
-      primary_carer_wellbeing_checkins: {
-        Row: {
-          carer_id: string
-          composite_score: number
-          id: string
-          overall_mood: number
-          overwhelm_level: number
-          sleep_quality: number
-          social_connection: number
-          support_message_dismissed_at: string | null
-          stress_level: number
-          submitted_at: string
-          week_start: string
-        }
-        Insert: {
-          carer_id: string
-          composite_score?: number
-          id?: string
-          overall_mood: number
-          overwhelm_level: number
-          sleep_quality: number
-          social_connection: number
-          support_message_dismissed_at?: string | null
-          stress_level: number
-          submitted_at?: string
-          week_start?: string
-        }
-        Update: {
-          carer_id?: string
-          composite_score?: number
-          id?: string
-          overall_mood?: number
-          overwhelm_level?: number
-          sleep_quality?: number
-          social_connection?: number
-          support_message_dismissed_at?: string | null
-          stress_level?: number
-          submitted_at?: string
-          week_start?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "primary_carer_wellbeing_checkins_carer_id_fkey"
-            columns: ["carer_id"]
       push_subscriptions: {
         Row: {
           auth: string | null

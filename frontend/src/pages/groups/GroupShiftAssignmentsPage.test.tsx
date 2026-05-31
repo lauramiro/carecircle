@@ -24,6 +24,7 @@ const groupHookMock = vi.hoisted(() => ({
       ],
       gpContacts: [],
       patientId: 'patient-001',
+      canSchedule: true,
     } as Group,
   },
 }));
@@ -104,6 +105,7 @@ describe('GroupShiftAssignmentsPage', () => {
         name: 'Dad Care Circle',
         description: 'Daily support and medication coordination for Dad.',
         role: 'Admin',
+        canSchedule: true,
         createdAt: '2025-05-12T09:00:00.000Z',
         members: [
           { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'Admin', joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' },
@@ -145,10 +147,18 @@ describe('GroupShiftAssignmentsPage', () => {
     renderPage();
 
     expect(screen.getByText('Dad Care Circle Shift Coverage')).toBeInTheDocument();
-    expect(screen.getByText('Morning')).toBeInTheDocument();
-    expect(screen.getByText('Afternoon')).toBeInTheDocument();
+    expect(screen.getByText('Week view')).toBeInTheDocument();
+    expect(screen.getByText('Day view')).toBeInTheDocument();
+    expect(screen.getByText(/Morning \(08:00-12:00\)/)).toBeInTheDocument();
     expect(screen.getByText(/uncovered shift/i)).toBeInTheDocument();
-    expect(screen.getAllByText('Coverage needed').length).toBeGreaterThan(0);
+  });
+
+  it('switches to the day view tab', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'Day view' }));
+    expect(screen.getByLabelText('Select day')).toBeInTheDocument();
   });
 
   it('allows admin users to assign a member to a slot', async () => {

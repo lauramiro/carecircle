@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@lib/supabaseClient';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchTodayShifts, type ShiftAssignmentWithCarer } from '@api/shifts/shifts.service';
 import {
   currentDayMinutes,
@@ -7,6 +6,7 @@ import {
   parseShiftSlotBounds,
   shiftEndDisplay,
 } from '@lib/shifts';
+import { useSupabaseRealtime } from '../realtime/useSupabaseRealtime';
 
 export interface OnDutyCarerState {
   carerName: string | null;
@@ -21,6 +21,15 @@ export function useOnDutyCarer(groupId: string): OnDutyCarerState {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nowMin, setNowMin] = useState(() => currentDayMinutes());
+
+  const reloadShifts = useCallback(() => {
+    if (!groupId) return;
+    fetchTodayShifts(groupId)
+      .then(setShifts)
+      .catch(() => {
+        /* non-fatal; keep stale data */
+      });
+  }, [groupId]);
 
   useEffect(() => {
     if (!groupId) {
@@ -40,25 +49,15 @@ export function useOnDutyCarer(groupId: string): OnDutyCarerState {
     return () => { active = false; };
   }, [groupId]);
 
-  useEffect(() => {
-    if (!groupId) return;
-
-    const channel = supabase
-      .channel(`dashboard-shifts-${groupId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'weekly_shift_assignments', filter: `group_id=eq.${groupId}` },
-        () => {
-          // Refetch on any change rather than patching state — shift assignments are infrequent.
-          fetchTodayShifts(groupId)
-            .then(setShifts)
-            .catch(() => { /* non-fatal; keep stale data */ });
-        },
-      )
-      .subscribe();
-
-    return () => { void supabase.removeChannel(channel); };
-  }, [groupId]);
+  useSupabaseRealtime({
+    channelName: groupId ? `dashboard-shifts-${groupId}` : 'dashboard-shifts-disabled',
+    table: 'weekly_shift_assignments',
+    filter: groupId ? `group_id=eq.${groupId}` : undefined,
+    enabled: Boolean(groupId),
+    onInsert: reloadShifts,
+    onUpdate: reloadShifts,
+    onDelete: reloadShifts,
+  });
 
   // Re-evaluate the active slot every minute so the widget updates at shift transitions.
   useEffect(() => {

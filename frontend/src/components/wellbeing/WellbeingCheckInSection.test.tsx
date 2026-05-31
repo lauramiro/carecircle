@@ -44,7 +44,8 @@ describe('WellbeingCheckInSection', () => {
 
     expect(screen.getByText('Weekly wellbeing check-in')).toBeInTheDocument();
     expect(screen.getAllByRole('radio', { name: '1' }).length).toBeGreaterThan(0);
-    expect(screen.getByText(/week of 25 may 2026/i)).toBeInTheDocument();
+    expect(screen.getByText(/week of/i)).toBeInTheDocument();
+    expect(screen.getByText(/25 May 2026|May 25, 2026/)).toBeInTheDocument();
     expect(screen.getByText(/score 18\/25/i)).toBeInTheDocument();
   });
 

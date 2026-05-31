@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ROLE } from '@typings/role-enum';
 import GroupsListPage from './GroupsListPage';
 
 const navigateMock = vi.hoisted(() => vi.fn());
@@ -14,7 +15,7 @@ const groupsHookMock = vi.hoisted(() => ({
         id: 'group-care-001',
         name: 'Dad Care Circle',
         description: 'Daily support and medication coordination for Dad.',
-        role: 'Admin' as const,
+        role: 'primary_carer' as ROLE,
         createdAt: '2025-05-12T09:00:00.000Z',
         memberCount: 3,
       },
@@ -56,7 +57,7 @@ describe('GroupsListPage', () => {
           id: 'group-care-001',
           name: 'Dad Care Circle',
           description: 'Daily support and medication coordination for Dad.',
-          role: 'Admin',
+          role: 'primary_carer' as ROLE,
           createdAt: '2025-05-12T09:00:00.000Z',
           memberCount: 3,
         },
@@ -69,7 +70,7 @@ describe('GroupsListPage', () => {
 
     expect(screen.getByText('Dad Care Circle')).toBeInTheDocument();
     // expect(screen.getByText('group-care-001')).toBeInTheDocument(); // Flaky/removed from UI
-    expect(screen.getByText('Admin')).toBeInTheDocument();
+    expect(screen.getByText('Primary carer')).toBeInTheDocument();
     expect(screen.getByText('12 May 2025')).toBeInTheDocument();
     expect(screen.getByText(/Daily support and medication coordination for Dad\./)).toBeInTheDocument();
   });

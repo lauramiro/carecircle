@@ -7,6 +7,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
 import { formatMedicationSchedule, getMedicationTimesToday } from '../../utils/formatMedicationSchedule';
 import type { Medication } from '../../api/medications/medications.types';
+import { canEditMedicationSchedule } from '../../lib/carePermissions';
 
 export default function MedicationsSchedulePage() {
   const { groupId } = useParams();
@@ -40,7 +41,7 @@ export default function MedicationsSchedulePage() {
     );
   }
 
-  const isAdmin = group.role === 'Admin';
+  const canManageSchedule = canEditMedicationSchedule(group.role);
   const visibleMeds = medications.filter((m) => m.status === 'active' || m.status === 'paused');
 
   // Build today's time-ordered list: [{time, meds[]}]
@@ -86,7 +87,7 @@ export default function MedicationsSchedulePage() {
             >
               Daily checklist
             </button>
-            {isAdmin && (
+            {canManageSchedule && (
               <button
                 type="button"
                 onClick={() => navigate(`/groups/${groupId}/medications/add`)}
@@ -110,7 +111,7 @@ export default function MedicationsSchedulePage() {
           <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
             No medications in the schedule yet.
           </p>
-          {isAdmin && (
+          {canManageSchedule && (
             <button
               type="button"
               onClick={() => navigate(`/groups/${groupId}/medications/add`)}
@@ -212,7 +213,7 @@ export default function MedicationsSchedulePage() {
                       >
                         Info
                       </button>
-                      {isAdmin && med.status === 'active' && (
+                      {canManageSchedule && med.status === 'active' && (
                         <button
                           type="button"
                           disabled={isSubmitting}
@@ -223,7 +224,7 @@ export default function MedicationsSchedulePage() {
                           Edit
                         </button>
                       )}
-                      {isAdmin && med.status === 'active' && (
+                      {canManageSchedule && med.status === 'active' && (
                         <button
                           type="button"
                           disabled={isSubmitting}
@@ -234,7 +235,7 @@ export default function MedicationsSchedulePage() {
                           Pause
                         </button>
                       )}
-                      {isAdmin && med.status === 'paused' && (
+                      {canManageSchedule && med.status === 'paused' && (
                         <button
                           type="button"
                           disabled={isSubmitting}
@@ -245,7 +246,7 @@ export default function MedicationsSchedulePage() {
                           Activate
                         </button>
                       )}
-                      {isAdmin &&
+                      {canManageSchedule &&
                         (confirmArchiveId === med.id ? (
                           <>
                             <button

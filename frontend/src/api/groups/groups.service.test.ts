@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { ROLE } from '@typings/role-enum';
 
 vi.mock('axios', () => ({
   default: {
@@ -41,6 +42,7 @@ import {
   inviteMember,
   removeGPContact,
   updateGPContact,
+  updateMemberRole,
 } from './groups.service';
 
 function mockPatientLookup(patientId = 'patient-1') {
@@ -79,7 +81,7 @@ describe('groups service', () => {
       id: expect.any(String),
       name: expect.any(String),
       description: expect.any(String),
-      role: expect.stringMatching(/Admin|Member/),
+      role: expect.stringMatching(/primary_carer|secondary_carer|observer/),
       createdAt: expect.any(String),
       memberCount: expect.any(Number),
     });
@@ -289,5 +291,44 @@ describe('groups service', () => {
     await expect(
       addGPContact('group-care-001', { gpName: 'Dr. Test GP' }),
     ).rejects.toThrow('Patient not found for this care group');
+  });
+});
+
+describe('updateMemberRole', () => {
+  beforeEach(() => {
+    vi.mocked(supabase.rpc).mockReset();
+  });
+
+  it('calls the update_care_giver_role RPC', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: undefined,
+      error: null,
+    } as unknown as Awaited<ReturnType<typeof supabase.rpc>>);
+
+    await updateMemberRole('group-care-001', 'member-2', ROLE.SECONDARY_CAREGIVER);
+
+    expect(supabase.rpc).toHaveBeenCalledWith('update_care_giver_role', {
+      p_group_id: 'group-care-001',
+      p_caregiver_id: 'member-2',
+      p_new_role: 'secondary_carer',
+    });
+  });
+
+  it('throws when the RPC fails', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: undefined,
+      error: {
+        message: 'Only primary carers can update member roles',
+        name: 'Error',
+        hint: '',
+        code: 'P0001',
+        details: '',
+        toJSON: () => ({}),
+      },
+    } as unknown as Awaited<ReturnType<typeof supabase.rpc>>);
+
+    await expect(
+      updateMemberRole('group-care-001', 'member-2', ROLE.SECONDARY_CAREGIVER),
+    ).rejects.toThrow('Only primary carers can update member roles');
   });
 });

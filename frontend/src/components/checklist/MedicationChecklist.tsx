@@ -5,12 +5,14 @@ import { toLocalDateString } from '@lib/dates';
 import { useReducedMotion } from '@hooks/useReducedMotion';
 import { useChecklistSubscription } from '@hooks/checklist/useChecklistSubscription';
 import MedicationChecklistItemRow from '@components/checklist/MedicationChecklistItemRow';
+import { ROLE } from '@typings/role-enum';
+import { isChecklistReadOnly } from '@lib/carePermissions';
 
 interface MedicationChecklistProps {
   checklistId: string;
   checklistDate: string;
   items: ChecklistItem[];
-  userRole: 'primary' | 'secondary' | 'observer';
+  userRole: ROLE;
   isLoading?: boolean;
   loadingLabel?: string;
   onItemsChange?: (items: ChecklistItem[]) => void;
@@ -41,7 +43,7 @@ export default function MedicationChecklist({
     onItemsChange,
   );
   const shouldReduceMotion = useReducedMotion();
-  const isReadOnly = userRole === 'observer';
+  const isReadOnly = isChecklistReadOnly(userRole);
 
   const sortedItems = useMemo(
     () => sortChecklistItemsByScheduledTime(items),

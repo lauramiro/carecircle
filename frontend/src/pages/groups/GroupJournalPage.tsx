@@ -13,6 +13,7 @@ import type { JournalEntry } from '../../api/journal/journal.types';
 import PageHeader from '../../components/ui/PageHeader';
 import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
 import WellbeingCheckinPanel from '../../components/checkins/WellbeingCheckinPanel';
+import { isJournalReadOnly } from '../../lib/carePermissions';
 
 const JOURNAL_EDIT_WINDOW_MS = 60 * 60 * 1000;
 
@@ -104,7 +105,7 @@ export default function GroupJournalPage() {
   const deferredSearchQuery = useDeferredValue(searchQuery.trim());
   const now = Date.now();
   const currentUserId = session?.user?.id;
-  const isObserver = group?.role === 'Observer';
+  const isObserver = group ? isJournalReadOnly(group.role) : false;
   const filteredEntries = useMemo(() => {
     const normalizedQuery = deferredSearchQuery.toLowerCase();
 

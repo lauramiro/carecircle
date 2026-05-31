@@ -1,4 +1,5 @@
-import { getGroups, canAssignGroupShifts } from '../groups/groups.service';
+import { getGroups } from '../groups/groups.service';
+import { canAssignShifts } from '../../lib/carePermissions';
 import { supabase } from '../../lib/supabaseClient';
 import type { Database } from '../../lib/database.types';
 import type {
@@ -100,7 +101,7 @@ export async function saveWeeklyShiftAssignment(
 }
 
 export async function getWeeklyShiftWarnings(): Promise<ShiftWarningSummary[]> {
-  const groups = (await getGroups()).filter((group) => canAssignGroupShifts(group.role));
+  const groups = (await getGroups()).filter((group) => canAssignShifts(group.role));
   if (groups.length === 0) return [];
 
   const weekStart = toISODate(getStartOfWeek(new Date()));

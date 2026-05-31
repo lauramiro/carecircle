@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Group } from '../../api/groups/groups.types';
+import { ROLE } from '@typings/role-enum';
 import type { WeeklyShiftAssignment } from '../../api/shifts/shift.types';
 import GroupShiftAssignmentsPage from './GroupShiftAssignmentsPage';
 
@@ -16,11 +17,11 @@ const groupHookMock = vi.hoisted(() => ({
       id: 'group-care-001',
       name: 'Dad Care Circle',
       description: 'Daily support and medication coordination for Dad.',
-      role: 'Admin' as const,
+      role: 'primary_carer' as ROLE,
       createdAt: '2025-05-12T09:00:00.000Z',
       members: [
-        { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'Admin' as const, joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' as const },
-        { id: 'member-2', name: 'John', email: 'john@example.com', role: 'Member' as const, joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' as const },
+        { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'primary_carer' as ROLE, joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' as const },
+        { id: 'member-2', name: 'John', email: 'john@example.com', role: 'secondary_carer' as ROLE, joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' as const },
       ],
       gpContacts: [],
       patientId: 'patient-001',
@@ -104,12 +105,12 @@ describe('GroupShiftAssignmentsPage', () => {
         id: 'group-care-001',
         name: 'Dad Care Circle',
         description: 'Daily support and medication coordination for Dad.',
-        role: 'Admin',
+        role: 'primary_carer' as ROLE,
         canSchedule: true,
         createdAt: '2025-05-12T09:00:00.000Z',
         members: [
-          { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'Admin', joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' },
-          { id: 'member-2', name: 'John', email: 'john@example.com', role: 'Member', joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' },
+          { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'primary_carer' as ROLE, joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' },
+          { id: 'member-2', name: 'John', email: 'john@example.com', role: 'secondary_carer' as ROLE, joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' },
         ],
         gpContacts: [],
         patientId: 'patient-001',
@@ -181,7 +182,7 @@ describe('GroupShiftAssignmentsPage', () => {
   it('renders read-only controls for non-admin users', () => {
     groupHookMock.value = {
       ...groupHookMock.value,
-      group: { ...groupHookMock.value.group!, role: 'Member' as const },
+      group: { ...groupHookMock.value.group!, role: 'secondary_carer' as ROLE },
     };
 
     renderPage();

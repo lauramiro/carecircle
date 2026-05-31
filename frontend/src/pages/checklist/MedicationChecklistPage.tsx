@@ -10,12 +10,6 @@ import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import PageHeader from '../../components/ui/PageHeader';
 import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
 
-function mapChecklistUserRole(groupRole: string): 'primary' | 'secondary' | 'observer' {
-  if (groupRole === 'Admin') return 'primary';
-  if (groupRole === 'Observer') return 'observer';
-  return 'secondary';
-}
-
 export default function MedicationChecklistPage() {
   const { groupId } = useParams();
   const [searchParams] = useSearchParams();
@@ -107,7 +101,6 @@ export default function MedicationChecklistPage() {
     );
   }
 
-  const checklistUserRole = mapChecklistUserRole(group.role);
   const isChecklistStale = checklistView !== null && checklistView.date !== selectedDateStr;
 
   return (
@@ -144,7 +137,7 @@ export default function MedicationChecklistPage() {
         <MedicationChecklist
           checklistId={checklistView.id}
           checklistDate={checklistView.date}
-          userRole={checklistUserRole}
+          userRole={group.role}
           isLoading={resolvingChecklist || isChecklistStale}
           items={checklistItems}
           onItemsChange={setChecklistItems}

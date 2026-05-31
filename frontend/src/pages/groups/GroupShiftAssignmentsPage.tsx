@@ -10,7 +10,7 @@ import {
   shiftCoverageBadgeStyles,
 } from '../../components/shifts/shiftAssignmentStyles';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
-import { canAssignGroupShifts } from '../../api/groups/groups.service';
+import { canAssignShifts } from '../../lib/carePermissions';
 import { useWeeklyShiftAssignments } from '../../hooks/shifts/useWeeklyShiftAssignments';
 import { SHIFT_SLOT_LABELS, SHIFT_SLOTS } from '../../api/shifts/shift.types';
 import {
@@ -91,7 +91,7 @@ export default function GroupShiftAssignmentsPage() {
     assignment,
   ]));
   const activeMembers = group.members.filter((member) => member.status === 'Active');
-  const canAssign = canAssignGroupShifts(group.role);
+  const canAssign = canAssignShifts(group.role);
   const uncoveredCount = countUnassignedSlots(assignments);
 
   const weekLabel = `${formatShiftDate(weekDates[0])} – ${formatShiftDate(weekDates[6])}`;

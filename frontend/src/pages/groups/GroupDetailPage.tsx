@@ -15,6 +15,7 @@ import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { useGPContacts } from '../../hooks/groups/useGPContacts';
 import { formatDate, formatMemberCount } from '../../utils/formatters';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { canManageMembers, isJournalReadOnly } from '../../lib/carePermissions';
 
 interface StatTileProps {
   icon: ReactNode;
@@ -117,7 +118,7 @@ export default function GroupDetailPage() {
   }
 
   const members = group.members;
-  const canManageMembers = group.role === 'Admin';
+  const canManageMembersFlag = canManageMembers(group.role);
   const basePath = `/groups/${group.id}`;
 
   return (
@@ -185,7 +186,7 @@ export default function GroupDetailPage() {
                 <ClipboardList size={16} strokeWidth={2} />
                 Today&apos;s medications
               </motion.button>
-              {canManageMembers && (
+              {canManageMembersFlag && (
                 <motion.button
                   type="button"
                   onClick={() => navigate(`${basePath}/medications/add`)}
@@ -216,7 +217,7 @@ export default function GroupDetailPage() {
           <StatTile
             icon={<NotebookText size={16} strokeWidth={2} />}
             label="Handover"
-            value={group.role === 'Observer' ? 'Read-only access' : 'Read & write'}
+            value={isJournalReadOnly(group.role) ? 'Read-only access' : 'Read & write'}
           />
           <StatTile
             icon={<Sparkles size={16} strokeWidth={2} />}

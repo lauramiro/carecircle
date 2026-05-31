@@ -15,7 +15,7 @@ import MyShiftsTodayWidget from '../components/shifts/MyShiftsTodayWidget';
 import ShiftCoverageAlerts from '../components/shifts/ShiftCoverageAlerts';
 import { useAuth } from '../contexts/AuthContext';
 import { useGroups } from '../hooks/groups/useGroups';
-import { canAssignGroupShifts } from '../api/groups/groups.service';
+import { canAssignShifts, canManageMembers } from '../lib/carePermissions';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useDashboardShiftWarnings } from '../hooks/shifts/useDashboardShiftWarnings';
 import {
@@ -34,11 +34,11 @@ export default function DashboardPage() {
   const shouldReduceMotion = useReducedMotion();
   const cardVariants = shouldReduceMotion ? STATIC_CARD_VARIANTS : CARD_VARIANTS;
   const { warnings, loading: warningsLoading, error: warningsError } = useDashboardShiftWarnings();
-  const adminGroups = groups.filter((group) => group.role === 'Admin').length;
+  const managedGroups = groups.filter((group) => canManageMembers(group.role)).length;
   const totalMembers = groups.reduce((sum, group) => sum + group.memberCount, 0);
   const recentGroups = groups.slice(0, 3);
   const primaryGroup = groups[0] ?? null;
-  const shiftManagerGroups = groups.filter((group) => canAssignGroupShifts(group.role));
+  const shiftManagerGroups = groups.filter((group) => canAssignShifts(group.role));
 
   if (loading) {
     return (
@@ -149,7 +149,7 @@ export default function DashboardPage() {
         />
         <StatCard
           icon={<Shield size={20} strokeWidth={1.9} />}
-          value={adminGroups}
+          value={managedGroups}
           label="Groups you manage"
           variants={cardVariants}
         />

@@ -4,6 +4,7 @@ import {
   canAssignShifts,
   canEditAppointments,
   canManageMembers,
+  canRemoveOrSuspendMember,
   isChecklistReadOnly,
   validateMemberRoleChange,
 } from './carePermissions';
@@ -102,6 +103,35 @@ describe('validateMemberRoleChange', () => {
         ROLE.SECONDARY_CAREGIVER,
         groupMembers,
       ).allowed,
+    ).toBe(true);
+  });
+});
+
+describe('canRemoveOrSuspendMember', () => {
+  const primaryMember: GroupMember = {
+    id: 'primary-1',
+    name: 'Sarah',
+    email: 'sarah@example.com',
+    role: ROLE.PRIMARY_CAREGIVER,
+    joinedAt: '2025-05-12T09:00:00.000Z',
+    status: 'Active',
+  };
+
+  it('blocks primary carers from acting on their own row', () => {
+    expect(canRemoveOrSuspendMember('primary-1', primaryMember)).toBe(false);
+  });
+
+  it('allows primary carers to act on other members', () => {
+    expect(canRemoveOrSuspendMember('primary-1', { ...primaryMember, id: 'member-2' })).toBe(true);
+  });
+
+  it('allows non-primary members to act on their own row', () => {
+    expect(
+      canRemoveOrSuspendMember('secondary-1', {
+        ...primaryMember,
+        id: 'secondary-1',
+        role: ROLE.SECONDARY_CAREGIVER,
+      }),
     ).toBe(true);
   });
 });

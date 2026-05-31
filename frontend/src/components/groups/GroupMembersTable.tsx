@@ -1,5 +1,5 @@
 import type { GroupMember } from '../../api/groups/groups.types';
-import { getAssignableRolesForMember } from '../../lib/carePermissions';
+import { getAssignableRolesForMember, canRemoveOrSuspendMember } from '../../lib/carePermissions';
 import { getCareRoleLabel } from '../../lib/careRole';
 import { ROLE } from '@typings/role-enum';
 import { formatDate } from '../../utils/formatters';
@@ -95,6 +95,7 @@ export default function GroupMembersTable({
             {members.map((member) => {
               const assignableRoles = getAssignableRolesForMember(member, currentUserId, members);
               const roleSelectDisabled = assignableRoles.length === 1;
+              const canRemoveOrSuspend = canRemoveOrSuspendMember(currentUserId, member);
 
               return (
               <tr
@@ -143,38 +144,47 @@ export default function GroupMembersTable({
                 </td>
                 {canManageMembers && (
                   <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onRemoveMember(member)}
-                        className="h-8 rounded-lg border px-3 text-xs font-bold"
-                        style={{
-                          borderColor: 'var(--color-status-critical)',
-                          color: 'var(--color-status-critical)',
-                        }}
+                    {canRemoveOrSuspend ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onRemoveMember(member)}
+                          className="h-8 rounded-lg border px-3 text-xs font-bold"
+                          style={{
+                            borderColor: 'var(--color-status-critical)',
+                            color: 'var(--color-status-critical)',
+                          }}
+                        >
+                          Remove
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onStatusChange(
+                              member,
+                              member.status === 'Suspended' ? 'Active' : 'Suspended',
+                            )
+                          }
+                          className="h-8 rounded-lg border px-3 text-xs font-bold"
+                          style={{
+                            borderColor: 'var(--color-border)',
+                            color:
+                              member.status === 'Suspended'
+                                ? 'var(--color-primary)'
+                                : 'var(--color-status-overdue)',
+                          }}
+                        >
+                          {member.status === 'Suspended' ? 'Reactivate' : 'Suspend'}
+                        </button>
+                      </div>
+                    ) : (
+                      <span
+                        className="text-xs font-medium"
+                        style={{ color: 'var(--color-text-hint)' }}
                       >
-                        Remove
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onStatusChange(
-                            member,
-                            member.status === 'Suspended' ? 'Active' : 'Suspended',
-                          )
-                        }
-                        className="h-8 rounded-lg border px-3 text-xs font-bold"
-                        style={{
-                          borderColor: 'var(--color-border)',
-                          color:
-                            member.status === 'Suspended'
-                              ? 'var(--color-primary)'
-                              : 'var(--color-status-overdue)',
-                        }}
-                      >
-                        {member.status === 'Suspended' ? 'Reactivate' : 'Suspend'}
-                      </button>
-                    </div>
+                        —
+                      </span>
+                    )}
                   </td>
                 )}
               </tr>

@@ -98,3 +98,15 @@ export function getAssignableRolesForMember(
 
   return allRoles;
 }
+
+/** Primary carers cannot remove or suspend themselves from the group. */
+export function canRemoveOrSuspendMember(
+  actorId: string | undefined,
+  targetMember: GroupMember,
+): boolean {
+  if (!actorId || targetMember.id !== actorId) {
+    return true;
+  }
+
+  return targetMember.role !== ROLE.PRIMARY_CAREGIVER;
+}

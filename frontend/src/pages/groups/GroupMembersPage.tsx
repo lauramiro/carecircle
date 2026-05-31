@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import type { GroupMember } from '../../api/groups/groups.types';
 import { updateMemberRole } from '../../api/groups/groups.service';
 import { useAuth } from '../../contexts/AuthContext';
-import { canManageMembers, validateMemberRoleChange } from '../../lib/carePermissions';
+import { canManageMembers, canRemoveOrSuspendMember, validateMemberRoleChange } from '../../lib/carePermissions';
 import { getCareRoleLabel } from '../../lib/careRole';
 import { ROLE } from '@typings/role-enum';
 import GroupMembersTable from '../../components/groups/GroupMembersTable';
@@ -120,6 +120,24 @@ export default function GroupMembersPage() {
     setPendingAction({ type: 'role', member, role });
   }
 
+  function handleRemoveMember(member: GroupMember) {
+    if (!canRemoveOrSuspendMember(currentUserId, member)) {
+      toast.error('Primary carers cannot remove themselves from the group.');
+      return;
+    }
+
+    setPendingAction({ type: 'remove', member });
+  }
+
+  function handleStatusChange(member: GroupMember, status: GroupMember['status']) {
+    if (!canRemoveOrSuspendMember(currentUserId, member)) {
+      toast.error('Primary carers cannot suspend themselves.');
+      return;
+    }
+
+    setPendingAction({ type: 'status', member, status });
+  }
+
   async function confirmPendingAction() {
     if (!pendingAction || isSubmittingAction || !group) return;
 
@@ -230,9 +248,9 @@ export default function GroupMembersPage() {
         members={members}
         currentUserId={currentUserId}
         canManageMembers={canManageMembersFlag}
-        onRemoveMember={(member) => setPendingAction({ type: 'remove', member })}
+        onRemoveMember={handleRemoveMember}
         onRoleChange={handleRoleChange}
-        onStatusChange={(member, status) => setPendingAction({ type: 'status', member, status })}
+        onStatusChange={handleStatusChange}
       />
 
       <MemberActionConfirmationModal

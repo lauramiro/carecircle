@@ -43,7 +43,7 @@ export default function ShiftCoverageAlerts({
               Shift coverage gaps
             </h2>
             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              Care sessions without an assigned carer this week.
+              Sessions you still need to assign as primary carer this week.
             </p>
           </div>
         </div>
@@ -66,7 +66,7 @@ export default function ShiftCoverageAlerts({
             color: 'var(--color-text-secondary)',
           }}
         >
-          All sessions are covered for this week across your care circles.
+          All sessions are covered this week in the groups you manage.
         </p>
       ) : (
         <ul className="mt-4 grid gap-3 md:grid-cols-2">

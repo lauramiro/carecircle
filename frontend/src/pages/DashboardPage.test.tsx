@@ -140,4 +140,30 @@ describe('DashboardPage', () => {
     expect(screen.queryByTestId('on-duty-carer-widget')).not.toBeInTheDocument();
     expect(screen.queryByTestId('my-shifts-today-widget')).not.toBeInTheDocument();
   });
+
+  it('hides shift coverage gaps when the user is not a primary carer anywhere', () => {
+    groupsHookMock.value = {
+      loading: false,
+      error: null,
+      groups: [
+        {
+          id: 'group-care-002',
+          name: 'Mum',
+          description: 'Desc',
+          role: 'Member',
+          createdAt: '2025-05-12T09:00:00.000Z',
+          memberCount: 2,
+          patientId: 'patient-002',
+        },
+      ],
+    };
+
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText('Shift coverage gaps')).not.toBeInTheDocument();
+  });
 });

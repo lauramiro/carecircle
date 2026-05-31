@@ -111,6 +111,11 @@ export function mapRole(role: string): GroupRole {
       return 'Member';
   }
 }
+
+/** Only primary carers (role_in_care = primary_carer) manage shift assignments. */
+export function canAssignGroupShifts(role: GroupRole): boolean {
+  return role === 'Admin';
+}
 export async function getGroups(): Promise<GroupSummary[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');

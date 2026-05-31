@@ -15,6 +15,7 @@ import MyShiftsTodayWidget from '../components/shifts/MyShiftsTodayWidget';
 import ShiftCoverageAlerts from '../components/shifts/ShiftCoverageAlerts';
 import { useAuth } from '../contexts/AuthContext';
 import { useGroups } from '../hooks/groups/useGroups';
+import { canAssignGroupShifts } from '../api/groups/groups.service';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useDashboardShiftWarnings } from '../hooks/shifts/useDashboardShiftWarnings';
 import {
@@ -37,6 +38,7 @@ export default function DashboardPage() {
   const totalMembers = groups.reduce((sum, group) => sum + group.memberCount, 0);
   const recentGroups = groups.slice(0, 3);
   const primaryGroup = groups[0] ?? null;
+  const shiftManagerGroups = groups.filter((group) => canAssignGroupShifts(group.role));
 
   if (loading) {
     return (
@@ -244,11 +246,13 @@ export default function DashboardPage() {
         )}
       </section>
 
-      <ShiftCoverageAlerts
-        warnings={warnings}
-        loading={warningsLoading}
-        error={warningsError}
-      />
+      {shiftManagerGroups.length > 0 && (
+        <ShiftCoverageAlerts
+          warnings={warnings}
+          loading={warningsLoading}
+          error={warningsError}
+        />
+      )}
     </section>
   );
 }

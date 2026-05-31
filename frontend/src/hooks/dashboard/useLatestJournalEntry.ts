@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getLatestJournalEntry } from '../../api/journal/journal.service';
 import type { JournalEntry } from '../../api/journal/journal.types';
+import { useSupabaseRealtime } from '../realtime/useSupabaseRealtime';
 
 interface UseLatestJournalEntryResult {
   entry: JournalEntry | null;
@@ -13,23 +14,44 @@ export function useLatestJournalEntry(groupId: string): UseLatestJournalEntryRes
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadLatest = useCallback(async (options?: { silent?: boolean }) => {
     if (!groupId) {
       setLoading(false);
       return;
     }
 
-    let active = true;
-    setLoading(true);
-    setError(null);
+    if (!options?.silent) {
+      setLoading(true);
+      setError(null);
+    }
 
-    getLatestJournalEntry(groupId)
-      .then(data => { if (active) setEntry(data); })
-      .catch(() => { if (active) setError('Failed to load journal entry.'); })
-      .finally(() => { if (active) setLoading(false); });
-
-    return () => { active = false; };
+    try {
+      const data = await getLatestJournalEntry(groupId);
+      setEntry(data);
+    } catch {
+      if (!options?.silent) setError('Failed to load journal entry.');
+    } finally {
+      if (!options?.silent) setLoading(false);
+    }
   }, [groupId]);
+
+  useEffect(() => {
+    void loadLatest();
+  }, [loadLatest]);
+
+  const refreshFromRealtime = useCallback(() => {
+    void loadLatest({ silent: true });
+  }, [loadLatest]);
+
+  useSupabaseRealtime({
+    channelName: groupId ? `dashboard-journal-${groupId}` : 'dashboard-journal-disabled',
+    table: 'handover_journal_entries',
+    filter: groupId ? `group_id=eq.${groupId}` : undefined,
+    enabled: Boolean(groupId),
+    onInsert: refreshFromRealtime,
+    onUpdate: refreshFromRealtime,
+    onDelete: refreshFromRealtime,
+  });
 
   return { entry, loading, error };
 }

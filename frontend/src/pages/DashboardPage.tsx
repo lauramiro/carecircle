@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import { AlertTriangle, CalendarDays, HeartPulse, Users } from 'lucide-react';
-import { ArrowRight, FolderOpen, Plus, Shield, Users } from 'lucide-react';
+import { AlertTriangle, ArrowRight, FolderOpen, Plus, Shield, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader';
 import StatCard from '../components/ui/StatCard';
@@ -12,38 +11,17 @@ import OnDutyCarerWidget from '../components/dashboard/OnDutyCarerWidget';
 import NextAppointmentWidget from '../components/dashboard/NextAppointmentWidget';
 import LatestJournalEntryWidget from '../components/dashboard/LatestJournalEntryWidget';
 import AiInsightWidget from '../components/dashboard/AiInsightWidget';
+import MyShiftsTodayWidget from '../components/shifts/MyShiftsTodayWidget';
 import { useAuth } from '../contexts/AuthContext';
 import { useGroups } from '../hooks/groups/useGroups';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useDashboardShiftWarnings } from '../hooks/shifts/useDashboardShiftWarnings';
 import {
   CARD_VARIANTS,
   STATIC_CARD_VARIANTS,
   STAGGER_CONTAINER_VARIANTS,
   TRANSITIONS,
 } from '../lib/animation.constants';
-import { useReducedMotion } from '../hooks/useReducedMotion';
-import { useDashboardShiftWarnings } from '../hooks/shifts/useDashboardShiftWarnings';
-import { formatDate } from '@utils/formatters';
-
-interface AnimatedStatValueProps {
-  value: number;
-  shouldReduceMotion: boolean;
-}
-
-function AnimatedStatValue({ value, shouldReduceMotion }: AnimatedStatValueProps) {
-  const { number } = useSpring({
-    from: { number: shouldReduceMotion ? value : 0 },
-    to: { number: value },
-    immediate: shouldReduceMotion,
-    config: { tension: 120, friction: 18 },
-  });
-
-  return (
-    <animated.p className="text-2xl font-bold">
-      {number.to((currentValue) => Math.round(currentValue).toString())}
-    </animated.p>
-  );
-}
 import { getPersonalizedGreeting } from '../utils/greeting';
 import { formatDate, formatMemberCount, truncateText } from '../utils/formatters';
 
@@ -143,6 +121,13 @@ export default function DashboardPage() {
             />
             <AiInsightWidget
               patientId={primaryGroup.patientId}
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <MyShiftsTodayWidget
               groupId={primaryGroup.id}
               groupName={primaryGroup.name}
             />
@@ -255,14 +240,14 @@ export default function DashboardPage() {
                   <span>{formatDate(group.createdAt)}</span>
                   <span>{formatMemberCount(group.memberCount)}</span>
                 </div>
-              </div>
-            </motion.article>
-          );
-        })}
-      </motion.div>
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </section>
 
       <section
-        className="mt-6 rounded-2xl border bg-white p-5"
+        className="rounded-2xl border bg-white p-5"
         style={{ borderColor: 'var(--color-border)' }}
       >
         <div className="flex items-center gap-3">
@@ -312,9 +297,6 @@ export default function DashboardPage() {
               </li>
             ))}
           </ul>
-              </motion.button>
-            ))}
-          </motion.div>
         )}
       </section>
     </section>

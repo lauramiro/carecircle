@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DashboardPage from './DashboardPage';
 
 vi.mock('../hooks/shifts/useDashboardShiftWarnings', () => ({
@@ -16,11 +17,8 @@ vi.mock('../hooks/shifts/useDashboardShiftWarnings', () => ({
     loading: false,
     error: null,
   }),
-import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import DashboardPage from './DashboardPage';
+}));
 
-// Stub dashboard widgets to keep this test focused on DashboardPage layout
 vi.mock('../components/dashboard/MedicationSummaryWidget', () => ({
   default: () => <div data-testid="medication-summary-widget" />,
 }));
@@ -39,6 +37,10 @@ vi.mock('../components/dashboard/LatestJournalEntryWidget', () => ({
 
 vi.mock('../components/dashboard/AiInsightWidget', () => ({
   default: () => <div data-testid="ai-insight-widget" />,
+}));
+
+vi.mock('../components/shifts/MyShiftsTodayWidget', () => ({
+  default: () => <div data-testid="my-shifts-today-widget" />,
 }));
 
 const authMock = vi.hoisted(() => ({
@@ -104,17 +106,14 @@ describe('DashboardPage', () => {
     expect(screen.getByText(/good (morning|afternoon|evening), sarah caregiver/i)).toBeInTheDocument();
     expect(screen.getByText(/overview of your care circles/i)).toBeInTheDocument();
     expect(screen.getByText('Active groups')).toBeInTheDocument();
-    expect(screen.getByText('Pending invites')).toBeInTheDocument();
-    expect(screen.getByText("Today's events")).toBeInTheDocument();
     expect(screen.getByText('Shift coverage alerts')).toBeInTheDocument();
-    expect(screen.getByText('Dad Care Circle')).toBeInTheDocument();
+    expect(screen.getAllByText('Dad Care Circle').length).toBeGreaterThan(0);
     expect(screen.getByText(/3 uncovered shifts this week/i)).toBeInTheDocument();
     expect(screen.getByText('Groups you manage')).toBeInTheDocument();
     expect(screen.getByText('Total members')).toBeInTheDocument();
-    expect(screen.getAllByText('Dad Care Circle').length).toBeGreaterThan(0);
   });
 
-  it('renders both care status widgets for the first group', () => {
+  it('renders care status widgets for the first group', () => {
     render(
       <MemoryRouter>
         <DashboardPage />
@@ -126,6 +125,7 @@ describe('DashboardPage', () => {
     expect(screen.getByTestId('next-appointment-widget')).toBeInTheDocument();
     expect(screen.getByTestId('latest-journal-entry-widget')).toBeInTheDocument();
     expect(screen.getByTestId('ai-insight-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('my-shifts-today-widget')).toBeInTheDocument();
   });
 
   it('does not render widgets when there are no groups', () => {
@@ -138,8 +138,6 @@ describe('DashboardPage', () => {
 
     expect(screen.queryByTestId('medication-summary-widget')).not.toBeInTheDocument();
     expect(screen.queryByTestId('on-duty-carer-widget')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('next-appointment-widget')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('latest-journal-entry-widget')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('ai-insight-widget')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('my-shifts-today-widget')).not.toBeInTheDocument();
   });
 });

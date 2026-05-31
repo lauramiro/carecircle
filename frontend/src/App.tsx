@@ -21,6 +21,7 @@ import AppointmentsPage from './pages/appointments/AppointmentsPage';
 import AppointmentFormPage from './pages/appointments/AppointmentFormPage';
 import AiQaPage from './pages/ai/AiQaPage';
 import AdministrationLogPage from './pages/groups/AdministrationLogPage';
+import MyShiftsPage from './pages/MyShiftsPage';
 import SettingsPage from './pages/SettingsPage';
 import { usePushNotifications } from './hooks/push/usePushNotifications';
 import { HospitalSummaryPDF } from './components/hospital-summary/HospitalSummaryPDF';
@@ -66,6 +67,7 @@ function App() {
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="dashboard/my-shifts" element={<MyShiftsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="groups/create" element={<CreateGroupPage />} />
           <Route path="groups/list" element={<GroupsListPage />} />

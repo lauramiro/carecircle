@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  compareShiftSlots,
   formatShiftSlotLabel,
+  formatShiftSlotShort,
   getNextSlotRef,
   getPreviousSlotRef,
   isShiftSlotActive,
@@ -36,5 +38,11 @@ describe('shifts utilities', () => {
       shiftDate: '2026-05-21',
       slot: 'morning',
     });
+  });
+
+  it('sorts shift slots in session order', () => {
+    expect(compareShiftSlots('evening', 'morning')).toBeGreaterThan(0);
+    expect(compareShiftSlots('morning', 'afternoon')).toBeLessThan(0);
+    expect(formatShiftSlotShort('morning')).toBe('Morning');
   });
 });

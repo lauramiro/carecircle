@@ -62,6 +62,22 @@ export function formatShiftSlotLabel(slot: ShiftSlotValue): string {
   return `Custom (${slot})`;
 }
 
+export function formatShiftSlotShort(slot: ShiftSlotValue): string {
+  if (isStandardShiftSlot(slot)) {
+    return SHIFT_SLOT_LABELS[slot];
+  }
+  return `Custom ${slot}`;
+}
+
+export function compareShiftSlots(a: ShiftSlotValue, b: ShiftSlotValue): number {
+  const indexFor = (slot: ShiftSlotValue): number => {
+    if (isStandardShiftSlot(slot)) return SHIFT_SLOTS.indexOf(slot);
+    const bounds = parseShiftSlotBounds(slot);
+    return bounds?.startMin ?? Number.MAX_SAFE_INTEGER;
+  };
+  return indexFor(a) - indexFor(b);
+}
+
 export function formatCustomShiftSlot(startTime: string, endTime: string): string {
   return `${startTime}-${endTime}`;
 }

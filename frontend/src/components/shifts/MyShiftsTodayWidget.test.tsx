@@ -41,7 +41,10 @@ vi.mock('../../hooks/shifts/useMyShifts', () => ({
         ],
       },
     ],
-    todayShifts: [],
+    todayShifts: [
+      { id: '1', groupId: 'group-1', shiftDate: '2026-05-20', slot: 'morning' },
+      { id: '2', groupId: 'group-2', shiftDate: '2026-05-20', slot: 'evening' },
+    ],
     upcomingShifts: [],
     historyShifts: [],
     upcomingByGroup: [],
@@ -71,7 +74,7 @@ describe('MyShiftsTodayWidget', () => {
     expect(screen.getByText('My Shifts Today')).toBeInTheDocument();
     expect(screen.getByText('Dad Care Circle')).toBeInTheDocument();
     expect(screen.getByText('Mum Care Circle')).toBeInTheDocument();
-    expect(screen.getByText(/Handover from: John/)).toBeInTheDocument();
-    expect(screen.getByText(/Handover to: Alex/)).toBeInTheDocument();
+    expect(screen.getByText(/John → Emma/)).toBeInTheDocument();
+    expect(screen.getByText(/Unassigned → Alex/)).toBeInTheDocument();
   });
 });

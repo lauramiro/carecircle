@@ -127,11 +127,9 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <MyShiftsTodayWidget
-              groups={groups.map((group) => ({ id: group.id, name: group.name }))}
-            />
-          </div>
+          <MyShiftsTodayWidget
+            groups={groups.map((group) => ({ id: group.id, name: group.name }))}
+          />
         </>
       )}
 

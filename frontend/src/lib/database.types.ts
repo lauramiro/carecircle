@@ -1767,50 +1767,6 @@ export type Database = {
         }
         Relationships: []
       }
-      primary_carer_wellbeing_checkins: {
-        Row: {
-          carer_id: string
-          composite_score: number
-          id: string
-          overall_mood: number
-          overwhelm_level: number
-          sleep_quality: number
-          social_connection: number
-          support_message_dismissed_at: string | null
-          stress_level: number
-          submitted_at: string
-          week_start: string
-        }
-        Insert: {
-          carer_id: string
-          composite_score?: number
-          id?: string
-          overall_mood: number
-          overwhelm_level: number
-          sleep_quality: number
-          social_connection: number
-          support_message_dismissed_at?: string | null
-          stress_level: number
-          submitted_at?: string
-          week_start?: string
-        }
-        Update: {
-          carer_id?: string
-          composite_score?: number
-          id?: string
-          overall_mood?: number
-          overwhelm_level?: number
-          sleep_quality?: number
-          social_connection?: number
-          support_message_dismissed_at?: string | null
-          stress_level?: number
-          submitted_at?: string
-          week_start?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "primary_carer_wellbeing_checkins_carer_id_fkey"
-            columns: ["carer_id"]
       push_subscriptions: {
         Row: {
           auth: string | null
@@ -2244,6 +2200,14 @@ export type Database = {
       is_caregiver_for: { Args: { p_patient_id: string }; Returns: boolean }
       is_email_registered: { Args: { p_email: string }; Returns: boolean }
       is_group_member: { Args: { check_group_id: string }; Returns: boolean }
+      update_care_giver_role: {
+        Args: {
+          p_caregiver_id: string
+          p_group_id: string
+          p_new_role: Database["public"]["Enums"]["member_role"]
+        }
+        Returns: undefined
+      }
       verify_profile_trigger: {
         Args: never
         Returns: {

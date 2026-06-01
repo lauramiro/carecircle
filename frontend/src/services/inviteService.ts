@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { callRpc } from '../lib/supabaseRpc';
 import { isAbortError } from '../utils/helper';
 
 export interface InviteGroupDetails {
@@ -84,7 +85,7 @@ export async function fetchInviteGroupDetails(inviteId: string): Promise<InviteG
 
   const { data: group, error: groupError } = await supabase
     .from('care_group')
-    .select('name, description, patient_id')
+    .select('name, description')
     .eq('id', invite.group_id)
     .maybeSingle();
 
@@ -92,7 +93,17 @@ export async function fetchInviteGroupDetails(inviteId: string): Promise<InviteG
     throw new Error(groupError.message);
   }
 
-  if (!group?.name || !group.patient_id) {
+  const { data: patient, error: patientError } = await supabase
+    .from('patients')
+    .select('id')
+    .eq('group_id', invite.group_id)
+    .maybeSingle();
+
+  if (patientError) {
+    throw new Error(patientError.message);
+  }
+
+  if (!group?.name || !patient?.id) {
     throw new Error('Care group not found.');
   }
 
@@ -100,7 +111,7 @@ export async function fetchInviteGroupDetails(inviteId: string): Promise<InviteG
     .from('care_givers')
     .select('*', { count: 'exact', head: true })
     .eq('group_id', invite.group_id)
-    .eq('patient_id', group.patient_id);
+    .eq('patient_id', patient.id);
 
   if (countError) {
     throw new Error(countError.message);
@@ -108,7 +119,7 @@ export async function fetchInviteGroupDetails(inviteId: string): Promise<InviteG
 
   return {
     groupId: invite.group_id,
-    patientId: group.patient_id,
+    patientId: patient.id,
     groupName: group.name,
     description: group.description ?? '',
     totalCarers: count ?? 0,
@@ -153,7 +164,7 @@ export async function acceptInvitation(inviteId: string, email: string): Promise
   void email;
   assertValidInviteUuid(inviteId);
 
-  const { data, error } = await supabase.rpc('update_invite_status', {
+  const { data, error } = await callRpc<{ group_id?: string }>('update_invite_status', {
     p_invite_id: inviteId,
     p_status: INVITE_STATUS.ACCEPTED,
   });
@@ -173,7 +184,7 @@ export async function acceptInvitation(inviteId: string, email: string): Promise
 export async function rejectInvitation(inviteId: string): Promise<void> {
   assertValidInviteUuid(inviteId);
 
-  const { error } = await supabase.rpc('update_invite_status', {
+  const { error } = await callRpc('update_invite_status', {
     p_invite_id: inviteId,
     p_status: INVITE_STATUS.REJECTED,
   });

@@ -12,7 +12,12 @@ import {
 } from '@constants/createCareCircle.constants';
 import { getIanaTimezoneOptions } from '@lib/ianaTimezones';
 import { supabase } from '@lib/supabaseClient';
-import type { CareGroupInsert, PatientInsert } from '@lib/supabaseTables';
+import type {
+  CareGiverInsert,
+  CareGroupInsert,
+  PatientInsert,
+  ProfileInsert,
+} from '@lib/supabaseTables';
 import type { CreateCareCircleFormValues } from '@typings/createCareCircle.types';
 import { parseCommaSeparatedList, pickDefinedStrings } from '@utils/createCareCircleForm';
 import { ROLE } from '@typings/role-enum';
@@ -27,6 +32,7 @@ export default function CreateGroupPage() {
     register,
     handleSubmit,
     clearErrors,
+    getValues,
     formState: { errors },
   } = useForm<CreateCareCircleFormValues>({
     defaultValues: CREATE_CARE_CIRCLE_DEFAULT_VALUES,
@@ -60,6 +66,22 @@ export default function CreateGroupPage() {
     required: 'Select a preferred group time zone.',
   });
 
+  const requirePatientContact = () => {
+    const email = getValues('patientEmail').trim();
+    const phone = getValues('phone').trim();
+    if (!email && !phone) {
+      return 'Enter an email or phone number for the patient.';
+    }
+    return true;
+  };
+
+  const patientEmailField = register('patientEmail', {
+    validate: requirePatientContact,
+  });
+  const phoneField = register('phone', {
+    validate: requirePatientContact,
+  });
+
   const timezoneOptions = getIanaTimezoneOptions();
 
   const onSubmit = async (data: CreateCareCircleFormValues) => {
@@ -67,6 +89,23 @@ export default function CreateGroupPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      // Ensure a profiles row exists before inserting the patient, which has a
+      // FK to profiles. The handle_new_user trigger creates this automatically
+      // on signup, but may not have run for existing accounts.
+      const profileInsert: ProfileInsert = {
+        id: user.id,
+        email: user.email ?? '',
+        full_name:
+          (user.user_metadata?.full_name as string | undefined) ??
+          user.email?.split('@')[0] ??
+          'User',
+        role: 'caregiver',
+      };
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert(profileInsert, { onConflict: 'id', ignoreDuplicates: true });
+      if (profileError) throw profileError;
 
       const patientInsert: PatientInsert = {
         full_name: data.patientFullName.trim(),
@@ -87,7 +126,7 @@ export default function CreateGroupPage() {
       if (ph) patientInsert.phone = ph;
 
       if (!patientInsert.email && !patientInsert.phone) {
-        throw new Error('A patient must have either an email or a phone number to satisfy the contact constraints.');
+        throw new Error('Enter an email or phone number for the patient.');
       }
 
       const emergency = pickDefinedStrings({
@@ -142,6 +181,7 @@ export default function CreateGroupPage() {
         .single();
 
       if (patientError) throw patientError;
+      if (!patient?.id) throw new Error('Patient record was not created.');
 
       const groupNameTrimmed = data.groupName.trim();
       const descriptionTrimmed = data.groupDescription.trim();
@@ -161,7 +201,7 @@ export default function CreateGroupPage() {
       if (groupError) throw groupError;
       if (!careGroup?.id) throw new Error('Care group was not created.');
 
-      const { error: careGiverError } = await supabase.from('care_givers').insert({
+      const careGiverInsert: CareGiverInsert = {
         group_id: careGroup.id,
         patient_id: patient.id,
         caregiver_id: user.id,
@@ -172,7 +212,10 @@ export default function CreateGroupPage() {
         can_communicate: true,
         status: 'active',
         joined_at: date.formatISO(new Date()),
-      });
+      };
+      const { error: careGiverError } = await supabase
+        .from('care_givers')
+        .insert(careGiverInsert);
 
       if (careGiverError) throw careGiverError;
 
@@ -193,8 +236,9 @@ export default function CreateGroupPage() {
           ? err.message
           : 'Something went wrong. Please try again.';
       toast.error(message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const inputBorder = (err: string | undefined) =>
@@ -424,17 +468,29 @@ export default function CreateGroupPage() {
         <div className="mb-5 grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="patientEmail" className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
-              Email
+              Email <span className="font-normal">(email or phone required)</span>
             </label>
             <input
               id="patientEmail"
               type="email"
-              {...register('patientEmail')}
+              {...patientEmailField}
+              onChange={e => {
+                patientEmailField.onChange(e);
+                clearErrors(['patientEmail', 'phone']);
+              }}
               placeholder="name@example.com"
               autoComplete="email"
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
-              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+              style={{
+                borderColor: inputBorder(errors.patientEmail?.message),
+                color: 'var(--color-text-primary)',
+              }}
             />
+            {errors.patientEmail && (
+              <p className="mt-2 text-xs" style={{ color: 'var(--color-status-critical)' }}>
+                {errors.patientEmail.message}
+              </p>
+            )}
           </div>
           <div>
             <label htmlFor="phone" className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
@@ -443,12 +499,24 @@ export default function CreateGroupPage() {
             <input
               id="phone"
               type="tel"
-              {...register('phone')}
+              {...phoneField}
+              onChange={e => {
+                phoneField.onChange(e);
+                clearErrors(['patientEmail', 'phone']);
+              }}
               placeholder="Contact number"
               autoComplete="tel"
               className="mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
-              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+              style={{
+                borderColor: inputBorder(errors.phone?.message),
+                color: 'var(--color-text-primary)',
+              }}
             />
+            {errors.phone && (
+              <p className="mt-2 text-xs" style={{ color: 'var(--color-status-critical)' }}>
+                {errors.phone.message}
+              </p>
+            )}
           </div>
         </div>
 
@@ -734,6 +802,7 @@ export default function CreateGroupPage() {
         <div className="mb-5">
           <label htmlFor="relationship" className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
             Your relationship to the patient
+            <RequiredMark />
           </label>
           <select
             id="relationship"

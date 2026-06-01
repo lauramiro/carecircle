@@ -13,6 +13,9 @@ const WELLBEING_REMINDER_TYPE = 'wellbeing_checkin_reminder';
 const WELLBEING_REMINDER_TITLE = 'Weekly wellbeing check-in';
 const WELLBEING_REMINDER_BODY =
   'How are you doing this week? Take 2 minutes for your wellbeing check-in';
+const PATIENT_WELLBEING_NUDGE_TYPE = 'patient_wellbeing_checkin_nudge';
+const PATIENT_WELLBEING_NUDGE_TITLE = 'Daily wellbeing check-in';
+const EVENING_SHIFT_SLOT = 'evening';
 
 interface AppointmentRow {
   id: string;
@@ -49,6 +52,16 @@ interface CareGroupTimezoneRow {
   preferred_timezone: string | null;
 }
 
+interface GroupPatientRow {
+  id: string;
+  full_name: string;
+  group_id: string | null;
+}
+
+interface EveningShiftAssignmentRow {
+  assigned_caregiver_id: string | null;
+}
+
 @Injectable()
 export class RemindersService {
   private readonly logger = new Logger(RemindersService.name);
@@ -78,6 +91,9 @@ export class RemindersService {
     }
     await this.processWeeklyWellbeingReminders(now).catch((err) =>
       this.logger.warn('wellbeing_reminders_failed', err),
+    );
+    await this.processEveningPatientWellbeingNudges(now).catch((err) =>
+      this.logger.warn('patient_wellbeing_nudges_failed', err),
     );
   }
 
@@ -432,5 +448,191 @@ export class RemindersService {
         url: actionUrl,
       })
       .catch((err) => this.logger.warn(`wellbeing_push_failed user=${userId}`, err));
+  }
+
+  private async processEveningPatientWellbeingNudges(now: Date): Promise<void> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('care_group')
+      .select('id, preferred_timezone');
+
+    if (error) {
+      this.logger.warn(`fetch_care_groups_failed ${error.message}`);
+      return;
+    }
+
+    const groups = (data ?? []) as CareGroupTimezoneRow[];
+    if (!groups.length) return;
+
+    for (const group of groups) {
+      const timezone = group.preferred_timezone ?? 'UTC';
+      if (!this.isWithinDailyReminderWindow(now, timezone, 20, 0)) {
+        continue;
+      }
+
+      const checkinDate = this.getLocalDateForTimezone(now, timezone);
+      const reminderKey = `${group.id}:${checkinDate}`;
+      const patient = await this.fetchPatientForGroup(group.id);
+      if (!patient) continue;
+
+      const onDutyCarerId = await this.fetchEveningShiftAssignee(group.id, checkinDate);
+      if (!onDutyCarerId) continue;
+
+      const [alreadySent, checkinExists, profile] = await Promise.all([
+        this.hasExistingNotification(onDutyCarerId, PATIENT_WELLBEING_NUDGE_TYPE, reminderKey),
+        this.hasPatientWellbeingCheckinForDate(patient.id, checkinDate),
+        this.fetchProfilePreference(onDutyCarerId),
+      ]);
+
+      if (alreadySent || checkinExists) continue;
+      if (!this.isEveningPatientCheckinNudgeEnabled(profile?.preferences)) continue;
+
+      const patientFirstName = this.extractFirstName(patient.full_name);
+      await this.sendEveningPatientWellbeingNudge({
+        userId: onDutyCarerId,
+        groupId: group.id,
+        patientFirstName,
+        reminderKey,
+      });
+    }
+  }
+
+  private async fetchPatientForGroup(groupId: string): Promise<GroupPatientRow | null> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('patients')
+      .select('id, full_name, group_id')
+      .eq('group_id', groupId)
+      .maybeSingle();
+
+    if (error) {
+      this.logger.warn(`fetch_group_patient_failed group=${groupId} ${error.message}`);
+      return null;
+    }
+
+    return data as GroupPatientRow | null;
+  }
+
+  private async fetchEveningShiftAssignee(
+    groupId: string,
+    shiftDate: string,
+  ): Promise<string | null> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('weekly_shift_assignments')
+      .select('assigned_caregiver_id')
+      .eq('group_id', groupId)
+      .eq('shift_date', shiftDate)
+      .eq('shift_slot', EVENING_SHIFT_SLOT)
+      .maybeSingle();
+
+    if (error) {
+      this.logger.warn(`fetch_evening_shift_failed group=${groupId} ${error.message}`);
+      return null;
+    }
+
+    return (data as EveningShiftAssignmentRow | null)?.assigned_caregiver_id ?? null;
+  }
+
+  private async fetchProfilePreference(userId: string): Promise<ProfilePreferenceRow | null> {
+    const profiles = await this.fetchProfilePreferences([userId]);
+    return profiles[0] ?? null;
+  }
+
+  private async hasPatientWellbeingCheckinForDate(
+    patientId: string,
+    checkinDate: string,
+  ): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('patient_wellbeing_checkins')
+      .select('id')
+      .eq('patient_id', patientId)
+      .eq('checkin_date', checkinDate)
+      .limit(1);
+
+    if (error) {
+      this.logger.warn(`fetch_patient_checkin_failed patient=${patientId} ${error.message}`);
+      return false;
+    }
+
+    return (data?.length ?? 0) > 0;
+  }
+
+  private isEveningPatientCheckinNudgeEnabled(
+    preferences: Record<string, unknown> | null | undefined,
+  ): boolean {
+    if (!preferences) return true;
+
+    const notifications =
+      typeof preferences.notifications === 'object' && preferences.notifications !== null
+        ? (preferences.notifications as Record<string, unknown>)
+        : null;
+    const reminderValue = notifications?.eveningPatientCheckinNudgeEnabled;
+
+    return reminderValue !== false;
+  }
+
+  private getLocalDateForTimezone(now: Date, timezone: string): string {
+    return format(toZonedTime(now, timezone), 'yyyy-MM-dd');
+  }
+
+  private isWithinDailyReminderWindow(
+    now: Date,
+    timezone: string,
+    hour: number,
+    minute: number,
+  ): boolean {
+    const targetUtc = fromZonedTime(
+      `${this.getLocalDateForTimezone(now, timezone)}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`,
+      timezone,
+    );
+    const diffMs = now.getTime() - targetUtc.getTime();
+
+    return diffMs >= 0 && diffMs < WINDOW_MINUTES * 60_000;
+  }
+
+  private extractFirstName(fullName: string): string {
+    const trimmed = fullName.trim();
+    if (!trimmed) return 'Patient';
+    return trimmed.split(/\s+/)[0] ?? 'Patient';
+  }
+
+  private async sendEveningPatientWellbeingNudge(params: {
+    userId: string;
+    groupId: string;
+    patientFirstName: string;
+    reminderKey: string;
+  }): Promise<void> {
+    const frontendUrl = (this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173').replace(
+      /\/$/,
+      '',
+    );
+    const actionUrl = `${frontendUrl}/groups/${params.groupId}/journal#wellbeing-checkin`;
+    const body = `${params.patientFirstName}'s daily wellbeing check-in hasn't been completed yet`;
+
+    const { error } = await this.supabase.getClient().from('notifications').insert({
+      user_id: params.userId,
+      type: PATIENT_WELLBEING_NUDGE_TYPE,
+      title: PATIENT_WELLBEING_NUDGE_TITLE,
+      body,
+      action_url: actionUrl,
+      related_entity_type: 'patient_wellbeing_checkin',
+      related_entity_id: params.reminderKey,
+      sent_via: ['push'],
+    });
+
+    if (error) {
+      this.logger.warn(`insert_patient_nudge_failed user=${params.userId} ${error.message}`);
+      return;
+    }
+
+    await this.pushDispatch
+      .sendToUsers([params.userId], {
+        title: PATIENT_WELLBEING_NUDGE_TITLE,
+        body,
+        url: actionUrl,
+      })
+      .catch((err) => this.logger.warn(`patient_nudge_push_failed user=${params.userId}`, err));
   }
 }

@@ -6,9 +6,18 @@ import StatCard from '../components/ui/StatCard';
 import EmptyState from '../components/ui/EmptyState';
 import { LoadingPanel } from '../components/ui/ContentPanel';
 import GroupRoleBadge from '../components/groups/GroupRoleBadge';
+import MedicationSummaryWidget from '../components/dashboard/MedicationSummaryWidget';
+import OnDutyCarerWidget from '../components/dashboard/OnDutyCarerWidget';
+import NextAppointmentWidget from '../components/dashboard/NextAppointmentWidget';
+import LatestJournalEntryWidget from '../components/dashboard/LatestJournalEntryWidget';
+import AiInsightWidget from '../components/dashboard/AiInsightWidget';
+import MyShiftsTodayWidget from '../components/shifts/MyShiftsTodayWidget';
+import ShiftCoverageAlerts from '../components/shifts/ShiftCoverageAlerts';
 import { useAuth } from '../contexts/AuthContext';
 import { useGroups } from '../hooks/groups/useGroups';
+import { canAssignShifts, canManageMembers } from '../lib/carePermissions';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useDashboardShiftWarnings } from '../hooks/shifts/useDashboardShiftWarnings';
 import {
   CARD_VARIANTS,
   STATIC_CARD_VARIANTS,
@@ -24,9 +33,12 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const shouldReduceMotion = useReducedMotion();
   const cardVariants = shouldReduceMotion ? STATIC_CARD_VARIANTS : CARD_VARIANTS;
-  const adminGroups = groups.filter((group) => group.role === 'Admin').length;
+  const { warnings, loading: warningsLoading, error: warningsError } = useDashboardShiftWarnings();
+  const managedGroups = groups.filter((group) => canManageMembers(group.role)).length;
   const totalMembers = groups.reduce((sum, group) => sum + group.memberCount, 0);
   const recentGroups = groups.slice(0, 3);
+  const primaryGroup = groups[0] ?? null;
+  const shiftManagerGroups = groups.filter((group) => canAssignShifts(group.role));
 
   if (loading) {
     return (
@@ -86,6 +98,43 @@ export default function DashboardPage() {
         }
       />
 
+      {primaryGroup && (
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
+            <MedicationSummaryWidget
+              groupId={primaryGroup.id}
+              patientId={primaryGroup.patientId}
+              groupName={primaryGroup.name}
+            />
+            <OnDutyCarerWidget
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <NextAppointmentWidget
+              patientId={primaryGroup.patientId}
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+            <LatestJournalEntryWidget
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+            <AiInsightWidget
+              patientId={primaryGroup.patientId}
+              groupId={primaryGroup.id}
+              groupName={primaryGroup.name}
+            />
+          </div>
+
+          <MyShiftsTodayWidget
+            groups={groups.map((group) => ({ id: group.id, name: group.name }))}
+          />
+        </>
+      )}
+
       <motion.div
         className="grid gap-4 md:grid-cols-3"
         variants={STAGGER_CONTAINER_VARIANTS}
@@ -100,7 +149,7 @@ export default function DashboardPage() {
         />
         <StatCard
           icon={<Shield size={20} strokeWidth={1.9} />}
-          value={adminGroups}
+          value={managedGroups}
           label="Groups you manage"
           variants={cardVariants}
         />
@@ -196,6 +245,14 @@ export default function DashboardPage() {
           </motion.div>
         )}
       </section>
+
+      {shiftManagerGroups.length > 0 && (
+        <ShiftCoverageAlerts
+          warnings={warnings}
+          loading={warningsLoading}
+          error={warningsError}
+        />
+      )}
     </section>
   );
 }

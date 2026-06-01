@@ -9,13 +9,14 @@ import type {
   GroupSummary,
   InvitePayload,
   InviteResult,
-  GroupRole,
 } from './groups.types';
+import { parseCareRole } from '../../lib/careRole';
 import { ROLE } from '@typings/role-enum';
 
 type GroupListQueryRow = {
   role_in_care: string | null;
   joined_at: string;
+  patient_id: string;
   care_group: {
     id: string;
     name: string | null;
@@ -98,18 +99,6 @@ async function fetchGPContactsForPatient(patientId: string): Promise<GPContact[]
   return (data ?? []).map(rowToGPContact);
 }
 
-export function mapRole(role: string): GroupRole {
-  switch (role) {
-    case ROLE.PRIMARY_CAREGIVER:
-      return 'Admin';
-    case ROLE.SECONDARY_CAREGIVER:
-      return 'Member';
-    case ROLE.OBSERVER:
-      return 'Observer';
-    default:
-      return 'Member';
-  }
-}
 export async function getGroups(): Promise<GroupSummary[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
@@ -119,6 +108,7 @@ export async function getGroups(): Promise<GroupSummary[]> {
     .select(`
       role_in_care,
       joined_at,
+      patient_id,
       care_group!inner (
         id,
         name,
@@ -139,9 +129,10 @@ export async function getGroups(): Promise<GroupSummary[]> {
       id: item.care_group.id,
       name: item.care_group.name || 'Care Group',
       description: item.care_group.description || '',
-      role: mapRole(item.role_in_care ?? ''),
+      role: parseCareRole(item.role_in_care),
       createdAt: item.care_group.created_at || item.joined_at || new Date().toISOString(),
-      memberCount: 1, 
+      memberCount: 1,
+      patientId: item.patient_id,
     };
   });
 }
@@ -200,14 +191,14 @@ export async function getUserGroupDetails(groupId: string): Promise<Group | null
     .eq('group_id', groupId)
     .maybeSingle();
 
-  const userRole = mapRole(membership.role_in_care ?? '');
+  const userRole = parseCareRole(membership.role_in_care);
   const canSchedule = membership.can_schedule === true;
 
   const members: GroupMember[] = (groupData.care_givers ?? []).map(m => ({
     id: m.caregiver_id,
     name: m.profiles?.full_name || 'Unknown',
     email: m.profiles?.email ?? '',
-    role: mapRole(m.role_in_care ?? ''),
+    role: parseCareRole(m.role_in_care),
     joinedAt: m.joined_at,
     status: m.status === 'active' ? 'Active' : 'Suspended',
   }));
@@ -376,6 +367,23 @@ export async function updateGPContact(
   }
 
   return rowToGPContact(updated);
+}
+
+export async function updateMemberRole(
+  groupId: string,
+  caregiverId: string,
+  newRole: ROLE,
+): Promise<void> {
+  const { error } = await supabase.rpc('update_care_giver_role', {
+    p_group_id: groupId,
+    p_caregiver_id: caregiverId,
+    p_new_role: newRole,
+  });
+
+  if (error) {
+    console.error('updateMemberRole:', error);
+    throw new Error(error.message || 'Unable to update member role');
+  }
 }
 
 export async function removeGPContact(groupId: string, gpId: string): Promise<void> {

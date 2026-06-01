@@ -1,13 +1,14 @@
-import { Controller, Get, Post, Param, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { supabase } from '../lib/supabase';
-import { WeeklyInsightGenerationService } from './weekly-insight-generation.service';
+import { Controller, Get, Param, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
 
 @Controller('insights')
 export class InsightsController {
   private readonly logger = new Logger(InsightsController.name);
 
+  constructor(private readonly supabase: SupabaseAdminClient) {}
+
   private async resolvePatientId(groupId: string): Promise<string> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase.getClient()
       .from('patients')
       .select('id')
       .eq('group_id', groupId)
@@ -23,12 +24,11 @@ export class InsightsController {
     return data.id;
   }
 
-
   @Get('group/:groupId')
   async getInsightsForGroup(@Param('groupId') groupId: string) {
     try {
       const patientId = await this.resolvePatientId(groupId);
-      const { data, error } = await supabase
+      const { data, error } = await this.supabase.getClient()
         .from('ai_insights')
         .select('insight_type, observation, suggested_action, severity, generated_at')
         .eq('patient_id', patientId)

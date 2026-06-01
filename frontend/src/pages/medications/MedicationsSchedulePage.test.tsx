@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Group } from '../../api/groups/groups.types';
+import { ROLE } from '@typings/role-enum';
 import type { Medication } from '../../api/medications/medications.types';
 import MedicationsSchedulePage from './MedicationsSchedulePage';
 
@@ -14,7 +15,7 @@ const groupHookMock = vi.hoisted(() => ({
       id: 'group-001',
       name: 'Dad Care Circle',
       description: '',
-      role: 'Admin' as const,
+      role: 'primary_carer' as ROLE,
       createdAt: '2025-01-01T00:00:00.000Z',
       patientId: 'patient-001',
       members: [],
@@ -175,14 +176,14 @@ describe('MedicationsSchedulePage', () => {
   it('does not show the Add medication button for non-Admin users', () => {
     groupHookMock.value = {
       ...groupHookMock.value,
-      group: { ...groupHookMock.value.group!, role: 'Member' as const },
+      group: { ...groupHookMock.value.group!, role: 'secondary_carer' as ROLE },
     };
     renderPage();
     expect(screen.queryByRole('button', { name: /add medication/i })).not.toBeInTheDocument();
     // restore
     groupHookMock.value = {
       ...groupHookMock.value,
-      group: { ...groupHookMock.value.group!, role: 'Admin' as const },
+      group: { ...groupHookMock.value.group!, role: 'primary_carer' as ROLE },
     };
   });
 });

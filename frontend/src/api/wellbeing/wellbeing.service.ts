@@ -20,14 +20,14 @@ export function getCurrentWeekStartIso(now = new Date()): string {
 function mapWellbeingCheckIn(row: WellbeingCheckInRow): WellbeingCheckIn {
   return {
     id: row.id,
-    submittedAt: row.submitted_at,
-    weekStart: row.week_start,
-    sleepQuality: row.sleep_quality,
-    stressLevel: row.stress_level,
-    overwhelmLevel: row.overwhelm_level,
-    socialConnection: row.social_connection,
-    overallMood: row.overall_mood,
-    compositeScore: row.composite_score,
+    submittedAt: row.submitted_at ?? '',
+    weekStart: row.week_start ?? '',
+    sleepQuality: row.sleep_quality ?? 0,
+    stressLevel: row.stress_level ?? 0,
+    overwhelmLevel: row.overwhelm_level ?? 0,
+    socialConnection: row.social_connection ?? 0,
+    overallMood: row.overall_mood ?? 0,
+    compositeScore: row.composite_score ?? 0,
     supportMessageDismissedAt: row.support_message_dismissed_at,
   };
 }

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { GPContact } from '../../api/groups/groups.types';
+import { ROLE } from '@typings/role-enum';
 import GPContactSection from './GPContactSection';
 
 const contacts: GPContact[] = [
@@ -19,7 +20,7 @@ const contacts: GPContact[] = [
 ];
 
 function renderSection(
-  role: 'Admin' | 'Member' = 'Admin',
+  role: ROLE = ROLE.PRIMARY_CAREGIVER,
   gpContacts: GPContact[] = contacts,
 ) {
   render(
@@ -36,32 +37,32 @@ function renderSection(
 }
 
 describe('GPContactSection', () => {
-  it('renders Add GP Contact button for admins', () => {
-    renderSection('Admin');
+  it('renders Add GP Contact button for primary carers', () => {
+    renderSection(ROLE.PRIMARY_CAREGIVER);
 
     expect(screen.getByRole('button', { name: /\+ add gp contact/i })).toBeInTheDocument();
   });
 
-  it('does not render Add GP Contact button for members', () => {
-    renderSection('Member');
+  it('does not render Add GP Contact button for secondary carers', () => {
+    renderSection(ROLE.SECONDARY_CAREGIVER);
 
     expect(screen.queryByRole('button', { name: /\+ add gp contact/i })).not.toBeInTheDocument();
   });
 
-  it('shows the admin empty state when no GP contacts exist', () => {
-    renderSection('Admin', []);
+  it('shows the primary carer empty state when no GP contacts exist', () => {
+    renderSection(ROLE.PRIMARY_CAREGIVER, []);
 
     expect(screen.getByText('No GP contacts added yet')).toBeInTheDocument();
   });
 
-  it('shows the member empty state when no GP contacts exist', () => {
-    renderSection('Member', []);
+  it('shows the secondary carer empty state when no GP contacts exist', () => {
+    renderSection(ROLE.SECONDARY_CAREGIVER, []);
 
     expect(screen.getByText('No GP contact information available')).toBeInTheDocument();
   });
 
   it('renders the correct number of GP contact cards', () => {
-    renderSection('Admin');
+    renderSection(ROLE.PRIMARY_CAREGIVER);
 
     expect(screen.getAllByRole('article')).toHaveLength(2);
   });

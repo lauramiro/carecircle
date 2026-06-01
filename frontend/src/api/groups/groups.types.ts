@@ -1,4 +1,5 @@
-export type GroupRole = 'Admin' | 'Member' | 'Observer';
+import { ROLE } from '@typings/role-enum';
+
 export type GroupMemberStatus = 'Active' | 'Suspended';
 
 export interface GPContact {
@@ -14,7 +15,7 @@ export interface GroupMember {
   id: string;
   name: string;
   email: string;
-  role: GroupRole;
+  role: ROLE;
   joinedAt: string;
   status: GroupMemberStatus;
 }
@@ -23,7 +24,7 @@ export interface Group {
   id: string;
   name: string;
   description: string;
-  role: GroupRole;
+  role: ROLE;
   canSchedule: boolean;
   createdAt: string;
   members: GroupMember[];
@@ -36,9 +37,10 @@ export interface GroupSummary {
   id: string;
   name: string;
   description: string;
-  role: GroupRole;
+  role: ROLE;
   createdAt: string;
   memberCount: number;
+  patientId: string;
 }
 
 export interface InvitePayload {

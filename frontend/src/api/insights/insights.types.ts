@@ -11,7 +11,7 @@ export interface AiInsight {
   id: string;
   insightType: InsightType;
   observation: string;
-  //suggestedAction: string;
+  suggestedAction: string;
   severity: InsightSeverity;
-  //generatedAt: string;
+  generatedAt: string;
 }

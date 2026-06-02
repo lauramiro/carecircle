@@ -367,9 +367,11 @@ export class WeeklyInsightGenerationService {
     const rows = digest.insightCards.map((card) => ({
       patient_id: digest.patientId,
       insight_type: card.insightType,
+      suggested_action: card.suggestedAction,
       observation: card.observation,
       severity: card.severity,
       is_active: true,
+      generated_at: card.generatedAt,
       created_at: new Date().toISOString(),
     }));
     const { error } = await this.supabase.getClient().from('ai_insights').insert(rows);

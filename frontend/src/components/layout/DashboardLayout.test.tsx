@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Group } from '../../api/groups/groups.types';
+import { ROLE } from '@typings/role-enum';
 import DashboardLayout from './DashboardLayout';
 
 const authMock = vi.hoisted(() => ({
@@ -192,7 +193,7 @@ describe('DashboardLayout', () => {
         patientId: 'patient-1',
         name: 'Dad Care Circle',
         description: 'Daily support',
-        role: 'Admin',
+        role: 'primary_carer' as ROLE,
         canSchedule: true,
         createdAt: '2025-05-12T09:00:00.000Z',
         members: [],

@@ -11,21 +11,22 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { supabase } from '../lib/supabase';
+import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
 import { HospitalSummaryService, HospitalSummaryData } from './hospital-summary.service';
 import { PDFGenerationService } from './pdf-generation.service';
- 
+
 @Controller('hospital-summary')
 export class HospitalSummaryController {
   private readonly logger = new Logger(HospitalSummaryController.name);
- 
+
   constructor(
+    private readonly supabase: SupabaseAdminClient,
     private readonly hospitalSummaryService: HospitalSummaryService,
-    private readonly pdfGenerationService: PDFGenerationService
+    private readonly pdfGenerationService: PDFGenerationService,
   ) {}
  
   private async resolvePatientId(groupId: string): Promise<string> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase.getClient()
       .from('patients')
       .select('id')
       .eq('group_id', groupId)

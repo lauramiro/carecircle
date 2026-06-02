@@ -70,4 +70,18 @@ export class PatientRepository {
     if (error) throw new Error(error.message);
     return data ?? [];
   }
+
+  async findRecentWellbeingCheckins(patientId: string, since: string) {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('patient_wellbeing_checkins')
+      .select('checkin_date, mood, appetite, mobility, pain_level, notes')
+      .eq('patient_id', patientId)
+      .gte('checkin_date', since.split('T')[0] ?? since)
+      .order('checkin_date', { ascending: false })
+      .limit(7);
+
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  }
 }

@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   createJournalEntry,
   getJournalEntriesByGroup,
   updateJournalEntry,
 } from '../../api/journal/journal.service';
 import type { JournalEntry } from '../../api/journal/journal.types';
+import { useSupabaseRealtime } from '../realtime/useSupabaseRealtime';
 
 interface UseJournalEntriesResult {
   entries: JournalEntry[];
@@ -23,36 +24,47 @@ export function useJournalEntries(groupId: string | undefined): UseJournalEntrie
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [updatingEntryId, setUpdatingEntryId] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadEntries() {
-      if (!groupId) {
-        setEntries([]);
-        setError('Group ID is missing.');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-        const result = await getJournalEntriesByGroup(groupId);
-        if (!active) return;
-        setEntries(result);
-      } catch {
-        if (active) setError('Unable to load handover journal entries. Please try again.');
-      } finally {
-        if (active) setLoading(false);
-      }
+  const loadEntries = useCallback(async (options?: { silent?: boolean }) => {
+    if (!groupId) {
+      setEntries([]);
+      setError('Group ID is missing.');
+      setLoading(false);
+      return;
     }
 
-    void loadEntries();
-
-    return () => {
-      active = false;
-    };
+    try {
+      if (!options?.silent) {
+        setLoading(true);
+        setError(null);
+      }
+      const result = await getJournalEntriesByGroup(groupId);
+      setEntries(result);
+    } catch {
+      if (!options?.silent) {
+        setError('Unable to load handover journal entries. Please try again.');
+      }
+    } finally {
+      if (!options?.silent) setLoading(false);
+    }
   }, [groupId]);
+
+  useEffect(() => {
+    void loadEntries();
+  }, [loadEntries]);
+
+  const refreshFromRealtime = useCallback(() => {
+    void loadEntries({ silent: true });
+  }, [loadEntries]);
+
+  useSupabaseRealtime({
+    channelName: groupId ? `journal-${groupId}` : 'journal-disabled',
+    table: 'handover_journal_entries',
+    filter: groupId ? `group_id=eq.${groupId}` : undefined,
+    enabled: Boolean(groupId),
+    onInsert: refreshFromRealtime,
+    onUpdate: refreshFromRealtime,
+    onDelete: refreshFromRealtime,
+  });
 
   async function addEntry(content: string) {
     if (!groupId) throw new Error('Group ID is missing.');

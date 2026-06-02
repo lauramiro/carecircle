@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PatientRepository } from '../integrations/repositories/patient.repository';
-import type { CareProfileContext } from '../prompts/care-profile.prompt';
+import type { CareProfileContext, WellbeingCheckinContext } from '../prompts/care-profile.prompt';
 
 @Injectable()
 export class ProfileService {
@@ -21,11 +21,12 @@ export class ProfileService {
 
     const patientId = patient.id as string;
 
-    const [medications, logs, journal, appointments] = await Promise.all([
+    const [medications, logs, journal, appointments, wellbeingCheckins] = await Promise.all([
       this.patientRepo.findActiveMedications(patientId),
       this.patientRepo.findRecentMedicationLogs(patientId, sevenDaysAgoStr),
       this.patientRepo.findRecentJournalEntries(groupId, sevenDaysAgoStr),
       this.patientRepo.findUpcomingAppointments(patientId),
+      this.patientRepo.findRecentWellbeingCheckins(patientId, sevenDaysAgoStr),
     ]);
 
     return {
@@ -62,6 +63,16 @@ export class ProfileService {
         location: (a.location as string | null) ?? undefined,
         provider: (a.provider_name as string | null) ?? undefined,
       })),
+      recentWellbeingCheckins: (wellbeingCheckins as Record<string, unknown>[]).map(
+        (c): WellbeingCheckinContext => ({
+          checkinDate: c.checkin_date as string,
+          mood: c.mood as number,
+          appetite: c.appetite as WellbeingCheckinContext['appetite'],
+          mobility: c.mobility as WellbeingCheckinContext['mobility'],
+          painLevel: c.pain_level as number,
+          notes: (c.notes as string | null) ?? undefined,
+        }),
+      ),
     };
   }
 }

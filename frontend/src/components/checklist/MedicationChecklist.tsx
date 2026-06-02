@@ -5,16 +5,19 @@ import { toLocalDateString } from '@lib/dates';
 import { useReducedMotion } from '@hooks/useReducedMotion';
 import { useChecklistSubscription } from '@hooks/checklist/useChecklistSubscription';
 import MedicationChecklistItemRow from '@components/checklist/MedicationChecklistItemRow';
+import { ROLE } from '@typings/role-enum';
+import { isChecklistReadOnly } from '@lib/carePermissions';
 
 interface MedicationChecklistProps {
   checklistId: string;
   checklistDate: string;
   items: ChecklistItem[];
-  userRole: 'primary' | 'secondary' | 'observer';
+  userRole: ROLE;
   isLoading?: boolean;
   loadingLabel?: string;
   onItemsChange?: (items: ChecklistItem[]) => void;
   highlightItemId?: string;
+  filterStatus?: ChecklistItem['status'];
 }
 
 function isToday(dateStr: string): boolean {
@@ -30,6 +33,7 @@ export default function MedicationChecklist({
   loadingLabel = 'Loading checklist…',
   onItemsChange,
   highlightItemId,
+  filterStatus,
 }: MedicationChecklistProps) {
   const highlightRef = useRef<HTMLDivElement | null>(null);
   const { items, isSubscribed, patchItem } = useChecklistSubscription(
@@ -39,11 +43,15 @@ export default function MedicationChecklist({
     onItemsChange,
   );
   const shouldReduceMotion = useReducedMotion();
-  const isReadOnly = userRole === 'observer';
+  const isReadOnly = isChecklistReadOnly(userRole);
 
   const sortedItems = useMemo(
     () => sortChecklistItemsByScheduledTime(items),
     [items],
+  );
+  const displayItems = useMemo(
+    () => (filterStatus ? sortedItems.filter((i) => i.status === filterStatus) : sortedItems),
+    [sortedItems, filterStatus],
   );
   const summary = summarizeChecklist(sortedItems);
 
@@ -88,14 +96,24 @@ export default function MedicationChecklist({
           </p>
         </div>
 
-        {isReadOnly && (
-          <span
-            className="rounded-full px-3 py-1 text-xs font-bold"
-            style={{ backgroundColor: 'var(--color-accent-soft)', color: 'var(--color-text-secondary)' }}
-          >
-            Read-only
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {filterStatus && (
+            <span
+              className="rounded-full px-3 py-1 text-xs font-bold"
+              style={{ backgroundColor: 'var(--color-status-overdue-bg, #FEF3E2)', color: 'var(--color-status-overdue)' }}
+            >
+              Filtered: {filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
+            </span>
+          )}
+          {isReadOnly && (
+            <span
+              className="rounded-full px-3 py-1 text-xs font-bold"
+              style={{ backgroundColor: 'var(--color-accent-soft)', color: 'var(--color-text-secondary)' }}
+            >
+              Read-only
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="mb-6 grid grid-cols-4 gap-3">
@@ -132,13 +150,15 @@ export default function MedicationChecklist({
             {loadingLabel}
           </div>
         )}
-        {sortedItems.length === 0 ? (
+        {displayItems.length === 0 ? (
           <p className="py-8 text-sm text-center" style={{ color: 'var(--color-text-hint)' }}>
-            No medications scheduled for this day.
+            {filterStatus
+              ? `No ${filterStatus} medications.`
+              : 'No medications scheduled for this day.'}
           </p>
         ) : (
           <div className="px-5 py-4 space-y-1">
-            {sortedItems.map((item) => (
+            {displayItems.map((item) => (
               <div
                 key={item.id}
                 id={`checklist-item-${item.id}`}

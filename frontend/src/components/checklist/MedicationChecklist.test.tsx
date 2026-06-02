@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ROLE } from '@typings/role-enum';
 import MedicationChecklist from '@components/checklist/MedicationChecklist';
 import type { ChecklistItem } from '@lib/checklist';
 
@@ -105,7 +106,7 @@ describe('MedicationChecklist', () => {
         checklistId="checklist-1"
         checklistDate="2026-01-01"
         items={defaultItems}
-        userRole="primary"
+        userRole={ROLE.PRIMARY_CAREGIVER}
       />,
     );
 
@@ -122,7 +123,7 @@ describe('MedicationChecklist', () => {
         checklistId="checklist-2"
         checklistDate="2026-01-01"
         items={defaultItems}
-        userRole="primary"
+        userRole={ROLE.PRIMARY_CAREGIVER}
       />,
     );
 
@@ -143,7 +144,7 @@ describe('MedicationChecklist', () => {
             given_at: '2026-01-01T08:05:00.000Z',
           }),
         ]}
-        userRole="primary"
+        userRole={ROLE.PRIMARY_CAREGIVER}
       />,
     );
 

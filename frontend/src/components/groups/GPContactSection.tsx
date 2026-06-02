@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import type { GPContact, GroupRole } from '../../api/groups/groups.types';
+import type { GPContact } from '../../api/groups/groups.types';
+import { canManageGPContacts } from '../../lib/carePermissions';
+import { ROLE } from '@typings/role-enum';
 import {
   DROPDOWN_VARIANTS,
   STAGGER_CONTAINER_VARIANTS,
@@ -22,7 +24,7 @@ interface GPContactSubmittingState {
 interface GPContactSectionProps {
   groupId: string;
   gpContacts: GPContact[];
-  userRole: GroupRole;
+  userRole: ROLE;
   isSubmitting: GPContactSubmittingState;
   onAddGP: (data: Omit<GPContact, 'id'>) => Promise<unknown>;
   onUpdateGP: (gpId: string, data: Omit<GPContact, 'id'>) => Promise<unknown>;
@@ -40,7 +42,7 @@ export default function GPContactSection({
 }: GPContactSectionProps) {
   const [addingContact, setAddingContact] = useState(false);
   const shouldReduceMotion = useReducedMotion();
-  const canManageGPContacts = userRole === 'Admin';
+  const canEditGPContacts = canManageGPContacts(userRole);
   const containerVariants = shouldReduceMotion
     ? STATIC_PAGE_VARIANTS
     : STAGGER_CONTAINER_VARIANTS;
@@ -71,7 +73,7 @@ export default function GPContactSection({
           </p>
         </div>
 
-        {canManageGPContacts && (
+        {canEditGPContacts && (
           <motion.button
             type="button"
             data-group-id={groupId}
@@ -93,7 +95,7 @@ export default function GPContactSection({
             color: 'var(--color-text-secondary)',
           }}
         >
-          {canManageGPContacts
+          {canEditGPContacts
             ? 'No GP contacts added yet'
             : 'No GP contact information available'}
         </div>
@@ -110,7 +112,7 @@ export default function GPContactSection({
             <GPContactCard
               key={contact.id}
               contact={contact}
-              canManage={canManageGPContacts}
+              canManage={canEditGPContacts}
               isUpdating={isSubmitting.update}
               isRemoving={isSubmitting.remove}
               onUpdate={onUpdateGP}
@@ -121,7 +123,7 @@ export default function GPContactSection({
       </motion.div>
 
       <AnimatePresence>
-        {canManageGPContacts && addingContact && (
+        {canEditGPContacts && addingContact && (
           // Height animation makes the optional add form feel attached to the section.
           <motion.div
             className="mt-4 overflow-hidden rounded-xl border p-4"

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
+import { not } from 'supertest/lib/cookies';
 
 export type InsightType =
   | 'pain_trend'
@@ -65,7 +66,8 @@ export class WeeklyInsightGenerationService {
       const { data: patients, error } = await this.supabase.getClient()
         .from('patients')
         .select('id, group_id')
-        .eq('status', 'active');
+        .eq('is_active', true)
+        .not('group_id', 'is', null);
 
       if (error || !patients) {
         this.logger.error('Failed to fetch active patients:', error);

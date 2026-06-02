@@ -1,11 +1,15 @@
-import { Controller, Get, Param, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Param,Post, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
+import { WeeklyInsightGenerationService } from './weekly-insight-generation.service';
 
 @Controller('insights')
 export class InsightsController {
   private readonly logger = new Logger(InsightsController.name);
+  private readonly weeklyInsightGenerationService: WeeklyInsightGenerationService;
 
-  constructor(private readonly supabase: SupabaseAdminClient) {}
+  constructor(private readonly supabase: SupabaseAdminClient, weeklyInsightGenerationService: WeeklyInsightGenerationService) {
+    this.weeklyInsightGenerationService = weeklyInsightGenerationService;
+  }
 
   private async resolvePatientId(groupId: string): Promise<string> {
     const { data, error } = await this.supabase.getClient()
@@ -23,6 +27,7 @@ export class InsightsController {
 
     return data.id;
   }
+  
 
 
   @Get('group/:groupId')

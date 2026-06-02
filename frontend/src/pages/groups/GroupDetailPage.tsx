@@ -198,6 +198,7 @@ export default function GroupDetailPage() {
                   Add medication
                 </motion.button>
               )}
+              
               <motion.button
                   type="button"
                   onClick={() => navigate(`${basePath}/hospital-summary`)}

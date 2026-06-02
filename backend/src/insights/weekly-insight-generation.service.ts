@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
+import { not } from 'supertest/lib/cookies';
 
 export type InsightType =
   | 'pain_trend'
@@ -65,7 +66,8 @@ export class WeeklyInsightGenerationService {
       const { data: patients, error } = await this.supabase.getClient()
         .from('patients')
         .select('id, group_id')
-        .eq('status', 'active');
+        .eq('is_active', true)
+        .not('group_id', 'is', null);
 
       if (error || !patients) {
         this.logger.error('Failed to fetch active patients:', error);
@@ -365,16 +367,14 @@ export class WeeklyInsightGenerationService {
     const rows = digest.insightCards.map((card) => ({
       patient_id: digest.patientId,
       insight_type: card.insightType,
+      suggested_action: card.suggestedAction,
       observation: card.observation,
       severity: card.severity,
       is_active: true,
+      generated_at: card.generatedAt,
       created_at: new Date().toISOString(),
     }));
     const { error } = await this.supabase.getClient().from('ai_insights').insert(rows);
-    if (error) {
-      console.error('❌ storeInsights failed:', error);
-    } else {
-      console.log('✅ Stored', rows.length, 'insights');
-    }
+    
   }
 }

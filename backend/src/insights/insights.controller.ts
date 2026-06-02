@@ -24,6 +24,7 @@ export class InsightsController {
     return data.id;
   }
 
+
   @Get('group/:groupId')
   async getInsightsForGroup(@Param('groupId') groupId: string) {
     try {

@@ -198,6 +198,16 @@ export default function GroupDetailPage() {
                   Add medication
                 </motion.button>
               )}
+              
+              <motion.button
+                  type="button"
+                  onClick={() => navigate(`${basePath}/hospital-summary`)}
+                  className="inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-bold"
+                  style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}>
+                  <FileText size={16} strokeWidth={2} />
+                  Hospital summary
+              </motion.button>
             </div>
           </div>
         </div>

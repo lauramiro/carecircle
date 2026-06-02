@@ -7,7 +7,7 @@ import {
   NotebookText,
   Plus,
   Sparkles,
-  Users,
+  Users, FileText
 } from 'lucide-react';
 import GPContactSection from '../../components/groups/GPContactSection';
 import GroupRoleBadge from '../../components/groups/GroupRoleBadge';

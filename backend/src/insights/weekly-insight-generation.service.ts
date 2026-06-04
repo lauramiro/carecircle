@@ -375,6 +375,14 @@ export class WeeklyInsightGenerationService {
       created_at: new Date().toISOString(),
     }));
     const { error } = await this.supabase.getClient().from('ai_insights').insert(rows);
-    
+
+    if (error) {
+      this.logger.error(
+        `Failed to store insights for patient ${digest.patientId} (${rows.length} rows): ${error.message}`,
+      );
+      return;
+    }
+
+    this.logger.log(`Stored ${rows.length} insights for patient ${digest.patientId}`);
   }
 }

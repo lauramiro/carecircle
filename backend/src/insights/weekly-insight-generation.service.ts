@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
-import { not } from 'supertest/lib/cookies';
 
 export type InsightType =
   | 'pain_trend'

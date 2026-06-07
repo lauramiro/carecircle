@@ -13,7 +13,9 @@ vi.mock('web-push', () => ({
 
 import { PushDispatchService } from './push-dispatch.service';
 
-function makeAlert(overrides: Partial<MissedMedicationAlertRecord> = {}): MissedMedicationAlertRecord {
+function makeAlert(
+  overrides: Partial<MissedMedicationAlertRecord> = {},
+): MissedMedicationAlertRecord {
   return {
     id: 'alert-1',
     checklist_item_id: 'item-1',
@@ -55,7 +57,10 @@ describe('PushDispatchService', () => {
 
   it('returns allFailed when VAPID is not configured', async () => {
     const appConfig = { config: {} };
-    const service = new PushDispatchService(pushSubRepo as never, appConfig as never);
+    const service = new PushDispatchService(
+      pushSubRepo as never,
+      appConfig as never,
+    );
 
     const result = await service.dispatch(makeAlert());
 
@@ -84,13 +89,19 @@ describe('PushDispatchService', () => {
     ]);
     sendNotification.mockResolvedValue({ statusCode: 201 });
 
-    const service = new PushDispatchService(pushSubRepo as never, appConfig as never);
+    const service = new PushDispatchService(
+      pushSubRepo as never,
+      appConfig as never,
+    );
     const alert = makeAlert();
     const result = await service.dispatch(alert);
 
     expect(setVapidDetails).toHaveBeenCalled();
     expect(sendNotification).toHaveBeenCalledWith(
-      { endpoint: 'https://push.example/1', keys: { p256dh: 'key', auth: 'auth' } },
+      {
+        endpoint: 'https://push.example/1',
+        keys: { p256dh: 'key', auth: 'auth' },
+      },
       JSON.stringify({
         title: 'Missed medication',
         body: alert.push_body,
@@ -119,9 +130,14 @@ describe('PushDispatchService', () => {
         auth: 'auth',
       },
     ]);
-    sendNotification.mockRejectedValue(Object.assign(new Error('gone'), { statusCode: 410 }));
+    sendNotification.mockRejectedValue(
+      Object.assign(new Error('gone'), { statusCode: 410 }),
+    );
 
-    const service = new PushDispatchService(pushSubRepo as never, appConfig as never);
+    const service = new PushDispatchService(
+      pushSubRepo as never,
+      appConfig as never,
+    );
     const result = await service.dispatch(makeAlert());
 
     expect(result.allFailed).toBe(true);

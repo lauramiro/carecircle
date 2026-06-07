@@ -47,7 +47,9 @@ export class ProfileService {
         };
       }),
       recentLogs: logs.map((l: Record<string, unknown>) => ({
-        medicationName: (l.medications as { medication_name?: string } | null)?.medication_name ?? 'Unknown',
+        medicationName:
+          (l.medications as { medication_name?: string } | null)
+            ?.medication_name ?? 'Unknown',
         status: l.status as 'given' | 'skipped' | 'overdue',
         loggedAt: (l.actual_time as string) ?? (l.scheduled_time as string),
         notes: (l.notes as string | null) ?? undefined,

@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { AppConfigService } from '../config/app-config.service';
 
@@ -12,7 +17,9 @@ export class SupabaseAdminClient implements OnModuleInit, OnModuleDestroy {
   onModuleInit(): void {
     const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = this.appConfig.config;
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      this.logger.warn('Supabase service role not configured; server-side DB operations disabled');
+      this.logger.warn(
+        'Supabase service role not configured; server-side DB operations disabled',
+      );
       return;
     }
     this.client = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);

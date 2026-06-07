@@ -26,7 +26,9 @@ export class InsightsService {
       try {
         await this.generateWeeklyDigest(group.id);
       } catch (err: any) {
-        this.logger.error(`Failed to generate digest for group ${group.id}: ${err.message}`);
+        this.logger.error(
+          `Failed to generate digest for group ${group.id}: ${err.message}`,
+        );
       }
     }
   }
@@ -45,8 +47,14 @@ export class InsightsService {
     const patientId = patient.id as string;
 
     const [logs, journal, vitals] = await Promise.all([
-      this.patientRepo.findRecentMedicationLogs(patientId, startDate.toISOString()),
-      this.patientRepo.findRecentJournalEntries(groupId, startDate.toISOString()),
+      this.patientRepo.findRecentMedicationLogs(
+        patientId,
+        startDate.toISOString(),
+      ),
+      this.patientRepo.findRecentJournalEntries(
+        groupId,
+        startDate.toISOString(),
+      ),
       this.patientRepo.findRecentVitalSigns(patientId, startDate.toISOString()),
     ]);
 
@@ -95,7 +103,9 @@ export class InsightsService {
 
     if (digestError) {
       if (digestError.code === '23505') {
-        this.logger.warn(`Digest already exists for group ${groupId} starting ${startDateStr}`);
+        this.logger.warn(
+          `Digest already exists for group ${groupId} starting ${startDateStr}`,
+        );
         return;
       }
       throw new Error(digestError.message);
@@ -122,11 +132,13 @@ export class InsightsService {
   }
 
   private async notifyGroupMembers(groupId: string, digestId: string) {
-    const { groupMembersIds } = await this.groupRepo.listActiveGroupMembers(groupId);
+    const { groupMembersIds } =
+      await this.groupRepo.listActiveGroupMembers(groupId);
     const db = this.supabase.getClient();
 
     const title = 'New Weekly Digest Ready';
-    const body = 'Your weekly care summary is now available in the Insights tab.';
+    const body =
+      'Your weekly care summary is now available in the Insights tab.';
     const url = `/groups/${groupId}/insights?digestId=${digestId}`;
 
     for (const userId of groupMembersIds) {
@@ -142,7 +154,9 @@ export class InsightsService {
       });
 
       // Push
-      await this.pushDispatch.sendToUsers([userId], { title, body, url }).catch(() => {});
+      await this.pushDispatch
+        .sendToUsers([userId], { title, body, url })
+        .catch(() => {});
     }
   }
 
@@ -172,7 +186,9 @@ export class InsightsService {
       .select('insight_card_id')
       .eq('user_id', userId);
 
-    const dismissedIds = new Set(dismissals?.map((d: any) => d.insight_card_id) ?? []);
+    const dismissedIds = new Set(
+      dismissals?.map((d: any) => d.insight_card_id) ?? [],
+    );
 
     return {
       digest,

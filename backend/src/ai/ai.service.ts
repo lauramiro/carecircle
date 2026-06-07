@@ -69,7 +69,10 @@ export class AiService {
 
     const message = await groq.chat.completions.create({
       messages: [
-        { role: 'system', content: 'You are a care coordination assistant. Return ONLY JSON.' },
+        {
+          role: 'system',
+          content: 'You are a care coordination assistant. Return ONLY JSON.',
+        },
         { role: 'user', content: prompt },
       ],
       model: this.MODEL,
@@ -81,7 +84,7 @@ export class AiService {
     const content = message.choices[0].message.content || '[]';
     try {
       const parsed = JSON.parse(content);
-      return Array.isArray(parsed) ? parsed : (parsed.insights || []);
+      return Array.isArray(parsed) ? parsed : parsed.insights || [];
     } catch (err) {
       this.logger.error(`Failed to parse AI insights JSON: ${content}`);
       return [];

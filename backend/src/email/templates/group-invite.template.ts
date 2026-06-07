@@ -33,7 +33,9 @@ const FONT_UI =
 const FONT_DISPLAY = "Georgia,'Lora','Times New Roman',serif";
 
 /** HTML + plain text bodies for the group member invite (CC-150). */
-export function buildGroupInviteEmailBodies(params: GroupInviteTemplateParams): {
+export function buildGroupInviteEmailBodies(
+  params: GroupInviteTemplateParams,
+): {
   subject: string;
   html: string;
   text: string;

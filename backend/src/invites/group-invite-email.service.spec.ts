@@ -9,7 +9,10 @@ describe('GroupInviteEmailService', () => {
       },
     };
     const mailer = { isConfigured: () => true, sendMail: vi.fn() };
-    const svc = new GroupInviteEmailService(appConfig as never, mailer as never);
+    const svc = new GroupInviteEmailService(
+      appConfig as never,
+      mailer as never,
+    );
     const url = svc.buildGroupInviteUrl(
       '33333333-3333-4333-8333-333333333333',
       'invitee@example.com',
@@ -20,10 +23,15 @@ describe('GroupInviteEmailService', () => {
   });
 
   it('sendInviteEmail sends mail using groupName from dto', async () => {
-    const appConfig = { config: { FRONTEND_PUBLIC_URL: 'http://localhost:5173' } };
+    const appConfig = {
+      config: { FRONTEND_PUBLIC_URL: 'http://localhost:5173' },
+    };
     const sendMail = vi.fn().mockResolvedValue(undefined);
     const mailer = { isConfigured: () => true, sendMail };
-    const svc = new GroupInviteEmailService(appConfig as never, mailer as never);
+    const svc = new GroupInviteEmailService(
+      appConfig as never,
+      mailer as never,
+    );
 
     await svc.sendInviteEmail({
       inviteId: '11111111-1111-4111-8111-111111111111',

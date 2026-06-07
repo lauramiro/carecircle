@@ -43,7 +43,9 @@ export class OverdueDetectionService {
     const scheduledAt = new Date(item.scheduled_at);
     if (scheduledAt.getTime() + 30 * 60 * 1000 > now.getTime()) return;
 
-    const overdueAt = new Date(scheduledAt.getTime() + 30 * 60 * 1000).toISOString();
+    const overdueAt = new Date(
+      scheduledAt.getTime() + 30 * 60 * 1000,
+    ).toISOString();
     const marked = await this.checklistRepo.markOverdue(itemId, overdueAt);
     if (!marked) return;
 
@@ -59,8 +61,12 @@ export class OverdueDetectionService {
     const pushBody = `${medName} ${doseSummary} is ${overdueMin} minutes overdue`;
     const smsBody = `${groupCtx.patientFirstName}: ${medName} (${doseSummary}) ~${overdueMin} min overdue. Open CareCircle to record or skip.`;
 
-    const localDate = localDateFromScheduledAt(scheduledAt, item.timezone ?? groupCtx.preferredTimezone);
-    const frontendUrl = this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173';
+    const localDate = localDateFromScheduledAt(
+      scheduledAt,
+      item.timezone ?? groupCtx.preferredTimezone,
+    );
+    const frontendUrl =
+      this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173';
     const deepLink = buildDeepLinkUrl(frontendUrl, groupId, localDate, itemId);
 
     const { groupMembersIds, groupMembersPhoneNumbers } =
@@ -98,6 +104,8 @@ export class OverdueDetectionService {
       pushDeliveryLog: pushResult.log,
     });
 
-    this.logger.log(`overdue_alert_created itemId=${itemId} alertId=${alert.id}`);
+    this.logger.log(
+      `overdue_alert_created itemId=${itemId} alertId=${alert.id}`,
+    );
   }
 }

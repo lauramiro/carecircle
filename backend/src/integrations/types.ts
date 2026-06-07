@@ -1,7 +1,26 @@
-export type MedicationStatus = 'active' | 'paused' | 'archived' | 'superseded' | 'discontinued';
-export type ScheduleType = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'as_needed';
-export type ChecklistItemStatus = 'due' | 'given' | 'overdue' | 'skipped' | 'archived';
-export type ChecklistScheduleStatus = 'pending' | 'done' | 'archived' | 'failed';
+export type MedicationStatus =
+  | 'active'
+  | 'paused'
+  | 'archived'
+  | 'superseded'
+  | 'discontinued';
+export type ScheduleType =
+  | 'daily'
+  | 'weekly'
+  | 'biweekly'
+  | 'monthly'
+  | 'as_needed';
+export type ChecklistItemStatus =
+  | 'due'
+  | 'given'
+  | 'overdue'
+  | 'skipped'
+  | 'archived';
+export type ChecklistScheduleStatus =
+  | 'pending'
+  | 'done'
+  | 'archived'
+  | 'failed';
 export type AlertStatus =
   | 'pending_push'
   | 'push_sent'

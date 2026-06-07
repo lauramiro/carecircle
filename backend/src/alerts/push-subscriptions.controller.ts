@@ -1,5 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
-import { IsIn, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { AppConfigService } from '../config/app-config.service';
 import { PushSubscriptionRepository } from '../integrations/repositories/push-subscription.repository';
 
@@ -58,7 +64,10 @@ export class PushSubscriptionsController {
   }
 
   @Delete('subscriptions/:id')
-  async unregister(@Param('id') id: string, @Body() dto: DeletePushSubscriptionDto) {
+  async unregister(
+    @Param('id') id: string,
+    @Body() dto: DeletePushSubscriptionDto,
+  ) {
     const deleted = await this.pushSubRepo.deleteById(id, dto.userId);
     return { deleted };
   }

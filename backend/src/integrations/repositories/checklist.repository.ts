@@ -50,7 +50,10 @@ export class ChecklistRepository {
 
     let inserted = 0;
     for (const item of items) {
-      const { error } = await this.supabase.getClient().from('checklist_items').insert(item);
+      const { error } = await this.supabase
+        .getClient()
+        .from('checklist_items')
+        .insert(item);
       if (error) {
         if (error.code === '23505') continue;
         this.logger.error(
@@ -124,7 +127,9 @@ export class ChecklistRepository {
     return (data?.length ?? 0) > 0;
   }
 
-  async findDueItemsPastThreshold(limit: number): Promise<ChecklistItemRecord[]> {
+  async findDueItemsPastThreshold(
+    limit: number,
+  ): Promise<ChecklistItemRecord[]> {
     const threshold = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     const { data, error } = await this.supabase
       .getClient()
@@ -168,7 +173,10 @@ export class ChecklistRepository {
     };
 
     if (existing?.id) {
-      const { error } = await client.from('checklist_schedule').update(row).eq('id', existing.id);
+      const { error } = await client
+        .from('checklist_schedule')
+        .update(row)
+        .eq('id', existing.id);
       if (error) throw new Error(error.message);
       return;
     }
@@ -189,8 +197,13 @@ export class ChecklistRepository {
     if (error) throw new Error(error.message);
   }
 
-  async findPendingSchedulesDue(withinHours: number, limit: number): Promise<ChecklistScheduleRecord[]> {
-    const cutoff = new Date(Date.now() + withinHours * 60 * 60 * 1000).toISOString();
+  async findPendingSchedulesDue(
+    withinHours: number,
+    limit: number,
+  ): Promise<ChecklistScheduleRecord[]> {
+    const cutoff = new Date(
+      Date.now() + withinHours * 60 * 60 * 1000,
+    ).toISOString();
     const { data, error } = await this.supabase
       .getClient()
       .from('checklist_schedule')

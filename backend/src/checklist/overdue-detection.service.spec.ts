@@ -1,8 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { OverdueDetectionService } from './overdue-detection.service';
-import type { ChecklistItemRecord, MissedMedicationAlertRecord } from '../integrations/types';
+import type {
+  ChecklistItemRecord,
+  MissedMedicationAlertRecord,
+} from '../integrations/types';
 
-function makeItem(overrides: Partial<ChecklistItemRecord> = {}): ChecklistItemRecord {
+function makeItem(
+  overrides: Partial<ChecklistItemRecord> = {},
+): ChecklistItemRecord {
   return {
     id: 'item-1',
     checklist_id: 'cl-1',
@@ -87,8 +92,10 @@ describe('OverdueDetectionService', () => {
       scheduled_at: overdueItem.scheduled_at!,
       overdue_detected_at: '2025-05-21T09:02:00.000Z',
       push_body: 'Metformin 500 mg is 32 minutes overdue',
-      sms_body: 'Alex: Metformin (500 mg) ~32 min overdue. Open CareCircle to record or skip.',
-      deep_link_url: 'https://app.example.com/groups/group-1/checklist?date=2025-05-21&item=item-1',
+      sms_body:
+        'Alex: Metformin (500 mg) ~32 min overdue. Open CareCircle to record or skip.',
+      deep_link_url:
+        'https://app.example.com/groups/group-1/checklist?date=2025-05-21&item=item-1',
       push_recipient_user_ids: ['carer-1'],
       sms_phone_numbers: ['+447700900123'],
       push_due_at: '2025-05-21T09:02:00.000Z',
@@ -103,7 +110,14 @@ describe('OverdueDetectionService', () => {
     };
     alertRepo.insertAlert.mockResolvedValue(alert);
     pushDispatch.dispatch.mockResolvedValue({
-      log: [{ userId: 'carer-1', subscriptionId: 'sub-1', success: true, statusCode: 201 }],
+      log: [
+        {
+          userId: 'carer-1',
+          subscriptionId: 'sub-1',
+          success: true,
+          statusCode: 201,
+        },
+      ],
       allFailed: false,
     });
 
@@ -112,7 +126,10 @@ describe('OverdueDetectionService', () => {
 
     await service.runTick();
 
-    expect(checklistRepo.markOverdue).toHaveBeenCalledWith('item-1', '2025-05-21T08:30:00.000Z');
+    expect(checklistRepo.markOverdue).toHaveBeenCalledWith(
+      'item-1',
+      '2025-05-21T08:30:00.000Z',
+    );
     expect(alertRepo.insertAlert).toHaveBeenCalledWith(
       expect.objectContaining({
         checklist_item_id: 'item-1',

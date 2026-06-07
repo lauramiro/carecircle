@@ -4,7 +4,12 @@ import { AlertRepository } from '../integrations/repositories/alert.repository';
 import { ChecklistRepository } from '../integrations/repositories/checklist.repository';
 import { TwilioSmsService } from '../sms/twilio-sms.service';
 
-type SmsLogEntry = { phone: string; success: boolean; sid?: string; error?: string };
+type SmsLogEntry = {
+  phone: string;
+  success: boolean;
+  sid?: string;
+  error?: string;
+};
 
 @Injectable()
 export class SmsDispatchService {
@@ -36,8 +41,14 @@ export class SmsDispatchService {
     sms_phone_numbers: string[];
   }): Promise<void> {
     const item = await this.checklistRepo.findById(alert.checklist_item_id);
-    if (item && (item.status === 'given' || item.status === 'skipped' || item.skip_reason)) {
-      await this.alertRepo.cancelOpenAlert(alert.checklist_item_id, 'acknowledged');
+    if (
+      item &&
+      (item.status === 'given' || item.status === 'skipped' || item.skip_reason)
+    ) {
+      await this.alertRepo.cancelOpenAlert(
+        alert.checklist_item_id,
+        'acknowledged',
+      );
       return;
     }
 
@@ -52,9 +63,13 @@ export class SmsDispatchService {
       const result = await this.sendAndLog(devNumber, alert.sms_body);
       smsLog.push(result);
       if (result.success) {
-        this.logger.log(`sms_dev_test_sent alertId=${alert.id} to=${devNumber} sid=${result.sid}`);
+        this.logger.log(
+          `sms_dev_test_sent alertId=${alert.id} to=${devNumber} sid=${result.sid}`,
+        );
       } else {
-        this.logger.warn(`sms_dev_test_failed alertId=${alert.id} to=${devNumber} error=${result.error}`);
+        this.logger.warn(
+          `sms_dev_test_failed alertId=${alert.id} to=${devNumber} error=${result.error}`,
+        );
       }
     }
 
@@ -65,7 +80,9 @@ export class SmsDispatchService {
       status: allFailed ? 'sms_failed' : 'sms_sent',
     });
 
-    this.logger.log(`sms_dispatched alertId=${alert.id} phones=${alert.sms_phone_numbers.length}`);
+    this.logger.log(
+      `sms_dispatched alertId=${alert.id} phones=${alert.sms_phone_numbers.length}`,
+    );
   }
 
   private async sendAndLog(phone: string, body: string): Promise<SmsLogEntry> {

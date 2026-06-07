@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 
@@ -34,11 +33,7 @@ export default function DateNavigation({ selectedDate, onDateChange }: DateNavig
   // Window ends on selected date (or today if selected is in the future — clamped below)
   const windowEnd = selected > today ? today : selected;
   const windowStart = addDays(windowEnd, -6);
-
-  const days = useMemo(
-    () => Array.from({ length: 7 }, (_, i) => addDays(windowStart, i)),
-    [windowStart.getTime()],
-  );
+  const days = Array.from({ length: 7 }, (_, i) => addDays(windowStart, i));
 
   function goToPrevWindow() {
     onDateChange(addDays(selected, -7));

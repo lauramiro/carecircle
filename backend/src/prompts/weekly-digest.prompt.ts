@@ -30,19 +30,35 @@ Your task is to analyze the last 7 days of care data for ${context.patientName} 
 ## Data for the week of ${context.startDate} to ${context.endDate}
 
 ### Medication Adherence
-${context.medicationLogs.length > 0 
-  ? context.medicationLogs.map(l => `- ${l.loggedAt}: ${l.medicationName} was ${l.status}${l.notes ? ` (${l.notes})` : ''}`).join('\n')
-  : 'No medication logs recorded this week.'}
+${
+  context.medicationLogs.length > 0
+    ? context.medicationLogs
+        .map(
+          (l) =>
+            `- ${l.loggedAt}: ${l.medicationName} was ${l.status}${l.notes ? ` (${l.notes})` : ''}`,
+        )
+        .join('\n')
+    : 'No medication logs recorded this week.'
+}
 
 ### Care Journal
-${context.journalEntries.length > 0
-  ? context.journalEntries.map(j => `- ${j.date}: ${j.entry}`).join('\n')
-  : 'No journal entries recorded this week.'}
+${
+  context.journalEntries.length > 0
+    ? context.journalEntries.map((j) => `- ${j.date}: ${j.entry}`).join('\n')
+    : 'No journal entries recorded this week.'
+}
 
 ### Vital Signs
-${context.vitalSigns.length > 0
-  ? context.vitalSigns.map(v => `- ${v.measuredAt}: BG: ${v.bloodGlucose ?? 'N/A'}, BP: ${v.bpSystolic ?? 'N/A'}/${v.bpDiastolic ?? 'N/A'}, HR: ${v.heartRate ?? 'N/A'}${v.notes ? ` (${v.notes})` : ''}`).join('\n')
-  : 'No vital signs recorded this week.'}
+${
+  context.vitalSigns.length > 0
+    ? context.vitalSigns
+        .map(
+          (v) =>
+            `- ${v.measuredAt}: BG: ${v.bloodGlucose ?? 'N/A'}, BP: ${v.bpSystolic ?? 'N/A'}/${v.bpDiastolic ?? 'N/A'}, HR: ${v.heartRate ?? 'N/A'}${v.notes ? ` (${v.notes})` : ''}`,
+        )
+        .join('\n')
+    : 'No vital signs recorded this week.'
+}
 
 ## Instructions
 1. Generate 3-5 insight cards.

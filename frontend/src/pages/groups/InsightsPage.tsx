@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '@contexts/AuthContext.tsx';
 import { getLatestInsights, getArchivedDigests, dismissInsight, triggerInsightGeneration, type WeeklyDigest,
@@ -21,28 +21,27 @@ export default function InsightsPage() {
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  useEffect(() => {
-    if (groupId && userId) {
-      loadData();
-    }
-  }, [groupId, userId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
+    if (!groupId || !userId) return;
     setIsLoading(true);
     try {
       const [latest, archived] = await Promise.all([
-        getLatestInsights(groupId!, userId!),
-        getArchivedDigests(groupId!),
+        getLatestInsights(groupId, userId),
+        getArchivedDigests(groupId),
       ]);
       setLatestDigest(latest.digest);
       setInsightCards(latest.cards);
       setArchivedDigests(archived);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load insights');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [groupId, userId]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const handleDismiss = async (cardId: string) => {
     if (!userId) return;
@@ -50,7 +49,7 @@ export default function InsightsPage() {
       await dismissInsight(cardId, userId);
       setInsightCards((prev) => prev.filter((c) => c.id !== cardId));
       toast.success('Insight dismissed');
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to dismiss insight');
     }
   };
@@ -62,7 +61,7 @@ export default function InsightsPage() {
       await triggerInsightGeneration(groupId);
       toast.success('Insight generation triggered');
       await loadData();
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to trigger insight generation');
     } finally {
       setIsGenerating(false);

@@ -315,7 +315,7 @@ function ListView({ appointments, highlightApptId, ...rest }: ViewProps) {
 // ─── WeekTimeGridView ─────────────────────────────────────────────────────────
 
 function WeekTimeGridView({ appointments, canEdit, groupId, memberName, isSubmitting, deletingId, onEdit, onDelete }: ViewProps) {
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
   const [weekStart, setWeekStart] = useState(() => weekMonday(today));
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -365,7 +365,7 @@ function WeekTimeGridView({ appointments, canEdit, groupId, memberName, isSubmit
       : hourStart + (hourEnd - hourStart) / 2;
     const offset = Math.max(0, (targetHour - hourStart) * HOUR_HEIGHT - 120);
     scrollContainerRef.current.scrollTop = offset;
-  }, [weekStart, hourStart, hourEnd]);
+  }, [days, today, weekStart, hourStart, hourEnd]);
 
   useEffect(() => {
     if (selectedAppt && !appointments.find(a => a.id === selectedAppt.id)) {

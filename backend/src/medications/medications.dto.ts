@@ -59,7 +59,9 @@ export class CreateMedicationDto {
   @IsString()
   endDate?: string;
 
-  @ValidateIf((o) => o.scheduleType !== 'as_needed' && !o.perpetual && !o.endDate)
+  @ValidateIf(
+    (o) => o.scheduleType !== 'as_needed' && !o.perpetual && !o.endDate,
+  )
   @IsOptional()
   @IsInt()
   @Min(1)

@@ -4,23 +4,21 @@ import { toast } from 'react-toastify';
 import MedicationChecklist from '../../components/checklist/MedicationChecklist';
 import DateNavigation from '../../components/checklist/DateNavigation';
 import { loadDailyChecklist } from '../../api/checklist/dailyChecklist.service';
-import type { ChecklistItem } from '../../lib/checklist';
+import type { ChecklistItem, ChecklistDoseStatus } from '../../lib/checklist';
 import { parseLocalDateString, toLocalDateString } from '../../lib/dates';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import PageHeader from '../../components/ui/PageHeader';
 import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
-
-function mapChecklistUserRole(groupRole: string): 'primary' | 'secondary' | 'observer' {
-  if (groupRole === 'Admin') return 'primary';
-  if (groupRole === 'Observer') return 'observer';
-  return 'secondary';
-}
 
 export default function MedicationChecklistPage() {
   const { groupId } = useParams();
   const [searchParams] = useSearchParams();
   const highlightItemId = searchParams.get('item') ?? undefined;
   const dateParam = searchParams.get('date');
+  const filterParam = searchParams.get('filter') as ChecklistDoseStatus | null;
+  const filterStatus = filterParam === 'overdue' || filterParam === 'due' || filterParam === 'given' || filterParam === 'skipped'
+    ? filterParam
+    : undefined;
   const [selectedDate, setSelectedDate] = useState(() =>
     dateParam ? parseLocalDateString(dateParam) : new Date(),
   );
@@ -103,7 +101,6 @@ export default function MedicationChecklistPage() {
     );
   }
 
-  const checklistUserRole = mapChecklistUserRole(group.role);
   const isChecklistStale = checklistView !== null && checklistView.date !== selectedDateStr;
 
   return (
@@ -140,12 +137,13 @@ export default function MedicationChecklistPage() {
         <MedicationChecklist
           checklistId={checklistView.id}
           checklistDate={checklistView.date}
-          userRole={checklistUserRole}
+          userRole={group.role}
           isLoading={resolvingChecklist || isChecklistStale}
           items={checklistItems}
           onItemsChange={setChecklistItems}
           loadingLabel={`Loading checklist for ${selectedDateStr}…`}
           highlightItemId={highlightItemId}
+          filterStatus={filterStatus}
         />
       )}
     </section>

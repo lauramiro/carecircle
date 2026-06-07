@@ -35,6 +35,20 @@ const journalEntrySelect = `
   )
 `;
 
+export async function getLatestJournalEntry(groupId: string): Promise<JournalEntry | null> {
+  const { data, error } = await supabase
+    .from('handover_journal_entries')
+    .select(journalEntrySelect)
+    .eq('group_id', groupId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return mapJournalEntry(data as unknown as JournalEntryRow);
+}
+
 export async function getJournalEntriesByGroup(groupId: string): Promise<JournalEntry[]> {
   const { data, error } = await supabase
     .from('handover_journal_entries')

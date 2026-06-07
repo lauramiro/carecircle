@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getTodayCheckin, upsertCheckin } from '../../api/checkins/checkins.service';
 import type { UpsertCheckinPayload, WellbeingCheckin } from '../../api/checkins/checkins.types';
+import { useSupabaseRealtime } from '../realtime/useSupabaseRealtime';
 
 /** Returns today's date as a local ISO date string (YYYY-MM-DD) */
 function getLocalIsoDate(): string {
@@ -48,29 +49,38 @@ export function useWellbeingCheckin(
   // Pending payload held in state while the user decides whether to overwrite
   const [pendingPayload, setPendingPayload] = useState<UpsertCheckinPayload | null>(null);
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadTodayCheckin() {
-      if (!patientId || !groupId) {
-        setLoading(false);
-        return;
-      }
-      try {
-        setLoading(true);
-        const existing = await getTodayCheckin(patientId, todayDate);
-        if (active) setTodayCheckin(existing);
-      } catch {
-        // Non-critical: if the load fails, treat as no check-in yet
-        if (active) setTodayCheckin(null);
-      } finally {
-        if (active) setLoading(false);
-      }
+  const loadTodayCheckin = useCallback(async (options?: { silent?: boolean }) => {
+    if (!patientId || !groupId) {
+      setLoading(false);
+      return;
     }
-
-    void loadTodayCheckin();
-    return () => { active = false; };
+    try {
+      if (!options?.silent) setLoading(true);
+      const existing = await getTodayCheckin(patientId, todayDate);
+      setTodayCheckin(existing);
+    } catch {
+      if (!options?.silent) setTodayCheckin(null);
+    } finally {
+      if (!options?.silent) setLoading(false);
+    }
   }, [patientId, groupId, todayDate]);
+
+  useEffect(() => {
+    void loadTodayCheckin();
+  }, [loadTodayCheckin]);
+
+  const refreshFromRealtime = useCallback(() => {
+    void loadTodayCheckin({ silent: true });
+  }, [loadTodayCheckin]);
+
+  useSupabaseRealtime({
+    channelName: patientId ? `wellbeing-checkin-${patientId}` : 'wellbeing-checkin-disabled',
+    table: 'patient_wellbeing_checkins',
+    filter: patientId ? `patient_id=eq.${patientId}` : undefined,
+    enabled: Boolean(patientId),
+    onInsert: refreshFromRealtime,
+    onUpdate: refreshFromRealtime,
+  });
 
   const submitCheckin = useCallback(
     (partial: Omit<UpsertCheckinPayload, 'caregiverId' | 'checkinDate'>) => {

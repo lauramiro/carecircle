@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { supabase } from '../lib/supabase';
+import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
 
 export type InsightType =
   | 'pain_trend'
@@ -51,6 +51,8 @@ interface ShiftAssignmentRow {
 export class WeeklyInsightGenerationService {
   private readonly logger = new Logger(WeeklyInsightGenerationService.name);
 
+  constructor(private readonly supabase: SupabaseAdminClient) {}
+
   private readonly groundingInstruction =
     'Ground all insights exclusively in the patient\'s care data from the previous 7 days. Do not invent details or general medical advice.';
 
@@ -60,10 +62,11 @@ export class WeeklyInsightGenerationService {
     this.logger.debug(this.groundingInstruction);
 
     try {
-      const { data: patients, error } = await supabase
+      const { data: patients, error } = await this.supabase.getClient()
         .from('patients')
         .select('id, group_id')
-        .eq('status', 'active');
+        .eq('is_active', true)
+        .not('group_id', 'is', null);
 
       if (error || !patients) {
         this.logger.error('Failed to fetch active patients:', error);
@@ -87,7 +90,7 @@ export class WeeklyInsightGenerationService {
     }
   }
 
-  private async generateInsightsForPatient(
+  public async generateInsightsForPatient(
     patient: ActivePatientRow,
   ): Promise<WeeklyInsightDigest | null> {
     const sevenDaysAgo = new Date();
@@ -144,7 +147,7 @@ export class WeeklyInsightGenerationService {
   }
 
   private async getJournalEntries(groupId: string, since: Date): Promise<JournalEntryRow[]> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase.getClient()
       .from('handover_journal_entries')
       .select('created_at, content')
       .eq('group_id', groupId)
@@ -165,7 +168,7 @@ export class WeeklyInsightGenerationService {
   }
 
   private async getMedicationLogs(patientId: string, since: Date): Promise<MedicationLogRow[]> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase.getClient()
       .from('medication_logs')
       .select('status, scheduled_time, actual_time, notes')
       .eq('patient_id', patientId)
@@ -189,7 +192,7 @@ export class WeeklyInsightGenerationService {
 
   private async getShiftAssignments(groupId: string, since: Date): Promise<ShiftAssignmentRow[]> {
     const sinceDate = since.toISOString().split('T')[0];
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase.getClient()
       .from('weekly_shift_assignments')
       .select('shift_date, shift_slot, assigned_caregiver_id')
       .eq('group_id', groupId)
@@ -362,19 +365,23 @@ export class WeeklyInsightGenerationService {
   private async storeInsights(digest: WeeklyInsightDigest) {
     const rows = digest.insightCards.map((card) => ({
       patient_id: digest.patientId,
-      week_ending_date: digest.weekEndingDate,
       insight_type: card.insightType,
-      observation: card.observation,
       suggested_action: card.suggestedAction,
+      observation: card.observation,
       severity: card.severity,
-      generated_at: card.generatedAt,
       is_active: true,
-      source: 'weekly_digest',
+      generated_at: card.generatedAt,
+      created_at: new Date().toISOString(),
     }));
+    const { error } = await this.supabase.getClient().from('ai_insights').insert(rows);
 
-    const { error } = await supabase.from('ai_insights').insert(rows);
     if (error) {
-      this.logger.error(`Failed to persist weekly insights for patient ${digest.patientId}:`, error);
+      this.logger.error(
+        `Failed to store insights for patient ${digest.patientId} (${rows.length} rows): ${error.message}`,
+      );
+      return;
     }
+
+    this.logger.log(`Stored ${rows.length} insights for patient ${digest.patientId}`);
   }
 }

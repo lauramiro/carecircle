@@ -15,3 +15,17 @@ export type ChecklistItemUpdate = TablesUpdate<'checklist_items'>;
 export type DailyChecklistRow = Tables<'daily_medication_checklists'>;
 export type DailyChecklistInsert = TablesInsert<'daily_medication_checklists'>;
 export type MedicationRow = Tables<'medications'>;
+export type WeeklyShiftAssignmentRow = Tables<'weekly_shift_assignments'>;
+export type PatientInsert = TablesInsert<'patients'>;
+export type CareGroupInsert = TablesInsert<'care_group'>;
+export type CareGiverInsert = TablesInsert<'care_givers'>;
+export type ProfileInsert = TablesInsert<'profiles'>;
+export type GPContactRow = Tables<'gp_contacts'>;
+export type GPContactInsert = TablesInsert<'gp_contacts'>;
+export type GPContactUpdate = TablesUpdate<'gp_contacts'>;
+
+/** Appointment columns used by CC-106; may be absent until migration is applied on remote. */
+export type AppointmentInsert = TablesInsert<'appointments'> & {
+  recurrence_rule?: string | null;
+  recurrence_series_id?: string | null;
+};

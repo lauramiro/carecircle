@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Group } from '../../api/groups/groups.types';
+import { ROLE } from '@typings/role-enum';
 
 const toastMock = vi.hoisted(() => ({
   success: vi.fn(),
@@ -94,7 +95,7 @@ vi.mock('../../services/inviteService', async (importOriginal) => {
 });
 
 import CreateGroupPage from '../../pages/groups/CreateGroupPage';
-import GroupDetailPage from '../../pages/groups/GroupDetailPage';
+import GroupMembersPage from '../../pages/groups/GroupMembersPage';
 import InvitePage from '../../pages/InvitePage';
 
 const INVITE_ID = '550e8400-e29b-41d4-a716-446655440000';
@@ -110,11 +111,11 @@ function renderCreateGroupFlow() {
   );
 }
 
-function renderGroupDetailFlow(groupId = 'group-care-001') {
+function renderGroupMembersFlow(groupId = 'group-care-001') {
   return render(
-    <MemoryRouter initialEntries={[`/groups/${groupId}`]}>
+    <MemoryRouter initialEntries={[`/groups/${groupId}/members`]}>
       <Routes>
-        <Route path="/groups/:groupId" element={<GroupDetailPage />} />
+        <Route path="/groups/:groupId/members" element={<GroupMembersPage />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -137,6 +138,12 @@ function renderInviteFlow(search: string) {
 function memberInviteSearch(email: string, confirmation: 'true' | 'false') {
   const params = new URLSearchParams({ inviteId: INVITE_ID, email, confirmation });
   return `?${params.toString()}`;
+}
+
+function mockProfilesUpsertSuccess() {
+  return {
+    upsert: vi.fn().mockResolvedValue({ error: null }),
+  };
 }
 
 function mockPatientInsertSuccess(patientId = 'patient-123') {
@@ -170,7 +177,7 @@ function buildAdminGroupWithMembers(memberCount: number): Group {
     id: 'group-care-001',
     name: 'CareCircle Family Group',
     description: 'A shared care group.',
-    role: 'Admin',
+    role: 'primary_carer' as ROLE,
     canSchedule: true,
     createdAt: '2025-05-12T09:00:00.000Z',
     patientId: 'patient-care-001',
@@ -178,7 +185,7 @@ function buildAdminGroupWithMembers(memberCount: number): Group {
       id: `member-${index + 1}`,
       name: `Member ${index + 1}`,
       email: `member${index + 1}@example.com`,
-      role: index === 0 ? 'Admin' : 'Member',
+      role: index === 0 ? 'primary_carer' as ROLE : 'secondary_carer' as ROLE,
       joinedAt: '2025-05-12T09:00:00.000Z',
       status: 'Active',
     })),
@@ -226,6 +233,7 @@ describe('group invite integration flow', () => {
     const careGiverInsert = vi.fn().mockResolvedValue({ error: null });
 
     supabaseMock.from
+      .mockReturnValueOnce(mockProfilesUpsertSuccess())
       .mockReturnValueOnce(mockPatientInsertSuccess('patient-001'))
       .mockReturnValueOnce(mockGroupInsertSuccess('group-001'))
       .mockReturnValueOnce({
@@ -242,7 +250,7 @@ describe('group invite integration flow', () => {
     await user.type(screen.getByLabelText(/circle name/i), 'Mum Care Team');
     await user.type(screen.getByLabelText(/patient full name/i), 'Jane Doe');
     await user.type(screen.getByLabelText(/date of birth/i), '1955-05-01');
-    await user.type(screen.getByLabelText(/^email$/i), 'jane@example.com');
+    await user.type(screen.getByLabelText(/^email\b/i), 'jane@example.com');
     await user.selectOptions(screen.getByLabelText(/relationship to the patient/i), 'parent');
     await user.click(screen.getByRole('button', { name: /create circle/i }));
 
@@ -257,9 +265,9 @@ describe('group invite integration flow', () => {
     );
   });
 
-  it('sends an invite from the group detail page', async () => {
+  it('sends an invite from the group members page', async () => {
     const user = userEvent.setup();
-    renderGroupDetailFlow();
+    renderGroupMembersFlow();
 
     await user.click(screen.getByRole('button', { name: /invite member/i }));
     await user.type(screen.getByLabelText(/email address/i), 'newcarer@example.com');

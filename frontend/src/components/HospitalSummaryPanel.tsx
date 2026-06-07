@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { assembleHospitalSummary, generateHospitalSummaryPDF, fetchInsights } from '../api/hospital-summary/hospitalSummary.service';
 
 export default function HospitalSummaryPanel() {

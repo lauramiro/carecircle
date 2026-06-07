@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Group } from '../../api/groups/groups.types';
+import { ROLE } from '@typings/role-enum';
 import GroupDetailPage from './GroupDetailPage';
 
 const groupHookMock = vi.hoisted(() => ({
@@ -13,12 +14,12 @@ const groupHookMock = vi.hoisted(() => ({
       patientId: 'patient-1',
       name: 'Dad Care Circle',
       description: 'Daily support and medication coordination for Dad.',
-      role: 'Admin' as const,
+      role: 'primary_carer' as ROLE,
       canSchedule: true,
       createdAt: '2025-05-12T09:00:00.000Z',
       members: [
-        { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'Admin' as const, joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' as const },
-        { id: 'member-2', name: 'John', email: 'john@example.com', role: 'Member' as const, joinedAt: '2025-05-13T10:20:00.000Z', status: 'Suspended' as const },
+        { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'primary_carer' as ROLE, joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' as const },
+        { id: 'member-2', name: 'John', email: 'john@example.com', role: 'secondary_carer' as ROLE, joinedAt: '2025-05-13T10:20:00.000Z', status: 'Suspended' as const },
       ],
       gpContacts: [],
     } as Group,
@@ -50,12 +51,12 @@ describe('GroupDetailPage', () => {
         patientId: 'patient-1',
         name: 'Dad Care Circle',
         description: 'Daily support and medication coordination for Dad.',
-        role: 'Admin',
+        role: 'primary_carer' as ROLE,
         canSchedule: true,
         createdAt: '2025-05-12T09:00:00.000Z',
         members: [
-          { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'Admin', joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' },
-          { id: 'member-2', name: 'John', email: 'john@example.com', role: 'Member', joinedAt: '2025-05-13T10:20:00.000Z', status: 'Suspended' },
+          { id: 'member-1', name: 'Sarah', email: 'sarah@example.com', role: 'primary_carer' as ROLE, joinedAt: '2025-05-12T09:00:00.000Z', status: 'Active' },
+          { id: 'member-2', name: 'John', email: 'john@example.com', role: 'secondary_carer' as ROLE, joinedAt: '2025-05-13T10:20:00.000Z', status: 'Suspended' },
         ],
         gpContacts: [],
       } as Group,
@@ -68,7 +69,7 @@ describe('GroupDetailPage', () => {
     expect(screen.getByText('Dad Care Circle')).toBeInTheDocument();
     expect(screen.getByText('Daily support and medication coordination for Dad.')).toBeInTheDocument();
     expect(screen.getAllByText('12 May 2025').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Admin').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Primary carer').length).toBeGreaterThan(0);
     expect(screen.getByText('2')).toBeInTheDocument();
     expect(screen.queryByText('Sarah')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /members/i })).toHaveAttribute('href', '/groups/group-care-001/members');
@@ -83,11 +84,11 @@ describe('GroupDetailPage', () => {
         patientId: 'patient-2',
         name: 'Mum Recovery Team',
         description: 'Post-surgery care planning and appointment tracking.',
-        role: 'Member',
+        role: 'secondary_carer' as ROLE,
         createdAt: '2025-04-28T13:30:00.000Z',
         members: [
-          { id: 'member-4', name: 'Amara', email: 'amara@example.com', role: 'Admin', joinedAt: '2025-04-28T13:30:00.000Z', status: 'Active' },
-          { id: 'member-5', name: 'Sarah', email: 'sarah@example.com', role: 'Member', joinedAt: '2025-04-29T09:15:00.000Z', status: 'Active' },
+          { id: 'member-4', name: 'Amara', email: 'amara@example.com', role: 'primary_carer' as ROLE, joinedAt: '2025-04-28T13:30:00.000Z', status: 'Active' },
+          { id: 'member-5', name: 'Sarah', email: 'sarah@example.com', role: 'secondary_carer' as ROLE, joinedAt: '2025-04-29T09:15:00.000Z', status: 'Active' },
         ],
         gpContacts: [
           {

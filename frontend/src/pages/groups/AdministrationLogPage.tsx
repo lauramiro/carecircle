@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { fetchAdministrationLogEvents } from '../../api/administrationLog/administrationLog.service';
 import type { AdministrationLogEvent } from '../../api/administrationLog/administrationLog.types';
 import AdministrationLogRow from '../../components/administrationLog/AdministrationLogRow';
 import AdministrationLogEventModal from '../../components/administrationLog/AdministrationLogEventModal';
 import AdministrationLogFiltersBar from '../../components/administrationLog/AdministrationLogFiltersBar';
 import PageHeader from '../../components/ui/PageHeader';
 import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
+import { useAdministrationLog } from '../../hooks/administrationLog/useAdministrationLog';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import {
   defaultAdministrationLogFilters,
@@ -18,8 +17,7 @@ import {
 export default function AdministrationLogPage() {
   const { groupId } = useParams();
   const { group, loading, error } = useGroupDetail(groupId);
-  const [events, setEvents] = useState<AdministrationLogEvent[]>([]);
-  const [loadingLog, setLoadingLog] = useState(true);
+  const { events, loading: loadingLog } = useAdministrationLog(groupId, group?.patientId);
   const [selected, setSelected] = useState<AdministrationLogEvent | null>(null);
   const [filters, setFilters] = useState<AdministrationLogFiltersState>(() =>
     defaultAdministrationLogFilters(),
@@ -32,37 +30,6 @@ export default function AdministrationLogPage() {
 
   const carerOptions = useMemo(() => events.map((e) => e.carerName), [events]);
   const medicationOptions = useMemo(() => events.map((e) => e.medicationName), [events]);
-
-  useEffect(() => {
-    if (!groupId || !group?.patientId) {
-      setLoadingLog(false);
-      setEvents([]);
-      return;
-    }
-
-    let cancelled = false;
-    setLoadingLog(true);
-
-    void (async () => {
-      try {
-        const data = await fetchAdministrationLogEvents(groupId, group.patientId, {
-          includeProofThumbnails: true,
-        });
-        if (!cancelled) setEvents(data);
-      } catch {
-        if (!cancelled) {
-          toast.error('Could not load administration log.');
-          setEvents([]);
-        }
-      } finally {
-        if (!cancelled) setLoadingLog(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [groupId, group?.patientId]);
 
   if (!groupId) {
     return <Navigate to="/groups/list" replace />;

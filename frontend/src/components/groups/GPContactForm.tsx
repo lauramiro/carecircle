@@ -47,13 +47,31 @@ export default function GPContactForm({
             type="text"
             value={values.gpName}
             onChange={(event) => updateField('gpName', event.target.value)}
+            onBlur={(event) => {
+              if (!event.target.value.trim()) {
+                validateField('gpName', event.target.value);
+              }
+            }}
             placeholder="Dr. Jane Smith"
+            aria-invalid={Boolean(errors.gpName)}
+            aria-describedby={errors.gpName ? `${formId}-gp-name-error` : undefined}
             className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
             style={{
-              borderColor: 'var(--color-border)',
+              borderColor: errors.gpName
+                ? 'var(--color-status-critical)'
+                : 'var(--color-border)',
               color: 'var(--color-text-primary)',
             }}
           />
+          {errors.gpName && (
+            <p
+              id={`${formId}-gp-name-error`}
+              className="mt-2 text-xs"
+              style={{ color: 'var(--color-status-critical)' }}
+            >
+              {errors.gpName}
+            </p>
+          )}
         </div>
 
         <div>

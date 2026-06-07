@@ -4,7 +4,7 @@ import type { AddAppointmentPayload, Appointment } from '../../api/appointments/
 import { useAppointments } from './useAppointments';
 
 // Mock the appointments mock service
-vi.mock('../../api/appointments/appointments.mock', () => ({
+vi.mock('../../api/appointments/appointments.service', () => ({
   getAppointmentsByPatient: vi.fn(),
   addAppointment: vi.fn(),
   editAppointment: vi.fn(),
@@ -27,7 +27,7 @@ import {
   addAppointment as addAppointmentService,
   editAppointment as editAppointmentService,
   deleteAppointment as deleteAppointmentService,
-} from '../../api/appointments/appointments.mock';
+} from '../../api/appointments/appointments.service';
 
 const mockGet = vi.mocked(getAppointmentsByPatient);
 const mockAdd = vi.mocked(addAppointmentService);

@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import webpush from 'web-push';
+import * as admin from 'firebase-admin';
 import { AppConfigService } from '../config/app-config.service';
 import { PushSubscriptionRepository } from '../integrations/repositories/push-subscription.repository';
 import type { MissedMedicationAlertRecord } from '../integrations/types';
@@ -16,15 +17,19 @@ export interface GenericPushPayload {
 }
 
 @Injectable()
-export class PushDispatchService {
+export class PushDispatchService implements OnModuleInit {
   private readonly logger = new Logger(PushDispatchService.name);
   private vapidConfigured = false;
+  private firebaseConfigured = false;
 
   constructor(
     private readonly pushSubRepo: PushSubscriptionRepository,
     private readonly appConfig: AppConfigService,
-  ) {
+  ) {}
+
+  onModuleInit() {
     this.configureVapid();
+    this.configureFirebase();
   }
 
   private configureVapid(): void {
@@ -37,11 +42,25 @@ export class PushDispatchService {
     this.vapidConfigured = true;
   }
 
+  private configureFirebase(): void {
+    const { FIREBASE_SERVICE_ACCOUNT_PATH } = process.env;
+    if (FIREBASE_SERVICE_ACCOUNT_PATH) {
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          credential: admin.credential.cert(FIREBASE_SERVICE_ACCOUNT_PATH),
+        });
+      }
+      this.firebaseConfigured = true;
+    } else {
+      this.logger.warn('Firebase Admin SDK not configured; FCM disabled');
+    }
+  }
+
   async dispatch(alert: MissedMedicationAlertRecord): Promise<PushDispatchResult> {
     const log: PushDispatchResult['log'] = [];
     const subscriptions = await this.pushSubRepo.findByUserIds(alert.push_recipient_user_ids);
 
-    if (!this.vapidConfigured || subscriptions.length === 0) {
+    if (!this.vapidConfigured && !this.firebaseConfigured || subscriptions.length === 0) {
       for (const userId of alert.push_recipient_user_ids) {
         log.push({
           userId,
@@ -55,7 +74,16 @@ export class PushDispatchService {
 
     let successCount = 0;
     for (const sub of subscriptions) {
-      if (sub.platform !== 'web_push' || !sub.p256dh || !sub.auth) {
+      if (sub.platform === 'fcm' && !this.firebaseConfigured) {
+        log.push({
+          userId: sub.user_id,
+          subscriptionId: sub.id,
+          success: false,
+          error: 'fcm_not_configured',
+        });
+        continue;
+      }
+      if (sub.platform === 'web_push' && (!this.vapidConfigured || !sub.p256dh || !sub.auth)) {
         log.push({
           userId: sub.user_id,
           subscriptionId: sub.id,
@@ -66,23 +94,34 @@ export class PushDispatchService {
       }
 
       try {
-        const result = await webpush.sendNotification(
-          {
-            endpoint: sub.endpoint,
-            keys: { p256dh: sub.p256dh, auth: sub.auth },
-          },
-          JSON.stringify({
-            title: 'Missed medication',
-            body: alert.push_body,
+        let statusCode = undefined;
+        if (sub.platform === 'fcm') {
+          await admin.messaging().send({
+            token: sub.endpoint,
+            notification: { title: 'Missed medication', body: alert.push_body },
             data: { url: alert.deep_link_url },
-          }),
-        );
+          });
+          statusCode = 200;
+        } else {
+          const result = await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh as string, auth: sub.auth as string },
+            },
+            JSON.stringify({
+              title: 'Missed medication',
+              body: alert.push_body,
+              data: { url: alert.deep_link_url },
+            }),
+          );
+          statusCode = result.statusCode;
+        }
         successCount++;
         log.push({
           userId: sub.user_id,
           subscriptionId: sub.id,
           success: true,
-          statusCode: result.statusCode,
+          statusCode,
         });
       } catch (err: unknown) {
         const statusCode =
@@ -105,8 +144,8 @@ export class PushDispatchService {
   }
 
   async sendToUsers(userIds: string[], payload: GenericPushPayload): Promise<void> {
-    if (!this.vapidConfigured) {
-      this.logger.warn('sendToUsers_skipped: VAPID not configured');
+    if (!this.vapidConfigured && !this.firebaseConfigured) {
+      this.logger.warn('sendToUsers_skipped: Push not configured');
       return;
     }
     if (userIds.length === 0) return;
@@ -118,18 +157,25 @@ export class PushDispatchService {
     }
     await Promise.all(
       subscriptions.map(async (sub) => {
-        if (sub.platform !== 'web_push' || !sub.p256dh || !sub.auth) return;
         try {
-          await webpush.sendNotification(
-            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-            JSON.stringify({ title: payload.title, body: payload.body, data: { url: payload.url } }),
-          );
+          if (sub.platform === 'fcm' && this.firebaseConfigured) {
+            await admin.messaging().send({
+              token: sub.endpoint,
+              notification: { title: payload.title, body: payload.body },
+              data: { url: payload.url },
+            });
+          } else if (sub.platform === 'web_push' && this.vapidConfigured && sub.p256dh && sub.auth) {
+            await webpush.sendNotification(
+              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+              JSON.stringify({ title: payload.title, body: payload.body, data: { url: payload.url } }),
+            );
+          }
         } catch (err: unknown) {
           const statusCode =
             typeof err === 'object' && err !== null && 'statusCode' in err
               ? Number((err as { statusCode: unknown }).statusCode)
               : undefined;
-          this.logger.warn(`push_failed sub=${sub.id} status=${statusCode ?? 'unknown'}`);
+          this.logger.warn(`push_failed sub=${sub.id} status=${statusCode ?? 'unknown'} err=${err instanceof Error ? err.message : 'Unknown'}`);
         }
       }),
     );

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getMessaging, getToken } from 'firebase/messaging';
 import { useAuth } from '../contexts/AuthContext';
 
 export type PushRegistrationStatus =
@@ -61,6 +63,13 @@ async function syncSubscriptionToBackend(
   }
 }
 
+const isChromeOrAndroid = () => {
+  const ua = navigator.userAgent;
+  const isAndroid = /android/i.test(ua);
+  const isChrome = /chrome|chromium|crios/i.test(ua);
+  return isAndroid || isChrome;
+};
+
 export async function registerWebPushForUser(userId: string): Promise<void> {
   const unsupported = pushUnsupportedReason();
   if (unsupported) throw new Error(unsupported);
@@ -78,8 +87,44 @@ export async function registerWebPushForUser(userId: string): Promise<void> {
     );
   }
 
-  const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+  const firebaseConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  };
+
+  const swUrl = `/sw.js?apiKey=${firebaseConfig.apiKey ?? ''}&projectId=${firebaseConfig.projectId ?? ''}&senderId=${firebaseConfig.messagingSenderId ?? ''}&appId=${firebaseConfig.appId ?? ''}`;
+  const registration = await navigator.serviceWorker.register(swUrl, { scope: '/' });
   await navigator.serviceWorker.ready;
+
+  if (isChromeOrAndroid() && firebaseConfig.apiKey) {
+    const app = initializeApp(firebaseConfig);
+    const messaging = getMessaging(app);
+    
+    try {
+      const currentToken = await getToken(messaging, { 
+        serviceWorkerRegistration: registration,
+        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY 
+      });
+
+      if (currentToken) {
+        await fetch('/api/push/subscriptions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            platform: 'fcm',
+            endpoint: currentToken,
+            userAgent: navigator.userAgent,
+          }),
+        });
+        return;
+      }
+    } catch (e) {
+      console.warn('FCM token generation failed, falling back to Web Push', e);
+    }
+  }
 
   const keyResponse = await fetch('/api/push/vapid-public-key');
   if (!keyResponse.ok) {

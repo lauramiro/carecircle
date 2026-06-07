@@ -19,6 +19,7 @@ import { AlertsModule } from './alerts/alerts.module';
 import { MedicationsModule } from './medications/medications.module';
 import { CronModule } from './cron/cron.module';
 import { RemindersModule } from './reminders/reminders.module';
+import { InsightsModule } from './insights/insights.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { RemindersModule } from './reminders/reminders.module';
     MedicationsModule,
     CronModule,
     RemindersModule,
+    InsightsModule,
   ],
   controllers: [AppController],
   providers: [

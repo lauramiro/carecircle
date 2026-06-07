@@ -153,7 +153,6 @@ export default function CreateGroupPage() {
         .insert({
           name: groupNameTrimmed,
           ...(descriptionTrimmed ? { description: descriptionTrimmed } : {}),
-          patient_id: patient.id,
           primary_caregiver_id: user.id,
           preferred_timezone: data.preferredTimezone,
         })

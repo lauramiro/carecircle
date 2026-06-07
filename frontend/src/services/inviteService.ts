@@ -84,7 +84,7 @@ export async function fetchInviteGroupDetails(inviteId: string): Promise<InviteG
 
   const { data: group, error: groupError } = await supabase
     .from('care_group')
-    .select('name, description, patient_id')
+    .select('name, description')
     .eq('id', invite.group_id)
     .maybeSingle();
 
@@ -92,15 +92,29 @@ export async function fetchInviteGroupDetails(inviteId: string): Promise<InviteG
     throw new Error(groupError.message);
   }
 
-  if (!group?.name || !group.patient_id) {
+  if (!group?.name) {
     throw new Error('Care group not found.');
+  }
+
+  const { data: patient, error: patientError } = await supabase
+    .from('patients')
+    .select('id')
+    .eq('group_id', invite.group_id)
+    .maybeSingle();
+
+  if (patientError) {
+    throw new Error(patientError.message);
+  }
+
+  if (!patient) {
+    throw new Error('Linked patient record not found.');
   }
 
   const { count, error: countError } = await supabase
     .from('care_givers')
     .select('*', { count: 'exact', head: true })
     .eq('group_id', invite.group_id)
-    .eq('patient_id', group.patient_id);
+    .eq('patient_id', patient.id);
 
   if (countError) {
     throw new Error(countError.message);
@@ -108,7 +122,7 @@ export async function fetchInviteGroupDetails(inviteId: string): Promise<InviteG
 
   return {
     groupId: invite.group_id,
-    patientId: group.patient_id,
+    patientId: patient.id,
     groupName: group.name,
     description: group.description ?? '',
     totalCarers: count ?? 0,

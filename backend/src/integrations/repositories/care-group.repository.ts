@@ -94,4 +94,14 @@ export class CareGroupRepository {
       groupMembersPhoneNumbers: [...new Set(groupMembersPhoneNumbers)],
     };
   }
+
+  async findAllGroups() {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('care_group')
+      .select('id, name');
+
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  }
 }

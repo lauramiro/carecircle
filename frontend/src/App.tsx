@@ -16,6 +16,7 @@ import AddMedicationPage from './pages/medications/AddMedicationPage';
 import MedicationsSchedulePage from './pages/medications/MedicationsSchedulePage';
 import MedicationChecklistPage from './pages/checklist/MedicationChecklistPage';
 import GroupJournalPage from './pages/groups/GroupJournalPage';
+import InsightsPage from './pages/groups/InsightsPage';
 import AppointmentsPage from './pages/appointments/AppointmentsPage';
 import AppointmentFormPage from './pages/appointments/AppointmentFormPage';
 import AiQaPage from './pages/ai/AiQaPage';
@@ -71,6 +72,7 @@ function App() {
           <Route path="groups/:groupId/members" element={<GroupMembersPage />} />
           <Route path="groups/:groupId/medications" element={<MedicationsSchedulePage />} />
           <Route path="groups/:groupId/journal" element={<GroupJournalPage />} />
+          <Route path="groups/:groupId/insights" element={<InsightsPage />} />
           <Route path="groups/:groupId/profile" element={<PatientProfilePage />} />
           <Route path="groups/:groupId/medications/add" element={<AddMedicationPage />} />
           <Route path="groups/:groupId/checklist" element={<MedicationChecklistPage />} />

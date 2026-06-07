@@ -33,7 +33,7 @@ export class PatientRepository {
     const { data, error } = await this.supabase
       .getClient()
       .from('medication_logs')
-      .select('status, actual_time, notes, medications(medication_name)')
+      .select('status, actual_time, scheduled_time, notes, medications(medication_name)')
       .eq('patient_id', patientId)
       .gte('scheduled_time', since)
       .order('scheduled_time', { ascending: false })
@@ -66,6 +66,20 @@ export class PatientRepository {
       .gte('start_time', new Date().toISOString())
       .order('start_time', { ascending: true })
       .limit(3);
+
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  }
+
+  async findRecentVitalSigns(patientId: string, since: string) {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('vital_signs')
+      .select('measured_at, blood_glucose, blood_pressure_systolic, blood_pressure_diastolic, heart_rate, notes')
+      .eq('patient_id', patientId)
+      .gte('measured_at', since)
+      .order('measured_at', { ascending: false })
+      .limit(20);
 
     if (error) throw new Error(error.message);
     return data ?? [];

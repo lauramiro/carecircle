@@ -94,7 +94,7 @@ export class PushDispatchService implements OnModuleInit {
       }
 
       try {
-        let statusCode = undefined;
+        let statusCode: number | undefined;
         if (sub.platform === 'fcm') {
           await admin.messaging().send({
             token: sub.endpoint,

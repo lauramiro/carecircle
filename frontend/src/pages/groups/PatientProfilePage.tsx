@@ -13,6 +13,7 @@ import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { canManageMembers } from '../../lib/carePermissions';
 import { getErrorMessage } from '../../utils/helper';
+import WellbeingTrendCharts from '../../components/checkins/WellbeingTrendCharts';
 
 const inputStyle = (hasError: boolean) => ({
   width: '100%',
@@ -51,6 +52,7 @@ export default function PatientProfilePage() {
   const shouldReduceMotion = useReducedMotion();
 
   const { group, loading: groupLoading } = useGroupDetail(groupId);
+  const isObserver = group?.role === 'observer';
   const canEditProfile = group ? canManageMembers(group.role) : false;
 
   const {
@@ -636,6 +638,15 @@ export default function PatientProfilePage() {
 
         </form>
       </div>
+
+      {/* Wellbeing trend charts — shown once a patientId is resolved */}
+      {patientId && group?.id && (
+        <WellbeingTrendCharts
+          patientId={patientId}
+          groupId={group.id}
+          isObserver={isObserver}
+        />
+      )}
 
       <style>{`
         button:hover .avatar-overlay { opacity: 1 !important; }

@@ -15,7 +15,7 @@ interface AppointmentRow {
   location: string | null;
   attendees: string[] | null;
   patient_id: string;
-  reminders_sent_offsets: number[];
+  reminder_offsets: number[];
 }
 
 interface ProfileRow {
@@ -70,7 +70,7 @@ export class RemindersService {
     const { data, error } = await db
       .from('appointments')
       .select(
-        'id, title, start_time, location, attendees, patient_id, reminders_sent_offsets',
+        'id, title, start_time, location, attendees, patient_id, reminder_offsets',
       )
       .gte('start_time', windowStart.toISOString())
       .lte('start_time', windowEnd.toISOString())
@@ -86,7 +86,7 @@ export class RemindersService {
 
     const pending = ((data ?? []) as AppointmentRow[]).filter(
       (a) =>
-        !((a.reminders_sent_offsets ?? []) as number[]).includes(offsetMinutes),
+        !((a.reminder_offsets ?? []) as number[]).includes(offsetMinutes),
     );
 
     if (!pending.length) return;
@@ -149,8 +149,8 @@ export class RemindersService {
     const { error } = await db
       .from('appointments')
       .update({
-        reminders_sent_offsets: [
-          ...(appt.reminders_sent_offsets ?? []),
+        reminder_offsets: [
+          ...(appt.reminder_offsets ?? []),
           offsetMinutes,
         ],
       })

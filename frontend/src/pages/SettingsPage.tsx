@@ -1,7 +1,25 @@
 import { Moon, Sun, Bell, CircleUserRound, Shield } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import WellbeingCheckInSection from '../components/wellbeing/WellbeingCheckInSection';
 import PageHeader from '../components/ui/PageHeader';
 import { useTheme, type Theme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabaseClient';
+import type { Json } from '../lib/database.types';
+import { isCurrentUserPrimaryCarer } from '../api/wellbeing/wellbeing.service';
+
+interface NotificationPreferences {
+  weeklyWellbeingReminderEnabled?: boolean;
+}
+
+interface ProfilePreferences {
+  notifications?: NotificationPreferences;
+  [key: string]: unknown;
+}
+
+function getWeeklyWellbeingReminderPreference(preferences: ProfilePreferences | null): boolean {
+  return preferences?.notifications?.weeklyWellbeingReminderEnabled !== false;
+}
 
 interface ThemeOptionProps {
   label: string;
@@ -49,6 +67,95 @@ function ThemeOption({ label, description, value, icon, selected, onSelect }: Th
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const { session } = useAuth();
+  const [isPrimaryCarer, setIsPrimaryCarer] = useState(false);
+  const [preferences, setPreferences] = useState<ProfilePreferences | null>(null);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [notificationError, setNotificationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (!userId) {
+      setIsLoadingNotifications(false);
+      setIsPrimaryCarer(false);
+      setPreferences(null);
+      return;
+    }
+
+    const currentUserId = userId;
+
+    let isActive = true;
+
+    async function loadNotificationPreferences() {
+      setIsLoadingNotifications(true);
+      setNotificationError(null);
+
+      try {
+        const [primaryCarer, profileResult] = await Promise.all([
+          isCurrentUserPrimaryCarer(),
+          supabase.from('profiles').select('preferences').eq('id', currentUserId).maybeSingle(),
+        ]);
+
+        if (!isActive) return;
+        if (profileResult.error) {
+          throw new Error(profileResult.error.message);
+        }
+
+        setIsPrimaryCarer(primaryCarer);
+        setPreferences((profileResult.data?.preferences as ProfilePreferences | null) ?? null);
+      } catch (error) {
+        if (!isActive) return;
+        setNotificationError(
+          error instanceof Error
+            ? error.message
+            : 'Unable to load notification preferences.',
+        );
+      } finally {
+        if (isActive) {
+          setIsLoadingNotifications(false);
+        }
+      }
+    }
+
+    void loadNotificationPreferences();
+
+    return () => {
+      isActive = false;
+    };
+  }, [session?.user?.id]);
+
+  async function handleWeeklyWellbeingReminderToggle(enabled: boolean) {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    const nextPreferences: ProfilePreferences = {
+      ...(preferences ?? {}),
+      notifications: {
+        ...((preferences?.notifications as NotificationPreferences | undefined) ?? {}),
+        weeklyWellbeingReminderEnabled: enabled,
+      },
+    };
+
+    setIsSavingNotifications(true);
+    setNotificationError(null);
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ preferences: nextPreferences as Json })
+      .eq('id', userId);
+
+    if (error) {
+      setNotificationError(error.message || 'Unable to save notification preferences.');
+      setIsSavingNotifications(false);
+      return;
+    }
+
+    setPreferences(nextPreferences);
+    setIsSavingNotifications(false);
+  }
+
+  const weeklyWellbeingReminderEnabled = getWeeklyWellbeingReminderPreference(preferences);
 
   return (
     <section className="space-y-6">
@@ -129,9 +236,61 @@ export default function SettingsPage() {
                 Notifications
               </h2>
               <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                Use the bell icon in the header to enable browser push alerts for overdue medications.
+                Use the bell icon in the header to enable browser push alerts. Weekly wellbeing reminders can be managed here.
               </p>
             </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
+            {isLoadingNotifications ? (
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                Loading notification preferences...
+              </p>
+            ) : isPrimaryCarer ? (
+              <div className="space-y-2">
+                <label className="flex items-start gap-3" htmlFor="weekly-wellbeing-reminder-toggle">
+                  <input
+                    id="weekly-wellbeing-reminder-toggle"
+                    type="checkbox"
+                    checked={weeklyWellbeingReminderEnabled}
+                    disabled={isSavingNotifications}
+                    onChange={(event) =>
+                      void handleWeeklyWellbeingReminderToggle(event.target.checked)
+                    }
+                    className="mt-1 h-4 w-4"
+                  />
+                  <span>
+                    <span
+                      className="block text-sm font-bold"
+                      style={{ color: 'var(--color-text-primary)' }}
+                    >
+                      Weekly wellbeing check-in reminder
+                    </span>
+                    <span
+                      className="mt-1 block text-xs leading-relaxed"
+                      style={{ color: 'var(--color-text-secondary)' }}
+                    >
+                      Send a push reminder every Monday at 9:00 am to complete your wellbeing check-in.
+                    </span>
+                  </span>
+                </label>
+                {isSavingNotifications ? (
+                  <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                    Saving your preference...
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                Weekly wellbeing reminders are available for primary carers only.
+              </p>
+            )}
+
+            {notificationError ? (
+              <p className="mt-3 text-xs" style={{ color: 'var(--color-status-critical)' }}>
+                {notificationError}
+              </p>
+            ) : null}
           </div>
         </article>
 
@@ -156,6 +315,10 @@ export default function SettingsPage() {
             </div>
           </div>
         </article>
+
+        <div className="xl:col-span-2">
+          <WellbeingCheckInSection />
+        </div>
       </div>
     </section>
   );

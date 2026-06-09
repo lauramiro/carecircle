@@ -17,12 +17,15 @@ import MedicationsSchedulePage from './pages/medications/MedicationsSchedulePage
 import MedicationChecklistPage from './pages/checklist/MedicationChecklistPage';
 import GroupJournalPage from './pages/groups/GroupJournalPage';
 import InsightsPage from './pages/groups/InsightsPage';
+import GroupShiftAssignmentsPage from './pages/groups/GroupShiftAssignmentsPage';
 import AppointmentsPage from './pages/appointments/AppointmentsPage';
 import AppointmentFormPage from './pages/appointments/AppointmentFormPage';
 import AiQaPage from './pages/ai/AiQaPage';
 import AdministrationLogPage from './pages/groups/AdministrationLogPage';
+import MyShiftsPage from './pages/MyShiftsPage';
 import SettingsPage from './pages/SettingsPage';
 import { usePushNotifications } from './hooks/push/usePushNotifications';
+import { HospitalSummaryPDF } from './components/hospital-summary/HospitalSummaryPDF';
 
 function App() {
   const { session, loading } = useAuth();
@@ -65,6 +68,7 @@ function App() {
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="dashboard/my-shifts" element={<MyShiftsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="groups/create" element={<CreateGroupPage />} />
           <Route path="groups/list" element={<GroupsListPage />} />
@@ -73,6 +77,7 @@ function App() {
           <Route path="groups/:groupId/medications" element={<MedicationsSchedulePage />} />
           <Route path="groups/:groupId/journal" element={<GroupJournalPage />} />
           <Route path="groups/:groupId/insights" element={<InsightsPage />} />
+          <Route path="groups/:groupId/shifts" element={<GroupShiftAssignmentsPage />} />
           <Route path="groups/:groupId/profile" element={<PatientProfilePage />} />
           <Route path="groups/:groupId/medications/add" element={<AddMedicationPage />} />
           <Route path="groups/:groupId/checklist" element={<MedicationChecklistPage />} />
@@ -81,6 +86,8 @@ function App() {
           <Route path="groups/:groupId/appointments/new" element={<AppointmentFormPage />} />
           <Route path="groups/:groupId/appointments/:appointmentId/edit" element={<AppointmentFormPage />} />
           <Route path="groups/:groupId/ai-assistant" element={<AiQaPage />} />
+          <Route path="/groups/:groupId/hospital-summary" element={<HospitalSummaryPDF />} />
+
         </Route>
         <Route
           path="*"

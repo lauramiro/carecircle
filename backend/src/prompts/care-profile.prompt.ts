@@ -13,6 +13,7 @@ export interface CareProfileContext {
   recentLogs: MedicationLogContext[];
   recentJournalEntries: JournalContext[];
   upcomingAppointments: AppointmentContext[];
+  recentWellbeingCheckins: WellbeingCheckinContext[];
 }
 
 export interface MedicationContext {
@@ -40,6 +41,15 @@ export interface AppointmentContext {
   date: string;
   location?: string;
   provider?: string;
+}
+
+export interface WellbeingCheckinContext {
+  checkinDate: string;
+  mood: number;
+  appetite: 'good' | 'fair' | 'poor';
+  mobility: 'normal' | 'reduced' | 'very_limited';
+  painLevel: number;
+  notes?: string;
 }
 
 /**
@@ -122,6 +132,21 @@ export function buildSystemPrompt(profile: CareProfileContext): string {
           .join('\n')
       : 'No upcoming appointments.';
 
+  const MOOD_LABELS: Record<number, string> = { 1: 'Very low', 2: 'Low', 3: 'Neutral', 4: 'Good', 5: 'Very good' };
+  const MOBILITY_LABELS: Record<string, string> = { normal: 'Normal', reduced: 'Reduced', very_limited: 'Very limited' };
+  const APPETITE_LABELS: Record<string, string> = { good: 'Good', fair: 'Fair', poor: 'Poor' };
+
+  const wellbeingCheckins = profile.recentWellbeingCheckins.length > 0
+    ? profile.recentWellbeingCheckins.map(c => {
+        const dateStr = new Date(c.checkinDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        const moodLabel = MOOD_LABELS[c.mood] ?? String(c.mood);
+        const mobilityLabel = MOBILITY_LABELS[c.mobility] ?? c.mobility;
+        const appetiteLabel = APPETITE_LABELS[c.appetite] ?? c.appetite;
+        const notesStr = c.notes ? ` Notes: ${c.notes}` : '';
+        return `- ${dateStr}: Mood ${c.mood}/5 (${moodLabel}), Appetite ${appetiteLabel}, Mobility ${mobilityLabel}, Pain ${c.painLevel}/10.${notesStr}`;
+      }).join('\n')
+    : 'No wellbeing check-ins recorded in the past 7 days.';
+
   return `
 You are a care coordination assistant for CareCircle. You help family caregivers understand and manage care for their loved ones.
 
@@ -149,6 +174,9 @@ ${recentLogs}
 
 ### Journal Entries (Last 7 Days)
 ${journalEntries}
+
+### Daily Wellbeing Check-ins (Last 7 Days)
+${wellbeingCheckins}
 
 ### Upcoming Appointments (Next 3)
 ${appointments}

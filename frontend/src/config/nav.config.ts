@@ -1,5 +1,6 @@
 import {
   Bot,
+  CalendarDays,
   CalendarHeart,
   ClipboardList,
   FileText,
@@ -71,6 +72,7 @@ export const groupContextNavItems: GroupContextNavItem[] = [
   { label: 'Schedule', segment: 'medications', icon: Pill },
   { label: 'Journal', segment: 'journal', icon: NotebookText },
   { label: 'Insights', segment: 'insights', icon: Sparkles },
+  { label: 'Shifts', segment: 'shifts', icon: CalendarDays },
   { label: 'Appointments', segment: 'appointments', icon: CalendarHeart },
   { label: 'Administration log', segment: 'administration-log', icon: FileText },
   { label: 'AI assistant', segment: 'ai-assistant', icon: Bot },

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { ROLE } from '@typings/role-enum';
 
 vi.mock('axios', () => ({
   default: {
@@ -6,6 +7,8 @@ vi.mock('axios', () => ({
     isAxiosError: vi.fn(() => false),
   },
 }));
+
+const fromMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
@@ -16,24 +19,10 @@ vi.mock('../../lib/supabaseClient', () => ({
       invoke: vi.fn(),
     },
     rpc: vi.fn(),
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: {
-          patient_id: 'group-care-001',
-          joined_at: '2023-01-01T00:00:00.000Z',
-          role_in_care: 'Admin',
-          patients: { full_name: 'Dad', notes: '' }
-        },
-        error: null,
-      }),
-      order: vi.fn().mockReturnThis(),
-    })),
+    from: fromMock,
   },
 }));
 
-// We also globally mock the groupsService module so it behaves the same as the old mocked behavior for getGroups which isn't easy to fully test via deep database mocks
 vi.mock('./groups.service', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./groups.service')>();
   const mock = await import('./groups.mock');
@@ -53,12 +42,35 @@ import {
   inviteMember,
   removeGPContact,
   updateGPContact,
+  updateMemberRole,
 } from './groups.service';
+
+function mockPatientLookup(patientId = 'patient-1') {
+  fromMock.mockImplementation((table: string) => {
+    if (table === 'patients') {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: patientId }, error: null }),
+          }),
+        }),
+      };
+    }
+    return {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+  });
+}
 
 describe('groups service', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(axios.post).mockReset();
     vi.mocked(axios.isAxiosError).mockReturnValue(false);
+    fromMock.mockReset();
   });
 
   it('returns group summaries', async () => {
@@ -69,7 +81,7 @@ describe('groups service', () => {
       id: expect.any(String),
       name: expect.any(String),
       description: expect.any(String),
-      role: expect.stringMatching(/Admin|Member/),
+      role: expect.stringMatching(/primary_carer|secondary_carer|observer/),
       createdAt: expect.any(String),
       memberCount: expect.any(Number),
     });
@@ -165,32 +177,158 @@ describe('groups service', () => {
     ).rejects.toThrow('Resend rejected the request');
   });
 
-  it('adds, updates, and removes GP contacts', async () => {
-    const addedContact = await addGPContact('group-care-003', {
+  it('adds, updates, and removes GP contacts via gp_contacts table', async () => {
+    const gpRow = {
+      id: 'gp-new-1',
+      name: 'Dr. Test GP',
+      phone: '+44 20 0000 0000',
+      address: 'Test Practice',
+      specialty: 'General Practice',
+      email: null,
+    };
+
+    const updatedRow = {
+      ...gpRow,
+      name: 'Dr. Updated GP',
+      phone: '+44 20 0000 9999',
+      address: 'Updated Practice',
+    };
+
+    let gpUpdateCalls = 0;
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'patients') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'patient-1' }, error: null }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'gp_contacts') {
+        return {
+          insert: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: gpRow, error: null }),
+            }),
+          }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  select: vi.fn().mockReturnValue({
+                    maybeSingle: vi.fn().mockImplementation(async () => {
+                      gpUpdateCalls += 1;
+                      if (gpUpdateCalls === 1) {
+                        return { data: updatedRow, error: null };
+                      }
+                      return { data: { id: gpRow.id }, error: null };
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+
+    const addedContact = await addGPContact('group-care-001', {
       gpName: 'Dr. Test GP',
       phoneNumber: '+44 20 0000 0000',
       practiceName: 'Test Practice',
     });
 
     expect(addedContact).toMatchObject({
-      id: expect.any(String),
+      id: 'gp-new-1',
       gpName: 'Dr. Test GP',
+      phoneNumber: '+44 20 0000 0000',
+      practiceName: 'Test Practice',
     });
 
-    const updatedContact = await updateGPContact('group-care-003', addedContact.id, {
+    const updatedContact = await updateGPContact('group-care-001', addedContact.id, {
       gpName: 'Dr. Updated GP',
       phoneNumber: '+44 20 0000 9999',
       practiceName: 'Updated Practice',
     });
 
     expect(updatedContact).toMatchObject({
-      id: addedContact.id,
+      id: 'gp-new-1',
       gpName: 'Dr. Updated GP',
       phoneNumber: '+44 20 0000 9999',
+      practiceName: 'Updated Practice',
+    });
+
+    await expect(removeGPContact('group-care-001', addedContact.id)).resolves.toBeUndefined();
+  });
+
+  it('throws when adding a GP contact without a name', async () => {
+    mockPatientLookup();
+
+    await expect(
+      addGPContact('group-care-001', { phoneNumber: '+44 20 0000 0000' }),
+    ).rejects.toThrow('GP name is required');
+  });
+
+  it('throws when no patient exists for the care group', async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'patients') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+        };
+      }
+      throw new Error(`Unexpected table: ${table}`);
     });
 
     await expect(
-      removeGPContact('group-care-003', addedContact.id),
-    ).resolves.toBeUndefined();
+      addGPContact('group-care-001', { gpName: 'Dr. Test GP' }),
+    ).rejects.toThrow('Patient not found for this care group');
+  });
+});
+
+describe('updateMemberRole', () => {
+  beforeEach(() => {
+    vi.mocked(supabase.rpc).mockReset();
+  });
+
+  it('calls the update_care_giver_role RPC', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: undefined,
+      error: null,
+    } as unknown as Awaited<ReturnType<typeof supabase.rpc>>);
+
+    await updateMemberRole('group-care-001', 'member-2', ROLE.SECONDARY_CAREGIVER);
+
+    expect(supabase.rpc).toHaveBeenCalledWith('update_care_giver_role', {
+      p_group_id: 'group-care-001',
+      p_caregiver_id: 'member-2',
+      p_new_role: 'secondary_carer',
+    });
+  });
+
+  it('throws when the RPC fails', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: undefined,
+      error: {
+        message: 'Only primary carers can update member roles',
+        name: 'Error',
+        hint: '',
+        code: 'P0001',
+        details: '',
+        toJSON: () => ({}),
+      },
+    } as unknown as Awaited<ReturnType<typeof supabase.rpc>>);
+
+    await expect(
+      updateMemberRole('group-care-001', 'member-2', ROLE.SECONDARY_CAREGIVER),
+    ).rejects.toThrow('Only primary carers can update member roles');
   });
 });

@@ -11,7 +11,9 @@ import {
 import { usePatientForm } from '../../hooks/groups/usePatientForm';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { canManageMembers } from '../../lib/carePermissions';
 import { getErrorMessage } from '../../utils/helper';
+import WellbeingTrendCharts from '../../components/checkins/WellbeingTrendCharts';
 
 const inputStyle = (hasError: boolean) => ({
   width: '100%',
@@ -50,7 +52,8 @@ export default function PatientProfilePage() {
   const shouldReduceMotion = useReducedMotion();
 
   const { group, loading: groupLoading } = useGroupDetail(groupId);
-  const isAdmin = group?.role === 'Admin';
+  const isObserver = group?.role === 'observer';
+  const canEditProfile = group ? canManageMembers(group.role) : false;
 
   const {
     values, chronicConditions, allergies, errors,
@@ -197,7 +200,7 @@ export default function PatientProfilePage() {
         fontFamily: 'Plus Jakarta Sans, sans-serif',
         lineHeight: 1.7,
       }}>
-        {isAdmin
+        {canEditProfile
           ? 'Medical and personal details for the person in your care.'
           : 'Medical and personal details for the person in your care. Only admins can edit this profile.'}
       </p>
@@ -215,8 +218,8 @@ export default function PatientProfilePage() {
             <button
               type="button"
               aria-label="Upload photo"
-              disabled={!isAdmin}
-              onClick={() => isAdmin && fileInputRef.current?.click()}
+              disabled={!canEditProfile}
+              onClick={() => canEditProfile && fileInputRef.current?.click()}
               style={{
                 position: 'relative',
                 width: '88px',
@@ -224,7 +227,7 @@ export default function PatientProfilePage() {
                 borderRadius: '50%',
                 border: '2px solid var(--color-border)',
                 overflow: 'hidden',
-                cursor: isAdmin ? 'pointer' : 'default',
+                cursor: canEditProfile ? 'pointer' : 'default',
                 padding: 0,
                 background: 'var(--color-primary-light)',
                 flexShrink: 0,
@@ -245,7 +248,7 @@ export default function PatientProfilePage() {
                   }}
                 />
               )}
-              {isAdmin && (
+              {canEditProfile && (
                 <span style={{
                   position: 'absolute',
                   inset: 0,
@@ -262,7 +265,7 @@ export default function PatientProfilePage() {
                 </span>
               )}
             </button>
-            {isAdmin && (
+            {canEditProfile && (
               <p className="mt-2" style={{ fontSize: '11px', color: 'var(--color-text-hint)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                 JPG, PNG or WebP
               </p>
@@ -284,11 +287,11 @@ export default function PatientProfilePage() {
             <input
               id="fullName"
               type="text"
-              disabled={!isAdmin}
+              disabled={!canEditProfile}
               value={values.fullName}
               onChange={(e) => { updateField('fullName', e.target.value); setFormError(null); }}
               onFocus={(e) => {
-                if (!isAdmin) return;
+                if (!canEditProfile) return;
                 e.target.style.borderColor = 'var(--color-border-focus)';
                 e.target.style.boxShadow = '0 0 0 3px rgba(74,111,165,0.12)';
               }}
@@ -301,7 +304,7 @@ export default function PatientProfilePage() {
               aria-required
               aria-invalid={Boolean(errors.fullName)}
               aria-describedby={errors.fullName ? 'fullName-error' : undefined}
-              style={{ ...inputStyle(Boolean(errors.fullName)), opacity: isAdmin ? 1 : 0.7 }}
+              style={{ ...inputStyle(Boolean(errors.fullName)), opacity: canEditProfile ? 1 : 0.7 }}
             />
             {errors.fullName && <p id="fullName-error" style={errorTextStyle}>{errors.fullName}</p>}
           </div>
@@ -315,7 +318,7 @@ export default function PatientProfilePage() {
               id="dateOfBirth"
               type="date"
               max={today}
-              disabled={!isAdmin}
+              disabled={!canEditProfile}
               value={values.dateOfBirth}
               onChange={(e) => { updateField('dateOfBirth', e.target.value); setFormError(null); }}
               onBlur={(e) => {
@@ -326,9 +329,9 @@ export default function PatientProfilePage() {
               aria-required
               aria-invalid={Boolean(errors.dateOfBirth)}
               aria-describedby={errors.dateOfBirth ? 'dateOfBirth-error' : undefined}
-              style={{ ...inputStyle(Boolean(errors.dateOfBirth)), colorScheme: 'light', opacity: isAdmin ? 1 : 0.7 }}
+              style={{ ...inputStyle(Boolean(errors.dateOfBirth)), colorScheme: 'light', opacity: canEditProfile ? 1 : 0.7 }}
               onFocus={(e) => {
-                if (!isAdmin) return;
+                if (!canEditProfile) return;
                 e.target.style.borderColor = 'var(--color-border-focus)';
                 e.target.style.boxShadow = '0 0 0 3px rgba(74,111,165,0.12)';
               }}
@@ -341,7 +344,7 @@ export default function PatientProfilePage() {
             <label style={labelStyle}>
               Conditions <span style={{ color: 'var(--color-status-critical)' }}>*</span>
             </label>
-            {isAdmin && (
+            {canEditProfile && (
               <div className="flex gap-2 mb-2">
                 <input
                   type="text"
@@ -424,7 +427,7 @@ export default function PatientProfilePage() {
                     }}
                   >
                     {c}
-                    {isAdmin && c !== 'None' && (
+                    {canEditProfile && c !== 'None' && (
                       <button
                         type="button"
                         aria-label={`Remove ${c}`}
@@ -438,7 +441,7 @@ export default function PatientProfilePage() {
                 ))}
               </div>
             )}
-            {chronicConditions.length === 0 && !isAdmin && (
+            {chronicConditions.length === 0 && !canEditProfile && (
               <p style={{ fontSize: '13px', color: 'var(--color-text-hint)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                 No conditions recorded.
               </p>
@@ -449,7 +452,7 @@ export default function PatientProfilePage() {
           {/* Allergies */}
           <div className="mb-6">
             <label style={labelStyle}>Allergies</label>
-            {isAdmin && (
+            {canEditProfile && (
               <div className="flex gap-2 mb-2">
                 <input
                   type="text"
@@ -549,7 +552,7 @@ export default function PatientProfilePage() {
                         </span>
                       )}
                     </span>
-                    {isAdmin && (
+                    {canEditProfile && (
                       <button
                         type="button"
                         aria-label={`Remove allergy ${a.description}`}
@@ -602,7 +605,7 @@ export default function PatientProfilePage() {
           )}
 
           {/* Save button — admins only */}
-          {isAdmin && (
+          {canEditProfile && (
             <div className="flex items-center gap-4">
               <motion.button
                 type="submit"
@@ -635,6 +638,15 @@ export default function PatientProfilePage() {
 
         </form>
       </div>
+
+      {/* Wellbeing trend charts — shown once a patientId is resolved */}
+      {patientId && group?.id && (
+        <WellbeingTrendCharts
+          patientId={patientId}
+          groupId={group.id}
+          isObserver={isObserver}
+        />
+      )}
 
       <style>{`
         button:hover .avatar-overlay { opacity: 1 !important; }

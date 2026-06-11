@@ -5,15 +5,18 @@ import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext.tsx'
 import { ThemeProvider } from './contexts/ThemeContext.tsx'
+import { FontSizeProvider } from './contexts/FontSizeContext.tsx'
 import ThemedToastContainer from './components/layout/ThemedToastContainer.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <FontSizeProvider>
     <ThemeProvider>
       <AuthProvider>
         <App />
         <ThemedToastContainer />
       </AuthProvider>
     </ThemeProvider>
+    </FontSizeProvider>
   </StrictMode>,
 )

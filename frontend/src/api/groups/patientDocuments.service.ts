@@ -4,6 +4,7 @@ const DOCUMENT_BUCKET = 'care-documents';
 const UUID_PATH_SEGMENT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ACCEPTED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
 const ACCEPTED_EXTENSIONS = new Set(['pdf', 'jpg', 'jpeg', 'png']);
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 
 export const PATIENT_DOCUMENT_MAX_BYTES = 10 * 1024 * 1024;
 export const DOCUMENT_FILE_TYPES_LABEL = 'PDF, JPEG, or PNG';
@@ -25,6 +26,14 @@ export interface PatientDocument {
   uploadedAt: string;
   uploadedByName: string;
   storagePath: string;
+}
+
+export interface DocumentStorageUsage {
+  usedBytes: number;
+  limitBytes: number;
+  usageRatio: number;
+  warningThresholdRatio: number;
+  isWarning: boolean;
 }
 
 type PatientDocumentRow = {
@@ -73,6 +82,45 @@ function assertDocumentPath(path: string): void {
   if (segments.length < 3 || !UUID_PATH_SEGMENT.test(segments[0])) {
     throw new Error('Invalid document path.');
   }
+}
+
+function normalizeDocumentStorageError(message: string): string {
+  if (/(quota|storage limit|limit exceeded|exceeded.+limit|space left|insufficient storage|capacity)/i.test(message)) {
+    return 'Storage limit reached. Delete older documents to free up space and try again.';
+  }
+
+  return message;
+}
+
+async function getAccessToken(): Promise<string> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    throw new Error('You must be signed in to manage documents.');
+  }
+
+  return session.access_token;
+}
+
+async function authenticatedApiFetch(path: string, init?: RequestInit): Promise<Response> {
+  const accessToken = await getAccessToken();
+  const url = apiBaseUrl ? `${apiBaseUrl}${path}` : path;
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      ...(init?.headers ?? {}),
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Request failed (${response.status})`);
+  }
+
+  return response;
 }
 
 function mapPatientDocument(row: PatientDocumentRow): PatientDocument {
@@ -139,7 +187,7 @@ export async function uploadPatientDocument(
     .upload(storagePath, file, { upsert: false, contentType: file.type });
 
   if (uploadError) {
-    throw new Error(uploadError.message);
+    throw new Error(normalizeDocumentStorageError(uploadError.message));
   }
 
   const { data, error } = await supabase
@@ -164,6 +212,39 @@ export async function uploadPatientDocument(
   }
 
   return mapPatientDocument(data as PatientDocumentRow);
+}
+
+export async function deletePatientDocument(document: PatientDocument): Promise<void> {
+  assertDocumentPath(document.storagePath);
+
+  const { error: storageError } = await supabase.storage
+    .from(DOCUMENT_BUCKET)
+    .remove([document.storagePath]);
+
+  if (storageError) {
+    throw new Error(storageError.message);
+  }
+
+  const { error } = await supabase
+    .from('documents')
+    .delete()
+    .eq('id', document.id);
+
+  if (error) {
+    throw new Error('The file was removed, but its document record could not be cleaned up. Refresh and try again.');
+  }
+}
+
+export async function getDocumentStorageUsage(groupId: string): Promise<DocumentStorageUsage> {
+  if (!groupId.trim()) {
+    throw new Error('groupId is required to load document storage usage.');
+  }
+
+  const response = await authenticatedApiFetch(
+    `/api/document-storage/groups/${encodeURIComponent(groupId)}/usage`,
+  );
+
+  return response.json() as Promise<DocumentStorageUsage>;
 }
 
 export async function getPatientDocumentDownloadUrl(storagePath: string): Promise<string> {

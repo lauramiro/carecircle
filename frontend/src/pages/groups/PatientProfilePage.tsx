@@ -3,9 +3,12 @@ import { ArrowLeft, Camera, CircleUserRound, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import {
+  deletePatientDocument,
+  getDocumentStorageUsage,
   DOCUMENT_FILE_TYPES_LABEL,
   PATIENT_DOCUMENT_MAX_BYTES,
   PATIENT_DOCUMENT_TYPE_OPTIONS,
+  type DocumentStorageUsage,
   getPatientDocumentDownloadUrl,
   getPatientDocuments,
   uploadPatientDocument,
@@ -115,11 +118,16 @@ export default function PatientProfilePage() {
   const [documentUploadError, setDocumentUploadError] = useState<string | null>(null);
   const [uploadingDocument, setUploadingDocument] = useState(false);
   const [downloadingDocumentId, setDownloadingDocumentId] = useState<string | null>(null);
+  const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null);
+  const [documentStorageUsage, setDocumentStorageUsage] = useState<DocumentStorageUsage | null>(null);
+  const [documentStorageUsageLoading, setDocumentStorageUsageLoading] = useState(true);
+  const [documentStorageUsageError, setDocumentStorageUsageError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const documentFileInputRef = useRef<HTMLInputElement>(null);
   const activePatientId = patientId ?? group?.patientId ?? null;
   const canUploadDocuments = !isObserver;
+  const canDeleteDocuments = canEditProfile;
 
   useEffect(() => {
     if (!groupId) return;
@@ -182,6 +190,38 @@ export default function PatientProfilePage() {
       active = false;
     };
   }, [activePatientId]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadDocumentStorageUsage() {
+      if (!groupId) {
+        setDocumentStorageUsage(null);
+        setDocumentStorageUsageLoading(false);
+        setDocumentStorageUsageError(null);
+        return;
+      }
+
+      try {
+        setDocumentStorageUsageLoading(true);
+        setDocumentStorageUsageError(null);
+        const usage = await getDocumentStorageUsage(groupId);
+        if (!active) return;
+        setDocumentStorageUsage(usage);
+      } catch (err: unknown) {
+        if (!active) return;
+        setDocumentStorageUsageError(getErrorMessage(err) || 'Unable to load document storage usage right now.');
+      } finally {
+        if (active) setDocumentStorageUsageLoading(false);
+      }
+    }
+
+    void loadDocumentStorageUsage();
+
+    return () => {
+      active = false;
+    };
+  }, [groupId]);
 
   if (!groupId) return <Navigate to="/groups/list" replace />;
 
@@ -247,6 +287,10 @@ export default function PatientProfilePage() {
     setDocumentUploadError(null);
 
     try {
+      if (documentStorageUsage && documentStorageUsage.usedBytes + selectedDocumentFile.size > documentStorageUsage.limitBytes) {
+        throw new Error('Storage limit reached. Delete older documents to free up space and try again.');
+      }
+
       const uploadedDocument = await uploadPatientDocument(
         activePatientId,
         selectedDocumentFile,
@@ -258,6 +302,12 @@ export default function PatientProfilePage() {
       setDocumentType('discharge_summary');
       setDocumentsError(null);
 
+      if (groupId) {
+        const refreshedUsage = await getDocumentStorageUsage(groupId);
+        setDocumentStorageUsage(refreshedUsage);
+        setDocumentStorageUsageError(null);
+      }
+
       if (documentFileInputRef.current) {
         documentFileInputRef.current.value = '';
       }
@@ -265,6 +315,26 @@ export default function PatientProfilePage() {
       setDocumentUploadError(getErrorMessage(err) || 'Unable to upload this document.');
     } finally {
       setUploadingDocument(false);
+    }
+  }
+
+  async function handleDocumentDelete(document: PatientDocument) {
+    setDeletingDocumentId(document.id);
+    setDocumentsError(null);
+
+    try {
+      await deletePatientDocument(document);
+      setDocuments((current) => current.filter((item) => item.id !== document.id));
+
+      if (groupId) {
+        const refreshedUsage = await getDocumentStorageUsage(groupId);
+        setDocumentStorageUsage(refreshedUsage);
+        setDocumentStorageUsageError(null);
+      }
+    } catch (err: unknown) {
+      setDocumentsError(getErrorMessage(err) || 'Unable to delete this document.');
+    } finally {
+      setDeletingDocumentId(null);
     }
   }
 
@@ -283,6 +353,9 @@ export default function PatientProfilePage() {
 
   const today = new Date().toISOString().split('T')[0];
   const isLoading = groupLoading || loadingPatient;
+  const documentUsagePercent = documentStorageUsage
+    ? Math.min(100, Math.round(documentStorageUsage.usageRatio * 100))
+    : 0;
 
   if (isLoading) {
     return (
@@ -712,6 +785,82 @@ export default function PatientProfilePage() {
               All uploaded files stay private to this care circle.
             </p>
 
+            <div
+              className="mb-4"
+              style={{
+                border: '1px solid var(--color-border)',
+                borderRadius: '10px',
+                padding: '12px 14px',
+                backgroundColor: 'var(--color-card)',
+              }}
+            >
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-secondary)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                Document storage usage
+              </p>
+
+              {documentStorageUsageLoading ? (
+                <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--color-text-hint)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                  Loading storage usage...
+                </p>
+              ) : documentStorageUsage ? (
+                <>
+                  <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--color-text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>
+                    {formatFileSize(documentStorageUsage.usedBytes)} of {formatFileSize(documentStorageUsage.limitBytes)} used ({documentUsagePercent}%)
+                  </p>
+                  <div
+                    aria-hidden
+                    style={{
+                      marginTop: '10px',
+                      height: '8px',
+                      borderRadius: '999px',
+                      backgroundColor: 'var(--color-accent-soft)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${documentUsagePercent}%`,
+                        height: '100%',
+                        backgroundColor: documentStorageUsage.isWarning
+                          ? 'var(--color-status-critical)'
+                          : 'var(--color-primary)',
+                        transition: 'width 0.2s ease',
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--color-text-hint)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                  Storage usage unavailable.
+                </p>
+              )}
+
+              {documentStorageUsageError && (
+                <p style={{ ...errorTextStyle, marginBottom: 0 }}>
+                  {documentStorageUsageError}
+                </p>
+              )}
+            </div>
+
+            {documentStorageUsage?.isWarning && (
+              <div
+                className="mb-4"
+                style={{
+                  border: '1px solid #F0BEBE',
+                  borderRadius: '10px',
+                  padding: '12px 14px',
+                  backgroundColor: 'var(--color-status-critical-bg)',
+                }}
+              >
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-status-critical)', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>
+                  Storage is above 80% of the 1 GB limit.
+                </p>
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-status-critical)', fontFamily: 'Plus Jakarta Sans, sans-serif', lineHeight: 1.6 }}>
+                  Delete older documents to free up space before uploading more files.
+                </p>
+              </div>
+            )}
+
             {canUploadDocuments && (
               <div className="mb-4" style={{ display: 'grid', gap: '10px' }}>
                 <select
@@ -815,27 +964,53 @@ export default function PatientProfilePage() {
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => { void handleDocumentDownload(document); }}
-                      disabled={downloadingDocumentId === document.id}
-                      style={{
-                        alignSelf: 'center',
-                        height: '36px',
-                        padding: '0 14px',
-                        borderRadius: '8px',
-                        border: '1px solid var(--color-border)',
-                        backgroundColor: 'var(--color-card)',
-                        color: 'var(--color-primary)',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        fontFamily: 'Plus Jakarta Sans, sans-serif',
-                        cursor: downloadingDocumentId === document.id ? 'not-allowed' : 'pointer',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {downloadingDocumentId === document.id ? 'Opening...' : 'Open'}
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => { void handleDocumentDownload(document); }}
+                        disabled={downloadingDocumentId === document.id || deletingDocumentId === document.id}
+                        style={{
+                          alignSelf: 'center',
+                          height: '36px',
+                          padding: '0 14px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--color-border)',
+                          backgroundColor: 'var(--color-card)',
+                          color: 'var(--color-primary)',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          fontFamily: 'Plus Jakarta Sans, sans-serif',
+                          cursor: downloadingDocumentId === document.id || deletingDocumentId === document.id ? 'not-allowed' : 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {downloadingDocumentId === document.id ? 'Opening...' : 'Open'}
+                      </button>
+
+                      {canDeleteDocuments && (
+                        <button
+                          type="button"
+                          onClick={() => { void handleDocumentDelete(document); }}
+                          disabled={deletingDocumentId === document.id || downloadingDocumentId === document.id}
+                          style={{
+                            alignSelf: 'center',
+                            height: '36px',
+                            padding: '0 14px',
+                            borderRadius: '8px',
+                            border: '1px solid #F0BEBE',
+                            backgroundColor: 'var(--color-card)',
+                            color: 'var(--color-status-critical)',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            fontFamily: 'Plus Jakarta Sans, sans-serif',
+                            cursor: deletingDocumentId === document.id || downloadingDocumentId === document.id ? 'not-allowed' : 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {deletingDocumentId === document.id ? 'Deleting...' : 'Delete'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

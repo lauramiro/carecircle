@@ -1,13 +1,16 @@
 import { Module } from '@nestjs/common';
-import { ScheduleModule } from '@nestjs/schedule';
-import { SupabaseAdminModule } from '../integrations/supabase-admin.module';
-import { WeeklyInsightGenerationService } from './weekly-insight-generation.service';
+import { InsightsService } from './insights.service';
 import { InsightsController } from './insights.controller';
+import { AiModule } from '../ai/ai.module';
+import { SupabaseAdminModule } from '../integrations/supabase-admin.module';
+import { AlertsModule } from '../alerts/alerts.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { WeeklyInsightGenerationService } from './weekly-insight-generation.service';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), SupabaseAdminModule],
+  imports: [ScheduleModule.forRoot(), AiModule, SupabaseAdminModule, AlertsModule],
   controllers: [InsightsController],
-  providers: [WeeklyInsightGenerationService],
-  exports: [WeeklyInsightGenerationService],
+  providers: [InsightsService, WeeklyInsightGenerationService],
+  exports: [InsightsService, WeeklyInsightGenerationService],
 })
 export class InsightsModule {}

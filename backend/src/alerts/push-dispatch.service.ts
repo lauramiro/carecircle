@@ -5,7 +5,13 @@ import { PushSubscriptionRepository } from '../integrations/repositories/push-su
 import type { MissedMedicationAlertRecord } from '../integrations/types';
 
 export interface PushDispatchResult {
-  log: Array<{ userId: string; subscriptionId: string; success: boolean; statusCode?: number; error?: string }>;
+  log: Array<{
+    userId: string;
+    subscriptionId: string;
+    success: boolean;
+    statusCode?: number;
+    error?: string;
+  }>;
   allFailed: boolean;
 }
 
@@ -28,7 +34,8 @@ export class PushDispatchService {
   }
 
   private configureVapid(): void {
-    const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = this.appConfig.config;
+    const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } =
+      this.appConfig.config;
     if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !VAPID_SUBJECT) {
       this.logger.warn('VAPID keys not configured; Web Push disabled');
       return;
@@ -37,9 +44,13 @@ export class PushDispatchService {
     this.vapidConfigured = true;
   }
 
-  async dispatch(alert: MissedMedicationAlertRecord): Promise<PushDispatchResult> {
+  async dispatch(
+    alert: MissedMedicationAlertRecord,
+  ): Promise<PushDispatchResult> {
     const log: PushDispatchResult['log'] = [];
-    const subscriptions = await this.pushSubRepo.findByUserIds(alert.push_recipient_user_ids);
+    const subscriptions = await this.pushSubRepo.findByUserIds(
+      alert.push_recipient_user_ids,
+    );
 
     if (!this.vapidConfigured || subscriptions.length === 0) {
       for (const userId of alert.push_recipient_user_ids) {
@@ -97,14 +108,19 @@ export class PushDispatchService {
           statusCode,
           error: message,
         });
-        this.logger.warn(`push_failed subscriptionId=${sub.id} status=${statusCode ?? 'unknown'}`);
+        this.logger.warn(
+          `push_failed subscriptionId=${sub.id} status=${statusCode ?? 'unknown'}`,
+        );
       }
     }
 
     return { log, allFailed: successCount === 0 };
   }
 
-  async sendToUsers(userIds: string[], payload: GenericPushPayload): Promise<void> {
+  async sendToUsers(
+    userIds: string[],
+    payload: GenericPushPayload,
+  ): Promise<void> {
     if (!this.vapidConfigured) {
       this.logger.warn('sendToUsers_skipped: VAPID not configured');
       return;
@@ -113,7 +129,9 @@ export class PushDispatchService {
 
     const subscriptions = await this.pushSubRepo.findByUserIds(userIds);
     if (subscriptions.length === 0) {
-      this.logger.warn(`sendToUsers_no_subscriptions userIds=${userIds.join(',')}`);
+      this.logger.warn(
+        `sendToUsers_no_subscriptions userIds=${userIds.join(',')}`,
+      );
       return;
     }
     await Promise.all(
@@ -121,15 +139,24 @@ export class PushDispatchService {
         if (sub.platform !== 'web_push' || !sub.p256dh || !sub.auth) return;
         try {
           await webpush.sendNotification(
-            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-            JSON.stringify({ title: payload.title, body: payload.body, data: { url: payload.url } }),
+            {
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh, auth: sub.auth },
+            },
+            JSON.stringify({
+              title: payload.title,
+              body: payload.body,
+              data: { url: payload.url },
+            }),
           );
         } catch (err: unknown) {
           const statusCode =
             typeof err === 'object' && err !== null && 'statusCode' in err
               ? Number((err as { statusCode: unknown }).statusCode)
               : undefined;
-          this.logger.warn(`push_failed sub=${sub.id} status=${statusCode ?? 'unknown'}`);
+          this.logger.warn(
+            `push_failed sub=${sub.id} status=${statusCode ?? 'unknown'}`,
+          );
         }
       }),
     );

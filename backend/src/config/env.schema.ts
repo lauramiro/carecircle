@@ -42,9 +42,19 @@ export const appConfigSchema = z.object({
   /** Set to `false` to disable Nest schedule crons (local tests). Default: enabled. */
   CRON_ENABLED: z.enum(['true', 'false']).optional().default('true'),
   /** Minutes after push before SMS fallback (default 10). */
-  SMS_FALLBACK_DELAY_MINUTES: z.coerce.number().int().positive().max(60).optional(),
+  SMS_FALLBACK_DELAY_MINUTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(60)
+    .optional(),
   /** Max checklist_items inserted per materialization batch (default 100). */
-  MATERIALIZATION_BATCH_SIZE: z.coerce.number().int().positive().max(500).optional(),
+  MATERIALIZATION_BATCH_SIZE: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(500)
+    .optional(),
 });
 
 export type AppConfig = z.infer<typeof appConfigSchema>;

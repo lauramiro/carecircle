@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import twilio from 'twilio';
 import { AppConfigService } from '../config/app-config.service';
 
-
 @Injectable()
 export class TwilioSmsService {
   private readonly logger = new Logger(TwilioSmsService.name);
@@ -11,24 +10,38 @@ export class TwilioSmsService {
 
   isConfigured(): boolean {
     const appConfig = this.appConfigService.config;
-    return Boolean(appConfig.TWILIO_ACCOUNT_SID && appConfig.TWILIO_AUTH_TOKEN && appConfig.TWILIO_FROM_NUMBER);
+    return Boolean(
+      appConfig.TWILIO_ACCOUNT_SID &&
+      appConfig.TWILIO_AUTH_TOKEN &&
+      appConfig.TWILIO_FROM_NUMBER,
+    );
   }
 
-  async sendSms(to: string, body: string): Promise<{ sid: string } | { error: string }> {
+  async sendSms(
+    to: string,
+    body: string,
+  ): Promise<{ sid: string } | { error: string }> {
     if (!this.isConfigured()) {
-      this.logger.warn('Twilio credentials or from-number missing; SMS not sent');
+      this.logger.warn(
+        'Twilio credentials or from-number missing; SMS not sent',
+      );
       return { error: 'twilio_not_configured' };
     }
 
     const appConfig = this.appConfigService.config;
-    const client = twilio(appConfig.TWILIO_ACCOUNT_SID, appConfig.TWILIO_AUTH_TOKEN);
+    const client = twilio(
+      appConfig.TWILIO_ACCOUNT_SID,
+      appConfig.TWILIO_AUTH_TOKEN,
+    );
     try {
       const msg = await client.messages.create({
         to,
         from: appConfig.TWILIO_FROM_NUMBER,
         body,
       });
-      this.logger.log(`twilio_message_created status=${msg.status} sid=${msg.sid}`);
+      this.logger.log(
+        `twilio_message_created status=${msg.status} sid=${msg.sid}`,
+      );
       return { sid: msg.sid as string };
     } catch (err: unknown) {
       const code =

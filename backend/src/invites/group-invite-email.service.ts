@@ -6,7 +6,10 @@ import {
 import { AppConfigService } from '../config/app-config.service';
 import { buildGroupInviteEmailBodies } from '../email/templates/group-invite.template';
 import { GmailMailerService } from '../email/gmail-mailer.service';
-import { normalizeInviteEmail, SendGroupInviteEmailDto } from './dto/send-group-invite-email.dto';
+import {
+  normalizeInviteEmail,
+  SendGroupInviteEmailDto,
+} from './dto/send-group-invite-email.dto';
 
 @Injectable()
 export class GroupInviteEmailService {
@@ -16,7 +19,10 @@ export class GroupInviteEmailService {
   ) {}
 
   private defaultFrontendUrl(): string {
-    return this.appConfig.config.FRONTEND_PUBLIC_URL?.trim() || 'http://localhost:5173';
+    return (
+      this.appConfig.config.FRONTEND_PUBLIC_URL?.trim() ||
+      'http://localhost:5173'
+    );
   }
 
   /** Same query keys as `InvitePage` / `buildMemberInvitePath` (confirmation=false for new invites). */
@@ -51,7 +57,7 @@ export class GroupInviteEmailService {
     console.log('sendInviteEmail params:', params);
     try {
       await this.mailer.sendMail(params);
-    } catch(err) {
+    } catch (err) {
       console.error('sendInviteEmail error:', err);
       throw new BadRequestException('mail_transport_failed');
     }

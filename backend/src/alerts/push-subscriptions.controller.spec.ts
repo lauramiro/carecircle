@@ -14,11 +14,16 @@ describe('PushSubscriptionsController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    controller = new PushSubscriptionsController(pushSubRepo as never, appConfig as never);
+    controller = new PushSubscriptionsController(
+      pushSubRepo as never,
+      appConfig as never,
+    );
   });
 
   it('getVapidPublicKey returns configured public key', () => {
-    expect(controller.getVapidPublicKey()).toEqual({ publicKey: 'test-public-key' });
+    expect(controller.getVapidPublicKey()).toEqual({
+      publicKey: 'test-public-key',
+    });
   });
 
   it('register upserts a push subscription and returns its id', async () => {

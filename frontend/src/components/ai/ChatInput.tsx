@@ -1,5 +1,9 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Send } from 'lucide-react';
+
+type TextareaStyle = CSSProperties & {
+  '--tw-ring-color': string;
+};
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -14,19 +18,23 @@ export default function ChatInput({
 }: ChatInputProps) {
   const [input, setInput] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendMessage = () => {
     if (input.trim() && !disabled) {
       onSendMessage(input);
       setInput('');
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Submit on Enter, but allow Shift+Enter for newlines
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e as any);
+      sendMessage();
     }
   };
 
@@ -48,7 +56,7 @@ export default function ChatInput({
             fontFamily: 'Plus Jakarta Sans, sans-serif',
             fontSize: '14px',
             '--tw-ring-color': 'var(--color-primary)',
-          } as any}
+          } satisfies TextareaStyle}
         />
       </div>
 

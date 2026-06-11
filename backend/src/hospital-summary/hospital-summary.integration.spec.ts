@@ -5,9 +5,34 @@ import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { HospitalSummaryService } from '../../src/hospital-summary/hospital-summary.service';
 import { PDFGenerationService } from '../../src/hospital-summary/pdf-generation.service';
+import { SupabaseAdminClient } from '../../src/integrations/supabase-admin.client';
 
-const mockHospitalSummaryData = {
-  patient: { fullName: 'Test Patient', dateOfBirth: '1980-01-01' },
+// Mock SupabaseAdminClient with a proper class constructor
+vi.mock('../../src/integrations/supabase-admin.client', () => {
+  // Build the query chain to return a patient ID
+  const singleFn = vi.fn().mockResolvedValue({ data: { id: 'patient-123' }, error: null });
+  const eqFn = vi.fn().mockReturnValue({ single: singleFn });
+  const selectFn = vi.fn().mockReturnValue({ eq: eqFn });
+  const fromFn = vi.fn().mockReturnValue({ select: selectFn });
+
+  class MockSupabaseAdminClient {
+    getClient() {
+      return { from: fromFn };
+    }
+    isEnabled() {
+      return false;
+    }
+  }
+
+  return {
+    SupabaseAdminClient: MockSupabaseAdminClient,
+  };
+});
+
+// Mock data matching the structure expected by the controller
+const mockSummaryData = {
+  fullName: 'Test Patient',
+  dateOfBirth: '1980-01-01',
   medications: [{ name: 'Lisinopril', dose: '10mg', frequency: 'once daily' }],
   gpContacts: [{ name: 'Dr. Smith', phone: '123-456' }],
   careNotesSummary: [{ date: '2026-06-01', content: 'Patient stable' }],
@@ -15,15 +40,17 @@ const mockHospitalSummaryData = {
   allergies: ['Penicillin'],
   flaggedPatterns: [],
   upcomingAppointments: [],
+  isValid: true,
+  validationErrors: [],
 };
 
 const mockHospitalSummaryService = {
-  assembleCareProfile: vi.fn().mockResolvedValue(mockHospitalSummaryData),
+  assembleHospitalSummary: vi.fn().mockResolvedValue(mockSummaryData),
 };
 
 const mockPdfBuffer = Buffer.from('fake pdf content');
 const mockPDFGenerationService = {
-  generatePDF: vi.fn().mockResolvedValue(mockPdfBuffer),
+  generateHospitalSummaryPDF: vi.fn().mockResolvedValue(mockPdfBuffer),
 };
 
 describe('Hospital Summary Integration', () => {
@@ -44,27 +71,27 @@ describe('Hospital Summary Integration', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) await app.close();
   });
 
   it('should generate a PDF with correct headers and content', async () => {
     const response = await request(app.getHttpServer())
-      .post('/api/hospital-summary/generate-pdf')
+      .post('/hospital-summary/generate-pdf')
       .send({ groupId: 'test-group-id' })
       .expect(201)
       .expect('Content-Type', /pdf/);
 
     expect(response.body).toBeInstanceOf(Buffer);
     expect(response.body.length).toBeGreaterThan(0);
-    expect(mockHospitalSummaryService.assembleCareProfile).toHaveBeenCalledWith('test-group-id');
-    expect(mockPDFGenerationService.generatePDF).toHaveBeenCalledWith(mockHospitalSummaryData);
+    expect(mockHospitalSummaryService.assembleHospitalSummary).toHaveBeenCalledWith('patient-123');
+    expect(mockPDFGenerationService.generateHospitalSummaryPDF).toHaveBeenCalledWith(mockSummaryData);
   });
 
   it('should return 500 if assembling the profile fails', async () => {
-    mockHospitalSummaryService.assembleCareProfile.mockRejectedValueOnce(new Error('Supabase error'));
+    mockHospitalSummaryService.assembleHospitalSummary.mockRejectedValueOnce(new Error('Supabase error'));
 
     await request(app.getHttpServer())
-      .post('/api/hospital-summary/generate-pdf')
+      .post('/hospital-summary/generate-pdf')
       .send({ groupId: 'test-group-id' })
       .expect(500);
   });

@@ -2,14 +2,13 @@
 ### Design & Testing Document  
 **Section: AI Approach, Test Strategy & Validation Results**  
 
-
 ---
 
 ## 1. AI Approach
 
 ### 1.1 Model Choice & Justification
 
-CareCircle uses an LLM for the **Conversational AI Q&A** feature. The **Hospital Summary PDF** is generated without an LLM – it is a deterministic assembly of live data from Supabase. The **Weekly Insight Engine** also uses rule‑based pattern matching, not an LLM.
+CareCircle uses an LLM for the **Conversational AI Q&A** feature. The **Hospital Summary PDF** is generated without an LLM it is a deterministic assembly of live data from Supabase. The **Weekly Insight Engine** also uses rule‑based pattern matching, not an LLM.
 
 | Feature | Model / Approach | Rationale |
 |---------|----------------|------------|
@@ -24,9 +23,9 @@ Groq's LPU inference hardware was the decisive factor. GPT‑4o and Claude API l
 
 **AI Q&A (Llama 3.3‑70B)**
 - System prompt is fixed and loaded once at service initialisation.
-- Care profile JSON is injected as the final section of the system message – **not** in the user message – to prevent prompt injection attacks from overriding grounding instructions.
-- Temperature: **0.3** – allows natural phrasing while suppressing creative elaboration.
-- Max tokens: **800** – sufficient for thorough answers; low enough to prevent verbose hallucination.
+- Care profile JSON is injected as the final section of the system message **not** in the user message to prevent prompt injection attacks from overriding grounding instructions.
+- Temperature: **0.3**  allows natural phrasing while suppressing creative elaboration.
+- Max tokens: **800** sufficient for thorough answers; low enough to prevent verbose hallucination.
 
 **Hospital Summary PDF**
 - No LLM is used. The backend (`HospitalSummaryService`) queries Supabase for:
@@ -57,7 +56,6 @@ The Hospital Summary PDF achieves grounding by construction – no generative mo
 | Structured JSON input | AI Q&A | Profile data injected as strongly‑typed JSON, reducing risk of misinterpretation. |
 
 ---
-
 ## 2. Testing Strategy
 
 ### 2.1 Automated Tests
@@ -68,20 +66,64 @@ All automated tests are executed in the GitHub Actions CI pipeline on every pull
 
 | Test Suite | Purpose | Test File | Dataset |
 |------------|---------|-----------|---------|
-| `ProfileService` – profile assembly | Verifies `getCareProfile()` correctly fetches medications, logs, journal entries, appointments, and wellbeing check-ins. | `profile.service.spec.ts` | 5 synthetic profiles (complete, missing sections) |
-| `WeeklyInsightGenerationService` – all types | Verifies all 5 insight types generate correct cards with correct severity. | `weekly-insight-generation.service.spec.ts` | 10 synthetic weekly digests (all insights, no insights, each type in isolation, edge cases) |
-| `WeeklyInsightGenerationService` – empty data | Verifies graceful handling when 7‑day window has no data. | `weekly-insight-generation.service.spec.ts` | Empty arrays for all three data sources |
+| `ProfileService` – profile assembly | Verifies `getCareProfile()` correctly fetches patient details from a mocked repository and maps them to a `CareProfileContext`. Related data (medications, logs, etc.) are mocked as empty arrays to isolate the core mapping logic. | `profile.service.spec.ts` | One synthetic patient record (full name, DOB, conditions, allergies); all related table queries return empty arrays. |
+| `WeeklyInsightGenerationService` – all types | Verifies all 5 insight types generate correct cards with correct severity based on synthetic journal entries, medication logs, and shift assignments. | `weekly-insight-generation.service.spec.ts` | 10 synthetic weekly digests (all insights, no insights, each type in isolation, edge cases). |
+| `WeeklyInsightGenerationService` – empty data | Verifies graceful handling when 7‑day window has no data. | `weekly-insight-generation.service.spec.ts` | Empty arrays for all three data sources. |
 
 #### Integration Tests
 
+These tests verify that the API endpoints are correctly wired and handle both success and failure scenarios. External dependencies (LLM, Supabase, PDF generator) are mocked to ensure fast, deterministic execution.
+
 | Test | Purpose | File | Verification |
 |------|---------|------|---------------|
-| AI Q&A – no invented data | Runs generation against 3 known profiles; cross‑checks every named item in output against source profile. | `ai-qa.integration.spec.ts` | String matching between AI output and source profile JSON. |
-| Hospital Summary – section completeness | Sends a real care profile through the assembly service and verifies all 8 PDF sections are present. | `hospital-summary.integration.spec.ts` | Checks `HospitalSummaryData` has non‑null values for all 8 required fields before PDF rendering. |
+| AI Q&A – endpoint integration | Calls `POST /ai/qa` with a mocked `PatientRepository` and a mocked Groq LLM. Verifies that the endpoint returns the mock answer and correctly propagates LLM errors. | `ai-qa-integration.spec.ts` | Response matches the mocked LLM content; on LLM failure, returns 500. |
+| Hospital Summary – PDF generation | Calls `POST /hospital-summary/generate-pdf` with mocked `HospitalSummaryService` and `PDFGenerationService`. Verifies that the endpoint returns a PDF buffer and that the mocks are called with expected arguments. | `hospital-summary-integration.spec.ts` | Response is a non‑empty Buffer; `assembleHospitalSummary` is called with the resolved patient ID; `generateHospitalSummaryPDF` is called with the mocked summary data. |
+
+> **Note:** The integration tests focus on request/response plumbing and error handling. The correctness of AI grounding, refusal behaviour, and hospital summary data completeness is validated separately through the **20‑question manual test** (Section 4) and the **10 synthetic profile validation** (Section 5).
+
+## 3. Manual Test Cases — Safety-Critical Paths
+
+These test cases cover critical medication safety, overdue detection, push notifications, and SMS fallback. They are designed to be run manually in a staging environment. (Execution status: documented as of June 2026; all passed.)
+
+### 3.1 Medication Confirmation
+
+| ID | Steps | Expected Result | Result |
+|----|-------|-----------------|--------|
+| **MC-01** | Open daily checklist at scheduled medication time. Tap “Mark as given.” | Log entry created with status = `given`, `confirmed_at` timestamp within 5 minutes of scheduled time. Green checkmark shown. | ✅ Pass |
+| **MC-02** | Mark medication as given 3 hours after scheduled time. | Log entry created with status = `confirmed_late`. Yellow indicator shown. Caregiver not blocked. | ✅ Pass |
+| **MC-03** | Tap “Skip” and select “Patient refused.” | Log entry with status = `skipped`, `skip_reason` captured. Counts as a miss in adherence calculation. | ✅ Pass |
+| **MC-04** | Two caregivers attempt to confirm the same medication simultaneously (two browser tabs). | Exactly one `medication_logs` record created. Second confirmation receives a conflict error. No duplicate record. | ✅ Pass |
+| **MC-05** | Mark medication given with device in airplane mode. | Optimistic UI update shows checkmark. On reconnection, syncs to Supabase. If sync fails, retry banner shown. | ✅ Pass |
+
+### 3.2 Overdue Medication Detection
+
+| ID | Steps | Expected Result | Result |
+|----|-------|-----------------|--------|
+| **OD-01** | Scheduled medication passes 09:00 + 30-min grace period without confirmation. | `medication_logs` entry created with status = `overdue`. Red indicator shown on checklist. | ✅ Pass |
+| **OD-02** | Mark an overdue medication as given. | Log entry updated to status = `confirmed_late`. Yellow indicator shown. | ✅ Pass |
+| **OD-03** | Allow grace period to expire with push notifications enabled. | Push notification delivered to all enrolled caregivers within 2 minutes. Includes medication name and scheduled time. | ✅ Pass |
+
+### 3.3 Push Notification Delivery
+
+| ID | Steps | Expected Result | Result |
+|----|-------|-----------------|--------|
+| **PN-01** | App open and in foreground. Medication goes overdue. | In-app notification banner appears within 2 minutes. | ✅ Pass |
+| **PN-02** | App backgrounded. Medication goes overdue. | OS push notification via FCM within 2 minutes. Tapping opens correct checklist. | ✅ Pass |
+| **PN-03** | 3 caregivers enrolled. Overdue event triggered. | All 3 devices receive notification. No duplicates. | ✅ Pass |
+| **PN-04** | Caregiver reinstalls app. Overdue event triggered. | New FCM token registered on first launch. Notification delivered to new token. | ✅ Pass |
+
+### 3.4 SMS Fallback
+
+| ID | Steps | Expected Result | Result |
+|----|-------|-----------------|--------|
+| **SMS-01** | Revoke push permission. Trigger overdue medication event. | Twilio SMS sent within 5 minutes. Body includes patient name, medication name, scheduled time. | ✅ Pass |
+| **SMS-02** | As above. | Twilio delivery receipt logged. No duplicate SMS sent. | ✅ Pass |
+| **SMS-03** | Push permissions revoked, no phone number on caregiver profile. | System logs delivery failure. No crash. Profile flagged for missing contact. | ✅ Pass |
+| **SMS-04** | Review Twilio logs after test sends. | No patient names or medical details in Twilio logs. SMS body uses patient first name only and generic text. | ✅ Pass |
 
 ---
 
-## 3. AI Q&A – 20‑Question Validation Results
+## 4. AI Q&A – 20‑Question Validation Results
 
 **Test profile:** Margaret Osei, 74 – 6 medications, 3 conditions, 2 allergies, 7 days of journal entries, 1 GP, 2 specialists.  
 **Summary:** 20/20 Pass. Average latency: 0.87s. No invented data detected. Medical disclaimer present in all 20 responses.
@@ -111,7 +153,7 @@ All automated tests are executed in the GitHub Actions CI pipeline on every pull
 
 ---
 
-## 4. Hospital Summary Validation – 10 Synthetic Profiles
+## 5. Hospital Summary Validation – 10 Synthetic Profiles
 
 **Validation criteria:** all 8 required sections present, no data appearing in the PDF that was not in the source profile, correct "No data recorded" output for empty sections, watermark visible on all pages, medical disclaimer present in footer of all pages, PDF generation time under 10 seconds.
 

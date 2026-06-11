@@ -1,36 +1,30 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProfileService } from './profile.service';
-import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
-
-const mockSupabaseSingle = vi.fn();
-const mockSupabaseEq = vi.fn().mockReturnThis();
-const mockSupabaseSelect = vi.fn().mockReturnThis();
-const mockSupabaseFrom = vi.fn().mockReturnValue({
-  select: mockSupabaseSelect.mockReturnValue({
-    eq: mockSupabaseEq.mockReturnValue({
-      single: mockSupabaseSingle,
-    }),
-  }),
-});
-
-const mockSupabaseClient = {
-  from: mockSupabaseFrom,
-};
-
-const mockSupabaseAdminClient = {
-  getClient: vi.fn().mockReturnValue(mockSupabaseClient),
-};
+import { PatientRepository } from '../integrations/repositories/patient.repository'; // adjust import path as needed
 
 describe('ProfileService', () => {
   let service: ProfileService;
+  let mockPatientRepository: any;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
+    // Create a complete mock with all methods used by ProfileService
+    mockPatientRepository = {
+      findByGroupId: vi.fn(),
+      findActiveMedications: vi.fn(),
+      findRecentMedicationLogs: vi.fn(),
+      findRecentJournalEntries: vi.fn(),
+      findUpcomingAppointments: vi.fn(),
+      findRecentWellbeingCheckins: vi.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProfileService,
-        { provide: SupabaseAdminClient, useValue: mockSupabaseAdminClient },
+        {
+          provide: PatientRepository,
+          useValue: mockPatientRepository,
+        },
       ],
     }).compile();
 
@@ -38,6 +32,7 @@ describe('ProfileService', () => {
   });
 
   it('should return a complete care profile for a valid groupId', async () => {
+    // Mock patient lookup
     const mockPatient = {
       id: 'patient-123',
       full_name: 'John Doe',
@@ -45,37 +40,26 @@ describe('ProfileService', () => {
       chronic_conditions: ['Diabetes'],
       allergies: ['Peanuts'],
     };
-    mockSupabaseSingle.mockResolvedValueOnce({ data: mockPatient, error: null });
+    mockPatientRepository.findByGroupId.mockResolvedValue(mockPatient);
 
-    // Simplified mock for other queries (adjust as needed)
-    mockSupabaseFrom.mockImplementation((table: string) => {
-      if (table === 'medications') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        };
-      }
-      return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gte: vi.fn().mockReturnValue({
-              order: vi.fn().mockReturnValue({
-                limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-              }),
-            }),
-          }),
-        }),
-      };
-    });
+    // Mock empty arrays for other data (simplify)
+    mockPatientRepository.findActiveMedications.mockResolvedValue([]);
+    mockPatientRepository.findRecentMedicationLogs.mockResolvedValue([]);
+    mockPatientRepository.findRecentJournalEntries.mockResolvedValue([]);
+    mockPatientRepository.findUpcomingAppointments.mockResolvedValue([]);
+    mockPatientRepository.findRecentWellbeingCheckins.mockResolvedValue([]);
 
     const profile = await service.getCareProfile('group-123');
+
     expect(profile.patientName).toBe('John Doe');
     expect(profile.conditions).toEqual(['Diabetes']);
+    expect(mockPatientRepository.findByGroupId).toHaveBeenCalledWith('group-123');
+    expect(mockPatientRepository.findActiveMedications).toHaveBeenCalledWith('patient-123');
+    // add other expectations as needed
   });
 
   it('should throw Patient not found when no patient exists', async () => {
-    mockSupabaseSingle.mockResolvedValueOnce({ data: null, error: { message: 'Not found' } });
+    mockPatientRepository.findByGroupId.mockResolvedValue(null);
     await expect(service.getCareProfile('invalid-group')).rejects.toThrow('Patient not found');
   });
 });

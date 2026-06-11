@@ -1,21 +1,22 @@
-import type { GroupRole } from '../../api/groups/groups.types';
+import { getCareRoleLabel } from '../../lib/careRole';
+import { ROLE } from '@typings/role-enum';
 
 interface GroupRoleBadgeProps {
-  role: GroupRole;
+  role: ROLE;
 }
 
 export default function GroupRoleBadge({ role }: GroupRoleBadgeProps) {
-  const isAdmin = role === 'Admin';
+  const isPrimary = role === ROLE.PRIMARY_CAREGIVER;
 
   return (
     <span
       className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold"
       style={{
-        backgroundColor: isAdmin ? 'var(--color-primary-light)' : '#EEF6F2',
-        color: isAdmin ? 'var(--color-primary)' : '#2F8F6B',
+        backgroundColor: isPrimary ? 'var(--color-primary-light)' : '#EEF6F2',
+        color: isPrimary ? 'var(--color-primary)' : '#2F8F6B',
       }}
     >
-      {role}
+      {getCareRoleLabel(role)}
     </span>
   );
 }

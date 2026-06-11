@@ -24,7 +24,9 @@ export interface DoseSlot {
   windowEnd: string;
 }
 
-export function medicationRecordToSlotMed(med: MedicationRecord): SlotMedication {
+export function medicationRecordToSlotMed(
+  med: MedicationRecord,
+): SlotMedication {
   return {
     id: med.id,
     status: med.status,
@@ -63,7 +65,9 @@ export function formatMinutesAsTime(totalMinutes: number): string {
 }
 
 export function sortTimes(times: string[]): string[] {
-  return normalizeTimes(times).sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
+  return normalizeTimes(times).sort(
+    (a, b) => timeToMinutes(a) - timeToMinutes(b),
+  );
 }
 
 export function normalizeTimes(times: string[] | null | undefined): string[] {
@@ -85,7 +89,10 @@ function isWithinDateRange(med: SlotMedication, localDate: string): boolean {
   return true;
 }
 
-function expandIntervalTimes(startTime: string, intervalHours: number): string[] {
+function expandIntervalTimes(
+  startTime: string,
+  intervalHours: number,
+): string[] {
   const times: string[] = [];
   let minutes = timeToMinutes(startTime);
   const endOfDay = 24 * 60;
@@ -124,7 +131,12 @@ export function isMedicationScheduledOnDate(
       return diffDays >= 0 && diffDays % 14 === 0;
     }
     case 'monthly':
-      return toZonedTime(parseLocalDateInTimezone(localDate, timezone), timezone).getDate() === med.dayOfMonth;
+      return (
+        toZonedTime(
+          parseLocalDateInTimezone(localDate, timezone),
+          timezone,
+        ).getDate() === med.dayOfMonth
+      );
     default:
       return false;
   }
@@ -169,7 +181,10 @@ function estimateDosesPerDay(med: SlotMedication, timezone: string): number {
   return computeDoseTimesForDate(med, today, timezone).length || 1;
 }
 
-function computeLastEligibleDate(med: SlotMedication, timezone: string): string | null {
+function computeLastEligibleDate(
+  med: SlotMedication,
+  timezone: string,
+): string | null {
   if (med.perpetual) return null;
   if (med.endDate) return med.endDate;
   if (med.totalDoses == null) return null;
@@ -199,8 +214,7 @@ export function enumerateFutureDoseSlots(
 
   const now = afterInstant;
   const todayLocal = formatLocalDate(now, timezone);
-  const startLocal =
-    med.startDate > todayLocal ? med.startDate : todayLocal;
+  const startLocal = med.startDate > todayLocal ? med.startDate : todayLocal;
 
   const lastDate = computeLastEligibleDate(med, timezone);
   const slots: DoseSlot[] = [];
@@ -246,18 +260,25 @@ export function needsHorizonExtension(
   futureDueCount: number,
   timezone: string,
 ): boolean {
-  if (!med.perpetual && med.endDate == null && med.totalDoses == null) return false;
+  if (!med.perpetual && med.endDate == null && med.totalDoses == null)
+    return false;
   const dosesPerDay = estimateDosesPerDay(med, timezone);
   return futureDueCount < 14 * dosesPerDay;
 }
 
-export function buildDoseSummary(dose: number | null, unit: string | null): string {
+export function buildDoseSummary(
+  dose: number | null,
+  unit: string | null,
+): string {
   if (dose == null) return unit ?? '';
   return `${dose} ${unit ?? 'mg'}`.trim();
 }
 
 export function minutesOverdue(scheduledAt: Date, now: Date): number {
-  return Math.max(0, Math.floor((now.getTime() - scheduledAt.getTime()) / 60000) - 30);
+  return Math.max(
+    0,
+    Math.floor((now.getTime() - scheduledAt.getTime()) / 60000) - 30,
+  );
 }
 
 export function buildDeepLinkUrl(
@@ -270,6 +291,9 @@ export function buildDeepLinkUrl(
   return `${base}/groups/${groupId}/checklist?date=${localDate}&item=${checklistItemId}`;
 }
 
-export function localDateFromScheduledAt(scheduledAt: Date, timezone: string): string {
+export function localDateFromScheduledAt(
+  scheduledAt: Date,
+  timezone: string,
+): string {
   return format(toZonedTime(scheduledAt, timezone), 'yyyy-MM-dd');
 }

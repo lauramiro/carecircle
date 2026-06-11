@@ -38,6 +38,14 @@ export function useGPContactForm(initialContact?: GPContact) {
   );
 
   function validateField(name: keyof GPContactFormValues, value: string): boolean {
+    if (name === 'gpName' && !value.trim()) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        gpName: 'GP name is required.',
+      }));
+      return false;
+    }
+
     if (name === 'phoneNumber' && !phoneNumberPattern.test(value)) {
       setErrors((currentErrors) => ({
         ...currentErrors,
@@ -55,7 +63,15 @@ export function useGPContactForm(initialContact?: GPContact) {
   }
 
   function validateForm(): boolean {
-    return validateField('phoneNumber', values.phoneNumber);
+    const nameValid = values.gpName.trim().length > 0;
+    if (!nameValid) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        gpName: 'GP name is required.',
+      }));
+    }
+    const phoneValid = validateField('phoneNumber', values.phoneNumber);
+    return nameValid && phoneValid;
   }
 
   function updateField(name: keyof GPContactFormValues, value: string) {

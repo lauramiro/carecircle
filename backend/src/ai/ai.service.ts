@@ -61,4 +61,33 @@ export class AiService {
       latencyMs,
     };
   }
+
+  async generateInsights(prompt: string): Promise<any[]> {
+    const groq = new Groq({
+      apiKey: this.appConfigService.config.GROQ_API_KEY,
+    });
+
+    const message = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a care coordination assistant. Return ONLY JSON.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      model: this.MODEL,
+      max_tokens: 1024,
+      temperature: 0.1, // Lower temperature for more consistent JSON
+      response_format: { type: 'json_object' },
+    });
+
+    const content = message.choices[0].message.content || '[]';
+    try {
+      const parsed = JSON.parse(content);
+      return Array.isArray(parsed) ? parsed : parsed.insights || [];
+    } catch (err) {
+      this.logger.error(`Failed to parse AI insights JSON: ${content}`);
+      return [];
+    }
+  }
 }

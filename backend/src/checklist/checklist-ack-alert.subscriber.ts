@@ -1,11 +1,20 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { AlertRepository } from '../integrations/repositories/alert.repository';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
 
 @Injectable()
-export class ChecklistAckAlertSubscriber implements OnModuleInit, OnModuleDestroy {
+export class ChecklistAckAlertSubscriber
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(ChecklistAckAlertSubscriber.name);
-  private channel: ReturnType<ReturnType<SupabaseAdminClient['getClient']>['channel']> | null = null;
+  private channel: ReturnType<
+    ReturnType<SupabaseAdminClient['getClient']>['channel']
+  > | null = null;
 
   constructor(
     private readonly supabase: SupabaseAdminClient,

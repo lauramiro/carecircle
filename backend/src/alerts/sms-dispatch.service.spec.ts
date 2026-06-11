@@ -43,7 +43,10 @@ describe('SmsDispatchService', () => {
 
     await service.runTick();
 
-    expect(alertRepo.cancelOpenAlert).toHaveBeenCalledWith('item-1', 'acknowledged');
+    expect(alertRepo.cancelOpenAlert).toHaveBeenCalledWith(
+      'item-1',
+      'acknowledged',
+    );
     expect(twilio.sendSms).not.toHaveBeenCalled();
   });
 
@@ -56,7 +59,10 @@ describe('SmsDispatchService', () => {
         sms_phone_numbers: ['+447700900123', '+447700900456'],
       },
     ]);
-    checklistRepo.findById.mockResolvedValue({ id: 'item-1', status: 'overdue' });
+    checklistRepo.findById.mockResolvedValue({
+      id: 'item-1',
+      status: 'overdue',
+    });
     twilio.sendSms
       .mockResolvedValueOnce({ sid: 'SM1' })
       .mockResolvedValueOnce({ sid: 'SM2' });
@@ -86,13 +92,21 @@ describe('SmsDispatchService', () => {
         sms_phone_numbers: ['+447700900123'],
       },
     ]);
-    checklistRepo.findById.mockResolvedValue({ id: 'item-1', status: 'overdue' });
-    twilio.sendSms.mockResolvedValueOnce({ sid: 'SM1' }).mockResolvedValueOnce({ sid: 'SM-dev' });
+    checklistRepo.findById.mockResolvedValue({
+      id: 'item-1',
+      status: 'overdue',
+    });
+    twilio.sendSms
+      .mockResolvedValueOnce({ sid: 'SM1' })
+      .mockResolvedValueOnce({ sid: 'SM-dev' });
 
     await service.runTick();
 
     expect(twilio.sendSms).toHaveBeenCalledTimes(2);
-    expect(twilio.sendSms).toHaveBeenLastCalledWith('+447700900999', 'Alex: Metformin overdue');
+    expect(twilio.sendSms).toHaveBeenLastCalledWith(
+      '+447700900999',
+      'Alex: Metformin overdue',
+    );
     expect(alertRepo.markSmsSent).toHaveBeenCalledWith(
       'alert-1',
       expect.objectContaining({
@@ -114,12 +128,18 @@ describe('SmsDispatchService', () => {
         status: 'push_failed',
       },
     ]);
-    checklistRepo.findById.mockResolvedValue({ id: 'item-1', status: 'overdue' });
+    checklistRepo.findById.mockResolvedValue({
+      id: 'item-1',
+      status: 'overdue',
+    });
     twilio.sendSms.mockResolvedValue({ sid: 'SM-dev' });
 
     await service.runTick();
 
-    expect(twilio.sendSms).toHaveBeenCalledWith('+447700900999', 'Alex: Metformin overdue');
+    expect(twilio.sendSms).toHaveBeenCalledWith(
+      '+447700900999',
+      'Alex: Metformin overdue',
+    );
   });
 
   it('runTick marks sms_failed when every send fails', async () => {
@@ -131,7 +151,10 @@ describe('SmsDispatchService', () => {
         sms_phone_numbers: ['+447700900123'],
       },
     ]);
-    checklistRepo.findById.mockResolvedValue({ id: 'item-1', status: 'overdue' });
+    checklistRepo.findById.mockResolvedValue({
+      id: 'item-1',
+      status: 'overdue',
+    });
     twilio.sendSms.mockResolvedValue({ error: 'invalid number' });
 
     await service.runTick();
@@ -140,7 +163,9 @@ describe('SmsDispatchService', () => {
       'alert-1',
       expect.objectContaining({
         status: 'sms_failed',
-        smsDeliveryLog: [{ phone: '+447700900123', success: false, error: 'invalid number' }],
+        smsDeliveryLog: [
+          { phone: '+447700900123', success: false, error: 'invalid number' },
+        ],
       }),
     );
   });

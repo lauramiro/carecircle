@@ -45,8 +45,14 @@ async function fillRequiredFormFields(user: ReturnType<typeof userEvent.setup>) 
   await user.type(screen.getByLabelText(/circle name/i), 'Mum Care Team');
   await user.type(screen.getByLabelText(/patient full name/i), 'Jane Doe');
   await user.type(screen.getByLabelText(/date of birth/i), '1955-05-01');
-  await user.type(screen.getByLabelText(/^email$/i), 'jane@example.com');
+  await user.type(screen.getByLabelText(/^email\b/i), 'jane@example.com');
   await user.selectOptions(screen.getByLabelText(/relationship to the patient/i), 'parent');
+}
+
+function mockProfilesUpsertSuccess() {
+  return {
+    upsert: vi.fn().mockResolvedValue({ error: null }),
+  };
 }
 
 function mockPatientInsertSuccess() {
@@ -162,6 +168,7 @@ describe('CreateGroupPage', () => {
     const user = userEvent.setup();
     const careGiversInsert = vi.fn().mockResolvedValue({ error: null });
     supabaseMock.from
+      .mockReturnValueOnce(mockProfilesUpsertSuccess())
       .mockReturnValueOnce(mockPatientInsertSuccess())
       .mockReturnValueOnce(mockCareGroupInsertSuccess())
       .mockReturnValueOnce({
@@ -182,7 +189,7 @@ describe('CreateGroupPage', () => {
       expect(navigateMock).toHaveBeenCalledWith('/groups/list');
     });
 
-    const careGroupInsert = supabaseMock.from.mock.results[1].value.insert;
+    const careGroupInsert = supabaseMock.from.mock.results[2].value.insert;
     expect(careGroupInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Mum Care Team',
@@ -199,7 +206,7 @@ describe('CreateGroupPage', () => {
         patient_id: 'patient-123',
         caregiver_id: 'test-user-id',
         relationship: 'parent',
-        role_in_care: 'Primary Carer',
+        role_in_care: 'primary_carer',
         can_view_medical: true,
         can_schedule: true,
         can_communicate: true,
@@ -213,6 +220,7 @@ describe('CreateGroupPage', () => {
     const user = userEvent.setup();
     const careGiversInsert = vi.fn().mockResolvedValue({ error: null });
     supabaseMock.from
+      .mockReturnValueOnce(mockProfilesUpsertSuccess())
       .mockReturnValueOnce(mockPatientInsertSuccess())
       .mockReturnValueOnce(mockCareGroupInsertSuccess())
       .mockReturnValueOnce({
@@ -232,7 +240,7 @@ describe('CreateGroupPage', () => {
     );
     await user.type(screen.getByLabelText(/patient full name/i), 'Jane Doe');
     await user.type(screen.getByLabelText(/date of birth/i), '1955-05-01');
-    await user.type(screen.getByLabelText(/^email$/i), 'jane@example.com');
+    await user.type(screen.getByLabelText(/^email\b/i), 'jane@example.com');
     await user.selectOptions(screen.getByLabelText(/relationship to the patient/i), 'parent');
     await user.click(screen.getByRole('button', { name: /create circle/i }));
 
@@ -240,7 +248,7 @@ describe('CreateGroupPage', () => {
       expect(careGiversInsert).toHaveBeenCalled();
     });
 
-    const careGroupInsert = supabaseMock.from.mock.results[1].value.insert;
+    const careGroupInsert = supabaseMock.from.mock.results[2].value.insert;
     expect(careGroupInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Mum Care Team',
@@ -254,7 +262,7 @@ describe('CreateGroupPage', () => {
 
   it('shows error toast when creation fails', async () => {
     const user = userEvent.setup();
-    supabaseMock.from.mockReturnValueOnce({
+    supabaseMock.from.mockReturnValueOnce(mockProfilesUpsertSuccess()).mockReturnValueOnce({
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({

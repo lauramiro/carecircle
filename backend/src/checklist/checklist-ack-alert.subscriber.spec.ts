@@ -8,7 +8,10 @@ describe('ChecklistAckAlertSubscriber', () => {
       on: vi.fn().mockReturnThis(),
       subscribe: vi.fn(),
     };
-    const client = { channel: vi.fn().mockReturnValue(chain), removeChannel: vi.fn() };
+    const client = {
+      channel: vi.fn().mockReturnValue(chain),
+      removeChannel: vi.fn(),
+    };
     const supabase = {
       isEnabled: () => true,
       getClient: () => client as never,
@@ -51,7 +54,10 @@ describe('ChecklistAckAlertSubscriber', () => {
   it('does not subscribe when Supabase admin client is disabled', () => {
     const cancelOpenAlert = vi.fn();
     const client = { channel: vi.fn() };
-    const supabase = { isEnabled: () => false, getClient: () => client as never };
+    const supabase = {
+      isEnabled: () => false,
+      getClient: () => client as never,
+    };
 
     const subscriber = new ChecklistAckAlertSubscriber(
       supabase as never,
@@ -69,8 +75,14 @@ describe('ChecklistAckAlertSubscriber', () => {
       on: vi.fn().mockReturnThis(),
       subscribe: vi.fn().mockReturnValue(realtimeChannel),
     };
-    const client = { channel: vi.fn().mockReturnValue(chain), removeChannel: vi.fn() };
-    const supabase = { isEnabled: () => true, getClient: () => client as never };
+    const client = {
+      channel: vi.fn().mockReturnValue(chain),
+      removeChannel: vi.fn(),
+    };
+    const supabase = {
+      isEnabled: () => true,
+      getClient: () => client as never,
+    };
 
     const subscriber = new ChecklistAckAlertSubscriber(
       supabase as never,

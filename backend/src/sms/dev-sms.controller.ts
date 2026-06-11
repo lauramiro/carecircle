@@ -41,11 +41,15 @@ export class DevSmsController {
       return {
         ok: false,
         error: 'twilio_not_configured',
-        message: 'Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM_NUMBER.',
+        message:
+          'Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM_NUMBER.',
       };
     }
 
-    const result = await this.twilioSms.sendSms(to, 'CareCircle SMS connectivity test.');
+    const result = await this.twilioSms.sendSms(
+      to,
+      'CareCircle SMS connectivity test.',
+    );
     if ('error' in result) {
       return { ok: false, error: result.error };
     }

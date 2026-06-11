@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabaseClient';
+import { eqExtendedColumn } from '../../lib/supabaseRpc';
 import type {
   AddAppointmentPayload,
   Appointment,
@@ -58,6 +59,40 @@ function generateSeriesDates(startTime: Date, rule: RecurrenceRule): Date[] {
   return results;
 }
 
+export interface AppointmentWithCarer extends Appointment {
+  carerName: string | null;
+}
+
+export async function getNextAppointmentForPatient(patientId: string): Promise<AppointmentWithCarer | null> {
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('*')
+    .eq('patient_id', patientId)
+    .neq('status', 'cancelled')
+    .gt('start_time', now)
+    .order('start_time', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  const appt = fromRow(data as Record<string, unknown>);
+  let carerName: string | null = null;
+
+  if (appt.attendingCarerId) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', appt.attendingCarerId)
+      .maybeSingle();
+    carerName = (profile as { full_name?: string | null } | null)?.full_name ?? null;
+  }
+
+  return { ...appt, carerName };
+}
+
 export async function getAppointmentsByPatient(patientId: string): Promise<Appointment[]> {
   const { data, error } = await supabase
     .from('appointments')
@@ -93,7 +128,7 @@ export async function addAppointment(payload: AddAppointmentPayload): Promise<Ap
         ...baseRow,
         start_time: payload.startTime,
         end_time: endTimeFromStart(payload.startTime),
-      })
+      } as never)
       .select('*')
       .single();
     if (error) throw new Error(error.message);
@@ -115,7 +150,7 @@ export async function addAppointment(payload: AddAppointmentPayload): Promise<Ap
 
   const { data, error } = await supabase
     .from('appointments')
-    .insert(rows)
+    .insert(rows as never)
     .select('*')
     .order('start_time', { ascending: true });
 
@@ -170,10 +205,11 @@ export async function editAppointment(
     delete futureFieldUpdate.start_time;
     delete futureFieldUpdate.end_time;
     if (Object.keys(futureFieldUpdate).length > 0) {
-      await supabase
-        .from('appointments')
-        .update(futureFieldUpdate)
-        .eq('recurrence_series_id', recurrenceSeriesId)
+      await eqExtendedColumn(
+        supabase.from('appointments').update(futureFieldUpdate),
+        'recurrence_series_id',
+        recurrenceSeriesId,
+      )
         .gt('start_time', originalStartTime)
         .neq('status', 'cancelled');
     }
@@ -182,10 +218,11 @@ export async function editAppointment(
     // preserve its own date while adopting the new hour/minute.
     if (changes.startTime !== undefined) {
       const newTime = new Date(changes.startTime);
-      const { data: futureRows } = await supabase
-        .from('appointments')
-        .select('id, start_time')
-        .eq('recurrence_series_id', recurrenceSeriesId)
+      const { data: futureRows } = await eqExtendedColumn(
+        supabase.from('appointments').select('id, start_time'),
+        'recurrence_series_id',
+        recurrenceSeriesId,
+      )
         .gt('start_time', originalStartTime)
         .neq('status', 'cancelled');
 
@@ -221,11 +258,11 @@ export async function deleteAppointment(
   startTime?: string,
 ): Promise<void> {
   if (scope === 'future' && seriesId && startTime) {
-    const { error } = await supabase
-      .from('appointments')
-      .update({ status: 'cancelled' })
-      .eq('recurrence_series_id', seriesId)
-      .gte('start_time', startTime);
+    const { error } = await eqExtendedColumn(
+      supabase.from('appointments').update({ status: 'cancelled' }),
+      'recurrence_series_id',
+      seriesId,
+    ).gte('start_time', startTime);
     if (error) throw new Error(error.message);
   } else {
     const { error } = await supabase

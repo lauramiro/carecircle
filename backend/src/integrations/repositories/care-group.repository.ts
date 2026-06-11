@@ -28,7 +28,9 @@ export class CareGroupRepository {
     if (patientError) throw new Error(patientError.message);
 
     const fullName = patient?.full_name?.trim() ?? '';
-    const patientFirstName = fullName ? (fullName.split(/\s+/)[0] ?? 'Patient') : 'Patient';
+    const patientFirstName = fullName
+      ? (fullName.split(/\s+/)[0] ?? 'Patient')
+      : 'Patient';
 
     return {
       groupId: group.id,
@@ -38,7 +40,9 @@ export class CareGroupRepository {
     };
   }
 
-  async getGroupContextByPatientId(patientId: string): Promise<GroupContext | null> {
+  async getGroupContextByPatientId(
+    patientId: string,
+  ): Promise<GroupContext | null> {
     const client = this.supabase.getClient();
 
     const { data: patient, error } = await client
@@ -59,7 +63,9 @@ export class CareGroupRepository {
     if (groupError) throw new Error(groupError.message);
 
     const fullName = patient.full_name?.trim() ?? '';
-    const patientFirstName = fullName ? (fullName.split(/\s+/)[0] ?? 'Patient') : 'Patient';
+    const patientFirstName = fullName
+      ? (fullName.split(/\s+/)[0] ?? 'Patient')
+      : 'Patient';
 
     return {
       groupId: patient.group_id,
@@ -83,7 +89,10 @@ export class CareGroupRepository {
     const groupMembersPhoneNumbers: string[] = [];
 
     for (const row of data ?? []) {
-      const r = row as { caregiver_id: string; profiles?: { phone?: string | null } | null };
+      const r = row as {
+        caregiver_id: string;
+        profiles?: { phone?: string | null } | null;
+      };
       groupMembersIds.push(r.caregiver_id);
       const raw = r.profiles?.phone?.trim();
       if (raw && isE164Phone(raw)) groupMembersPhoneNumbers.push(raw);
@@ -93,5 +102,15 @@ export class CareGroupRepository {
       groupMembersIds: [...new Set(groupMembersIds)],
       groupMembersPhoneNumbers: [...new Set(groupMembersPhoneNumbers)],
     };
+  }
+
+  async findAllGroups() {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('care_group')
+      .select('id, name');
+
+    if (error) throw new Error(error.message);
+    return data ?? [];
   }
 }

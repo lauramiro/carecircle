@@ -2,6 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Camera, CircleUserRound, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import {
+  deletePatientDocument,
+  getDocumentStorageUsage,
+  DOCUMENT_FILE_TYPES_LABEL,
+  PATIENT_DOCUMENT_MAX_BYTES,
+  PATIENT_DOCUMENT_TYPE_OPTIONS,
+  type DocumentStorageUsage,
+  getPatientDocumentDownloadUrl,
+  getPatientDocuments,
+  uploadPatientDocument,
+  type PatientDocument,
+  type PatientDocumentType,
+} from '../../api/groups/patientDocuments.service';
 import type { Allergy } from '../../api/groups/patient.types';
 import {
   getPatient,
@@ -11,7 +24,9 @@ import {
 import { usePatientForm } from '../../hooks/groups/usePatientForm';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { canManageMembers } from '../../lib/carePermissions';
 import { getErrorMessage } from '../../utils/helper';
+import WellbeingTrendCharts from '../../components/checkins/WellbeingTrendCharts';
 
 const inputStyle = (hasError: boolean) => ({
   width: '100%',
@@ -44,13 +59,39 @@ const errorTextStyle = {
   fontFamily: 'Plus Jakarta Sans, sans-serif',
 };
 
+function formatDocumentTypeLabel(documentType: PatientDocumentType): string {
+  const option = PATIENT_DOCUMENT_TYPE_OPTIONS.find((item) => item.value === documentType);
+  return option?.label ?? documentType;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  if (bytes >= 1024) {
+    return `${Math.round(bytes / 1024)} KB`;
+  }
+
+  return `${bytes} B`;
+}
+
+function formatUploadDate(value: string): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(value));
+}
+
 export default function PatientProfilePage() {
   const { groupId } = useParams();
   const navigate = useNavigate();
   const shouldReduceMotion = useReducedMotion();
 
   const { group, loading: groupLoading } = useGroupDetail(groupId);
-  const isAdmin = group?.role === 'Admin';
+  const isObserver = group?.role === 'observer';
+  const canEditProfile = group ? canManageMembers(group.role) : false;
 
   const {
     values, chronicConditions, allergies, errors,
@@ -69,8 +110,24 @@ export default function PatientProfilePage() {
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [documents, setDocuments] = useState<PatientDocument[]>([]);
+  const [documentsLoading, setDocumentsLoading] = useState(true);
+  const [documentsError, setDocumentsError] = useState<string | null>(null);
+  const [documentType, setDocumentType] = useState<PatientDocumentType>('discharge_summary');
+  const [selectedDocumentFile, setSelectedDocumentFile] = useState<File | null>(null);
+  const [documentUploadError, setDocumentUploadError] = useState<string | null>(null);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
+  const [downloadingDocumentId, setDownloadingDocumentId] = useState<string | null>(null);
+  const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null);
+  const [documentStorageUsage, setDocumentStorageUsage] = useState<DocumentStorageUsage | null>(null);
+  const [documentStorageUsageLoading, setDocumentStorageUsageLoading] = useState(true);
+  const [documentStorageUsageError, setDocumentStorageUsageError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const documentFileInputRef = useRef<HTMLInputElement>(null);
+  const activePatientId = patientId ?? group?.patientId ?? null;
+  const canUploadDocuments = !isObserver;
+  const canDeleteDocuments = canEditProfile;
 
   useEffect(() => {
     if (!groupId) return;
@@ -102,6 +159,70 @@ export default function PatientProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadDocuments() {
+      if (!activePatientId) {
+        setDocuments([]);
+        setDocumentsLoading(false);
+        setDocumentsError(null);
+        return;
+      }
+
+      try {
+        setDocumentsLoading(true);
+        setDocumentsError(null);
+        const documentRows = await getPatientDocuments(activePatientId);
+        if (!active) return;
+        setDocuments(documentRows);
+      } catch (err: unknown) {
+        if (!active) return;
+        setDocumentsError(getErrorMessage(err) || 'Unable to load documents right now.');
+      } finally {
+        if (active) setDocumentsLoading(false);
+      }
+    }
+
+    void loadDocuments();
+
+    return () => {
+      active = false;
+    };
+  }, [activePatientId]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadDocumentStorageUsage() {
+      if (!groupId) {
+        setDocumentStorageUsage(null);
+        setDocumentStorageUsageLoading(false);
+        setDocumentStorageUsageError(null);
+        return;
+      }
+
+      try {
+        setDocumentStorageUsageLoading(true);
+        setDocumentStorageUsageError(null);
+        const usage = await getDocumentStorageUsage(groupId);
+        if (!active) return;
+        setDocumentStorageUsage(usage);
+      } catch (err: unknown) {
+        if (!active) return;
+        setDocumentStorageUsageError(getErrorMessage(err) || 'Unable to load document storage usage right now.');
+      } finally {
+        if (active) setDocumentStorageUsageLoading(false);
+      }
+    }
+
+    void loadDocumentStorageUsage();
+
+    return () => {
+      active = false;
+    };
+  }, [groupId]);
+
   if (!groupId) return <Navigate to="/groups/list" replace />;
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -109,6 +230,12 @@ export default function PatientProfilePage() {
     if (!file) return;
     setPendingFile(file);
     setAvatarPreviewUrl(URL.createObjectURL(file));
+  }
+
+  function handleDocumentFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setSelectedDocumentFile(file);
+    setDocumentUploadError(null);
   }
 
   async function handleSubmit() {
@@ -145,8 +272,90 @@ export default function PatientProfilePage() {
     setSaving(false);
   }
 
+  async function handleDocumentUpload() {
+    if (!activePatientId) {
+      setDocumentUploadError('Patient profile not found.');
+      return;
+    }
+
+    if (!selectedDocumentFile) {
+      setDocumentUploadError('Please choose a document to upload.');
+      return;
+    }
+
+    setUploadingDocument(true);
+    setDocumentUploadError(null);
+
+    try {
+      if (documentStorageUsage && documentStorageUsage.usedBytes + selectedDocumentFile.size > documentStorageUsage.limitBytes) {
+        throw new Error('Storage limit reached. Delete older documents to free up space and try again.');
+      }
+
+      const uploadedDocument = await uploadPatientDocument(
+        activePatientId,
+        selectedDocumentFile,
+        documentType,
+      );
+
+      setDocuments((current) => [uploadedDocument, ...current]);
+      setSelectedDocumentFile(null);
+      setDocumentType('discharge_summary');
+      setDocumentsError(null);
+
+      if (groupId) {
+        const refreshedUsage = await getDocumentStorageUsage(groupId);
+        setDocumentStorageUsage(refreshedUsage);
+        setDocumentStorageUsageError(null);
+      }
+
+      if (documentFileInputRef.current) {
+        documentFileInputRef.current.value = '';
+      }
+    } catch (err: unknown) {
+      setDocumentUploadError(getErrorMessage(err) || 'Unable to upload this document.');
+    } finally {
+      setUploadingDocument(false);
+    }
+  }
+
+  async function handleDocumentDelete(document: PatientDocument) {
+    setDeletingDocumentId(document.id);
+    setDocumentsError(null);
+
+    try {
+      await deletePatientDocument(document);
+      setDocuments((current) => current.filter((item) => item.id !== document.id));
+
+      if (groupId) {
+        const refreshedUsage = await getDocumentStorageUsage(groupId);
+        setDocumentStorageUsage(refreshedUsage);
+        setDocumentStorageUsageError(null);
+      }
+    } catch (err: unknown) {
+      setDocumentsError(getErrorMessage(err) || 'Unable to delete this document.');
+    } finally {
+      setDeletingDocumentId(null);
+    }
+  }
+
+  async function handleDocumentDownload(document: PatientDocument) {
+    setDownloadingDocumentId(document.id);
+
+    try {
+      const signedUrl = await getPatientDocumentDownloadUrl(document.storagePath);
+      window.open(signedUrl, '_blank', 'noopener,noreferrer');
+    } catch (err: unknown) {
+      setDocumentsError(getErrorMessage(err) || 'Unable to open this document.');
+    } finally {
+      setDownloadingDocumentId(null);
+    }
+  }
+
   const today = new Date().toISOString().split('T')[0];
   const isLoading = groupLoading || loadingPatient;
+  const documentUsagePercent = documentStorageUsage
+    ? Math.min(100, Math.round(documentStorageUsage.usageRatio * 100))
+    : 0;
 
   if (isLoading) {
     return (
@@ -197,7 +406,7 @@ export default function PatientProfilePage() {
         fontFamily: 'Plus Jakarta Sans, sans-serif',
         lineHeight: 1.7,
       }}>
-        {isAdmin
+        {canEditProfile
           ? 'Medical and personal details for the person in your care.'
           : 'Medical and personal details for the person in your care. Only admins can edit this profile.'}
       </p>
@@ -215,8 +424,8 @@ export default function PatientProfilePage() {
             <button
               type="button"
               aria-label="Upload photo"
-              disabled={!isAdmin}
-              onClick={() => isAdmin && fileInputRef.current?.click()}
+              disabled={!canEditProfile}
+              onClick={() => canEditProfile && fileInputRef.current?.click()}
               style={{
                 position: 'relative',
                 width: '88px',
@@ -224,7 +433,7 @@ export default function PatientProfilePage() {
                 borderRadius: '50%',
                 border: '2px solid var(--color-border)',
                 overflow: 'hidden',
-                cursor: isAdmin ? 'pointer' : 'default',
+                cursor: canEditProfile ? 'pointer' : 'default',
                 padding: 0,
                 background: 'var(--color-primary-light)',
                 flexShrink: 0,
@@ -245,7 +454,7 @@ export default function PatientProfilePage() {
                   }}
                 />
               )}
-              {isAdmin && (
+              {canEditProfile && (
                 <span style={{
                   position: 'absolute',
                   inset: 0,
@@ -262,7 +471,7 @@ export default function PatientProfilePage() {
                 </span>
               )}
             </button>
-            {isAdmin && (
+            {canEditProfile && (
               <p className="mt-2" style={{ fontSize: '11px', color: 'var(--color-text-hint)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                 JPG, PNG or WebP
               </p>
@@ -284,11 +493,11 @@ export default function PatientProfilePage() {
             <input
               id="fullName"
               type="text"
-              disabled={!isAdmin}
+              disabled={!canEditProfile}
               value={values.fullName}
               onChange={(e) => { updateField('fullName', e.target.value); setFormError(null); }}
               onFocus={(e) => {
-                if (!isAdmin) return;
+                if (!canEditProfile) return;
                 e.target.style.borderColor = 'var(--color-border-focus)';
                 e.target.style.boxShadow = '0 0 0 3px rgba(74,111,165,0.12)';
               }}
@@ -301,7 +510,7 @@ export default function PatientProfilePage() {
               aria-required
               aria-invalid={Boolean(errors.fullName)}
               aria-describedby={errors.fullName ? 'fullName-error' : undefined}
-              style={{ ...inputStyle(Boolean(errors.fullName)), opacity: isAdmin ? 1 : 0.7 }}
+              style={{ ...inputStyle(Boolean(errors.fullName)), opacity: canEditProfile ? 1 : 0.7 }}
             />
             {errors.fullName && <p id="fullName-error" style={errorTextStyle}>{errors.fullName}</p>}
           </div>
@@ -315,7 +524,7 @@ export default function PatientProfilePage() {
               id="dateOfBirth"
               type="date"
               max={today}
-              disabled={!isAdmin}
+              disabled={!canEditProfile}
               value={values.dateOfBirth}
               onChange={(e) => { updateField('dateOfBirth', e.target.value); setFormError(null); }}
               onBlur={(e) => {
@@ -326,9 +535,9 @@ export default function PatientProfilePage() {
               aria-required
               aria-invalid={Boolean(errors.dateOfBirth)}
               aria-describedby={errors.dateOfBirth ? 'dateOfBirth-error' : undefined}
-              style={{ ...inputStyle(Boolean(errors.dateOfBirth)), colorScheme: 'light', opacity: isAdmin ? 1 : 0.7 }}
+              style={{ ...inputStyle(Boolean(errors.dateOfBirth)), colorScheme: 'light', opacity: canEditProfile ? 1 : 0.7 }}
               onFocus={(e) => {
-                if (!isAdmin) return;
+                if (!canEditProfile) return;
                 e.target.style.borderColor = 'var(--color-border-focus)';
                 e.target.style.boxShadow = '0 0 0 3px rgba(74,111,165,0.12)';
               }}
@@ -341,7 +550,7 @@ export default function PatientProfilePage() {
             <label style={labelStyle}>
               Conditions <span style={{ color: 'var(--color-status-critical)' }}>*</span>
             </label>
-            {isAdmin && (
+            {canEditProfile && (
               <div className="flex gap-2 mb-2">
                 <input
                   type="text"
@@ -424,7 +633,7 @@ export default function PatientProfilePage() {
                     }}
                   >
                     {c}
-                    {isAdmin && c !== 'None' && (
+                    {canEditProfile && c !== 'None' && (
                       <button
                         type="button"
                         aria-label={`Remove ${c}`}
@@ -438,7 +647,7 @@ export default function PatientProfilePage() {
                 ))}
               </div>
             )}
-            {chronicConditions.length === 0 && !isAdmin && (
+            {chronicConditions.length === 0 && !canEditProfile && (
               <p style={{ fontSize: '13px', color: 'var(--color-text-hint)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                 No conditions recorded.
               </p>
@@ -449,7 +658,7 @@ export default function PatientProfilePage() {
           {/* Allergies */}
           <div className="mb-6">
             <label style={labelStyle}>Allergies</label>
-            {isAdmin && (
+            {canEditProfile && (
               <div className="flex gap-2 mb-2">
                 <input
                   type="text"
@@ -549,7 +758,7 @@ export default function PatientProfilePage() {
                         </span>
                       )}
                     </span>
-                    {isAdmin && (
+                    {canEditProfile && (
                       <button
                         type="button"
                         aria-label={`Remove allergy ${a.description}`}
@@ -565,6 +774,249 @@ export default function PatientProfilePage() {
             ) : (
               <p style={{ fontSize: '13px', color: 'var(--color-text-hint)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                 No allergies recorded.
+              </p>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <label style={labelStyle}>Documents</label>
+            <p className="mb-3" style={{ fontSize: '12px', color: 'var(--color-text-hint)', fontFamily: 'Plus Jakarta Sans, sans-serif', lineHeight: 1.6 }}>
+              Upload {DOCUMENT_FILE_TYPES_LABEL} documents up to {Math.round(PATIENT_DOCUMENT_MAX_BYTES / (1024 * 1024))} MB.
+              All uploaded files stay private to this care circle.
+            </p>
+
+            <div
+              className="mb-4"
+              style={{
+                border: '1px solid var(--color-border)',
+                borderRadius: '10px',
+                padding: '12px 14px',
+                backgroundColor: 'var(--color-card)',
+              }}
+            >
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-secondary)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                Document storage usage
+              </p>
+
+              {documentStorageUsageLoading ? (
+                <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--color-text-hint)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                  Loading storage usage...
+                </p>
+              ) : documentStorageUsage ? (
+                <>
+                  <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--color-text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>
+                    {formatFileSize(documentStorageUsage.usedBytes)} of {formatFileSize(documentStorageUsage.limitBytes)} used ({documentUsagePercent}%)
+                  </p>
+                  <div
+                    aria-hidden
+                    style={{
+                      marginTop: '10px',
+                      height: '8px',
+                      borderRadius: '999px',
+                      backgroundColor: 'var(--color-accent-soft)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${documentUsagePercent}%`,
+                        height: '100%',
+                        backgroundColor: documentStorageUsage.isWarning
+                          ? 'var(--color-status-critical)'
+                          : 'var(--color-primary)',
+                        transition: 'width 0.2s ease',
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--color-text-hint)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                  Storage usage unavailable.
+                </p>
+              )}
+
+              {documentStorageUsageError && (
+                <p style={{ ...errorTextStyle, marginBottom: 0 }}>
+                  {documentStorageUsageError}
+                </p>
+              )}
+            </div>
+
+            {documentStorageUsage?.isWarning && (
+              <div
+                className="mb-4"
+                style={{
+                  border: '1px solid #F0BEBE',
+                  borderRadius: '10px',
+                  padding: '12px 14px',
+                  backgroundColor: 'var(--color-status-critical-bg)',
+                }}
+              >
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-status-critical)', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>
+                  Storage is above 80% of the 1 GB limit.
+                </p>
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-status-critical)', fontFamily: 'Plus Jakarta Sans, sans-serif', lineHeight: 1.6 }}>
+                  Delete older documents to free up space before uploading more files.
+                </p>
+              </div>
+            )}
+
+            {canUploadDocuments && (
+              <div className="mb-4" style={{ display: 'grid', gap: '10px' }}>
+                <select
+                  value={documentType}
+                  onChange={(e) => {
+                    setDocumentType(e.target.value as PatientDocumentType);
+                    setDocumentUploadError(null);
+                  }}
+                  style={{
+                    ...inputStyle(false),
+                    color: 'var(--color-text-primary)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {PATIENT_DOCUMENT_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  ref={documentFileInputRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                  onChange={handleDocumentFileChange}
+                  style={{
+                    ...inputStyle(false),
+                    height: 'auto',
+                    padding: '10px 12px',
+                  }}
+                />
+
+                {selectedDocumentFile && (
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontFamily: 'Plus Jakarta Sans, sans-serif', margin: 0 }}>
+                    {selectedDocumentFile.name} · {formatFileSize(selectedDocumentFile.size)}
+                  </p>
+                )}
+
+                <div>
+                  <button
+                    type="button"
+                    disabled={uploadingDocument || !selectedDocumentFile}
+                    onClick={() => { void handleDocumentUpload(); }}
+                    style={{
+                      height: '40px',
+                      padding: '0 16px',
+                      backgroundColor: uploadingDocument || !selectedDocumentFile
+                        ? 'var(--color-accent-soft)'
+                        : 'var(--color-primary)',
+                      color: uploadingDocument || !selectedDocumentFile
+                        ? 'var(--color-text-hint)'
+                        : '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      fontFamily: 'Plus Jakarta Sans, sans-serif',
+                      cursor: uploadingDocument || !selectedDocumentFile ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {uploadingDocument ? 'Uploading...' : 'Upload document'}
+                  </button>
+                </div>
+
+                {documentUploadError && <p style={errorTextStyle}>{documentUploadError}</p>}
+              </div>
+            )}
+
+            {documentsError && (
+              <p style={{ ...errorTextStyle, marginBottom: '10px' }}>
+                {documentsError}
+              </p>
+            )}
+
+            {documentsLoading ? (
+              <p style={{ fontSize: '13px', color: 'var(--color-text-hint)', fontFamily: 'Plus Jakarta Sans, sans-serif', margin: 0 }}>
+                Loading documents...
+              </p>
+            ) : documents.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {documents.map((document) => (
+                  <div
+                    key={document.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      padding: '12px 14px',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '10px',
+                      backgroundColor: 'var(--color-accent-soft)',
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', wordBreak: 'break-word' }}>
+                        {document.fileName}
+                      </p>
+                      <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-text-secondary)', fontFamily: 'Plus Jakarta Sans, sans-serif', lineHeight: 1.6 }}>
+                        {formatDocumentTypeLabel(document.documentType)} · Uploaded {formatUploadDate(document.uploadedAt)} · By {document.uploadedByName} · {formatFileSize(document.fileSize)}
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => { void handleDocumentDownload(document); }}
+                        disabled={downloadingDocumentId === document.id || deletingDocumentId === document.id}
+                        style={{
+                          alignSelf: 'center',
+                          height: '36px',
+                          padding: '0 14px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--color-border)',
+                          backgroundColor: 'var(--color-card)',
+                          color: 'var(--color-primary)',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          fontFamily: 'Plus Jakarta Sans, sans-serif',
+                          cursor: downloadingDocumentId === document.id || deletingDocumentId === document.id ? 'not-allowed' : 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {downloadingDocumentId === document.id ? 'Opening...' : 'Open'}
+                      </button>
+
+                      {canDeleteDocuments && (
+                        <button
+                          type="button"
+                          onClick={() => { void handleDocumentDelete(document); }}
+                          disabled={deletingDocumentId === document.id || downloadingDocumentId === document.id}
+                          style={{
+                            alignSelf: 'center',
+                            height: '36px',
+                            padding: '0 14px',
+                            borderRadius: '8px',
+                            border: '1px solid #F0BEBE',
+                            backgroundColor: 'var(--color-card)',
+                            color: 'var(--color-status-critical)',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            fontFamily: 'Plus Jakarta Sans, sans-serif',
+                            cursor: deletingDocumentId === document.id || downloadingDocumentId === document.id ? 'not-allowed' : 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {deletingDocumentId === document.id ? 'Deleting...' : 'Delete'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ fontSize: '13px', color: 'var(--color-text-hint)', fontFamily: 'Plus Jakarta Sans, sans-serif', margin: 0 }}>
+                No documents uploaded yet.
               </p>
             )}
           </div>
@@ -602,7 +1054,7 @@ export default function PatientProfilePage() {
           )}
 
           {/* Save button — admins only */}
-          {isAdmin && (
+          {canEditProfile && (
             <div className="flex items-center gap-4">
               <motion.button
                 type="submit"
@@ -635,6 +1087,15 @@ export default function PatientProfilePage() {
 
         </form>
       </div>
+
+      {/* Wellbeing trend charts — shown once a patientId is resolved */}
+      {patientId && group?.id && (
+        <WellbeingTrendCharts
+          patientId={patientId}
+          groupId={group.id}
+          isObserver={isObserver}
+        />
+      )}
 
       <style>{`
         button:hover .avatar-overlay { opacity: 1 !important; }

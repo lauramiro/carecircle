@@ -15,7 +15,12 @@ export class MedicationsController {
 
   @Post()
   create(@Param('groupId') groupId: string, @Body() dto: CreateMedicationDto) {
-    this.validateCourseBounds(dto.scheduleType, dto.perpetual, dto.endDate, dto.totalDoses);
+    this.validateCourseBounds(
+      dto.scheduleType,
+      dto.perpetual,
+      dto.endDate,
+      dto.totalDoses,
+    );
     return this.medicationsService.create(groupId, dto);
   }
 

@@ -77,7 +77,10 @@ describe('MedicationsService', () => {
       perpetual: true,
     });
 
-    expect(materialization.materializeForMedication).toHaveBeenCalledWith('med-1', 'medication_create');
+    expect(materialization.materializeForMedication).toHaveBeenCalledWith(
+      'med-1',
+      'medication_create',
+    );
   });
 
   it('create skips materialization for as_needed medications', async () => {
@@ -87,7 +90,9 @@ describe('MedicationsService', () => {
       preferredTimezone: 'UTC',
       patientFirstName: 'Alex',
     });
-    medicationRepo.insert.mockResolvedValue(makeMed({ schedule_type: 'as_needed', specific_times: null }));
+    medicationRepo.insert.mockResolvedValue(
+      makeMed({ schedule_type: 'as_needed', specific_times: null }),
+    );
 
     await service.create('group-1', {
       patientId: 'patient-1',
@@ -121,20 +126,27 @@ describe('MedicationsService', () => {
   it('update reconciles checklist when schedule-affecting fields change', async () => {
     const oldMed = makeMed();
     const newMed = makeMed({ specific_times: ['08:00', '20:00'] });
-    medicationRepo.findById.mockResolvedValueOnce(oldMed).mockResolvedValueOnce(newMed);
+    medicationRepo.findById
+      .mockResolvedValueOnce(oldMed)
+      .mockResolvedValueOnce(newMed);
     medicationRepo.update.mockResolvedValue(newMed);
 
     await service.update('group-1', 'med-1', {
       specificTimes: ['08:00', '20:00'],
     });
 
-    expect(reconciliation.reconcileAfterMedicationEdit).toHaveBeenCalledWith(oldMed, newMed);
+    expect(reconciliation.reconcileAfterMedicationEdit).toHaveBeenCalledWith(
+      oldMed,
+      newMed,
+    );
   });
 
   it('update skips reconciliation when only non-schedule fields change', async () => {
     const oldMed = makeMed();
     const newMed = makeMed({ medication_name: 'Metformin XR' });
-    medicationRepo.findById.mockResolvedValueOnce(oldMed).mockResolvedValueOnce(newMed);
+    medicationRepo.findById
+      .mockResolvedValueOnce(oldMed)
+      .mockResolvedValueOnce(newMed);
     medicationRepo.update.mockResolvedValue(newMed);
 
     await service.update('group-1', 'med-1', {

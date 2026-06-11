@@ -323,8 +323,9 @@ export function useMedicationForm() {
 
   function initFromMedication(med: Medication) {
     const { dose, unit } = parseDosageString(med.dosage);
+    const isInterval = med.scheduleType === 'daily' && med.intervalHours !== null;
 
-    let scheduleFields: Pick<
+    const scheduleFields: Pick<
       MedicationFormValues,
       | 'scheduleType'
       | 'dailyMode'
@@ -333,10 +334,7 @@ export function useMedicationForm() {
       | 'intervalStartTime'
       | 'daysOfWeek'
       | 'dayOfMonth'
-    >;
-
-    const isInterval = med.scheduleType === 'daily' && med.intervalHours !== null;
-    scheduleFields = {
+    > = {
       scheduleType: med.scheduleType ?? '',
       dailyMode: med.scheduleType === 'daily' ? (isInterval ? 'interval' : 'specific_times') : '',
       specificTimes: isInterval ? [] : (med.specificTimes ?? ['']),

@@ -45,7 +45,9 @@ export class GmailMailerService {
       throw new Error('mail_from_missing');
     }
     const fromName = c.MAIL_FROM_NAME?.trim();
-    const from = fromName ? `"${fromName.replace(/"/g, '')}" <${fromAddress}>` : fromAddress;
+    const from = fromName
+      ? `"${fromName.replace(/"/g, '')}" <${fromAddress}>`
+      : fromAddress;
 
     const transport = this.getTransporter();
     const info = await transport.sendMail({

@@ -7,8 +7,11 @@ import {
   LineElement,
   BarElement,
   Tooltip,
+  type ActiveElement,
   type ChartData,
+  type ChartEvent,
   type ChartOptions,
+  type TooltipItem,
 } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
 import { format, parseISO } from 'date-fns';
@@ -182,8 +185,8 @@ function buildLineOptions(
         titleColor: 'var(--color-text-hint)',
         bodyColor: color,
         callbacks: {
-          title: (items) => items[0]?.label ?? '',
-          label: (ctx) => valueFormatter(ctx.parsed.y),
+          title: (items: TooltipItem<'line'>[]) => items[0]?.label ?? '',
+          label: (ctx: TooltipItem<'line'>) => valueFormatter(ctx.parsed.y ?? 0),
         },
       },
     },
@@ -210,7 +213,7 @@ function buildLineOptions(
         },
       },
     },
-    onClick: (_evt, elements) => {
+    onClick: (_evt: ChartEvent, elements: ActiveElement[]) => {
       if (elements.length > 0) onPointClick(points[elements[0].index].checkin);
     },
   };
@@ -237,8 +240,8 @@ function buildBarOptions(
         titleColor: 'var(--color-text-hint)',
         bodyColor: color,
         callbacks: {
-          title: (items) => items[0]?.label ?? '',
-          label: (ctx) => valueFormatter(ctx.parsed.y),
+          title: (items: TooltipItem<'bar'>[]) => items[0]?.label ?? '',
+          label: (ctx: TooltipItem<'bar'>) => valueFormatter(ctx.parsed.y ?? 0),
         },
       },
     },
@@ -265,7 +268,7 @@ function buildBarOptions(
         },
       },
     },
-    onClick: (_evt, elements) => {
+    onClick: (_evt: ChartEvent, elements: ActiveElement[]) => {
       if (elements.length > 0) onPointClick(points[elements[0].index].checkin);
     },
   };

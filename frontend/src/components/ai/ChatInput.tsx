@@ -56,7 +56,7 @@ export default function ChatInput({
             fontFamily: 'Plus Jakarta Sans, sans-serif',
             fontSize: '14px',
             '--tw-ring-color': 'var(--color-primary)',
-          } satisfies TextareaStyle}
+          } as TextareaStyle}
         />
       </div>
 

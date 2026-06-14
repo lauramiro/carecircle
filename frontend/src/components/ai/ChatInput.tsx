@@ -17,6 +17,14 @@ export default function ChatInput({
   disabled = false,
 }: ChatInputProps) {
   const [input, setInput] = useState('');
+  const textareaStyle: TextareaStyle = {
+    borderColor: 'var(--color-border)',
+    backgroundColor: disabled ? 'var(--color-bg-disabled)' : 'var(--color-input-bg)',
+    color: 'var(--color-text-primary)',
+    fontFamily: 'Plus Jakarta Sans, sans-serif',
+    fontSize: '14px',
+    '--tw-ring-color': 'var(--color-primary)',
+  };
 
   const sendMessage = () => {
     if (input.trim() && !disabled) {
@@ -49,14 +57,7 @@ export default function ChatInput({
           disabled={disabled}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border resize-none focus:outline-none focus:ring-2"
-          style={{
-            borderColor: 'var(--color-border)',
-            backgroundColor: disabled ? 'var(--color-bg-disabled)' : 'var(--color-input-bg)',
-            color: 'var(--color-text-primary)',
-            fontFamily: 'Plus Jakarta Sans, sans-serif',
-            fontSize: '14px',
-            '--tw-ring-color': 'var(--color-primary)',
-          } satisfies TextareaStyle}
+          style={textareaStyle}
         />
       </div>
 

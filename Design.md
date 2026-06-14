@@ -1,5 +1,167 @@
 # Design & Testing
 
+## System Architecture
+
+CareCircle is split into three major runtime layers: a React browser client, a NestJS backend, and Supabase-managed platform services. The browser owns interactive care workflows and authenticated user sessions. The backend owns trusted operations that require server-side credentials, background scheduling, third-party integrations, and generated artifacts such as PDFs. Supabase owns authentication, Postgres data, row-level security, realtime events, and storage.
+
+```mermaid
+flowchart LR
+  User[Caregiver browser] --> Frontend[React + Vite frontend]
+
+  Frontend -->|Supabase anon key| Auth[Supabase Auth]
+  Frontend -->|RLS-protected CRUD| DB[(Supabase Postgres)]
+  Frontend -->|postgres_changes subscriptions| Realtime[Supabase Realtime]
+  Frontend -->|proof uploads / assets| Storage[Supabase Storage]
+  Frontend -->|/api requests| Backend[NestJS backend on Render]
+
+  Backend -->|service-role key for trusted workflows| DB
+  Backend -->|admin reads/writes| Storage
+  Backend -->|care-profile prompts| AI[Groq AI API]
+  Backend -->|SMS fallback alerts| Twilio[Twilio SMS]
+  Backend -->|VAPID web push| Push[Browser push services]
+  Backend -->|email invites| Gmail[Gmail SMTP]
+
+  Render[Render deployment] --> Frontend
+  Render --> Backend
+  Backend --> Crons[Nest scheduled jobs]
+  Crons --> DB
+  Crons --> Twilio
+  Crons --> Push
+```
+
+### Runtime Responsibilities
+
+| Layer | Responsibility |
+| --- | --- |
+| Frontend | Renders the caregiving UI, holds the Supabase Auth session, performs RLS-protected reads/writes with the anon key, subscribes to realtime changes, and calls backend APIs for trusted workflows. |
+| Backend | Exposes `/api` routes, validates requests/configuration, performs service-role Supabase operations, dispatches alerts, generates PDFs, calls AI providers, and runs scheduled jobs. |
+| Supabase Auth | Manages user identity and provides JWTs used by RLS policies. |
+| Supabase Postgres | Stores care groups, caregivers, patients, medication schedules, checklist items, alerts, appointments, insights, invites, and wellbeing data. |
+| Supabase Realtime | Publishes database changes to subscribed frontend hooks and backend alert-cancellation subscribers. |
+| Supabase Storage | Stores uploaded proof or care-related files behind Supabase access controls. |
+| Groq AI API | Generates grounded care-profile answers and structured insight JSON. |
+| Twilio | Sends SMS fallback reminders when push acknowledgement does not arrive in time. |
+| Browser push services | Deliver VAPID web-push notifications to registered browser endpoints. |
+| Render | Hosts deployable frontend/backend services and manages production environment variables. |
+
+## Technology Choices
+
+| Concern | Choice | Justification |
+| --- | --- | --- |
+| Frontend framework | React 19, Vite, TypeScript | React fits a stateful caregiver dashboard with reusable components, Vite keeps local iteration fast, and TypeScript catches contract mistakes across hooks, services, and UI state. |
+| Backend framework | NestJS, TypeScript | NestJS gives clear module boundaries for AI, alerts, cron jobs, hospital summaries, invites, SMS, and reminders. Dependency injection also makes scheduled and integration-heavy services easier to test. |
+| Database and auth | Supabase Auth + Postgres + RLS | Supabase provides hosted authentication, relational data, realtime subscriptions, storage, and SQL-level RLS in one platform. This matches the group-membership access model and avoids building auth/session infrastructure from scratch. |
+| AI model/provider | Groq `llama-3.3-70b-versatile` | The backend uses Groq for low-latency care-profile Q&A and insight generation. Prompts are grounded in fetched profile data, and JSON responses are constrained for downstream UI use. |
+| Push provider | Browser Web Push with VAPID via `web-push` | Web Push avoids a paid mobile-notification dependency for the capstone scope and works with browser subscriptions stored per user. VAPID keys keep push credentials server-side while exposing only the public key to the frontend. |
+| PDF library | `pdfkit` | `pdfkit` runs server-side in Node, supports programmatic layout, and lets the hospital-summary service add sections, disclaimers, watermarks, and footers without requiring browser rendering. |
+| SMS provider | Twilio | Twilio provides a mature API for E.164 phone delivery, making it suitable for fallback medication and appointment reminders when push delivery is missed or unavailable. |
+| Deployment platform | Render | Render supports Git-based deploys, static sites, web services, environment variables, logs, and a low-cost/free starting point, which is appropriate for a student capstone deployment. |
+
+## Architectural Patterns
+
+### Realtime Pub/Sub Subscription Model
+
+The frontend uses Supabase Realtime `postgres_changes` subscriptions for screens that must reflect care-team activity quickly. Examples include checklist updates, appointments, administration logs, journal entries, dashboard summaries, wellbeing check-ins, and latest care activity. Shared subscription behavior lives in `frontend/src/hooks/realtime/useSupabaseRealtime.ts`, while domain hooks such as `useChecklistSubscription` and `useAppointments` translate database rows into UI-specific types.
+
+The subscription model is table-filtered rather than globally broadcast. For example, checklist subscriptions filter by `checklist_id`, and appointment subscriptions filter by `patient_id`. This reduces unnecessary updates and keeps each screen scoped to the selected care group/patient. When a channel closes or errors, hooks surface an error state; the shared realtime hook also uses limited exponential reconnect attempts.
+
+The backend also uses realtime for alert cancellation. `ChecklistAckAlertSubscriber` subscribes to `checklist_items` updates through the service-role Supabase client. When a medication checklist item becomes `given` or `skipped`, the backend cancels open missed-medication alert records before SMS fallback dispatch can send stale alerts.
+
+### RLS Enforcement Approach
+
+RLS is the primary data-access boundary for browser-originated Supabase operations. The frontend uses only `VITE_SUPABASE_ANON_KEY`; authorization is enforced by Supabase JWT identity plus policies on tables such as `patients`, `care_givers`, `checklist_items`, `appointments`, and related care data.
+
+Policies are role-aware and group-aware. Active caregivers can read group/patient data they belong to, while sensitive writes are restricted by role. Primary carers can manage patient profile and membership data; secondary carers can participate in care workflows; observers are read-mostly. The permission matrix and detailed policy catalogue below document table-level enforcement.
+
+The backend uses `SUPABASE_SERVICE_ROLE_KEY` only for trusted server workflows that need to bypass RLS: scheduled checklist materialization, overdue detection, alert dispatch, PDF/hospital-summary assembly, AI profile loading, and realtime alert cancellation. This keeps privileged keys out of the browser and centralizes admin operations in NestJS services.
+
+### Optimistic UI With Conflict Resolution
+
+CareCircle uses optimistic updates where immediate feedback matters and where conflicts can be corrected by realtime or reload behavior:
+
+- Checklist item status changes are patched locally through `patchItem`, then reconciled when Supabase Realtime emits the final `checklist_items` row.
+- One-off appointment creation is inserted locally after the API returns the created appointment. Recurring appointments rely on realtime inserts for each generated occurrence.
+- Appointment edits update local state for single-instance edits. Bulk future-series edits reload the appointment list because multiple rows may change at once.
+- Appointment deletion removes local rows immediately after successful service completion, with future-series deletion filtering all affected occurrences.
+
+Conflict resolution is intentionally conservative: the database event or reload becomes the source of truth. If another caregiver updates the same record, the realtime payload overwrites stale local state. For multi-row operations, the hook reloads from Supabase instead of trying to infer every changed row locally.
+
+## Render Deployment Setup
+
+### Service Layout
+
+| Service | Render type | Root directory | Build command | Start/publish command |
+| --- | --- | --- | --- | --- |
+| Frontend | Static site | `frontend` | `npm install && npm run build` | Publish `frontend/dist` |
+| Backend | Web service | `backend` | `npm install && npm run build` | `npm run start:prod` |
+
+The frontend should be configured with the deployed backend URL for API calls and the Supabase anon key. The backend should be configured with production Supabase credentials, third-party API keys, and `NODE_ENV=production`. Crons run inside the NestJS backend process and can be disabled with `CRON_ENABLED=false` for temporary maintenance or isolated API testing.
+
+### Environment Variable Management
+
+Render environment variables should be entered through the Render dashboard, not committed to Git. Public browser variables must be limited to `VITE_` values that are safe to expose. Server-only secrets belong only on the backend web service.
+
+Frontend variables:
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `VITE_SUPABASE_URL` | Yes | Supabase project URL used by the browser client. |
+| `VITE_SUPABASE_ANON_KEY` | Yes | Public anon key used with RLS-protected browser queries. |
+| `VITE_API_BASE_URL` | If configured by the frontend API layer | Backend Render URL, for example `https://carecircle-api.onrender.com/api`. |
+| `VITE_USE_AI_MOCK` | No | Development/test toggle only; should be false or unset in production. |
+
+Backend variables:
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `NODE_ENV` | Yes | Use `production` on Render. |
+| `PORT` | Yes | Render injects a port for web services; the Nest app reads `PORT`. |
+| `SUPABASE_URL` | Yes | Supabase project URL. |
+| `SUPABASE_ANON_KEY` | Yes | Used when needed for non-privileged Supabase interactions. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Strongly recommended | Server-only. Required for admin reads/writes, crons, alerts, and workflows that bypass RLS. |
+| `GROQ_API_KEY` | Yes | Required for AI Q&A and generated insights. |
+| `FRONTEND_PUBLIC_URL` | Recommended | Used for deep links in invites, push, and SMS flows. |
+| `GMAIL_USER` | If email invites enabled | Gmail SMTP account. |
+| `GMAIL_APP_PASSWORD` | If email invites enabled | Gmail app password, never a normal account password. |
+| `MAIL_FROM` | No | Optional sender override. |
+| `MAIL_FROM_NAME` | No | Optional display-name override. |
+| `TWILIO_ACCOUNT_SID` | If SMS enabled | Twilio account SID. |
+| `TWILIO_AUTH_TOKEN` | If SMS enabled | Server-only Twilio secret. |
+| `TWILIO_FROM_NUMBER` | If SMS enabled | E.164 sender number. |
+| `TWILIO_DEV_TEST_TO_NUMBER` | No | Development-only SMS test recipient. |
+| `VAPID_PUBLIC_KEY` | If push enabled | Public VAPID key; also exposed to browser through the backend endpoint. |
+| `VAPID_PRIVATE_KEY` | If push enabled | Server-only VAPID private key. |
+| `VAPID_SUBJECT` | If push enabled | `mailto:` or `https:` contact URI. |
+| `CRON_ENABLED` | No | Defaults to enabled; set `false` to disable scheduled jobs. |
+| `SMS_FALLBACK_DELAY_MINUTES` | No | Defaults to 10 minutes. |
+| `MATERIALIZATION_BATCH_SIZE` | No | Defaults to 100 checklist items per batch. |
+
+### Cost Comparison
+
+Prices should be rechecked before final submission because hosting vendors can change them. As of June 14, 2026, Render lists a Hobby workspace at `$0/mo`, static sites at `$0/month`, web services starting at `$0/month`, and paid web-service instances beginning with Starter at `$7/month`. Render Postgres also lists a free tier with a 30-day limit and paid Basic options starting at `$6/month` [Render pricing](https://render.com/pricing).
+
+| Option | Estimated app hosting cost | Fit for CareCircle capstone |
+| --- | --- | --- |
+| Render free/static + free web service | `$0/month` for the frontend static site and free backend web service, subject to free-tier limits | Best fit for demonstration and grading because it minimizes cost, supports Git deploys, and keeps frontend/backend services simple. |
+| Render paid Starter backend | About `$7/month` for the backend web service, plus any paid database/storage/API usage | Better if the backend needs more reliable runtime behavior than the free tier. |
+| Heroku Eco/Basic alternative | Heroku lists Eco dynos at `$5/month` and Basic dynos at `$7/month`; Basic is always-on [Heroku pricing](https://www.heroku.com/pricing/) | Reasonable alternative, but a capstone deployment loses Render's direct `$0` starting point for comparable backend hosting. |
+
+The selected deployment keeps Supabase as the managed database/auth/realtime platform rather than using Render Postgres. That avoids duplicating database infrastructure and preserves RLS, Auth, Realtime, and Storage in one integrated service.
+
+## Testing Strategy
+
+CareCircle uses automated tests plus build checks as the main quality gate:
+
+| Area | Command | Purpose |
+| --- | --- | --- |
+| Frontend build | `cd frontend && npm run build` | Type-checks the React app and verifies the Vite production bundle. |
+| Frontend tests | `cd frontend && npm run test` | Runs Vitest tests for UI flows, hooks, and integration-level behavior. |
+| Backend build | `cd backend && npm run build` | Type-checks and compiles the NestJS backend. |
+| Backend unit tests | `cd backend && npm run test` | Runs service/controller/job tests for backend behavior. |
+| Backend e2e tests | `cd backend && npm run test:e2e` | Verifies API-level behavior where e2e coverage exists. |
+
+Targeted tests exist for realtime hooks, checklist alert cancellation, push subscriptions, weekly insight generation, hospital-summary assembly, auth/session behavior, invite flows, appointments, and dashboard widgets. RLS behavior is documented in the policy catalogue below and is also exercised indirectly through Supabase-backed integration flows.
+
 ## Permission Matrix
 This section defines the access control levels for users within a care group based on their role in the `group_members` table.
 
@@ -712,4 +874,3 @@ This section documents **every** RLS policy currently enforced in the CareCircle
 - Latency: Performance is well within the 8,000 ms requirement.
 
 For full test details see `QA.md` or the linked PR/issue for this feature branch.
-

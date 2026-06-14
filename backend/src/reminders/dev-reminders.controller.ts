@@ -23,7 +23,17 @@ class DevRunRemindersBodyDto {
 export class DevRemindersController {
   constructor(private readonly reminders: RemindersService) {}
 
-  /** Manually triggers the appointment and wellbeing reminder check (development only). */
+  /**
+   * Manually triggers appointment reminder evaluation at a chosen point in time.
+   *
+   * This is a development-only seam for testing 24-hour and 1-hour reminder
+   * windows without waiting for wall-clock cron execution.
+   *
+   * @param body Optional request body containing ISO timestamp `now`; defaults
+   * to the current server time.
+   * @returns Object confirming the reminder check ran and the evaluated timestamp.
+   * @throws Error Propagates validation, guard, or reminder-service failures.
+   */
   @Post('run')
   @HttpCode(200)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))

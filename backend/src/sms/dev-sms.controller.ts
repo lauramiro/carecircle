@@ -20,6 +20,19 @@ export class DevSmsController {
     private readonly appConfig: AppConfigService,
   ) {}
 
+  /**
+   * Sends a generic SMS connectivity test in development environments only.
+   *
+   * The endpoint returns structured "not configured" responses instead of
+   * throwing so setup screens and manual checks can clearly distinguish missing
+   * Twilio configuration from provider delivery failures.
+   *
+   * @param body Optional request body containing `to`; when omitted, the
+   * endpoint falls back to `TWILIO_DEV_TEST_TO_NUMBER`.
+   * @returns Structured test result with `ok`, and either a Twilio `sid` or an
+   * explanatory `error`/`message`.
+   * @throws Error Propagates validation or unexpected Twilio service failures.
+   */
   @Post('test')
   @HttpCode(200)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))

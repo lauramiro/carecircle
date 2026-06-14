@@ -37,6 +37,14 @@ export interface GPContact {
   address?: string;
 }
 
+export interface HospitalSummaryDocument {
+  fileName: string;
+  documentType: string;
+  uploadedAt: string;
+  fileType: string;
+  imageBuffer?: Buffer;
+}
+
 export interface HospitalSummaryData {
   // Patient Details
   fullName: string;
@@ -57,6 +65,9 @@ export interface HospitalSummaryData {
   
   // AI Analysis
   flaggedPatterns: FlaggedPattern[];
+
+  // Flagged documents for hospital summary
+  flaggedDocuments: HospitalSummaryDocument[];
   
   // Metadata
   isValid: boolean;
@@ -118,6 +129,9 @@ export class HospitalSummaryService {
       const flaggedPatterns = await this.getFlaggedPatterns(patientId);
       console.log('[assembleHospitalSummary] flaggedPatterns length:', flaggedPatterns.length);
 
+      // Step 7: Fetch documents flagged for hospital summary inclusion
+      const flaggedDocuments = await this.getFlaggedDocuments(patientId);
+
       // Assemble complete data object
       const summaryData: HospitalSummaryData = {
         // Patient Details
@@ -139,6 +153,9 @@ export class HospitalSummaryService {
 
         // AI Analysis
         flaggedPatterns: flaggedPatterns || [],
+
+        // Flagged documents
+        flaggedDocuments: flaggedDocuments || [],
 
         // Validation
         isValid: validationErrors.length === 0,
@@ -341,6 +358,51 @@ export class HospitalSummaryService {
         severity: pattern.severity || 'low',
       })) || []
     );
+  }
+
+  /**
+   * Fetch documents flagged for inclusion in the hospital summary PDF.
+   * Image files are downloaded so they can be embedded in the generated PDF.
+   */
+  private async getFlaggedDocuments(patientId: string): Promise<HospitalSummaryDocument[]> {
+    const { data, error } = await this.supabase.getClient()
+      .from('documents')
+      .select('file_name, file_type, document_type, created_at, storage_path')
+      .eq('patient_id', patientId)
+      .eq('include_in_hospital_summary', true)
+      .order('created_at', { ascending: false });
+
+    if (error || !data) {
+      console.error('Error fetching flagged documents:', error);
+      return [];
+    }
+
+    const flaggedDocuments: HospitalSummaryDocument[] = [];
+
+    for (const document of data) {
+      const entry: HospitalSummaryDocument = {
+        fileName: document.file_name,
+        documentType: document.document_type ?? 'other',
+        uploadedAt: document.created_at ?? new Date().toISOString(),
+        fileType: document.file_type,
+      };
+
+      const isImage = document.file_type === 'image/jpeg' || document.file_type === 'image/png';
+      if (isImage && document.storage_path) {
+        const { data: fileData, error: downloadError } = await this.supabase.getClient()
+          .storage
+          .from('care-documents')
+          .download(document.storage_path);
+
+        if (!downloadError && fileData) {
+          entry.imageBuffer = Buffer.from(await fileData.arrayBuffer());
+        }
+      }
+
+      flaggedDocuments.push(entry);
+    }
+
+    return flaggedDocuments;
   }
 }
 

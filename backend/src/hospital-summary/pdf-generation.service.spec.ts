@@ -42,6 +42,14 @@ const sampleSummaryData: HospitalSummaryData = {
       severity: 'medium',
     },
   ],
+  flaggedDocuments: [
+    {
+      fileName: 'discharge-summary.pdf',
+      documentType: 'discharge_summary',
+      uploadedAt: new Date().toISOString(),
+      fileType: 'application/pdf',
+    },
+  ],
   isValid: true,
   validationErrors: [],
 };

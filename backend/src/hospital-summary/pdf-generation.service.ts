@@ -43,6 +43,7 @@ export class PDFGenerationService {
         this.addGPContacts(doc, summaryData);
         this.addCareNotes(doc, summaryData);
         this.addFlaggedPatterns(doc, summaryData);
+        this.addFlaggedDocuments(doc, summaryData);
 
         // Add watermark and footer to all pages
         this.addWatermarkAndFooter(doc);
@@ -264,6 +265,61 @@ export class PDFGenerationService {
     doc.moveDown();
   }
 
+  private addFlaggedDocuments(doc: any, data: HospitalSummaryData) {
+    if (data.flaggedDocuments.length === 0) return;
+
+    this.ensureSpace(doc, 3);
+    this.addSectionTitle(doc, 'INCLUDED DOCUMENTS');
+
+    doc
+      .fontSize(10)
+      .font('Helvetica')
+      .text(
+        'The following documents were flagged for hospital summary inclusion. Image files are attached below; PDF files are listed as references.',
+        { indent: 20, width: this.PAGE_WIDTH - 2 * this.MARGIN - 20 },
+      );
+    doc.moveDown(0.5);
+
+    for (const [idx, document] of data.flaggedDocuments.entries()) {
+      this.ensureSpace(doc, 2);
+      const uploadedDate = new Date(document.uploadedAt).toLocaleDateString();
+      const attachmentNote = document.imageBuffer
+        ? ' (image attached below)'
+        : ' (reference only — see care circle for full file)';
+      doc
+        .fontSize(11)
+        .font('Helvetica')
+        .text(
+          `${idx + 1}. ${document.fileName} — ${this.formatDocumentType(document.documentType)} — uploaded ${uploadedDate}${attachmentNote}`,
+          { indent: 20, width: this.PAGE_WIDTH - 2 * this.MARGIN - 20 },
+        );
+    }
+
+    doc.moveDown();
+
+    for (const document of data.flaggedDocuments) {
+      if (!document.imageBuffer) continue;
+
+      doc.addPage();
+      this.ensureSpace(doc, 2);
+      doc
+        .fontSize(12)
+        .font('Helvetica-Bold')
+        .text(document.fileName, this.MARGIN, this.MARGIN);
+      doc.moveDown(0.5);
+
+      const maxWidth = this.PAGE_WIDTH - 2 * this.MARGIN;
+      const maxHeight = this.PAGE_HEIGHT - 2 * this.MARGIN - 80;
+      doc.image(document.imageBuffer, {
+        fit: [maxWidth, maxHeight],
+        align: 'center',
+        valign: 'center',
+      });
+    }
+
+    doc.moveDown();
+  }
+
   private addWatermarkAndFooter(doc: any) {
     const pages = doc.bufferedPageRange().count;
 
@@ -374,6 +430,21 @@ export class PDFGenerationService {
         return '#388e3c';
       default:
         return '#000000';
+    }
+  }
+
+  private formatDocumentType(documentType: string): string {
+    switch (documentType) {
+      case 'discharge_summary':
+        return 'Discharge Summary';
+      case 'test_result':
+        return 'Test Result';
+      case 'insurance':
+        return 'Insurance';
+      case 'other':
+        return 'Other';
+      default:
+        return documentType;
     }
   }
 }

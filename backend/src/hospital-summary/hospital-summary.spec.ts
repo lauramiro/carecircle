@@ -111,6 +111,8 @@ const resolve = (
         data: INSIGHTS[filters.patient_id as string] ?? [],
         error: null,
       };
+    case 'documents':
+      return { data: [], error: null };
     default:
       return { data: [], error: null };
   }
@@ -177,6 +179,7 @@ describe('HospitalSummaryService', () => {
         'gpContacts',
         'careNotesSummary',
         'flaggedPatterns',
+        'flaggedDocuments',
       ] as const;
 
       // Verify all sections present

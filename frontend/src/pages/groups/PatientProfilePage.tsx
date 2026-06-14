@@ -9,8 +9,9 @@ import {
   PATIENT_DOCUMENT_MAX_BYTES,
   PATIENT_DOCUMENT_TYPE_OPTIONS,
   type DocumentStorageUsage,
-  getPatientDocumentDownloadUrl,
+  getPatientDocumentBlob,
   getPatientDocuments,
+  setPatientDocumentHospitalSummaryFlag,
   uploadPatientDocument,
   type PatientDocument,
   type PatientDocumentType,
@@ -24,8 +25,9 @@ import {
 import { usePatientForm } from '../../hooks/groups/usePatientForm';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { canManageMembers } from '../../lib/carePermissions';
+import { canFlagDocumentsForHospitalSummary, canManageMembers } from '../../lib/carePermissions';
 import { getErrorMessage } from '../../utils/helper';
+import { downloadBlob, shareFile } from '../../utils/shareFile';
 import WellbeingTrendCharts from '../../components/checkins/WellbeingTrendCharts';
 
 const inputStyle = (hasError: boolean) => ({
@@ -118,6 +120,8 @@ export default function PatientProfilePage() {
   const [documentUploadError, setDocumentUploadError] = useState<string | null>(null);
   const [uploadingDocument, setUploadingDocument] = useState(false);
   const [downloadingDocumentId, setDownloadingDocumentId] = useState<string | null>(null);
+  const [sharingDocumentId, setSharingDocumentId] = useState<string | null>(null);
+  const [updatingHospitalSummaryFlagId, setUpdatingHospitalSummaryFlagId] = useState<string | null>(null);
   const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null);
   const [documentStorageUsage, setDocumentStorageUsage] = useState<DocumentStorageUsage | null>(null);
   const [documentStorageUsageLoading, setDocumentStorageUsageLoading] = useState(true);
@@ -128,6 +132,7 @@ export default function PatientProfilePage() {
   const activePatientId = patientId ?? group?.patientId ?? null;
   const canUploadDocuments = !isObserver;
   const canDeleteDocuments = canEditProfile;
+  const canFlagDocuments = group ? canFlagDocumentsForHospitalSummary(group.role) : false;
 
   useEffect(() => {
     if (!groupId) return;
@@ -340,14 +345,55 @@ export default function PatientProfilePage() {
 
   async function handleDocumentDownload(document: PatientDocument) {
     setDownloadingDocumentId(document.id);
+    setDocumentsError(null);
 
     try {
-      const signedUrl = await getPatientDocumentDownloadUrl(document.storagePath);
-      window.open(signedUrl, '_blank', 'noopener,noreferrer');
+      const blob = await getPatientDocumentBlob(document);
+      await downloadBlob(blob, document.fileName);
     } catch (err: unknown) {
-      setDocumentsError(getErrorMessage(err) || 'Unable to open this document.');
+      setDocumentsError(getErrorMessage(err) || 'Unable to download this document.');
     } finally {
       setDownloadingDocumentId(null);
+    }
+  }
+
+  async function handleDocumentShare(document: PatientDocument) {
+    setSharingDocumentId(document.id);
+    setDocumentsError(null);
+
+    try {
+      const blob = await getPatientDocumentBlob(document);
+      const file = new File([blob], document.fileName, {
+        type: document.fileType || 'application/octet-stream',
+      });
+      await shareFile(file, {
+        title: document.fileName,
+        text: 'Shared from CareCircle',
+      });
+    } catch (err: unknown) {
+      setDocumentsError(getErrorMessage(err) || 'Unable to share this document.');
+    } finally {
+      setSharingDocumentId(null);
+    }
+  }
+
+  async function handleHospitalSummaryFlagToggle(document: PatientDocument, include: boolean) {
+    if (!canFlagDocuments) return;
+
+    setUpdatingHospitalSummaryFlagId(document.id);
+    setDocumentsError(null);
+
+    try {
+      await setPatientDocumentHospitalSummaryFlag(document.id, include);
+      setDocuments((current) =>
+        current.map((item) =>
+          item.id === document.id ? { ...item, includeInHospitalSummary: include } : item,
+        ),
+      );
+    } catch (err: unknown) {
+      setDocumentsError(getErrorMessage(err) || 'Unable to update hospital summary flag.');
+    } finally {
+      setUpdatingHospitalSummaryFlagId(null);
     }
   }
 
@@ -947,70 +993,133 @@ export default function PatientProfilePage() {
                     key={document.id}
                     style={{
                       display: 'flex',
-                      justifyContent: 'space-between',
-                      gap: '12px',
+                      flexDirection: 'column',
+                      gap: '10px',
                       padding: '12px 14px',
                       border: '1px solid var(--color-border)',
                       borderRadius: '10px',
                       backgroundColor: 'var(--color-accent-soft)',
                     }}
                   >
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', wordBreak: 'break-word' }}>
-                        {document.fileName}
-                      </p>
-                      <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-text-secondary)', fontFamily: 'Plus Jakarta Sans, sans-serif', lineHeight: 1.6 }}>
-                        {formatDocumentTypeLabel(document.documentType)} · Uploaded {formatUploadDate(document.uploadedAt)} · By {document.uploadedByName} · {formatFileSize(document.fileSize)}
-                      </p>
-                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif', wordBreak: 'break-word' }}>
+                          {document.fileName}
+                        </p>
+                        <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-text-secondary)', fontFamily: 'Plus Jakarta Sans, sans-serif', lineHeight: 1.6 }}>
+                          {formatDocumentTypeLabel(document.documentType)} · Uploaded {formatUploadDate(document.uploadedAt)} · By {document.uploadedByName} · {formatFileSize(document.fileSize)}
+                        </p>
+                      </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <button
-                        type="button"
-                        onClick={() => { void handleDocumentDownload(document); }}
-                        disabled={downloadingDocumentId === document.id || deletingDocumentId === document.id}
-                        style={{
-                          alignSelf: 'center',
-                          height: '36px',
-                          padding: '0 14px',
-                          borderRadius: '8px',
-                          border: '1px solid var(--color-border)',
-                          backgroundColor: 'var(--color-card)',
-                          color: 'var(--color-primary)',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          fontFamily: 'Plus Jakarta Sans, sans-serif',
-                          cursor: downloadingDocumentId === document.id || deletingDocumentId === document.id ? 'not-allowed' : 'pointer',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {downloadingDocumentId === document.id ? 'Opening...' : 'Open'}
-                      </button>
-
-                      {canDeleteDocuments && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                         <button
                           type="button"
-                          onClick={() => { void handleDocumentDelete(document); }}
-                          disabled={deletingDocumentId === document.id || downloadingDocumentId === document.id}
+                          onClick={() => { void handleDocumentDownload(document); }}
+                          disabled={
+                            downloadingDocumentId === document.id
+                            || sharingDocumentId === document.id
+                            || deletingDocumentId === document.id
+                          }
                           style={{
-                            alignSelf: 'center',
                             height: '36px',
                             padding: '0 14px',
                             borderRadius: '8px',
-                            border: '1px solid #F0BEBE',
+                            border: '1px solid var(--color-border)',
                             backgroundColor: 'var(--color-card)',
-                            color: 'var(--color-status-critical)',
+                            color: 'var(--color-primary)',
                             fontSize: '12px',
                             fontWeight: 600,
                             fontFamily: 'Plus Jakarta Sans, sans-serif',
-                            cursor: deletingDocumentId === document.id || downloadingDocumentId === document.id ? 'not-allowed' : 'pointer',
+                            cursor: downloadingDocumentId === document.id || sharingDocumentId === document.id || deletingDocumentId === document.id ? 'not-allowed' : 'pointer',
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          {deletingDocumentId === document.id ? 'Deleting...' : 'Delete'}
+                          {downloadingDocumentId === document.id ? 'Downloading...' : 'Download'}
                         </button>
-                      )}
+
+                        <button
+                          type="button"
+                          onClick={() => { void handleDocumentShare(document); }}
+                          disabled={
+                            downloadingDocumentId === document.id
+                            || sharingDocumentId === document.id
+                            || deletingDocumentId === document.id
+                          }
+                          style={{
+                            height: '36px',
+                            padding: '0 14px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--color-border)',
+                            backgroundColor: 'var(--color-card)',
+                            color: 'var(--color-primary)',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            fontFamily: 'Plus Jakarta Sans, sans-serif',
+                            cursor: downloadingDocumentId === document.id || sharingDocumentId === document.id || deletingDocumentId === document.id ? 'not-allowed' : 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {sharingDocumentId === document.id ? 'Sharing...' : 'Share'}
+                        </button>
+
+                        {canDeleteDocuments && (
+                          <button
+                            type="button"
+                            onClick={() => { void handleDocumentDelete(document); }}
+                            disabled={
+                              deletingDocumentId === document.id
+                              || downloadingDocumentId === document.id
+                              || sharingDocumentId === document.id
+                            }
+                            style={{
+                              height: '36px',
+                              padding: '0 14px',
+                              borderRadius: '8px',
+                              border: '1px solid #F0BEBE',
+                              backgroundColor: 'var(--color-card)',
+                              color: 'var(--color-status-critical)',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              fontFamily: 'Plus Jakarta Sans, sans-serif',
+                              cursor: deletingDocumentId === document.id || downloadingDocumentId === document.id || sharingDocumentId === document.id ? 'not-allowed' : 'pointer',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {deletingDocumentId === document.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        )}
+                      </div>
                     </div>
+
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '12px',
+                        color: document.includeInHospitalSummary
+                          ? 'var(--color-primary)'
+                          : 'var(--color-text-secondary)',
+                        fontFamily: 'Plus Jakarta Sans, sans-serif',
+                        cursor: canFlagDocuments ? 'pointer' : 'default',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={document.includeInHospitalSummary}
+                        disabled={!canFlagDocuments || updatingHospitalSummaryFlagId === document.id}
+                        onChange={(event) => {
+                          void handleHospitalSummaryFlagToggle(document, event.target.checked);
+                        }}
+                        aria-label={`Include ${document.fileName} in hospital summary`}
+                        style={{ accentColor: 'var(--color-primary)' }}
+                      />
+                      <span>
+                        Include in Hospital Summary
+                        {updatingHospitalSummaryFlagId === document.id ? ' (saving...)' : ''}
+                        {!canFlagDocuments ? ' (read-only)' : ''}
+                      </span>
+                    </label>
                   </div>
                 ))}
               </div>

@@ -186,8 +186,7 @@ function buildLineOptions(
         bodyColor: color,
         callbacks: {
           title: (items: TooltipItem<'line'>[]) => items[0]?.label ?? '',
-          label: (ctx: TooltipItem<'line'>) =>
-            ctx.parsed.y === null ? '' : valueFormatter(ctx.parsed.y),
+          label: (ctx: TooltipItem<'line'>) => valueFormatter(ctx.parsed.y ?? 0),
         },
       },
     },
@@ -242,8 +241,7 @@ function buildBarOptions(
         bodyColor: color,
         callbacks: {
           title: (items: TooltipItem<'bar'>[]) => items[0]?.label ?? '',
-          label: (ctx: TooltipItem<'bar'>) =>
-            ctx.parsed.y === null ? '' : valueFormatter(ctx.parsed.y),
+          label: (ctx: TooltipItem<'bar'>) => valueFormatter(ctx.parsed.y ?? 0),
         },
       },
     },

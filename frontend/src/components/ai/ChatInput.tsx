@@ -57,7 +57,14 @@ export default function ChatInput({
           disabled={disabled}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border resize-none focus:outline-none focus:ring-2"
-          style={textareaStyle}
+          style={{
+            borderColor: 'var(--color-border)',
+            backgroundColor: disabled ? 'var(--color-bg-disabled)' : 'var(--color-input-bg)',
+            color: 'var(--color-text-primary)',
+            fontFamily: 'Plus Jakarta Sans, sans-serif',
+            fontSize: '14px',
+            '--tw-ring-color': 'var(--color-primary)',
+          } as TextareaStyle}
         />
       </div>
 

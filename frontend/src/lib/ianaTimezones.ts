@@ -14,7 +14,7 @@ function formatUtcOffset(timeZone: string, at: Date): string {
 
 /** All IANA time zones supported by the runtime, sorted for display. */
 export function getIanaTimezoneOptions(at: Date = new Date()): TimezoneOption[] {
-  const zones = Intl.supportedValuesOf('timeZone');
+  const zones = Array.from(new Set(['UTC', ...Intl.supportedValuesOf('timeZone')]));
   return zones
     .map((value) => ({
       value,

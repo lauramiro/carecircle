@@ -12,6 +12,9 @@ jobs:
   frontend:
     name: Frontend - Build & Test
     runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: https://carecircle-ci.supabase.co
+      VITE_SUPABASE_ANON_KEY: ci-anon-key
     defaults:
       run:
         working-directory: frontend

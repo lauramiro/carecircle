@@ -86,6 +86,9 @@ export class PatientRepository {
       .gte('measured_at', since)
       .order('measured_at', { ascending: false })
       .limit(20);
+
+    if (error) throw new Error(error.message);
+    return data ?? [];
   }
   
   async findRecentWellbeingCheckins(patientId: string, since: string) {

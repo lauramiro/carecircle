@@ -56,7 +56,7 @@ function EmergencyContactForm({
       ? {
           name: initial.name,
           role: initial.role,
-          phoneNumber: initial.phoneNumber,
+          phoneNumber: initial.phoneNumber ?? '',
         }
       : emptyForm,
   );
@@ -290,18 +290,22 @@ export default function EmergencyContactsPage() {
                       <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                         {contact.role}
                       </p>
-                      <p className="mt-1 text-sm font-semibold">{contact.phoneNumber}</p>
+                      <p className="mt-1 text-sm font-semibold">
+                        {contact.phoneNumber ?? 'Phone number missing'}
+                      </p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <a
-                      href={`tel:${contact.phoneNumber.replace(/\s+/g, '')}`}
-                      className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-white no-underline"
-                      style={{ backgroundColor: 'var(--color-status-critical)' }}
-                    >
-                      <PhoneCall size={16} />
-                      Call
-                    </a>
+                    {contact.phoneNumber && (
+                      <a
+                        href={`tel:${contact.phoneNumber.replace(/\s+/g, '')}`}
+                        className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-white no-underline"
+                        style={{ backgroundColor: 'var(--color-status-critical)' }}
+                      >
+                        <PhoneCall size={16} />
+                        Call
+                      </a>
+                    )}
                     {canManage && contact.editable && (
                       <>
                         <button

@@ -21,7 +21,7 @@ export interface EmergencyContact {
   id: string;
   name: string;
   role: string;
-  phoneNumber: string;
+  phoneNumber?: string;
   source: EmergencyContactSource;
   editable: boolean;
 }

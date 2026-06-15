@@ -118,6 +118,24 @@ describe('EmergencyContactsPage', () => {
     expect(screen.queryByRole('button', { name: /remove/i })).not.toBeInTheDocument();
   });
 
+  it('shows primary carer details even when phone is missing', async () => {
+    serviceMock.getEmergencyContacts.mockResolvedValue([
+      {
+        id: 'primary-carer-1',
+        name: 'Primary Carer',
+        role: 'Primary carer',
+        source: 'primary_carer',
+        editable: false,
+      },
+    ]);
+
+    renderPage();
+
+    expect(await screen.findByText('Primary Carer')).toBeInTheDocument();
+    expect(screen.getByText('Phone number missing')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /call/i })).not.toBeInTheDocument();
+  });
+
   it('shows cached contacts when refresh fails', async () => {
     serviceMock.getEmergencyContacts.mockRejectedValue(new Error('offline'));
     localStorage.setItem(

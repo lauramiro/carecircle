@@ -49,6 +49,11 @@ type FreeFormEmergencyContactRow = Pick<
   'id' | 'label' | 'contact_name' | 'phone'
 >;
 
+type PrimaryCarerProfileRow = {
+  full_name: string | null;
+  phone: string | null;
+};
+
 function rowToGPContact(row: GPContactListRow): GPContact {
   return {
     id: row.id,
@@ -144,6 +149,30 @@ async function getPatientEmergencyContext(groupId: string): Promise<{
     patientId: data.id,
     primaryCaregiverId: data.primary_caregiver_id ?? null,
   };
+}
+
+async function findPrimaryCaregiverId(
+  groupId: string,
+  patientId: string,
+  fallbackId: string | null,
+): Promise<string | null> {
+  if (fallbackId) return fallbackId;
+
+  const { data, error } = await supabase
+    .from('care_givers')
+    .select('caregiver_id')
+    .eq('group_id', groupId)
+    .eq('patient_id', patientId)
+    .eq('role_in_care', ROLE.PRIMARY_CAREGIVER)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (error) {
+    console.warn('Primary carer lookup unavailable:', error.message);
+    return null;
+  }
+
+  return data?.caregiver_id ?? null;
 }
 
 function gpContactToEmergencyContact(contact: GPContact): EmergencyContact | null {
@@ -492,6 +521,11 @@ export async function removeGPContact(groupId: string, gpId: string): Promise<vo
 
 export async function getEmergencyContacts(groupId: string): Promise<EmergencyContact[]> {
   const { patientId, primaryCaregiverId } = await getPatientEmergencyContext(groupId);
+  const resolvedPrimaryCaregiverId = await findPrimaryCaregiverId(
+    groupId,
+    patientId,
+    primaryCaregiverId,
+  );
   const contacts: EmergencyContact[] = [];
 
   const gpContacts = await fetchGPContactsForPatient(patientId);
@@ -535,19 +569,20 @@ export async function getEmergencyContacts(groupId: string): Promise<EmergencyCo
     }
   }
 
-  if (primaryCaregiverId) {
+  if (resolvedPrimaryCaregiverId) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('full_name, phone')
-      .eq('id', primaryCaregiverId)
+      .eq('id', resolvedPrimaryCaregiverId)
       .maybeSingle();
 
-    if (profile?.phone) {
+    if (profile) {
+      const primaryCarerProfile = profile as PrimaryCarerProfileRow;
       contacts.push({
-        id: `primary-carer:${primaryCaregiverId}`,
-        name: profile.full_name || 'Primary carer',
+        id: `primary-carer:${resolvedPrimaryCaregiverId}`,
+        name: primaryCarerProfile.full_name || 'Primary carer',
         role: 'Primary carer',
-        phoneNumber: profile.phone,
+        phoneNumber: primaryCarerProfile.phone?.trim() || undefined,
         source: 'primary_carer',
         editable: false,
       });

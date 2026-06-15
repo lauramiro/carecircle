@@ -5,7 +5,6 @@ import {
   CalendarDays,
   ClipboardList,
   NotebookText,
-  PhoneCall,
   Plus,
   Sparkles,
   Users, FileText
@@ -179,16 +178,6 @@ export default function GroupDetailPage() {
             <div className="flex flex-wrap gap-2">
               <motion.button
                 type="button"
-                onClick={() => navigate(`${basePath}/emergency-contacts`)}
-                className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-white"
-                style={{ backgroundColor: 'var(--color-status-critical)' }}
-                whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-              >
-                <PhoneCall size={16} strokeWidth={2} />
-                Emergency contacts
-              </motion.button>
-              <motion.button
-                type="button"
                 onClick={() => navigate(`${basePath}/checklist`)}
                 className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-white"
                 style={{ backgroundColor: 'var(--color-primary)' }}
@@ -242,9 +231,8 @@ export default function GroupDetailPage() {
           />
           <StatTile
             icon={<Sparkles size={16} strokeWidth={2} />}
-            label="Emergency"
-            value="2 taps away"
-            href={`${basePath}/emergency-contacts`}
+            label="GP contacts"
+            value={gpContacts.length}
           />
         </div>
       </article>

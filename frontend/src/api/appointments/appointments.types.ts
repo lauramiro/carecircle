@@ -12,7 +12,6 @@ export interface Appointment {
   endTime: string;
   attendingCarerId: string | null;
   specialistName: string | null;
-  specialistPhone: string | null;
   location: string | null;
   preVisitNotes: string | null;
   postVisitNotes: string | null;
@@ -30,7 +29,6 @@ export interface AddAppointmentPayload {
   startTime: string;
   attendingCarerId: string;
   specialistName?: string;
-  specialistPhone?: string;
   location?: string;
   preVisitNotes?: string;
   recurrenceRule?: RecurrenceRule;
@@ -41,7 +39,6 @@ export interface EditAppointmentPayload {
   startTime?: string;
   attendingCarerId?: string;
   specialistName?: string | null;
-  specialistPhone?: string | null;
   location?: string | null;
   preVisitNotes?: string | null;
   postVisitNotes?: string | null;

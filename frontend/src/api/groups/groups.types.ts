@@ -11,27 +11,6 @@ export interface GPContact {
   email?: string;
 }
 
-export type EmergencyContactSource =
-  | 'gp'
-  | 'specialist'
-  | 'primary_carer'
-  | 'free_form';
-
-export interface EmergencyContact {
-  id: string;
-  name: string;
-  role: string;
-  phoneNumber: string;
-  source: EmergencyContactSource;
-  editable: boolean;
-}
-
-export interface EmergencyContactFormData {
-  name: string;
-  role: string;
-  phoneNumber: string;
-}
-
 export interface GroupMember {
   id: string;
   name: string;

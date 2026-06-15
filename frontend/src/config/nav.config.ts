@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   NotebookText,
   Pill,
-  PhoneCall,
   Plus,
   Settings,
   Sparkles,
@@ -68,7 +67,6 @@ export const dashboardNavItems: NavItem[] = [
 
 export const groupContextNavItems: GroupContextNavItem[] = [
   { label: 'Overview', segment: '', icon: LayoutDashboard, exact: true },
-  { label: 'Emergency', segment: 'emergency-contacts', icon: PhoneCall },
   { label: 'Members', segment: 'members', icon: Users },
   { label: "Today's medications", segment: 'checklist', icon: ClipboardList },
   { label: 'Schedule', segment: 'medications', icon: Pill },

@@ -11,7 +11,6 @@ import GroupDetailPage from './pages/groups/GroupDetailPage';
 import GroupMembersPage from './pages/groups/GroupMembersPage';
 import GroupsListPage from './pages/groups/GroupsListPage';
 import GroupInvite from './pages/GroupInvite';
-import EmergencyContactsPage from './pages/groups/EmergencyContactsPage';
 import PatientProfilePage from './pages/groups/PatientProfilePage';
 import AddMedicationPage from './pages/medications/AddMedicationPage';
 import MedicationsSchedulePage from './pages/medications/MedicationsSchedulePage';
@@ -74,7 +73,6 @@ function App() {
           <Route path="groups/create" element={<CreateGroupPage />} />
           <Route path="groups/list" element={<GroupsListPage />} />
           <Route path="groups/:groupId" element={<GroupDetailPage />} />
-          <Route path="groups/:groupId/emergency-contacts" element={<EmergencyContactsPage />} />
           <Route path="groups/:groupId/members" element={<GroupMembersPage />} />
           <Route path="groups/:groupId/medications" element={<MedicationsSchedulePage />} />
           <Route path="groups/:groupId/journal" element={<GroupJournalPage />} />

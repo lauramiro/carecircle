@@ -11,6 +11,7 @@ function makeAppt(
   return {
     endTime: overrides.startTime,
     specialistName: null,
+    specialistPhone: null,
     location: null,
     preVisitNotes: null,
     postVisitNotes: null,
@@ -89,6 +90,7 @@ export async function addAppointment(payload: AddAppointmentPayload): Promise<Ap
     endTime: payload.startTime,
     attendingCarerId: payload.attendingCarerId,
     specialistName: payload.specialistName ?? null,
+    specialistPhone: payload.specialistPhone ?? null,
     location: payload.location ?? null,
     preVisitNotes: payload.preVisitNotes ?? null,
     postVisitNotes: null,
@@ -115,6 +117,7 @@ export async function editAppointment(
   if (changes.startTime !== undefined) { appt.startTime = changes.startTime; appt.endTime = changes.startTime; }
   if (changes.attendingCarerId !== undefined) appt.attendingCarerId = changes.attendingCarerId;
   if (changes.specialistName !== undefined) appt.specialistName = changes.specialistName;
+  if (changes.specialistPhone !== undefined) appt.specialistPhone = changes.specialistPhone;
   if (changes.location !== undefined) appt.location = changes.location;
   if (changes.preVisitNotes !== undefined) appt.preVisitNotes = changes.preVisitNotes;
   if (changes.postVisitNotes !== undefined) appt.postVisitNotes = changes.postVisitNotes;

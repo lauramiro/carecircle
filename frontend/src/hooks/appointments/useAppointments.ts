@@ -24,6 +24,7 @@ function fromRealtimeRow(row: Record<string, unknown>): Appointment {
     endTime: row.end_time as string,
     attendingCarerId: attendees?.[0] ?? null,
     specialistName: (row.provider_name as string) ?? null,
+    specialistPhone: (row.provider_phone as string) ?? null,
     location: (row.location as string) ?? null,
     preVisitNotes: (row.notes as string) ?? null,
     postVisitNotes: (row.post_appointment_notes as string) ?? null,

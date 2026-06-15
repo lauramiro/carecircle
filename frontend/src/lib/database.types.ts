@@ -71,6 +71,7 @@ export type Database = {
           post_appointment_notes: string | null
           provider_id: string | null
           provider_name: string | null
+          provider_phone: string | null
           reminder_offsets: number[] | null
           reminder_sent: boolean | null
           reminder_sent_at: string | null
@@ -99,6 +100,7 @@ export type Database = {
           post_appointment_notes?: string | null
           provider_id?: string | null
           provider_name?: string | null
+          provider_phone?: string | null
           reminder_offsets?: number[] | null
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
@@ -127,6 +129,7 @@ export type Database = {
           post_appointment_notes?: string | null
           provider_id?: string | null
           provider_name?: string | null
+          provider_phone?: string | null
           reminder_offsets?: number[] | null
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
@@ -205,6 +208,60 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emergency_contacts: {
+        Row: {
+          contact_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          label: string
+          patient_id: string
+          phone: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          contact_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          patient_id: string
+          phone: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          contact_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          patient_id?: string
+          phone?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_contacts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_contacts_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]

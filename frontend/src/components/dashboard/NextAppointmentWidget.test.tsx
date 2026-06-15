@@ -25,6 +25,7 @@ const BASE_APPOINTMENT: AppointmentWithCarer = {
   attendingCarerId: 'carer-1',
   carerName: 'Alice Smith',
   specialistName: null,
+  specialistPhone: null,
   location: null,
   preVisitNotes: null,
   postVisitNotes: null,

@@ -1,6 +1,10 @@
 import { supabase } from '@lib/supabaseClient';
 import { CHECKLIST_PROOF_BUCKET } from '@components/checklist/medicationChecklist.constants';
-import type { ChecklistItemPatch, MarkAsGivenInput, SkipChecklistItemInput } from './checklist.types';
+import type {
+  ChecklistItemPatch,
+  MarkAsGivenInput,
+  SkipChecklistItemInput,
+} from './checklist.types';
 
 export async function getCurrentCarerProfileId(): Promise<string | null> {
   const {
@@ -43,12 +47,16 @@ export async function markChecklistItemGiven(
     updated_at: givenAt,
   };
 
-  const { error } = await supabase
+  const { data: updatedItem, error } = await supabase
     .from('checklist_items')
     .update(patch)
-    .eq('id', input.itemId);
+    .eq('id', input.itemId)
+    .in('status', ['due', 'overdue'])
+    .select('id')
+    .maybeSingle();
 
   if (error) throw error;
+  if (!updatedItem) throw new Error('checklist_item_already_confirmed');
 
   if (photoUrl && carerId) {
     const { error: confirmationErr } = await supabase.from('medication_confirmations').insert({

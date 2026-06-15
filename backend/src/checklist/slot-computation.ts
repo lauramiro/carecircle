@@ -24,6 +24,28 @@ export interface DoseSlot {
   windowEnd: string;
 }
 
+export type ScheduleLogComparisonStatus =
+  | 'on_time'
+  | 'late'
+  | 'skipped'
+  | 'already_given'
+  | 'missing';
+
+export interface ScheduleLogInput {
+  checklistItemId: string;
+  scheduledAt: Date;
+  windowStart: string;
+  windowEnd: string;
+  status: 'due' | 'given' | 'overdue' | 'skipped' | 'archived';
+  givenAt: Date | null;
+}
+
+export interface ScheduleLogComparison {
+  checklistItemId: string;
+  status: ScheduleLogComparisonStatus;
+  minutesLate: number;
+}
+
 export function medicationRecordToSlotMed(
   med: MedicationRecord,
 ): SlotMedication {
@@ -272,6 +294,50 @@ export function buildDoseSummary(
 ): string {
   if (dose == null) return unit ?? '';
   return `${dose} ${unit ?? 'mg'}`.trim();
+}
+
+export function compareScheduleToLog(
+  input: ScheduleLogInput,
+): ScheduleLogComparison {
+  if (input.status === 'skipped') {
+    return {
+      checklistItemId: input.checklistItemId,
+      status: 'skipped',
+      minutesLate: 0,
+    };
+  }
+
+  if (input.status === 'given' && !input.givenAt) {
+    return {
+      checklistItemId: input.checklistItemId,
+      status: 'already_given',
+      minutesLate: 0,
+    };
+  }
+
+  if (!input.givenAt) {
+    return {
+      checklistItemId: input.checklistItemId,
+      status: 'missing',
+      minutesLate: 0,
+    };
+  }
+
+  const windowEnd = zonedDateTimeToUtc(
+    input.scheduledAt.toISOString().slice(0, 10),
+    input.windowEnd,
+    'UTC',
+  );
+  const minutesLate = Math.max(
+    0,
+    Math.floor((input.givenAt.getTime() - windowEnd.getTime()) / 60000),
+  );
+
+  return {
+    checklistItemId: input.checklistItemId,
+    status: minutesLate > 0 ? 'late' : 'on_time',
+    minutesLate,
+  };
 }
 
 export function minutesOverdue(scheduledAt: Date, now: Date): number {

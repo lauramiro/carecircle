@@ -169,6 +169,18 @@ function freeFormRowToEmergencyContact(row: FreeFormEmergencyContactRow): Emerge
   };
 }
 
+function postgrestErrorCode(error: unknown): string | null {
+  if (!error || typeof error !== 'object' || !('code' in error)) {
+    return null;
+  }
+  const code = error.code;
+  return typeof code === 'string' ? code : null;
+}
+
+function isMissingOptionalEmergencySchema(error: unknown): boolean {
+  return ['42703', '42P01'].includes(postgrestErrorCode(error) ?? '');
+}
+
 export async function getGroups(): Promise<GroupSummary[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
@@ -497,24 +509,30 @@ export async function getEmergencyContacts(groupId: string): Promise<EmergencyCo
     .not('provider_phone', 'is', null)
     .order('start_time', { ascending: false });
 
-  if (specialistError) throw new Error(specialistError.message);
-
-  const seenSpecialists = new Set<string>();
-  for (const row of specialistRows ?? []) {
-    const name = row.provider_name?.trim();
-    const phone = row.provider_phone?.trim();
-    if (!name || !phone) continue;
-    const key = `${name}:${phone}`;
-    if (seenSpecialists.has(key)) continue;
-    seenSpecialists.add(key);
-    contacts.push({
-      id: `specialist:${row.id}`,
-      name,
-      role: 'Specialist',
-      phoneNumber: phone,
-      source: 'specialist',
-      editable: false,
-    });
+  if (specialistError) {
+    if (isMissingOptionalEmergencySchema(specialistError)) {
+      console.warn('Specialist emergency contacts unavailable:', specialistError.message);
+    } else {
+      throw new Error(specialistError.message);
+    }
+  } else {
+    const seenSpecialists = new Set<string>();
+    for (const row of specialistRows ?? []) {
+      const name = row.provider_name?.trim();
+      const phone = row.provider_phone?.trim();
+      if (!name || !phone) continue;
+      const key = `${name}:${phone}`;
+      if (seenSpecialists.has(key)) continue;
+      seenSpecialists.add(key);
+      contacts.push({
+        id: `specialist:${row.id}`,
+        name,
+        role: 'Specialist',
+        phoneNumber: phone,
+        source: 'specialist',
+        editable: false,
+      });
+    }
   }
 
   if (primaryCaregiverId) {
@@ -543,8 +561,15 @@ export async function getEmergencyContacts(groupId: string): Promise<EmergencyCo
     .eq('is_active', true)
     .order('sort_order', { ascending: true });
 
-  if (freeFormError) throw new Error(freeFormError.message);
-  contacts.push(...(freeFormRows ?? []).map(freeFormRowToEmergencyContact));
+  if (freeFormError) {
+    if (isMissingOptionalEmergencySchema(freeFormError)) {
+      console.warn('Free-form emergency contacts unavailable:', freeFormError.message);
+    } else {
+      throw new Error(freeFormError.message);
+    }
+  } else {
+    contacts.push(...(freeFormRows ?? []).map(freeFormRowToEmergencyContact));
+  }
 
   return contacts;
 }

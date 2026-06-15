@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { PhoneCall, Plus, ShieldAlert } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -138,6 +138,7 @@ export default function EmergencyContactsPage() {
   const [usingCache, setUsingCache] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const loadErrorToastGroupRef = useRef<string | null>(null);
 
   const canManage = useMemo(
     () => (group ? canManageEmergencyContacts(group.role) : false),
@@ -161,7 +162,8 @@ export default function EmergencyContactsPage() {
         setUsingCache(false);
       })
       .catch(() => {
-        if (cached.length === 0) {
+        if (cached.length === 0 && loadErrorToastGroupRef.current !== groupId) {
+          loadErrorToastGroupRef.current = groupId;
           toast.error('Emergency contacts could not be loaded');
         }
       })

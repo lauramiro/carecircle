@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ROLE } from '@typings/role-enum';
-import EmergencyContactsPage from './EmergencyContactsPage';
 
 const groupDetailMock = vi.hoisted(() => ({
   value: {
@@ -23,19 +23,30 @@ const serviceMock = vi.hoisted(() => ({
   removeEmergencyContact: vi.fn(),
 }));
 
+const toastMock = vi.hoisted(() => ({
+  error: vi.fn(),
+}));
+
 vi.mock('../../hooks/groups/useGroupDetail', () => ({
   useGroupDetail: () => groupDetailMock.value,
 }));
 
 vi.mock('../../api/groups/groups.service', () => serviceMock);
 
-function renderPage() {
+vi.mock('react-toastify', () => ({
+  toast: toastMock,
+}));
+
+import EmergencyContactsPage from './EmergencyContactsPage';
+
+function renderPage({ strict = false } = {}) {
+  const page = <EmergencyContactsPage />;
   return render(
     <MemoryRouter initialEntries={['/groups/group-1/emergency-contacts']}>
       <Routes>
         <Route
           path="/groups/:groupId/emergency-contacts"
-          element={<EmergencyContactsPage />}
+          element={strict ? <StrictMode>{page}</StrictMode> : page}
         />
       </Routes>
     </MemoryRouter>,
@@ -129,5 +140,16 @@ describe('EmergencyContactsPage', () => {
     await waitFor(() =>
       expect(screen.getByText(/showing cached contacts/i)).toBeInTheDocument(),
     );
+  });
+
+  it('shows only one load error toast when loading fails under strict mode', async () => {
+    serviceMock.getEmergencyContacts.mockRejectedValue(new Error('offline'));
+
+    renderPage({ strict: true });
+
+    await waitFor(() => {
+      expect(toastMock.error).toHaveBeenCalledWith('Emergency contacts could not be loaded');
+    });
+    expect(toastMock.error).toHaveBeenCalledTimes(1);
   });
 });

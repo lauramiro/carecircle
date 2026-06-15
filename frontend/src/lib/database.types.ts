@@ -17,30 +17,36 @@ export type Database = {
       ai_insights: {
         Row: {
           created_at: string
+          generated_at: string | null
           id: string
           insight_type: string
           is_active: boolean
           observation: string
           patient_id: string
           severity: string | null
+          suggested_action: string | null
         }
         Insert: {
           created_at?: string
+          generated_at?: string | null
           id?: string
           insight_type: string
           is_active?: boolean
           observation: string
           patient_id: string
           severity?: string | null
+          suggested_action?: string | null
         }
         Update: {
           created_at?: string
+          generated_at?: string | null
           id?: string
           insight_type?: string
           is_active?: boolean
           observation?: string
           patient_id?: string
           severity?: string | null
+          suggested_action?: string | null
         }
         Relationships: [
           {
@@ -208,60 +214,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      emergency_contacts: {
-        Row: {
-          contact_name: string
-          created_at: string
-          created_by: string | null
-          id: string
-          is_active: boolean
-          label: string
-          patient_id: string
-          phone: string
-          sort_order: number
-          updated_at: string
-        }
-        Insert: {
-          contact_name: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_active?: boolean
-          label: string
-          patient_id: string
-          phone: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Update: {
-          contact_name?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_active?: boolean
-          label?: string
-          patient_id?: string
-          phone?: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "emergency_contacts_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "emergency_contacts_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
@@ -748,6 +700,7 @@ export type Database = {
           file_type: string
           file_url: string
           id: string
+          include_in_hospital_summary: boolean
           is_sensitive: boolean | null
           patient_id: string | null
           storage_path: string
@@ -765,6 +718,7 @@ export type Database = {
           file_type: string
           file_url: string
           id?: string
+          include_in_hospital_summary?: boolean
           is_sensitive?: boolean | null
           patient_id?: string | null
           storage_path: string
@@ -782,6 +736,7 @@ export type Database = {
           file_type?: string
           file_url?: string
           id?: string
+          include_in_hospital_summary?: boolean
           is_sensitive?: boolean | null
           patient_id?: string | null
           storage_path?: string
@@ -803,6 +758,60 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emergency_contacts: {
+        Row: {
+          contact_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          label: string
+          patient_id: string
+          phone: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          contact_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          patient_id: string
+          phone: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          contact_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          patient_id?: string
+          phone?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_contacts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_contacts_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
@@ -921,6 +930,47 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_group"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insight_cards: {
+        Row: {
+          created_at: string
+          data_link: string | null
+          description: string
+          digest_id: string
+          id: string
+          title: string
+          trend_direction: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          data_link?: string | null
+          description: string
+          digest_id: string
+          id?: string
+          title: string
+          trend_direction?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          data_link?: string | null
+          description?: string
+          digest_id?: string
+          id?: string
+          title?: string
+          trend_direction?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insight_cards_digest_id_fkey"
+            columns: ["digest_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_digests"
             referencedColumns: ["id"]
           },
         ]
@@ -1967,6 +2017,42 @@ export type Database = {
           },
         ]
       }
+      user_insight_dismissals: {
+        Row: {
+          dismissed_at: string
+          id: string
+          insight_card_id: string
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string
+          id?: string
+          insight_card_id: string
+          user_id: string
+        }
+        Update: {
+          dismissed_at?: string
+          id?: string
+          insight_card_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_insight_dismissals_insight_card_id_fkey"
+            columns: ["insight_card_id"]
+            isOneToOne: false
+            referencedRelation: "insight_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_insight_dismissals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vital_signs: {
         Row: {
           blood_glucose: number | null
@@ -2032,6 +2118,38 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_digests: {
+        Row: {
+          created_at: string
+          end_date: string
+          group_id: string
+          id: string
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          group_id: string
+          id?: string
+          start_date: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          group_id?: string
+          id?: string
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_digests_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_group"
             referencedColumns: ["id"]
           },
         ]
@@ -2257,6 +2375,10 @@ export type Database = {
       is_caregiver_for: { Args: { p_patient_id: string }; Returns: boolean }
       is_email_registered: { Args: { p_email: string }; Returns: boolean }
       is_group_member: { Args: { check_group_id: string }; Returns: boolean }
+      set_document_include_in_hospital_summary: {
+        Args: { p_document_id: string; p_include: boolean }
+        Returns: undefined
+      }
       update_care_giver_role: {
         Args: {
           p_caregiver_id: string
@@ -2264,13 +2386,6 @@ export type Database = {
           p_new_role: Database["public"]["Enums"]["member_role"]
         }
         Returns: undefined
-      }
-      update_invite_status: {
-        Args: {
-          p_invite_id: string
-          p_status: Database["public"]["Enums"]["invite_status"]
-        }
-        Returns: { group_id: string }[]
       }
       verify_profile_trigger: {
         Args: never

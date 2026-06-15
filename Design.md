@@ -1,5 +1,25 @@
 # Design & Testing
 
+
+## CC-129 Magic-Link Onboarding Test Notes
+
+The invite flow is designed as a four-step path from email to the care circle group details page:
+
+1. Open the secure invitation magic link.
+2. Review the care circle details.
+3. Accept the invitation.
+4. Continue to the group dashboard.
+
+Automated coverage:
+
+| Area | Test | Purpose |
+| :--- | :--- | :--- |
+| Invite email magic link | `backend/src/invites/group-invite-email.service.spec.ts` | Verifies invitation email links are Supabase magic links that redirect to `/group-invite` confirmation mode. |
+| Pending invite login resume | `frontend/src/pages/LoginPage.test.tsx` | Verifies login magic links preserve matching pending invite redirects. |
+| Invite onboarding progress | `frontend/src/pages/InvitePage.test.tsx` | Verifies the explicit accept screen shows the numbered onboarding steps. |
+
+Manual sprint-review evidence should include one non-technical user attempting the invitation flow from email link to group details page, with notes on step count, points of confusion, and whether assistance was needed.
+
 ## CC-117 Automated Test Matrix
 
 | Area | Test | Purpose | CI visibility |
@@ -10,6 +30,7 @@
 | Medication confirmation concurrency | `frontend/src/api/checklist/checklistMutations.service.test.ts` | Verifies simultaneous medication confirmations result in one successful update and exactly one confirmation record insert. | Frontend Vitest job |
 
 The CI workflow runs deterministic backend and frontend build/test jobs on pull requests. The VAPID delivery check is intentionally opt-in because it requires a live browser push subscription and VAPID test secrets.
+
 
 ## Permission Matrix
 This section defines the access control levels for users within a care group based on their role in the `group_members` table.

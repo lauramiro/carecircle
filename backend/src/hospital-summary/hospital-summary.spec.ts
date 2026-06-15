@@ -168,18 +168,23 @@ describe('HospitalSummaryService', () => {
       const syntheticPatientId = 'test-patient-001';
 
       const result = await service.assembleHospitalSummary(syntheticPatientId);
+      const requiredSections = [
+        'fullName',
+        'dateOfBirth',
+        'medications',
+        'conditions',
+        'allergies',
+        'gpContacts',
+        'careNotesSummary',
+        'flaggedPatterns',
+      ] as const;
 
       // Verify all sections present
       expect(result).toBeDefined();
-      expect(result.fullName).toBeDefined();
-      expect(result.dateOfBirth).toBeDefined();
-      expect(result.medications).toBeDefined();
+      for (const section of requiredSections) {
+        expect(result[section]).toBeDefined();
+      }
       expect(Array.isArray(result.medications)).toBe(true);
-      expect(result.conditions).toBeDefined();
-      expect(result.allergies).toBeDefined();
-      expect(result.gpContacts).toBeDefined();
-      expect(result.careNotesSummary).toBeDefined();
-      expect(result.flaggedPatterns).toBeDefined();
 
       // Verify no critical sections are empty
       expect(result.medications.length).toBeGreaterThan(0);

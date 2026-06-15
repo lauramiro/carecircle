@@ -31,7 +31,6 @@ function fromRow(row: Record<string, unknown>): Appointment {
     endTime: row.end_time as string,
     attendingCarerId: attendees?.[0] ?? null,
     specialistName: (row.provider_name as string) ?? null,
-    specialistPhone: (row.provider_phone as string) ?? null,
     location: (row.location as string) ?? null,
     preVisitNotes: (row.notes as string) ?? null,
     postVisitNotes: (row.post_appointment_notes as string) ?? null,
@@ -115,7 +114,6 @@ export async function addAppointment(payload: AddAppointmentPayload): Promise<Ap
     title: payload.title,
     attendees: [payload.attendingCarerId],
     provider_name: payload.specialistName ?? null,
-    provider_phone: payload.specialistPhone ?? null,
     location: payload.location ?? null,
     notes: payload.preVisitNotes ?? null,
     status: 'scheduled',
@@ -172,7 +170,6 @@ export async function editAppointment(
     end_time: string;
     attendees: string[];
     provider_name: string | null;
-    provider_phone: string | null;
     location: string | null;
     notes: string | null;
     post_appointment_notes: string | null;
@@ -187,7 +184,6 @@ export async function editAppointment(
   }
   if (changes.attendingCarerId !== undefined) update.attendees = [changes.attendingCarerId];
   if (changes.specialistName !== undefined) update.provider_name = changes.specialistName;
-  if (changes.specialistPhone !== undefined) update.provider_phone = changes.specialistPhone;
   if (changes.location !== undefined) update.location = changes.location;
   if (changes.preVisitNotes !== undefined) update.notes = changes.preVisitNotes;
   if (changes.postVisitNotes !== undefined) update.post_appointment_notes = changes.postVisitNotes;

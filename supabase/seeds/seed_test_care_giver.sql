@@ -16,11 +16,11 @@ VALUES (
   gen_random_uuid(),
   'authenticated',
   'authenticated',
-  'tester@example.com',                                              -- ← replace
+  'tester5@example.com',                                              -- ← replace
   crypt('TestPassword123!', gen_salt('bf')),                         -- ← replace
   now(),
   '{"provider":"email","providers":["email"]}'::jsonb,
-  jsonb_build_object('full_name', 'Tester Name', 'role', 'caregiver'), -- ← replace name
+  jsonb_build_object('full_name', 'Tester5 Name', 'role', 'caregiver'), -- ← replace name
   now(),
   now()
 )
@@ -44,17 +44,17 @@ ON CONFLICT DO NOTHING;
  )
  SELECT
    u.id                                AS caregiver_id,
-   '<group-id>'::uuid                  AS group_id,               -- ← replace
+   '0b381af1-1734-474e-bd05-17cc47a9b2e4'::uuid                  AS group_id,               -- ← replace
    p.id                                AS patient_id,
-   'primary_carer'::public.member_role AS role_in_care,
+   'secondary_carer'::public.member_role AS role_in_care,
    'active'                            AS status,
    true                                AS can_communicate,
    true                                AS can_schedule,
    true                                AS can_view_medical,
    'tester'                            AS relationship
  FROM  auth.users      u
- JOIN  public.patients p ON p.group_id = '<group-id>'::uuid       -- ← same group-id
- WHERE u.email = 'tester@example.com'                             -- ← replace
+ JOIN  public.patients p ON p.group_id = '0b381af1-1734-474e-bd05-17cc47a9b2e4'::uuid       -- ← same group-id
+ WHERE u.email = 'tester5@example.com'                             -- ← replace
  ON CONFLICT (group_id, patient_id, caregiver_id) DO NOTHING;
 
 

@@ -76,6 +76,7 @@ insert into public.patients (
   full_name,
   date_of_birth,
   primary_caregiver_id,
+  email,
   notes
 )
 values
@@ -84,6 +85,7 @@ values
     'RLS Circle A Patient',
     '1940-01-01',
     '11111111-1111-4111-8111-111111111111'::uuid,
+    'rls.patient.a@example.com',
     'Seed fixture for Circle A RLS verification.'
   ),
   (
@@ -91,6 +93,7 @@ values
     'RLS Circle B Patient',
     '1942-02-02',
     '44444444-4444-4444-8444-444444444444'::uuid,
+    'rls.patient.b@example.com',
     'Seed fixture for Circle B RLS verification.'
   )
 on conflict (id) do nothing;
@@ -213,7 +216,7 @@ values (
   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1'::uuid,
   'Circle B Medication',
   1,
-  'tablet',
+  'mg',
   current_date,
   '44444444-4444-4444-8444-444444444444'::uuid,
   'active',

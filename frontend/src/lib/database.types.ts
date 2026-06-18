@@ -1220,6 +1220,8 @@ export type Database = {
           instructions: string | null
           interval_hours: number | null
           last_refill_date: string | null
+          low_stock_alert_sent_at: string | null
+          low_stock_alert_threshold_days: number
           materialization_cursor_at: string | null
           medication_name: string
           name: string | null
@@ -1231,6 +1233,7 @@ export type Database = {
           prescribed_by: string | null
           prescribed_date: string | null
           prescription_number: string | null
+          quantity_on_hand: number | null
           refills_remaining: number | null
           route: string | null
           schedule_type: string | null
@@ -1260,6 +1263,8 @@ export type Database = {
           instructions?: string | null
           interval_hours?: number | null
           last_refill_date?: string | null
+          low_stock_alert_sent_at?: string | null
+          low_stock_alert_threshold_days?: number
           materialization_cursor_at?: string | null
           medication_name: string
           name?: string | null
@@ -1271,6 +1276,7 @@ export type Database = {
           prescribed_by?: string | null
           prescribed_date?: string | null
           prescription_number?: string | null
+          quantity_on_hand?: number | null
           refills_remaining?: number | null
           route?: string | null
           schedule_type?: string | null
@@ -1300,6 +1306,8 @@ export type Database = {
           instructions?: string | null
           interval_hours?: number | null
           last_refill_date?: string | null
+          low_stock_alert_sent_at?: string | null
+          low_stock_alert_threshold_days?: number
           materialization_cursor_at?: string | null
           medication_name?: string
           name?: string | null
@@ -1311,6 +1319,7 @@ export type Database = {
           prescribed_by?: string | null
           prescribed_date?: string | null
           prescription_number?: string | null
+          quantity_on_hand?: number | null
           refills_remaining?: number | null
           route?: string | null
           schedule_type?: string | null

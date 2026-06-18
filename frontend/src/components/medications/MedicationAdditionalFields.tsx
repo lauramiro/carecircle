@@ -116,6 +116,29 @@ export default function MedicationAdditionalFields({
           </div>
 
           <div>
+            <label htmlFor={`${formId}-quantity-on-hand`} className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
+              Quantity on hand
+            </label>
+            <input
+              id={`${formId}-quantity-on-hand`}
+              type="number"
+              min="0"
+              step="1"
+              value={values.quantityOnHand}
+              onChange={(e) => updateField('quantityOnHand', e.target.value)}
+              onBlur={() => touchField('quantityOnHand')}
+              placeholder="e.g. 28"
+              className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
+              style={fieldStyle(Boolean(errors.quantityOnHand))}
+            />
+            {errors.quantityOnHand && (
+              <p className="mt-1 text-xs" style={{ color: 'var(--color-status-critical)' }}>
+                {errors.quantityOnHand}
+              </p>
+            )}
+          </div>
+
+          <div>
             <label htmlFor={`${formId}-prescribed-date`} className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
               Prescribed date
             </label>

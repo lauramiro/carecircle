@@ -153,6 +153,29 @@ describe('AddMedicationForm', () => {
     expect(payload.dosage).toBe('500 mg');
   });
 
+  it('includes quantity on hand when entered', async () => {
+    mockCheckDuplicateName.mockResolvedValue(false);
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <AddMedicationForm
+        patientId="patient-1"
+        isSubmitting={false}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    await fillValidForm(user);
+    await user.click(screen.getByRole('button', { name: /additional details/i }));
+    await user.type(screen.getByLabelText(/quantity on hand/i), '28');
+    await user.click(screen.getByRole('button', { name: /add medication/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ quantityOnHand: 28 });
+  });
+
   it('shows a validation error when Daily is selected with no time filled in', async () => {
     mockCheckDuplicateName.mockResolvedValue(false);
     const user = userEvent.setup();

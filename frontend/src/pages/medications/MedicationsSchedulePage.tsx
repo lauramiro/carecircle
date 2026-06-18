@@ -6,6 +6,7 @@ import { useMedications } from '../../hooks/medications/useMedications';
 import PageHeader from '../../components/ui/PageHeader';
 import { ErrorPanel, LoadingPanel } from '../../components/ui/ContentPanel';
 import { formatMedicationSchedule, getMedicationTimesToday } from '../../utils/formatMedicationSchedule';
+import { isLowStockMedication } from '../../utils/medicationStock';
 import type { Medication } from '../../api/medications/medications.types';
 import { canEditMedicationSchedule } from '../../lib/carePermissions';
 
@@ -195,6 +196,14 @@ export default function MedicationsSchedulePage() {
                             style={{ background: '#e5e7eb', color: '#6b7280' }}
                           >
                             Paused
+                          </span>
+                        )}
+                        {isLowStockMedication(med) && (
+                          <span
+                            className="rounded px-1.5 py-0.5 text-xs font-bold"
+                            style={{ background: '#fef3c7', color: '#92400e' }}
+                          >
+                            Low stock
                           </span>
                         )}
                       </div>

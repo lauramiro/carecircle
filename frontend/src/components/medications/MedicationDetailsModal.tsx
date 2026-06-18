@@ -9,6 +9,7 @@ import {
 } from '../../lib/animation.constants';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { getMedicationAdditionalDetails } from '../../utils/medicationAdditionalDetails';
+import { formatDaysRemaining, getEstimatedDaysRemaining } from '../../utils/medicationStock';
 
 interface MedicationDetailsModalProps {
   medication: Medication | null;
@@ -24,6 +25,14 @@ export default function MedicationDetailsModal({
   const shouldReduceMotion = useReducedMotion();
   const modalVariants = shouldReduceMotion ? STATIC_MODAL_VARIANTS : MODAL_PANEL_VARIANTS;
   const details = medication ? getMedicationAdditionalDetails(medication) : [];
+  const daysRemaining = medication ? getEstimatedDaysRemaining(medication) : null;
+  const stockDetails = medication?.quantityOnHand == null
+    ? []
+    : [
+        { label: 'Quantity on hand', value: String(medication.quantityOnHand) },
+        { label: 'Estimated days remaining', value: formatDaysRemaining(daysRemaining) },
+      ];
+  const allDetails = [...stockDetails, ...details];
 
   return (
     <AnimatePresence>
@@ -75,13 +84,13 @@ export default function MedicationDetailsModal({
               </button>
             </div>
 
-            {details.length === 0 ? (
+            {allDetails.length === 0 ? (
               <p className="mt-5 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                 No additional details have been recorded for this medication.
               </p>
             ) : (
               <dl className="mt-5 space-y-4">
-                {details.map((row) => (
+                {allDetails.map((row) => (
                   <div key={row.label}>
                     <dt className="text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
                       {row.label}

@@ -31,6 +31,22 @@ export class MedicationRepository {
     return (data ?? []) as MedicationRecord[];
   }
 
+  async findPendingLowStockAlertCandidates(
+    limit = 100,
+  ): Promise<MedicationRecord[]> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('medications')
+      .select('*')
+      .eq('status', 'active')
+      .not('quantity_on_hand', 'is', null)
+      .is('low_stock_alert_sent_at', null)
+      .limit(limit);
+
+    if (error) throw new Error(error.message);
+    return (data ?? []) as MedicationRecord[];
+  }
+
   async updateMaterializationCursor(
     medicationId: string,
     cursorAt: string | null,
@@ -93,5 +109,42 @@ export class MedicationRepository {
 
     if (error) throw new Error(error.message);
     return data as MedicationRecord;
+  }
+
+  async markLowStockAlertSent(
+    medicationId: string,
+    sentAt: string,
+  ): Promise<MedicationRecord | null> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('medications')
+      .update({
+        low_stock_alert_sent_at: sentAt,
+        updated_at: sentAt,
+      })
+      .eq('id', medicationId)
+      .is('low_stock_alert_sent_at', null)
+      .select('*')
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    return data as MedicationRecord | null;
+  }
+
+  async clearLowStockAlertSent(
+    medicationId: string,
+    sentAt: string,
+  ): Promise<void> {
+    const { error } = await this.supabase
+      .getClient()
+      .from('medications')
+      .update({
+        low_stock_alert_sent_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', medicationId)
+      .eq('low_stock_alert_sent_at', sentAt);
+
+    if (error) throw new Error(error.message);
   }
 }

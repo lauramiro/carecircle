@@ -95,6 +95,7 @@ export async function addMedication(
       route: payload.route,
       instructions: payload.instructions,
       takeWithFood: payload.takeWithFood,
+      quantityOnHand: payload.quantityOnHand,
     }),
   });
 
@@ -122,6 +123,7 @@ export async function editMedication(
   if (changes.perpetual !== undefined) body.perpetual = changes.perpetual;
   if (changes.endDate !== undefined) body.endDate = changes.endDate;
   if (changes.totalDoses !== undefined) body.totalDoses = changes.totalDoses;
+  if (changes.quantityOnHand !== undefined) body.quantityOnHand = changes.quantityOnHand;
 
   const response = await apiFetch(`/api/groups/${groupId}/medications/${id}`, {
     method: 'PATCH',

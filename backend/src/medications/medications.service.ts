@@ -72,6 +72,7 @@ export class MedicationsService {
       route: dto.route ?? null,
       instructions: dto.instructions ?? null,
       take_with_food: dto.takeWithFood ?? null,
+      quantity_on_hand: dto.quantityOnHand ?? null,
     });
 
     if (med.schedule_type !== 'as_needed') {
@@ -119,6 +120,8 @@ export class MedicationsService {
     if (dto.perpetual !== undefined) changes.perpetual = dto.perpetual;
     if (dto.endDate !== undefined) changes.end_date = dto.endDate;
     if (dto.totalDoses !== undefined) changes.total_doses = dto.totalDoses;
+    if (dto.quantityOnHand !== undefined)
+      changes.quantity_on_hand = dto.quantityOnHand;
 
     const newMed = await this.medicationRepo.update(medicationId, changes);
 

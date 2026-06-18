@@ -4,6 +4,7 @@ import { ChecklistAckAlertSubscriber } from './checklist-ack-alert.subscriber';
 describe('ChecklistAckAlertSubscriber', () => {
   function createSubscriber() {
     const cancelOpenAlert = vi.fn().mockResolvedValue(undefined);
+    const maybeSendLowStockAlert = vi.fn().mockResolvedValue(undefined);
     const chain = {
       on: vi.fn().mockReturnThis(),
       subscribe: vi.fn(),
@@ -20,6 +21,7 @@ describe('ChecklistAckAlertSubscriber', () => {
     const subscriber = new ChecklistAckAlertSubscriber(
       supabase as never,
       { cancelOpenAlert } as never,
+      { maybeSendLowStockAlert } as never,
     );
     subscriber.onModuleInit();
 
@@ -27,27 +29,88 @@ describe('ChecklistAckAlertSubscriber', () => {
       new: Record<string, unknown>;
     }) => void;
 
-    return { subscriber, handler, cancelOpenAlert, client, chain };
+    return {
+      subscriber,
+      handler,
+      cancelOpenAlert,
+      maybeSendLowStockAlert,
+      client,
+      chain,
+    };
   }
 
   it('calls cancelOpenAlert for given status updates', async () => {
-    const { handler, cancelOpenAlert } = createSubscriber();
+    const { handler, cancelOpenAlert, maybeSendLowStockAlert } = createSubscriber();
 
     handler({ new: { id: 'chk-1', status: 'due' } });
     expect(cancelOpenAlert).not.toHaveBeenCalled();
 
-    handler({ new: { id: 'chk-1', status: 'given' } });
+    handler({
+      new: {
+        id: 'chk-1',
+        status: 'given',
+        medication_id: 'med-1',
+        group_id: 'group-1',
+      },
+    });
     await vi.waitFor(() =>
       expect(cancelOpenAlert).toHaveBeenCalledWith('chk-1', 'acknowledged'),
     );
+    expect(maybeSendLowStockAlert).toHaveBeenCalledWith({
+      medicationId: 'med-1',
+      groupId: 'group-1',
+    });
   });
 
   it('calls cancelOpenAlert for skipped status updates', async () => {
-    const { handler, cancelOpenAlert } = createSubscriber();
+    const { handler, cancelOpenAlert, maybeSendLowStockAlert } = createSubscriber();
 
     handler({ new: { id: 'chk-2', status: 'skipped' } });
     await vi.waitFor(() =>
       expect(cancelOpenAlert).toHaveBeenCalledWith('chk-2', 'acknowledged'),
+    );
+    expect(maybeSendLowStockAlert).not.toHaveBeenCalled();
+  });
+
+  it('still checks low stock when overdue alert cancellation fails', async () => {
+    const cancelOpenAlert = vi.fn().mockRejectedValue(new Error('cancel failed'));
+    const maybeSendLowStockAlert = vi.fn().mockResolvedValue(undefined);
+    const chain = {
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn(),
+    };
+    const client = {
+      channel: vi.fn().mockReturnValue(chain),
+      removeChannel: vi.fn(),
+    };
+    const supabase = {
+      isEnabled: () => true,
+      getClient: () => client as never,
+    };
+    const subscriber = new ChecklistAckAlertSubscriber(
+      supabase as never,
+      { cancelOpenAlert } as never,
+      { maybeSendLowStockAlert } as never,
+    );
+    subscriber.onModuleInit();
+
+    const handler = chain.on.mock.calls[0][2] as (payload: {
+      new: Record<string, unknown>;
+    }) => void;
+    handler({
+      new: {
+        id: 'chk-1',
+        status: 'given',
+        medication_id: 'med-1',
+        group_id: 'group-1',
+      },
+    });
+
+    await vi.waitFor(() =>
+      expect(maybeSendLowStockAlert).toHaveBeenCalledWith({
+        medicationId: 'med-1',
+        groupId: 'group-1',
+      }),
     );
   });
 
@@ -62,6 +125,7 @@ describe('ChecklistAckAlertSubscriber', () => {
     const subscriber = new ChecklistAckAlertSubscriber(
       supabase as never,
       { cancelOpenAlert } as never,
+      { maybeSendLowStockAlert: vi.fn() } as never,
     );
     subscriber.onModuleInit();
 
@@ -87,6 +151,7 @@ describe('ChecklistAckAlertSubscriber', () => {
     const subscriber = new ChecklistAckAlertSubscriber(
       supabase as never,
       { cancelOpenAlert } as never,
+      { maybeSendLowStockAlert: vi.fn() } as never,
     );
     subscriber.onModuleInit();
     subscriber.onModuleDestroy();

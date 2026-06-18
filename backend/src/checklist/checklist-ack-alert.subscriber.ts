@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { AlertRepository } from '../integrations/repositories/alert.repository';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
+import { MedicationLowStockAlertService } from './medication-low-stock-alert.service';
 
 @Injectable()
 export class ChecklistAckAlertSubscriber
@@ -19,6 +20,7 @@ export class ChecklistAckAlertSubscriber
   constructor(
     private readonly supabase: SupabaseAdminClient,
     private readonly alertRepo: AlertRepository,
+    private readonly lowStockAlerts: MedicationLowStockAlertService,
   ) {}
 
   onModuleInit(): void {
@@ -61,6 +63,21 @@ export class ChecklistAckAlertSubscriber
       this.logger.log(`alert_cancelled itemId=${itemId} reason=acknowledged`);
     } catch (err) {
       this.logger.warn(`alert_cancel_failed itemId=${itemId}`, err);
+    }
+
+    if (status !== 'given') return;
+
+    const medicationId = row.medication_id as string | undefined;
+    const groupId = row.group_id as string | undefined;
+    if (!medicationId || !groupId) return;
+
+    try {
+      await this.lowStockAlerts.maybeSendLowStockAlert({
+        medicationId,
+        groupId,
+      });
+    } catch (err) {
+      this.logger.warn(`low_stock_alert_failed itemId=${itemId}`, err);
     }
   }
 }

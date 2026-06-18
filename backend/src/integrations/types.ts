@@ -45,6 +45,9 @@ export interface MedicationRecord {
   status: MedicationStatus;
   perpetual: boolean;
   total_doses: number | null;
+  quantity_on_hand: number | null;
+  low_stock_alert_threshold_days: number;
+  low_stock_alert_sent_at: string | null;
   materialization_cursor_at: string | null;
 }
 

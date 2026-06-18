@@ -82,6 +82,11 @@ export class CreateMedicationDto {
   @IsOptional()
   @IsBoolean()
   takeWithFood?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  quantityOnHand?: number | null;
 }
 
 export class UpdateMedicationDto {
@@ -132,4 +137,9 @@ export class UpdateMedicationDto {
   @IsOptional()
   @IsInt()
   totalDoses?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  quantityOnHand?: number | null;
 }

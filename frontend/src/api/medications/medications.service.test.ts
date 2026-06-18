@@ -42,6 +42,9 @@ describe('medications.service API mutations', () => {
     route: null,
     instructions: null,
     take_with_food: null,
+    quantity_on_hand: null,
+    low_stock_alert_threshold_days: 7,
+    low_stock_alert_sent_at: null,
     generic_name: null,
     prescribed_by: null,
     prescribed_date: null,
@@ -90,6 +93,26 @@ describe('medications.service API mutations', () => {
     );
   });
 
+  it('addMedication posts quantity on hand when supplied', async () => {
+    mockJsonResponse({ ...medicationRow, quantity_on_hand: 28 });
+
+    await addMedication('group-1', {
+      patientId: 'patient-1',
+      medicationName: 'Metformin',
+      dosage: '500 mg',
+      startDate: '2025-01-01',
+      scheduleType: 'daily',
+      specificTimes: ['08:00'],
+      perpetual: true,
+      quantityOnHand: 28,
+    });
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      quantityOnHand: 28,
+    });
+  });
+
   it('editMedication PATCHes schedule changes to the backend API', async () => {
     mockJsonResponse({ ...medicationRow, end_date: '2025-12-31', perpetual: false });
 
@@ -103,6 +126,19 @@ describe('medications.service API mutations', () => {
     expect(JSON.parse(String(init?.body))).toEqual({
       perpetual: false,
       endDate: '2025-12-31',
+    });
+  });
+
+  it('editMedication PATCHes quantity on hand changes', async () => {
+    mockJsonResponse({ ...medicationRow, quantity_on_hand: 40 });
+
+    await editMedication('group-1', 'med-1', {
+      quantityOnHand: 40,
+    });
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(JSON.parse(String(init?.body))).toEqual({
+      quantityOnHand: 40,
     });
   });
 

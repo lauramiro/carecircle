@@ -5,6 +5,7 @@ const getUserMock = vi.hoisted(() => vi.fn());
 const fromMock = vi.hoisted(() => vi.fn());
 const uploadMock = vi.hoisted(() => vi.fn());
 const getPublicUrlMock = vi.hoisted(() => vi.fn());
+const callRpcMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@lib/supabaseClient', () => ({
   supabase: {
@@ -21,20 +22,10 @@ vi.mock('@lib/supabaseClient', () => ({
   },
 }));
 
-function checklistUpdateBuilder(result: { data: unknown; error: unknown }) {
-  const maybeSingle = vi.fn().mockResolvedValue(result);
-  const select = vi.fn(() => ({ maybeSingle }));
-  const inFilter = vi.fn(() => ({ select }));
-  const eq = vi.fn(() => ({ in: inFilter }));
+vi.mock('@lib/supabaseRpc', () => ({
+  callRpc: callRpcMock,
+}));
 
-  return {
-    update: vi.fn(() => ({ eq })),
-    eq,
-    inFilter,
-    select,
-    maybeSingle,
-  };
-}
 
 describe('markChecklistItemGiven', () => {
   beforeEach(() => {
@@ -49,18 +40,12 @@ describe('markChecklistItemGiven', () => {
   });
 
   it('creates exactly one confirmation when two carers confirm the same item concurrently', async () => {
-    const firstUpdate = checklistUpdateBuilder({
-      data: { id: 'item-1' },
-      error: null,
-    });
-    const secondUpdate = checklistUpdateBuilder({ data: null, error: null });
-    const updateQueue = [firstUpdate, secondUpdate];
     const insert = vi.fn().mockResolvedValue({ error: null });
+    callRpcMock
+      .mockResolvedValueOnce({ data: 'item-1', error: null })
+      .mockResolvedValueOnce({ data: null, error: null });
 
     fromMock.mockImplementation((table: string) => {
-      if (table === 'checklist_items') {
-        return updateQueue.shift();
-      }
       if (table === 'medication_confirmations') {
         return { insert };
       }
@@ -90,6 +75,13 @@ describe('markChecklistItemGiven', () => {
         }),
       }),
     ]);
+    expect(callRpcMock).toHaveBeenCalledWith('mark_checklist_item_given', {
+      p_item_id: 'item-1',
+      p_given_at: expect.any(String),
+      p_given_notes: null,
+      p_overdue_hours: null,
+      p_overdue_minutes: null,
+    });
     expect(insert).toHaveBeenCalledOnce();
   });
 });

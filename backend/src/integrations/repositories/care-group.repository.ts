@@ -104,6 +104,22 @@ export class CareGroupRepository {
     };
   }
 
+  async listActivePrimaryCarerIds(groupId: string): Promise<string[]> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('care_givers')
+      .select('caregiver_id')
+      .eq('group_id', groupId)
+      .eq('status', 'active')
+      .eq('role_in_care', 'primary_carer');
+
+    if (error) throw new Error(error.message);
+    const ids = (data ?? [])
+      .map((row) => row.caregiver_id)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0);
+    return [...new Set(ids)];
+  }
+
   async findAllGroups() {
     const { data, error } = await this.supabase
       .getClient()

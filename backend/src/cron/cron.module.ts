@@ -6,6 +6,7 @@ import { AppConfigModule } from '../config/app-config.module';
 import { InsightsModule } from '../insights/insights.module';
 import {
   ChecklistMaterializationCron,
+  LowStockAlertCron,
   OverdueDetectionCron,
   SmsDispatchCron,
   WeeklyDigestCron,
@@ -21,6 +22,7 @@ import {
   ],
   providers: [
     ChecklistMaterializationCron,
+    LowStockAlertCron,
     OverdueDetectionCron,
     SmsDispatchCron,
     WeeklyDigestCron,

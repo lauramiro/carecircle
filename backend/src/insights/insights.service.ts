@@ -24,7 +24,7 @@ export class InsightsService {
 
     for (const group of groups) {
       try {
-        await this.generateWeeklyDigest(group.id);
+        await this.generateWeeklyDigest(group.id as string);
       } catch (err: unknown) {
         this.logger.error(
           `Failed to generate digest for group ${group.id}: ${(err as Error).message}`,

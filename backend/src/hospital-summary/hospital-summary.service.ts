@@ -245,7 +245,7 @@ export class HospitalSummaryService {
           frequency,
           startDate: med.start_date || new Date().toISOString().split('T')[0],
           lastGivenTimestamp:
-            logsData?.actual_time || logsData?.scheduled_time || null,
+            logsData?.actual_time || logsData?.scheduled_time || undefined,
         };
       }),
     );

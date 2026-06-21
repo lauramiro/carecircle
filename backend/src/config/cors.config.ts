@@ -2,8 +2,6 @@ import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.int
 import { AppConfig } from './env.schema';
 
 const developmentOriginPattern = /^http:\/\/localhost(?::\d+)?$/;
-const productionOrigin = 'https://carecircle.com';
-
 export function buildCorsOptions(config: AppConfig): CorsOptions {
   return {
     origin: (origin, callback) => {
@@ -15,9 +13,11 @@ export function buildCorsOptions(config: AppConfig): CorsOptions {
       const allowed =
         config.NODE_ENV === 'development'
           ? developmentOriginPattern.test(origin)
-          : origin === productionOrigin;
+          : config.FRONTEND_PUBLIC_URL
+            ? origin === config.FRONTEND_PUBLIC_URL.replace(/\/$/, '')
+            : false;
 
-      callback(allowed ? null : new Error('Not allowed by CORS'), allowed);
+      callback(null, allowed);
     },
   };
 }

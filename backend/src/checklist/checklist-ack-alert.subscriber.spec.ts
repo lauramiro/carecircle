@@ -40,7 +40,8 @@ describe('ChecklistAckAlertSubscriber', () => {
   }
 
   it('calls cancelOpenAlert for given status updates', async () => {
-    const { handler, cancelOpenAlert, maybeSendLowStockAlert } = createSubscriber();
+    const { handler, cancelOpenAlert, maybeSendLowStockAlert } =
+      createSubscriber();
 
     handler({ new: { id: 'chk-1', status: 'due' } });
     expect(cancelOpenAlert).not.toHaveBeenCalled();
@@ -63,7 +64,8 @@ describe('ChecklistAckAlertSubscriber', () => {
   });
 
   it('calls cancelOpenAlert for skipped status updates', async () => {
-    const { handler, cancelOpenAlert, maybeSendLowStockAlert } = createSubscriber();
+    const { handler, cancelOpenAlert, maybeSendLowStockAlert } =
+      createSubscriber();
 
     handler({ new: { id: 'chk-2', status: 'skipped' } });
     await vi.waitFor(() =>
@@ -73,7 +75,9 @@ describe('ChecklistAckAlertSubscriber', () => {
   });
 
   it('still checks low stock when overdue alert cancellation fails', async () => {
-    const cancelOpenAlert = vi.fn().mockRejectedValue(new Error('cancel failed'));
+    const cancelOpenAlert = vi
+      .fn()
+      .mockRejectedValue(new Error('cancel failed'));
     const maybeSendLowStockAlert = vi.fn().mockResolvedValue(undefined);
     const chain = {
       on: vi.fn().mockReturnThis(),

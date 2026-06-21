@@ -12,7 +12,9 @@ import {
 
 @Controller('document-storage')
 export class DocumentStorageController {
-  constructor(private readonly documentStorageService: DocumentStorageService) {}
+  constructor(
+    private readonly documentStorageService: DocumentStorageService,
+  ) {}
 
   @Get('groups/:groupId/usage')
   getGroupUsage(
@@ -25,6 +27,9 @@ export class DocumentStorageController {
       throw new UnauthorizedException('Missing bearer token.');
     }
 
-    return this.documentStorageService.getGroupStorageUsage(groupId, accessToken);
+    return this.documentStorageService.getGroupStorageUsage(
+      groupId,
+      accessToken,
+    );
   }
 }

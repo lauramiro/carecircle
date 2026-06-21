@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { describe, expect, it, vi } from 'vitest';
 import { GroupInviteEmailService } from './group-invite-email.service';
 

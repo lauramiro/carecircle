@@ -21,7 +21,7 @@ function getIntervalDoseCount(
       : 8 * 60;
   return Math.max(
     1,
-    Math.floor(((24 * 60 - 1) - startMinutes) / (intervalHours * 60)) + 1,
+    Math.floor((24 * 60 - 1 - startMinutes) / (intervalHours * 60)) + 1,
   );
 }
 
@@ -75,7 +75,10 @@ export class MedicationLowStockAlertService {
           groupId: groupCtx.groupId,
         });
       } catch (err) {
-        this.logger.warn(`low_stock_candidate_failed medicationId=${med.id}`, err);
+        this.logger.warn(
+          `low_stock_candidate_failed medicationId=${med.id}`,
+          err,
+        );
       }
     }
   }
@@ -110,7 +113,9 @@ export class MedicationLowStockAlertService {
     if (!marked) return;
 
     const roundedDays =
-      daysRemaining < 1 ? '<1' : Math.max(1, Math.floor(daysRemaining)).toString();
+      daysRemaining < 1
+        ? '<1'
+        : Math.max(1, Math.floor(daysRemaining)).toString();
 
     try {
       const result = await this.pushDispatch.sendToUsers(primaryCarerIds, {

@@ -2,7 +2,10 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { Groq } from 'groq-sdk';
 import { AppConfigService } from '../config/app-config.service';
 import { ProfileService } from './profile.service';
-import { buildSystemPrompt } from '../prompts/care-profile.prompt';
+import {
+  buildSystemPrompt,
+  CareProfileContext,
+} from '../prompts/care-profile.prompt';
 
 export interface AiQaResponse {
   answer: string;
@@ -23,11 +26,14 @@ export class AiService {
     const startTime = Date.now();
 
     // Fetch profile using groupId (handle not-found gracefully)
-    let profile;
+    let profile: CareProfileContext;
     try {
       profile = await this.profileService.getCareProfile(groupId);
-    } catch (err: any) {
-      if (err instanceof NotFoundException || err?.status === 404) {
+    } catch (err: unknown) {
+      if (
+        err instanceof NotFoundException ||
+        (err as { status?: number })?.status === 404
+      ) {
         this.logger.warn(`No patient profile for groupId=${groupId}`);
         throw new NotFoundException(
           'Patient record not found. Please verify the provided groupId.',
@@ -83,9 +89,17 @@ export class AiService {
 
     const content = message.choices[0].message.content || '[]';
     try {
-      const parsed = JSON.parse(content);
-      return Array.isArray(parsed) ? parsed : parsed.insights || [];
-    } catch (err) {
+      const parsed = JSON.parse(content) as unknown;
+      if (Array.isArray(parsed)) return parsed;
+      if (
+        typeof parsed === 'object' &&
+        parsed !== null &&
+        Array.isArray((parsed as { insights?: unknown[] }).insights)
+      ) {
+        return (parsed as { insights?: unknown[] }).insights || [];
+      }
+      return [];
+    } catch {
       this.logger.error(`Failed to parse AI insights JSON: ${content}`);
       return [];
     }

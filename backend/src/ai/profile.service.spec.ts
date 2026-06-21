@@ -5,7 +5,14 @@ import { PatientRepository } from '../integrations/repositories/patient.reposito
 
 describe('ProfileService', () => {
   let service: ProfileService;
-  let mockPatientRepository: any;
+  let mockPatientRepository: {
+    findByGroupId: ReturnType<typeof vi.fn>;
+    findActiveMedications: ReturnType<typeof vi.fn>;
+    findRecentMedicationLogs: ReturnType<typeof vi.fn>;
+    findRecentJournalEntries: ReturnType<typeof vi.fn>;
+    findUpcomingAppointments: ReturnType<typeof vi.fn>;
+    findRecentWellbeingCheckins: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     // Create a complete mock with all methods used by ProfileService
@@ -53,13 +60,19 @@ describe('ProfileService', () => {
 
     expect(profile.patientName).toBe('John Doe');
     expect(profile.conditions).toEqual(['Diabetes']);
-    expect(mockPatientRepository.findByGroupId).toHaveBeenCalledWith('group-123');
-    expect(mockPatientRepository.findActiveMedications).toHaveBeenCalledWith('patient-123');
+    expect(mockPatientRepository.findByGroupId).toHaveBeenCalledWith(
+      'group-123',
+    );
+    expect(mockPatientRepository.findActiveMedications).toHaveBeenCalledWith(
+      'patient-123',
+    );
     // add other expectations as needed
   });
 
   it('should throw Patient not found when no patient exists', async () => {
     mockPatientRepository.findByGroupId.mockResolvedValue(null);
-    await expect(service.getCareProfile('invalid-group')).rejects.toThrow('Patient not found');
+    await expect(service.getCareProfile('invalid-group')).rejects.toThrow(
+      'Patient not found',
+    );
   });
 });

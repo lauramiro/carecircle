@@ -25,9 +25,9 @@ export class InsightsService {
     for (const group of groups) {
       try {
         await this.generateWeeklyDigest(group.id);
-      } catch (err: any) {
+      } catch (err: unknown) {
         this.logger.error(
-          `Failed to generate digest for group ${group.id}: ${err.message}`,
+          `Failed to generate digest for group ${group.id}: ${(err as Error).message}`,
         );
       }
     }
@@ -62,24 +62,35 @@ export class InsightsService {
       patientName: patient.full_name as string,
       startDate: startDateStr,
       endDate: endDateStr,
-      medicationLogs: logs.map((l: any) => ({
-        medicationName: l.medications?.medication_name ?? 'Unknown',
-        status: l.status,
-        loggedAt: l.actual_time ?? l.scheduled_time,
-        notes: l.notes,
-      })),
-      journalEntries: journal.map((j: any) => ({
-        date: j.created_at,
-        entry: j.content,
-      })),
-      vitalSigns: vitals.map((v: any) => ({
-        measuredAt: v.measured_at,
-        bloodGlucose: v.blood_glucose,
-        bpSystolic: v.blood_pressure_systolic,
-        bpDiastolic: v.blood_pressure_diastolic,
-        heartRate: v.heart_rate,
-        notes: v.notes,
-      })),
+      medicationLogs: logs.map((l) => {
+        const lr = l as Record<string, unknown>;
+        return {
+          medicationName:
+            (lr.medications as { medication_name?: string })?.medication_name ??
+            'Unknown',
+          status: lr.status as string,
+          loggedAt: (lr.actual_time ?? lr.scheduled_time) as string,
+          notes: lr.notes as string | undefined,
+        };
+      }),
+      journalEntries: journal.map((j) => {
+        const jr = j as Record<string, unknown>;
+        return {
+          date: jr.created_at as string,
+          entry: jr.content as string,
+        };
+      }),
+      vitalSigns: vitals.map((v) => {
+        const vr = v as Record<string, unknown>;
+        return {
+          measuredAt: vr.measured_at as string,
+          bloodGlucose: vr.blood_glucose as number | undefined,
+          bpSystolic: vr.blood_pressure_systolic as number | undefined,
+          bpDiastolic: vr.blood_pressure_diastolic as number | undefined,
+          heartRate: vr.heart_rate as number | undefined,
+          notes: vr.notes as string | undefined,
+        };
+      }),
     });
 
     const insights = await this.aiService.generateInsights(prompt);
@@ -91,7 +102,7 @@ export class InsightsService {
     const db = this.supabase.getClient();
 
     // 1. Create Weekly Digest record
-    const { data: digest, error: digestError } = await db
+    const result = await db
       .from('weekly_digests')
       .insert({
         group_id: groupId,
@@ -100,6 +111,8 @@ export class InsightsService {
       })
       .select()
       .single();
+    const digestError = result.error;
+    const digest = result.data as { id: string };
 
     if (digestError) {
       if (digestError.code === '23505') {
@@ -113,14 +126,22 @@ export class InsightsService {
 
     // 2. Create Insight Cards
     const { error: cardsError } = await db.from('insight_cards').insert(
-      insights.map((ins: any) => ({
-        digest_id: digest.id,
-        type: ins.type,
-        title: ins.title,
-        description: ins.description,
-        trend_direction: ins.trend_direction,
-        data_link: ins.data_link.replace(':groupId', groupId),
-      })),
+      insights.map(
+        (ins: {
+          type: string;
+          title: string;
+          description: string;
+          trend_direction?: string;
+          data_link?: string;
+        }) => ({
+          digest_id: digest.id,
+          type: ins.type,
+          title: ins.title,
+          description: ins.description,
+          trend_direction: ins.trend_direction,
+          data_link: ins.data_link?.replace(':groupId', groupId),
+        }),
+      ),
     );
 
     if (cardsError) throw new Error(cardsError.message);
@@ -132,8 +153,9 @@ export class InsightsService {
   }
 
   private async notifyGroupMembers(groupId: string, digestId: string) {
-    const { groupMembersIds } =
+    const groupMembersResult =
       await this.groupRepo.listActiveGroupMembers(groupId);
+    const groupMembersIds = groupMembersResult.groupMembersIds;
     const db = this.supabase.getClient();
 
     const title = 'New Weekly Digest Ready';
@@ -187,12 +209,13 @@ export class InsightsService {
       .eq('user_id', userId);
 
     const dismissedIds = new Set(
-      dismissals?.map((d: any) => d.insight_card_id) ?? [],
+      dismissals?.map((d: { insight_card_id: string }) => d.insight_card_id) ??
+        [],
     );
 
     return {
       digest,
-      cards: cards.filter((c: any) => !dismissedIds.has(c.id)),
+      cards: cards.filter((c: { id: string }) => !dismissedIds.has(c.id)),
     };
   }
 
@@ -221,7 +244,7 @@ export class InsightsService {
     const { data, error } = await query;
     if (error) throw new Error(error.message);
 
-    return data ?? [];
+    return (data as unknown[]) ?? [];
   }
 
   async dismissInsight(userId: string, cardId: string) {

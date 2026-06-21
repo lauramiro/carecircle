@@ -115,7 +115,9 @@ describe('MedicationLowStockAlertService', () => {
     const pushDispatch = { sendToUsers: vi.fn() };
     const service = new MedicationLowStockAlertService(
       medicationRepo as never,
-      { listActivePrimaryCarerIds: vi.fn().mockResolvedValue(['carer-1']) } as never,
+      {
+        listActivePrimaryCarerIds: vi.fn().mockResolvedValue(['carer-1']),
+      } as never,
       pushDispatch as never,
     );
 
@@ -130,9 +132,11 @@ describe('MedicationLowStockAlertService', () => {
   it('clears the alert sentinel when all push delivery attempts fail', async () => {
     const medicationRepo = {
       findById: vi.fn().mockResolvedValue(makeMed()),
-      markLowStockAlertSent: vi.fn().mockImplementation((_id: string, sentAt: string) =>
-        Promise.resolve(makeMed({ low_stock_alert_sent_at: sentAt })),
-      ),
+      markLowStockAlertSent: vi
+        .fn()
+        .mockImplementation((_id: string, sentAt: string) =>
+          Promise.resolve(makeMed({ low_stock_alert_sent_at: sentAt })),
+        ),
       clearLowStockAlertSent: vi.fn().mockResolvedValue(undefined),
     };
     const careGroupRepo = {
@@ -152,7 +156,8 @@ describe('MedicationLowStockAlertService', () => {
       groupId: 'group-1',
     });
 
-    const sentAt = medicationRepo.markLowStockAlertSent.mock.calls[0][1];
+    const sentAt = medicationRepo.markLowStockAlertSent.mock
+      .calls[0][1] as string;
     expect(medicationRepo.clearLowStockAlertSent).toHaveBeenCalledWith(
       'med-1',
       sentAt,
@@ -161,7 +166,9 @@ describe('MedicationLowStockAlertService', () => {
 
   it('scans pending low-stock candidates as a realtime fallback', async () => {
     const medicationRepo = {
-      findPendingLowStockAlertCandidates: vi.fn().mockResolvedValue([makeMed()]),
+      findPendingLowStockAlertCandidates: vi
+        .fn()
+        .mockResolvedValue([makeMed()]),
       findById: vi.fn().mockResolvedValue(makeMed()),
       markLowStockAlertSent: vi.fn().mockResolvedValue(makeMed()),
       clearLowStockAlertSent: vi.fn(),
@@ -186,8 +193,12 @@ describe('MedicationLowStockAlertService', () => {
 
     await service.runPendingLowStockAlerts(25);
 
-    expect(medicationRepo.findPendingLowStockAlertCandidates).toHaveBeenCalledWith(25);
-    expect(careGroupRepo.getGroupContextByPatientId).toHaveBeenCalledWith('patient-1');
+    expect(
+      medicationRepo.findPendingLowStockAlertCandidates,
+    ).toHaveBeenCalledWith(25);
+    expect(careGroupRepo.getGroupContextByPatientId).toHaveBeenCalledWith(
+      'patient-1',
+    );
     expect(pushDispatch.sendToUsers).toHaveBeenCalledOnce();
   });
 });

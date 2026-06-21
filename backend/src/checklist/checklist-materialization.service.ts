@@ -95,7 +95,7 @@ export class ChecklistMaterializationService {
 
     await this.checklistRepo.insertChecklistItems(inserts);
 
-    const lastScheduledAt = batch[batch.length - 1]!.scheduledAt.toISOString();
+    const lastScheduledAt = batch[batch.length - 1].scheduledAt.toISOString();
     await this.medicationRepo.updateMaterializationCursor(
       medicationId,
       lastScheduledAt,

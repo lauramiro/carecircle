@@ -42,11 +42,11 @@ export class TwilioSmsService {
       this.logger.log(
         `twilio_message_created status=${msg.status} sid=${msg.sid}`,
       );
-      return { sid: msg.sid as string };
+      return { sid: msg.sid };
     } catch (err: unknown) {
       const code =
         typeof err === 'object' && err !== null && 'code' in err
-          ? String((err as { code: unknown }).code)
+          ? String(err.code)
           : 'unknown';
       this.logger.warn(`twilio_send_failed code=${code}`);
       return { error: 'twilio_send_failed' };

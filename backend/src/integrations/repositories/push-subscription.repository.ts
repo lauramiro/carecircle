@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { SupabaseAdminClient } from '../supabase-admin.client';
 import type { PushSubscriptionRecord } from '../types';

@@ -140,7 +140,7 @@ export class PushDispatchService implements OnModuleInit {
       } catch (err: unknown) {
         const statusCode =
           typeof err === 'object' && err !== null && 'statusCode' in err
-            ? Number((err as { statusCode: unknown }).statusCode)
+            ? Number(err.statusCode)
             : undefined;
         const message = err instanceof Error ? err.message : 'push_failed';
         log.push({
@@ -250,7 +250,7 @@ export class PushDispatchService implements OnModuleInit {
       } catch (err: unknown) {
         const statusCode =
           typeof err === 'object' && err !== null && 'statusCode' in err
-            ? Number((err as { statusCode: unknown }).statusCode)
+            ? Number(err.statusCode)
             : undefined;
         const message = err instanceof Error ? err.message : 'push_failed';
         log.push({

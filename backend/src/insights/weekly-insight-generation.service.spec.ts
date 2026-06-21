@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WeeklyInsightGenerationService } from './weekly-insight-generation.service';
 import type { SupabaseAdminClient } from '../integrations/supabase-admin.client';
@@ -5,33 +6,79 @@ import type { SupabaseAdminClient } from '../integrations/supabase-admin.client'
 const mockSupabaseResponse = (table: string) => {
   switch (table) {
     case 'patients':
-      return { data: [{ id: 'patient-001', group_id: 'group-001' }], error: null };
+      return {
+        data: [{ id: 'patient-001', group_id: 'group-001' }],
+        error: null,
+      };
     case 'handover_journal_entries':
       return {
         data: [
-          { created_at: new Date().toISOString(), content: 'Patient reports mild pain in the knee.' },
-          { created_at: new Date().toISOString(), content: 'Appetite is poor and patient skipped breakfast.' },
-          { created_at: new Date().toISOString(), content: 'Patient says pain is getting worse with movement.' },
-          { created_at: new Date().toISOString(), content: 'Patient feeling hungry before lunch.' },
+          {
+            created_at: new Date().toISOString(),
+            content: 'Patient reports mild pain in the knee.',
+          },
+          {
+            created_at: new Date().toISOString(),
+            content: 'Appetite is poor and patient skipped breakfast.',
+          },
+          {
+            created_at: new Date().toISOString(),
+            content: 'Patient says pain is getting worse with movement.',
+          },
+          {
+            created_at: new Date().toISOString(),
+            content: 'Patient feeling hungry before lunch.',
+          },
         ],
         error: null,
       };
     case 'medication_logs':
       return {
         data: [
-          { status: 'given', scheduled_time: new Date().toISOString(), actual_time: new Date().toISOString(), notes: 'On time' },
-          { status: 'missed', scheduled_time: new Date().toISOString(), actual_time: null, notes: 'Not taken' },
-          { status: 'given', scheduled_time: new Date().toISOString(), actual_time: new Date().toISOString(), notes: 'Late dose' },
+          {
+            status: 'given',
+            scheduled_time: new Date().toISOString(),
+            actual_time: new Date().toISOString(),
+            notes: 'On time',
+          },
+          {
+            status: 'missed',
+            scheduled_time: new Date().toISOString(),
+            actual_time: null,
+            notes: 'Not taken',
+          },
+          {
+            status: 'given',
+            scheduled_time: new Date().toISOString(),
+            actual_time: new Date().toISOString(),
+            notes: 'Late dose',
+          },
         ],
         error: null,
       };
     case 'weekly_shift_assignments':
       return {
         data: [
-          { shift_date: new Date().toISOString().split('T')[0], shift_slot: 'morning', assigned_caregiver_id: 'caregiver-1' },
-          { shift_date: new Date().toISOString().split('T')[0], shift_slot: 'afternoon', assigned_caregiver_id: 'caregiver-1' },
-          { shift_date: new Date().toISOString().split('T')[0], shift_slot: 'evening', assigned_caregiver_id: 'caregiver-1' },
-          { shift_date: new Date().toISOString().split('T')[0], shift_slot: 'night', assigned_caregiver_id: 'caregiver-2' },
+          {
+            shift_date: new Date().toISOString().split('T')[0],
+            shift_slot: 'morning',
+            assigned_caregiver_id: 'caregiver-1',
+          },
+          {
+            shift_date: new Date().toISOString().split('T')[0],
+            shift_slot: 'afternoon',
+            assigned_caregiver_id: 'caregiver-1',
+          },
+          {
+            shift_date: new Date().toISOString().split('T')[0],
+            shift_slot: 'evening',
+            assigned_caregiver_id: 'caregiver-1',
+          },
+          {
+            shift_date: new Date().toISOString().split('T')[0],
+            shift_slot: 'night',
+            assigned_caregiver_id: 'caregiver-2',
+          },
         ],
         error: null,
       };
@@ -51,7 +98,8 @@ const createSupabaseQuery = (response: any) => {
     order: vi.fn(() => builder),
     limit: vi.fn(() => builder),
     insert: vi.fn(() => Promise.resolve(response)),
-    then: (onFulfilled: any, onRejected: any) => Promise.resolve(response).then(onFulfilled, onRejected),
+    then: (onFulfilled: any, onRejected: any) =>
+      Promise.resolve(response).then(onFulfilled, onRejected),
     catch: (onRejected: any) => Promise.resolve(response).catch(onRejected),
   };
 
@@ -102,12 +150,18 @@ describe('WeeklyInsightGenerationService', () => {
     expect(digest?.patientId).toBe('patient-001');
     expect(digest?.weekEndingDate).toBe(new Date().toISOString().split('T')[0]);
     expect(digest?.insightCards.map((card: any) => card.insightType)).toEqual(
-      expect.arrayContaining(['pain_trend', 'medication_adherence', 'appetite_change']),
+      expect.arrayContaining([
+        'pain_trend',
+        'medication_adherence',
+        'appetite_change',
+      ]),
     );
   });
 
   it('runs the weekly job and stores generated insights for active patients', async () => {
-    const storeSpy = vi.spyOn(service as any, 'storeInsights').mockResolvedValue(undefined);
+    const storeSpy = vi
+      .spyOn(service as any, 'storeInsights')
+      .mockResolvedValue(undefined);
 
     await service.generateWeeklyInsights();
 
@@ -140,16 +194,24 @@ describe('WeeklyInsightGenerationService', () => {
       });
       service = new WeeklyInsightGenerationService(built.adminClient);
 
-      const errorSpy = vi.spyOn((service as any).logger, 'error').mockImplementation(() => undefined);
-      const logSpy = vi.spyOn((service as any).logger, 'log').mockImplementation(() => undefined);
+      const errorSpy = vi
+        .spyOn((service as any).logger, 'error')
+        .mockImplementation(() => undefined);
+      const logSpy = vi
+        .spyOn((service as any).logger, 'log')
+        .mockImplementation(() => undefined);
 
-      await expect((service as any).storeInsights(digest)).resolves.toBeUndefined();
+      await expect(
+        (service as any).storeInsights(digest),
+      ).resolves.toBeUndefined();
 
       expect(errorSpy).toHaveBeenCalledOnce();
       const message = errorSpy.mock.calls[0][0] as string;
       expect(message).toContain('patient-001');
       expect(message).toContain('1 rows');
-      expect(message).toContain('duplicate key value violates unique constraint');
+      expect(message).toContain(
+        'duplicate key value violates unique constraint',
+      );
       expect(logSpy).not.toHaveBeenCalled();
     });
 
@@ -157,8 +219,12 @@ describe('WeeklyInsightGenerationService', () => {
       const built = createAdminClient({ data: [], error: null });
       service = new WeeklyInsightGenerationService(built.adminClient);
 
-      const errorSpy = vi.spyOn((service as any).logger, 'error').mockImplementation(() => undefined);
-      const logSpy = vi.spyOn((service as any).logger, 'log').mockImplementation(() => undefined);
+      const errorSpy = vi
+        .spyOn((service as any).logger, 'error')
+        .mockImplementation(() => undefined);
+      const logSpy = vi
+        .spyOn((service as any).logger, 'log')
+        .mockImplementation(() => undefined);
 
       await (service as any).storeInsights(digest);
 

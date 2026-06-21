@@ -50,7 +50,11 @@ export class GroupInviteEmailService {
     inviteId: string,
     email: string,
   ): Promise<string> {
-    const redirectTo = this.buildGroupInviteRedirectUrl(inviteId, email, 'true');
+    const redirectTo = this.buildGroupInviteRedirectUrl(
+      inviteId,
+      email,
+      'true',
+    );
     const { data, error } = await this.supabase
       .getClient()
       .auth.admin.generateLink({

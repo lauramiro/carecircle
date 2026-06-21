@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 import { Injectable } from '@nestjs/common';
 import { isE164Phone } from '../../common/validation/e164';
 import { SupabaseAdminClient } from '../supabase-admin.client';

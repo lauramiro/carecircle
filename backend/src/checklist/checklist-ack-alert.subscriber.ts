@@ -31,7 +31,7 @@ export class ChecklistAckAlertSubscriber
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'checklist_items' },
           (payload) => {
-            void this.handleUpdate(payload.new as Record<string, unknown>);
+            void this.handleUpdate(payload.new);
           },
         )
         .subscribe((status) => {

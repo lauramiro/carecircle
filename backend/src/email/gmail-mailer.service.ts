@@ -50,13 +50,13 @@ export class GmailMailerService {
       : fromAddress;
 
     const transport = this.getTransporter();
-    const info = await transport.sendMail({
+    const info = (await transport.sendMail({
       from,
       to: params.to,
       subject: params.subject,
       text: params.text,
       html: params.html,
-    });
+    })) as { messageId: string };
     this.logger.log(`invite_mail_sent messageId=${String(info.messageId)}`);
   }
 }

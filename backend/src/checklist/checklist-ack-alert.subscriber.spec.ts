@@ -80,7 +80,9 @@ describe('ChecklistAckAlertSubscriber', () => {
   });
 
   it('still checks low stock when overdue alert cancellation fails', async () => {
-    const cancelOpenAlert = vi.fn().mockRejectedValue(new Error('cancel failed'));
+    const cancelOpenAlert = vi
+      .fn()
+      .mockRejectedValue(new Error('cancel failed'));
     const maybeSendLowStockAlert = vi.fn().mockResolvedValue(undefined);
     const chain = {
       on: vi.fn().mockReturnThis(),

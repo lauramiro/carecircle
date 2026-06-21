@@ -1,9 +1,7 @@
 import { Body, Controller, Post, Logger } from '@nestjs/common';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { Groq } from 'groq-sdk';
 import { AiService } from './ai.service';
 import { AppConfigService } from '../config/app-config.service';
-import { buildSystemPrompt } from '../prompts/care-profile.prompt';
 
 export class AskQuestionDto {
   @IsString()

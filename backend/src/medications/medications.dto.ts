@@ -59,7 +59,9 @@ export class CreateMedicationDto {
   @IsString()
   endDate?: string;
 
-  @ValidateIf((o) => o.scheduleType !== 'as_needed' && !o.perpetual && !o.endDate)
+  @ValidateIf(
+    (o) => o.scheduleType !== 'as_needed' && !o.perpetual && !o.endDate,
+  )
   @IsOptional()
   @IsInt()
   @Min(1)
@@ -80,6 +82,11 @@ export class CreateMedicationDto {
   @IsOptional()
   @IsBoolean()
   takeWithFood?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  quantityOnHand?: number | null;
 }
 
 export class UpdateMedicationDto {
@@ -130,4 +137,9 @@ export class UpdateMedicationDto {
   @IsOptional()
   @IsInt()
   totalDoses?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  quantityOnHand?: number | null;
 }

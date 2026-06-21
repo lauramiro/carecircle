@@ -40,8 +40,13 @@ describe('SMS cancellation on acknowledgement (CC-102)', () => {
     alertRepo.cancelOpenAlert.mockImplementation(async () => {
       cancelled = true;
     });
-    alertRepo.findSmsDueAlerts.mockImplementation(async () => (cancelled ? [] : [dueAlert]));
-    checklistRepo.findById.mockResolvedValue({ id: 'item-1', status: 'overdue' });
+    alertRepo.findSmsDueAlerts.mockImplementation(async () =>
+      cancelled ? [] : [dueAlert],
+    );
+    checklistRepo.findById.mockResolvedValue({
+      id: 'item-1',
+      status: 'overdue',
+    });
     twilio.sendSms.mockResolvedValue({ sid: 'SM1' });
 
     smsService = new SmsDispatchService(
@@ -57,19 +62,27 @@ describe('SMS cancellation on acknowledgement (CC-102)', () => {
       on: vi.fn().mockReturnThis(),
       subscribe: vi.fn(),
     };
-    const client = { channel: vi.fn().mockReturnValue(chain), removeChannel: vi.fn() };
-    const supabase = { isEnabled: () => true, getClient: () => client as never };
+    const client = {
+      channel: vi.fn().mockReturnValue(chain),
+      removeChannel: vi.fn(),
+    };
+    const supabase = {
+      isEnabled: () => true,
+      getClient: () => client as never,
+    };
 
     const mockAlertRepo = {
       ...alertRepo,
       findCancelledAlertByItemId: vi.fn().mockResolvedValue(null),
     };
     const mockPushDispatch = { sendDismissToUsers: vi.fn().mockResolvedValue(undefined) };
+    const mockLowStockAlerts = { maybeSendLowStockAlert: vi.fn().mockResolvedValue(undefined) };
 
     const subscriber = new ChecklistAckAlertSubscriber(
       supabase as never,
       mockAlertRepo as never,
       mockPushDispatch as never,
+      mockLowStockAlerts as never,
     );
     subscriber.onModuleInit();
 
@@ -99,7 +112,10 @@ describe('SMS cancellation on acknowledgement (CC-102)', () => {
     await smsService.runTick();
 
     expect(alertRepo.cancelOpenAlert).not.toHaveBeenCalled();
-    expect(twilio.sendSms).toHaveBeenCalledWith('+447700900123', dueAlert.sms_body);
+    expect(twilio.sendSms).toHaveBeenCalledWith(
+      '+447700900123',
+      dueAlert.sms_body,
+    );
     expect(alertRepo.markSmsSent).toHaveBeenCalled();
   });
 });

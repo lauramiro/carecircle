@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, Post, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Post,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { SendGroupInviteEmailDto } from './dto/send-group-invite-email.dto';
 import { GroupInviteEmailService } from './group-invite-email.service';
 

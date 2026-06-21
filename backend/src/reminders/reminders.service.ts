@@ -25,7 +25,7 @@ interface AppointmentRow {
   location: string | null;
   attendees: string[] | null;
   patient_id: string;
-  reminders_sent_offsets: number[];
+  reminder_offsets: number[];
 }
 
 interface ProfileRow {
@@ -88,12 +88,17 @@ export class RemindersService {
   async runReminderCheckAt(now: Date): Promise<void> {
     if (!this.appConfig.cronsEnabled) return;
     if (!this.supabase.isEnabled()) {
-      this.logger.warn('reminders_cron_skipped: supabase service role not configured');
+      this.logger.warn(
+        'reminders_cron_skipped: supabase service role not configured',
+      );
       return;
     }
     for (const offsetMinutes of REMINDER_OFFSETS_MINUTES) {
       await this.processOffset(now, offsetMinutes).catch((err) =>
-        this.logger.warn(`reminders_offset_failed offset=${offsetMinutes}`, err),
+        this.logger.warn(
+          `reminders_offset_failed offset=${offsetMinutes}`,
+          err,
+        ),
       );
     }
     await this.processWeeklyWellbeingReminders(now).catch((err) =>
@@ -258,33 +263,47 @@ export class RemindersService {
   private async processOffset(now: Date, offsetMinutes: number): Promise<void> {
     const db = this.supabase.getClient();
     const targetTime = new Date(now.getTime() + offsetMinutes * 60_000);
-    const windowStart = new Date(targetTime.getTime() - WINDOW_MINUTES * 60_000);
+    const windowStart = new Date(
+      targetTime.getTime() - WINDOW_MINUTES * 60_000,
+    );
     const windowEnd = new Date(targetTime.getTime() + WINDOW_MINUTES * 60_000);
 
     const { data, error } = await db
       .from('appointments')
-      .select('id, title, start_time, location, attendees, patient_id, reminders_sent_offsets')
+      .select(
+        'id, title, start_time, location, attendees, patient_id, reminder_offsets',
+      )
       .gte('start_time', windowStart.toISOString())
       .lte('start_time', windowEnd.toISOString())
       .not('status', 'in', '("cancelled","completed","no_show")')
       .gt('start_time', now.toISOString());
 
     if (error) {
-      this.logger.error(`reminders_query_failed offset=${offsetMinutes} ${error.message}`);
+      this.logger.error(
+        `reminders_query_failed offset=${offsetMinutes} ${error.message}`,
+      );
       return;
     }
 
     const pending = ((data ?? []) as AppointmentRow[]).filter(
-      (a) => !((a.reminders_sent_offsets ?? []) as number[]).includes(offsetMinutes),
+      (a) =>
+        !((a.reminder_offsets ?? []) as number[]).includes(offsetMinutes),
     );
 
     if (!pending.length) return;
-    this.logger.log(`reminders_pending offset=${offsetMinutes} count=${pending.length}`);
+    this.logger.log(
+      `reminders_pending offset=${offsetMinutes} count=${pending.length}`,
+    );
 
-    await Promise.all(pending.map((a) => this.dispatchReminder(a, offsetMinutes)));
+    await Promise.all(
+      pending.map((a) => this.dispatchReminder(a, offsetMinutes)),
+    );
   }
 
-  private async dispatchReminder(appt: AppointmentRow, offsetMinutes: number): Promise<void> {
+  private async dispatchReminder(
+    appt: AppointmentRow,
+    offsetMinutes: number,
+  ): Promise<void> {
     const db = this.supabase.getClient();
     const attendeeIds = appt.attendees ?? [];
     if (!attendeeIds.length) {
@@ -298,31 +317,50 @@ export class RemindersService {
     ]);
 
     const groupId = patient?.group_id;
-    const frontendUrl = (this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173').replace(/\/$/, '');
+    const frontendUrl = (
+      this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173'
+    ).replace(/\/$/, '');
     const deepLinkUrl = groupId
       ? `${frontendUrl}/groups/${groupId}/appointments?apptId=${appt.id}`
       : frontendUrl;
 
     const label = offsetMinutes >= 1440 ? '24 hours' : '1 hour';
     const apptDate = new Date(appt.start_time);
-    const dateStr = apptDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-    const timeStr = apptDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = apptDate.toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    const timeStr = apptDate.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
     const locationStr = appt.location ? ` at ${appt.location}` : '';
 
     const title = `Reminder: ${appt.title}`;
     const body = `${appt.title} is in ${label} — ${dateStr}, ${timeStr}${locationStr}`;
 
     await Promise.all(
-      profiles.map((profile) => this.notifyUser(profile, title, body, deepLinkUrl, appt.id)),
+      profiles.map((profile) =>
+        this.notifyUser(profile, title, body, deepLinkUrl, appt.id),
+      ),
     );
 
     const { error } = await db
       .from('appointments')
-      .update({ reminders_sent_offsets: [...(appt.reminders_sent_offsets ?? []), offsetMinutes] })
+      .update({
+        reminder_offsets: [
+          ...(appt.reminder_offsets ?? []),
+          offsetMinutes,
+        ],
+      })
       .eq('id', appt.id);
 
     if (error) {
-      this.logger.error(`reminders_mark_sent_failed appt=${appt.id} ${error.message}`);
+      this.logger.error(
+        `reminders_mark_sent_failed appt=${appt.id} ${error.message}`,
+      );
     } else {
       this.logger.log(`reminders_sent appt=${appt.id} offset=${offsetMinutes}`);
     }
@@ -349,13 +387,17 @@ export class RemindersService {
       related_entity_id: appointmentId,
     });
     if (notifError) {
-      this.logger.warn(`in_app_notification_failed user=${profile.id} ${notifError.message}`);
+      this.logger.warn(
+        `in_app_notification_failed user=${profile.id} ${notifError.message}`,
+      );
     } else {
       channelsSent.push('in_app');
     }
 
     // Web push
-    await this.pushDispatch.sendToUsers([profile.id], { title, body, url }).catch(() => {});
+    await this.pushDispatch
+      .sendToUsers([profile.id], { title, body, url })
+      .catch(() => {});
     channelsSent.push('push');
 
     // Email (best-effort)
@@ -368,14 +410,19 @@ export class RemindersService {
           html: `<p>${body}</p><p><a href="${url}">View appointment</a></p>`,
         })
         .then(() => channelsSent.push('email'))
-        .catch(() => this.logger.warn(`reminder_email_failed user=${profile.id}`));
+        .catch(() =>
+          this.logger.warn(`reminder_email_failed user=${profile.id}`),
+        );
     }
 
-    this.logger.log(`reminder_dispatched user=${profile.id} channels=${channelsSent.join(',')}`);
+    this.logger.log(
+      `reminder_dispatched user=${profile.id} channels=${channelsSent.join(',')}`,
+    );
   }
 
   private async fetchProfiles(userIds: string[]): Promise<ProfileRow[]> {
-    const { data, error } = await this.supabase.getClient()
+    const { data, error } = await this.supabase
+      .getClient()
       .from('profiles')
       .select('id, email, full_name')
       .in('id', userIds);
@@ -387,13 +434,16 @@ export class RemindersService {
   }
 
   private async fetchPatient(patientId: string): Promise<PatientRow | null> {
-    const { data, error } = await this.supabase.getClient()
+    const { data, error } = await this.supabase
+      .getClient()
       .from('patients')
       .select('group_id')
       .eq('id', patientId)
       .maybeSingle();
     if (error) {
-      this.logger.warn(`fetch_patient_failed patient=${patientId} ${error.message}`);
+      this.logger.warn(
+        `fetch_patient_failed patient=${patientId} ${error.message}`,
+      );
       return null;
     }
     return data as PatientRow | null;

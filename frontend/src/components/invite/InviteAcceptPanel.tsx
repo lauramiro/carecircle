@@ -70,6 +70,24 @@ export default function InviteAcceptPanel({
           padding: '24px',
         }}
       >
+        <ol
+          aria-label="Onboarding progress"
+          className="mb-5"
+          style={{
+            display: 'grid',
+            gap: '10px',
+            marginTop: 0,
+            paddingLeft: '20px',
+            color: 'var(--color-text-secondary)',
+            fontSize: '13px',
+            lineHeight: 1.5,
+          }}
+        >
+          <li>Open your secure invitation link</li>
+          <li>Review the care circle details</li>
+          <li>Accept the invitation</li>
+          <li>Continue to the group dashboard</li>
+        </ol>
         <p
           className="mb-5"
           style={{

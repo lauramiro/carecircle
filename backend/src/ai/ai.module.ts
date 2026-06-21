@@ -9,5 +9,6 @@ import { SupabaseAdminModule } from '../integrations/supabase-admin.module';
   imports: [AppConfigModule, SupabaseAdminModule],
   controllers: [AiController],
   providers: [AiService, ProfileService],
+  exports: [AiService],
 })
 export class AiModule {}

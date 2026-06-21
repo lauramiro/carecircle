@@ -1,10 +1,18 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ChecklistMaterializationService } from '../checklist/checklist-materialization.service';
 import { ChecklistReconciliationService } from '../checklist/checklist-materialization.service';
 import { CareGroupRepository } from '../integrations/repositories/care-group.repository';
 import { MedicationRepository } from '../integrations/repositories/medication.repository';
 import type { MedicationRecord } from '../integrations/types';
-import type { CreateMedicationDto, UpdateMedicationDto } from './medications.dto';
+import type {
+  CreateMedicationDto,
+  UpdateMedicationDto,
+} from './medications.dto';
 
 const SCHEDULE_FIELDS = [
   'schedule_type',
@@ -20,9 +28,14 @@ const SCHEDULE_FIELDS = [
   'unit',
 ] as const;
 
-function scheduleAffectingChange(oldMed: MedicationRecord, changes: Record<string, unknown>): boolean {
+function scheduleAffectingChange(
+  oldMed: MedicationRecord,
+  changes: Record<string, unknown>,
+): boolean {
   const old = oldMed as unknown as Record<string, unknown>;
-  return SCHEDULE_FIELDS.some((field) => field in changes && changes[field] !== old[field]);
+  return SCHEDULE_FIELDS.some(
+    (field) => field in changes && changes[field] !== old[field],
+  );
 }
 
 @Injectable()
@@ -59,11 +72,15 @@ export class MedicationsService {
       route: dto.route ?? null,
       instructions: dto.instructions ?? null,
       take_with_food: dto.takeWithFood ?? null,
+      quantity_on_hand: dto.quantityOnHand ?? null,
     });
 
     if (med.schedule_type !== 'as_needed') {
       try {
-        await this.materialization.materializeForMedication(med.id, 'medication_create');
+        await this.materialization.materializeForMedication(
+          med.id,
+          'medication_create',
+        );
       } catch (err) {
         this.logger.error(`materialize_failed medicationId=${med.id}`, err);
         throw new InternalServerErrorException(
@@ -77,24 +94,34 @@ export class MedicationsService {
     return med;
   }
 
-  async update(groupId: string, medicationId: string, dto: UpdateMedicationDto) {
+  async update(
+    groupId: string,
+    medicationId: string,
+    dto: UpdateMedicationDto,
+  ) {
     void groupId;
     const oldMed = await this.medicationRepo.findById(medicationId);
     if (!oldMed) throw new NotFoundException('Medication not found');
 
     const changes: Record<string, unknown> = {};
-    if (dto.medicationName !== undefined) changes.medication_name = dto.medicationName;
+    if (dto.medicationName !== undefined)
+      changes.medication_name = dto.medicationName;
     if (dto.dose !== undefined) changes.dose = dto.dose;
     if (dto.unit !== undefined) changes.unit = dto.unit;
     if (dto.startDate !== undefined) changes.start_date = dto.startDate;
-    if (dto.scheduleType !== undefined) changes.schedule_type = dto.scheduleType;
-    if (dto.specificTimes !== undefined) changes.specific_times = dto.specificTimes;
-    if (dto.intervalHours !== undefined) changes.interval_hours = dto.intervalHours;
+    if (dto.scheduleType !== undefined)
+      changes.schedule_type = dto.scheduleType;
+    if (dto.specificTimes !== undefined)
+      changes.specific_times = dto.specificTimes;
+    if (dto.intervalHours !== undefined)
+      changes.interval_hours = dto.intervalHours;
     if (dto.daysOfWeek !== undefined) changes.days_of_week = dto.daysOfWeek;
     if (dto.dayOfMonth !== undefined) changes.day_of_month = dto.dayOfMonth;
     if (dto.perpetual !== undefined) changes.perpetual = dto.perpetual;
     if (dto.endDate !== undefined) changes.end_date = dto.endDate;
     if (dto.totalDoses !== undefined) changes.total_doses = dto.totalDoses;
+    if (dto.quantityOnHand !== undefined)
+      changes.quantity_on_hand = dto.quantityOnHand;
 
     const newMed = await this.medicationRepo.update(medicationId, changes);
 

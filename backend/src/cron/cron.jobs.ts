@@ -2,8 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { SmsDispatchService } from '../alerts/sms-dispatch.service';
 import { ChecklistMaterializationService } from '../checklist/checklist-materialization.service';
+import { MedicationLowStockAlertService } from '../checklist/medication-low-stock-alert.service';
 import { OverdueDetectionService } from '../checklist/overdue-detection.service';
 import { AppConfigService } from '../config/app-config.service';
+import { InsightsService } from '../insights/insights.service';
 
 @Injectable()
 export class ChecklistMaterializationCron {
@@ -79,6 +81,50 @@ export class SmsDispatchCron {
       await this.smsDispatch.runTick();
     } catch (err) {
       this.logger.warn('sms_cron_failed', err);
+    }
+  }
+}
+
+@Injectable()
+export class LowStockAlertCron {
+  private readonly logger = new Logger(LowStockAlertCron.name);
+
+  constructor(
+    private readonly lowStockAlerts: MedicationLowStockAlertService,
+    private readonly appConfig: AppConfigService,
+  ) {}
+
+  /** Every 5 minutes - retry low-stock alerts that may have missed realtime delivery. */
+  @Cron('*/5 * * * *')
+  async runEveryFiveMinutes(): Promise<void> {
+    this.logger.log('Low stock alert cron triggered (every 5 minutes)');
+    if (!this.appConfig.cronsEnabled) return;
+    try {
+      await this.lowStockAlerts.runPendingLowStockAlerts(100);
+    } catch (err) {
+      this.logger.warn('low_stock_alert_cron_failed', err);
+    }
+  }
+}
+
+@Injectable()
+export class WeeklyDigestCron {
+  private readonly logger = new Logger(WeeklyDigestCron.name);
+
+  constructor(
+    private readonly insightsService: InsightsService,
+    private readonly appConfig: AppConfigService,
+  ) {}
+
+  /** Every Monday at 8 AM. */
+  @Cron('0 8 * * 1')
+  async runEveryMonday(): Promise<void> {
+    this.logger.log('Weekly digest cron triggered (Every Monday 8AM)');
+    if (!this.appConfig.cronsEnabled) return;
+    try {
+      await this.insightsService.generateAllWeeklyDigests();
+    } catch (err) {
+      this.logger.warn('weekly_digest_cron_failed', err);
     }
   }
 }

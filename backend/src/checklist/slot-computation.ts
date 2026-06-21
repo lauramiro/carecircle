@@ -24,7 +24,31 @@ export interface DoseSlot {
   windowEnd: string;
 }
 
-export function medicationRecordToSlotMed(med: MedicationRecord): SlotMedication {
+export type ScheduleLogComparisonStatus =
+  | 'on_time'
+  | 'late'
+  | 'skipped'
+  | 'already_given'
+  | 'missing';
+
+export interface ScheduleLogInput {
+  checklistItemId: string;
+  scheduledAt: Date;
+  windowStart: string;
+  windowEnd: string;
+  status: 'due' | 'given' | 'overdue' | 'skipped' | 'archived';
+  givenAt: Date | null;
+}
+
+export interface ScheduleLogComparison {
+  checklistItemId: string;
+  status: ScheduleLogComparisonStatus;
+  minutesLate: number;
+}
+
+export function medicationRecordToSlotMed(
+  med: MedicationRecord,
+): SlotMedication {
   return {
     id: med.id,
     status: med.status,
@@ -63,7 +87,9 @@ export function formatMinutesAsTime(totalMinutes: number): string {
 }
 
 export function sortTimes(times: string[]): string[] {
-  return normalizeTimes(times).sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
+  return normalizeTimes(times).sort(
+    (a, b) => timeToMinutes(a) - timeToMinutes(b),
+  );
 }
 
 export function normalizeTimes(times: string[] | null | undefined): string[] {
@@ -85,7 +111,10 @@ function isWithinDateRange(med: SlotMedication, localDate: string): boolean {
   return true;
 }
 
-function expandIntervalTimes(startTime: string, intervalHours: number): string[] {
+function expandIntervalTimes(
+  startTime: string,
+  intervalHours: number,
+): string[] {
   const times: string[] = [];
   let minutes = timeToMinutes(startTime);
   const endOfDay = 24 * 60;
@@ -124,7 +153,12 @@ export function isMedicationScheduledOnDate(
       return diffDays >= 0 && diffDays % 14 === 0;
     }
     case 'monthly':
-      return toZonedTime(parseLocalDateInTimezone(localDate, timezone), timezone).getDate() === med.dayOfMonth;
+      return (
+        toZonedTime(
+          parseLocalDateInTimezone(localDate, timezone),
+          timezone,
+        ).getDate() === med.dayOfMonth
+      );
     default:
       return false;
   }
@@ -169,7 +203,10 @@ function estimateDosesPerDay(med: SlotMedication, timezone: string): number {
   return computeDoseTimesForDate(med, today, timezone).length || 1;
 }
 
-function computeLastEligibleDate(med: SlotMedication, timezone: string): string | null {
+function computeLastEligibleDate(
+  med: SlotMedication,
+  timezone: string,
+): string | null {
   if (med.perpetual) return null;
   if (med.endDate) return med.endDate;
   if (med.totalDoses == null) return null;
@@ -199,8 +236,7 @@ export function enumerateFutureDoseSlots(
 
   const now = afterInstant;
   const todayLocal = formatLocalDate(now, timezone);
-  const startLocal =
-    med.startDate > todayLocal ? med.startDate : todayLocal;
+  const startLocal = med.startDate > todayLocal ? med.startDate : todayLocal;
 
   const lastDate = computeLastEligibleDate(med, timezone);
   const slots: DoseSlot[] = [];
@@ -246,18 +282,69 @@ export function needsHorizonExtension(
   futureDueCount: number,
   timezone: string,
 ): boolean {
-  if (!med.perpetual && med.endDate == null && med.totalDoses == null) return false;
+  if (!med.perpetual && med.endDate == null && med.totalDoses == null)
+    return false;
   const dosesPerDay = estimateDosesPerDay(med, timezone);
   return futureDueCount < 14 * dosesPerDay;
 }
 
-export function buildDoseSummary(dose: number | null, unit: string | null): string {
+export function buildDoseSummary(
+  dose: number | null,
+  unit: string | null,
+): string {
   if (dose == null) return unit ?? '';
   return `${dose} ${unit ?? 'mg'}`.trim();
 }
 
+export function compareScheduleToLog(
+  input: ScheduleLogInput,
+): ScheduleLogComparison {
+  if (input.status === 'skipped') {
+    return {
+      checklistItemId: input.checklistItemId,
+      status: 'skipped',
+      minutesLate: 0,
+    };
+  }
+
+  if (input.status === 'given' && !input.givenAt) {
+    return {
+      checklistItemId: input.checklistItemId,
+      status: 'already_given',
+      minutesLate: 0,
+    };
+  }
+
+  if (!input.givenAt) {
+    return {
+      checklistItemId: input.checklistItemId,
+      status: 'missing',
+      minutesLate: 0,
+    };
+  }
+
+  const windowEnd = zonedDateTimeToUtc(
+    input.scheduledAt.toISOString().slice(0, 10),
+    input.windowEnd,
+    'UTC',
+  );
+  const minutesLate = Math.max(
+    0,
+    Math.floor((input.givenAt.getTime() - windowEnd.getTime()) / 60000),
+  );
+
+  return {
+    checklistItemId: input.checklistItemId,
+    status: minutesLate > 0 ? 'late' : 'on_time',
+    minutesLate,
+  };
+}
+
 export function minutesOverdue(scheduledAt: Date, now: Date): number {
-  return Math.max(0, Math.floor((now.getTime() - scheduledAt.getTime()) / 60000) - 30);
+  return Math.max(
+    0,
+    Math.floor((now.getTime() - scheduledAt.getTime()) / 60000) - 30,
+  );
 }
 
 export function buildDeepLinkUrl(
@@ -270,6 +357,9 @@ export function buildDeepLinkUrl(
   return `${base}/groups/${groupId}/checklist?date=${localDate}&item=${checklistItemId}`;
 }
 
-export function localDateFromScheduledAt(scheduledAt: Date, timezone: string): string {
+export function localDateFromScheduledAt(
+  scheduledAt: Date,
+  timezone: string,
+): string {
   return format(toZonedTime(scheduledAt, timezone), 'yyyy-MM-dd');
 }

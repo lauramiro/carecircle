@@ -13,7 +13,9 @@ vi.mock('web-push', () => ({
 
 import { PushDispatchService } from './push-dispatch.service';
 
-function makeAlert(overrides: Partial<MissedMedicationAlertRecord> = {}): MissedMedicationAlertRecord {
+function makeAlert(
+  overrides: Partial<MissedMedicationAlertRecord> = {},
+): MissedMedicationAlertRecord {
   return {
     id: 'alert-1',
     checklist_item_id: 'item-1',
@@ -55,7 +57,10 @@ describe('PushDispatchService', () => {
 
   it('returns allFailed when VAPID is not configured', async () => {
     const appConfig = { config: {} };
-    const service = new PushDispatchService(pushSubRepo as never, appConfig as never);
+    const service = new PushDispatchService(
+      pushSubRepo as never,
+      appConfig as never,
+    );
 
     const result = await service.dispatch(makeAlert());
 
@@ -84,13 +89,19 @@ describe('PushDispatchService', () => {
     ]);
     sendNotification.mockResolvedValue({ statusCode: 201 });
 
-    const service = new PushDispatchService(pushSubRepo as never, appConfig as never);
+    const service = new PushDispatchService(
+      pushSubRepo as never,
+      appConfig as never,
+    );
     const alert = makeAlert();
     const result = await service.dispatch(alert);
 
     expect(setVapidDetails).toHaveBeenCalled();
     expect(sendNotification).toHaveBeenCalledWith(
-      { endpoint: 'https://push.example/1', keys: { p256dh: 'key', auth: 'auth' } },
+      {
+        endpoint: 'https://push.example/1',
+        keys: { p256dh: 'key', auth: 'auth' },
+      },
       JSON.stringify({
         title: 'Missed medication',
         body: alert.push_body,
@@ -119,10 +130,96 @@ describe('PushDispatchService', () => {
         auth: 'auth',
       },
     ]);
-    sendNotification.mockRejectedValue(Object.assign(new Error('gone'), { statusCode: 410 }));
+    sendNotification.mockRejectedValue(
+      Object.assign(new Error('gone'), { statusCode: 410 }),
+    );
 
-    const service = new PushDispatchService(pushSubRepo as never, appConfig as never);
+    const service = new PushDispatchService(
+      pushSubRepo as never,
+      appConfig as never,
+    );
     const result = await service.dispatch(makeAlert());
+
+    expect(result.allFailed).toBe(true);
+    expect(result.log[0]).toMatchObject({ success: false, statusCode: 410 });
+  });
+
+  it('sendToUsers returns success details for generic pushes', async () => {
+    const appConfig = {
+      config: {
+        VAPID_PUBLIC_KEY: 'pub',
+        VAPID_PRIVATE_KEY: 'priv',
+        VAPID_SUBJECT: 'mailto:test@example.com',
+      },
+    };
+    pushSubRepo.findByUserIds.mockResolvedValue([
+      {
+        id: 'sub-1',
+        user_id: 'user-1',
+        platform: 'web_push',
+        endpoint: 'https://push.example/1',
+        p256dh: 'key',
+        auth: 'auth',
+      },
+    ]);
+    sendNotification.mockResolvedValue({ statusCode: 201 });
+
+    const service = new PushDispatchService(
+      pushSubRepo as never,
+      appConfig as never,
+    );
+    const result = await service.sendToUsers(['user-1'], {
+      title: 'Medication stock low',
+      body: 'Metformin has 10 doses remaining',
+      url: '/groups/group-1/medications',
+    });
+
+    expect(result.allFailed).toBe(false);
+    expect(result.log[0]).toMatchObject({ success: true, statusCode: 201 });
+    expect(sendNotification).toHaveBeenCalledWith(
+      {
+        endpoint: 'https://push.example/1',
+        keys: { p256dh: 'key', auth: 'auth' },
+      },
+      JSON.stringify({
+        title: 'Medication stock low',
+        body: 'Metformin has 10 doses remaining',
+        data: { url: '/groups/group-1/medications' },
+      }),
+    );
+  });
+
+  it('sendToUsers returns allFailed when generic push delivery fails', async () => {
+    const appConfig = {
+      config: {
+        VAPID_PUBLIC_KEY: 'pub',
+        VAPID_PRIVATE_KEY: 'priv',
+        VAPID_SUBJECT: 'mailto:test@example.com',
+      },
+    };
+    pushSubRepo.findByUserIds.mockResolvedValue([
+      {
+        id: 'sub-1',
+        user_id: 'user-1',
+        platform: 'web_push',
+        endpoint: 'https://push.example/1',
+        p256dh: 'key',
+        auth: 'auth',
+      },
+    ]);
+    sendNotification.mockRejectedValue(
+      Object.assign(new Error('gone'), { statusCode: 410 }),
+    );
+
+    const service = new PushDispatchService(
+      pushSubRepo as never,
+      appConfig as never,
+    );
+    const result = await service.sendToUsers(['user-1'], {
+      title: 'Medication stock low',
+      body: 'Metformin has 10 doses remaining',
+      url: '/groups/group-1/medications',
+    });
 
     expect(result.allFailed).toBe(true);
     expect(result.log[0]).toMatchObject({ success: false, statusCode: 410 });

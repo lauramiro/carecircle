@@ -46,37 +46,34 @@ export function HospitalSummaryPDF() {
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
- 
+
   const sharePDF = async () => {
-    if (!generatedPdf) return;
- 
+  if (!generatedPdf) return;
+
+  const fileName = `hospital-summary-${groupId || 'group'}.pdf`;
+  const file = new File([generatedPdf], fileName, { type: 'application/pdf' });
+
+  // Check if Web Share API is available AND can share files
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
-      // Create File object from Blob
-      const file = new File(
-        [generatedPdf],
-        `hospital-summary-${groupName}.pdf`,
-        { type: 'application/pdf' }
-      );
- 
-      // Check if Web Share API is available
-      if (navigator.share) {
-        await navigator.share({
-          title: `Hospital Visit Summary - ${groupName}`,
-          text: 'Care profile summary for hospital/emergency department',
-          files: [file],
-        });
-      } else {
-        // Fallback: Copy download link to clipboard
-        alert('Share API not supported. Please download the PDF instead.');
+      await navigator.share({
+        title: `Hospital Visit Summary - ${groupName}`,
+        text: 'Care profile summary for hospital/emergency department',
+        files: [file],
+      });
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('Share error:', err);
+        alert('Sharing failed. You can download the PDF instead.');
         downloadPDF();
       }
-    } catch (err: any) {
-      // User cancelled share or error occurred
-      if (err.name !== 'AbortError') {
-        setError('Failed to share PDF. Please try downloading instead.');
-      }
     }
-  };
+  } else {
+    // Fallback for browsers that don't support file sharing
+    alert('Your browser does not support sharing files. Please download the PDF.');
+    downloadPDF();
+  }
+};
  
   const handleRetry = () => {
     setError(null);

@@ -6,7 +6,13 @@ import { PushSubscriptionRepository } from '../integrations/repositories/push-su
 import type { MissedMedicationAlertRecord } from '../integrations/types';
 
 export interface PushDispatchResult {
-  log: Array<{ userId: string; subscriptionId: string; success: boolean; statusCode?: number; error?: string }>;
+  log: Array<{
+    userId: string;
+    subscriptionId: string;
+    success: boolean;
+    statusCode?: number;
+    error?: string;
+  }>;
   allFailed: boolean;
 }
 
@@ -33,7 +39,8 @@ export class PushDispatchService implements OnModuleInit {
   }
 
   private configureVapid(): void {
-    const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = this.appConfig.config;
+    const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } =
+      this.appConfig.config;
     if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !VAPID_SUBJECT) {
       this.logger.warn('VAPID keys not configured; Web Push disabled');
       return;
@@ -41,6 +48,7 @@ export class PushDispatchService implements OnModuleInit {
     webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
     this.vapidConfigured = true;
   }
+
 
   private configureFirebase(): void {
     const { FIREBASE_SERVICE_ACCOUNT_PATH } = process.env;
@@ -58,7 +66,9 @@ export class PushDispatchService implements OnModuleInit {
 
   async dispatch(alert: MissedMedicationAlertRecord): Promise<PushDispatchResult> {
     const log: PushDispatchResult['log'] = [];
-    const subscriptions = await this.pushSubRepo.findByUserIds(alert.push_recipient_user_ids);
+    const subscriptions = await this.pushSubRepo.findByUserIds(
+      alert.push_recipient_user_ids,
+    );
 
     if (!this.vapidConfigured && !this.firebaseConfigured || subscriptions.length === 0) {
       for (const userId of alert.push_recipient_user_ids) {
@@ -140,49 +150,123 @@ export class PushDispatchService implements OnModuleInit {
           statusCode,
           error: message,
         });
-        this.logger.warn(`push_failed subscriptionId=${sub.id} status=${statusCode ?? 'unknown'}`);
+        this.logger.warn(
+          `push_failed subscriptionId=${sub.id} status=${statusCode ?? 'unknown'}`,
+        );
       }
     }
 
     return { log, allFailed: successCount === 0 };
   }
 
-  async sendToUsers(userIds: string[], payload: GenericPushPayload): Promise<void> {
+  async sendToUsers(
+    userIds: string[],
+    payload: GenericPushPayload,
+  ): Promise<PushDispatchResult> {
+    const log: PushDispatchResult['log'] = [];
+
+    if (userIds.length === 0) return { log, allFailed: true };
+
     if (!this.vapidConfigured && !this.firebaseConfigured) {
       this.logger.warn('sendToUsers_skipped: Push not configured');
-      return;
+      for (const userId of userIds) {
+        log.push({
+          userId,
+          subscriptionId: 'none',
+          success: false,
+          error: 'push_not_configured',
+        });
+      }
+      return { log, allFailed: true };
     }
-    if (userIds.length === 0) return;
 
     const subscriptions = await this.pushSubRepo.findByUserIds(userIds);
     if (subscriptions.length === 0) {
-      this.logger.warn(`sendToUsers_no_subscriptions userIds=${userIds.join(',')}`);
-      return;
+      this.logger.warn(
+        `sendToUsers_no_subscriptions userIds=${userIds.join(',')}`,
+      );
+      for (const userId of userIds) {
+        log.push({
+          userId,
+          subscriptionId: 'none',
+          success: false,
+          error: 'no_subscription',
+        });
+      }
+      return { log, allFailed: true };
     }
-    await Promise.all(
-      subscriptions.map(async (sub) => {
-        try {
-          if (sub.platform === 'fcm' && this.firebaseConfigured) {
-            await admin.messaging().send({
-              token: sub.endpoint,
-              notification: { title: payload.title, body: payload.body },
+
+    let successCount = 0;
+    for (const sub of subscriptions) {
+      if (sub.platform === 'fcm' && !this.firebaseConfigured) {
+        log.push({
+          userId: sub.user_id,
+          subscriptionId: sub.id,
+          success: false,
+          error: 'fcm_not_configured',
+        });
+        continue;
+      }
+      if (sub.platform === 'web_push' && (!this.vapidConfigured || !sub.p256dh || !sub.auth)) {
+        log.push({
+          userId: sub.user_id,
+          subscriptionId: sub.id,
+          success: false,
+          error: 'unsupported_platform',
+        });
+        continue;
+      }
+
+      try {
+        let statusCode: number | undefined;
+        if (sub.platform === 'fcm') {
+          await admin.messaging().send({
+            token: sub.endpoint,
+            notification: { title: payload.title, body: payload.body },
+            data: { url: payload.url },
+          });
+          statusCode = 200;
+        } else {
+          const result = await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh as string, auth: sub.auth as string },
+            },
+            JSON.stringify({
+              title: payload.title,
+              body: payload.body,
               data: { url: payload.url },
-            });
-          } else if (sub.platform === 'web_push' && this.vapidConfigured && sub.p256dh && sub.auth) {
-            await webpush.sendNotification(
-              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-              JSON.stringify({ title: payload.title, body: payload.body, data: { url: payload.url } }),
-            );
-          }
-        } catch (err: unknown) {
-          const statusCode =
-            typeof err === 'object' && err !== null && 'statusCode' in err
-              ? Number((err as { statusCode: unknown }).statusCode)
-              : undefined;
-          this.logger.warn(`push_failed sub=${sub.id} status=${statusCode ?? 'unknown'} err=${err instanceof Error ? err.message : 'Unknown'}`);
+            }),
+          );
+          statusCode = result.statusCode;
         }
-      }),
-    );
+        successCount++;
+        log.push({
+          userId: sub.user_id,
+          subscriptionId: sub.id,
+          success: true,
+          statusCode,
+        });
+      } catch (err: unknown) {
+        const statusCode =
+          typeof err === 'object' && err !== null && 'statusCode' in err
+            ? Number((err as { statusCode: unknown }).statusCode)
+            : undefined;
+        const message = err instanceof Error ? err.message : 'push_failed';
+        log.push({
+          userId: sub.user_id,
+          subscriptionId: sub.id,
+          success: false,
+          statusCode,
+          error: message,
+        });
+        this.logger.warn(
+          `push_failed sub=${sub.id} status=${statusCode ?? 'unknown'}`,
+        );
+      }
+    }
+
+    return { log, allFailed: successCount === 0 };
   }
 
   /**

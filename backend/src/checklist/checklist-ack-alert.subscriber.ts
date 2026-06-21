@@ -2,16 +2,22 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { PushDispatchService } from '../alerts/push-dispatch.service';
 import { AlertRepository } from '../integrations/repositories/alert.repository';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
+import { MedicationLowStockAlertService } from './medication-low-stock-alert.service';
 
 @Injectable()
-export class ChecklistAckAlertSubscriber implements OnModuleInit, OnModuleDestroy {
+export class ChecklistAckAlertSubscriber
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(ChecklistAckAlertSubscriber.name);
-  private channel: ReturnType<ReturnType<SupabaseAdminClient['getClient']>['channel']> | null = null;
+  private channel: ReturnType<
+    ReturnType<SupabaseAdminClient['getClient']>['channel']
+  > | null = null;
 
   constructor(
     private readonly supabase: SupabaseAdminClient,
     private readonly alertRepo: AlertRepository,
     private readonly pushDispatch: PushDispatchService,
+    private readonly lowStockAlerts: MedicationLowStockAlertService,
   ) {}
 
   onModuleInit(): void {
@@ -95,6 +101,21 @@ export class ChecklistAckAlertSubscriber implements OnModuleInit, OnModuleDestro
       // Dismiss push failure is non-fatal — the DB row is already cancelled,
       // which prevents SMS escalation. The UI will also self-correct via Supabase Realtime.
       this.logger.warn(`dismiss_push_failed itemId=${itemId}`, err);
+    }
+
+    if (status !== 'given') return;
+
+    const medicationId = row.medication_id as string | undefined;
+    const groupId = row.group_id as string | undefined;
+    if (!medicationId || !groupId) return;
+
+    try {
+      await this.lowStockAlerts.maybeSendLowStockAlert({
+        medicationId,
+        groupId,
+      });
+    } catch (err) {
+      this.logger.warn(`low_stock_alert_failed itemId=${itemId}`, err);
     }
   }
 }

@@ -1,7 +1,26 @@
-export type MedicationStatus = 'active' | 'paused' | 'archived' | 'superseded' | 'discontinued';
-export type ScheduleType = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'as_needed';
-export type ChecklistItemStatus = 'due' | 'given' | 'overdue' | 'skipped' | 'archived';
-export type ChecklistScheduleStatus = 'pending' | 'done' | 'archived' | 'failed';
+export type MedicationStatus =
+  | 'active'
+  | 'paused'
+  | 'archived'
+  | 'superseded'
+  | 'discontinued';
+export type ScheduleType =
+  | 'daily'
+  | 'weekly'
+  | 'biweekly'
+  | 'monthly'
+  | 'as_needed';
+export type ChecklistItemStatus =
+  | 'due'
+  | 'given'
+  | 'overdue'
+  | 'skipped'
+  | 'archived';
+export type ChecklistScheduleStatus =
+  | 'pending'
+  | 'done'
+  | 'archived'
+  | 'failed';
 export type AlertStatus =
   | 'pending_push'
   | 'push_sent'
@@ -26,6 +45,9 @@ export interface MedicationRecord {
   status: MedicationStatus;
   perpetual: boolean;
   total_doses: number | null;
+  quantity_on_hand: number | null;
+  low_stock_alert_threshold_days: number;
+  low_stock_alert_sent_at: string | null;
   materialization_cursor_at: string | null;
 }
 

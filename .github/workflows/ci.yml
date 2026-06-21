@@ -11,7 +11,7 @@ on:
 
 jobs:
   frontend:
-    name: Frontend - CI Pipeline
+    name: Frontend - Build & Test
     runs-on: ubuntu-latest
     env:
       VITE_SUPABASE_URL: https://carecircle-ci.supabase.co
@@ -37,9 +37,13 @@ jobs:
         run: npm run lint
 
       - name: Unit Tests
+        env:
+          VITEST_JUNIT_SUITE_NAME: "Frontend Unit Tests"
         run: npm run test -- --reporter=default --reporter=junit --outputFile=unit-test-results.xml
 
       - name: Integration Tests
+        env:
+          VITEST_JUNIT_SUITE_NAME: "Frontend Integration Tests"
         run: npm run test:integration -- --reporter=default --reporter=junit --outputFile=integration-test-results.xml
 
       - name: Build
@@ -52,7 +56,7 @@ jobs:
           paths: "frontend/*-test-results.xml"
 
   backend:
-    name: Backend - CI Pipeline
+    name: Backend - Build & Test
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -76,6 +80,7 @@ jobs:
 
       - name: Unit Tests
         env:
+          VITEST_JUNIT_SUITE_NAME: "Backend Unit Tests"
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_TEST_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_TEST_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_TEST_SUBJECT }}
@@ -86,6 +91,7 @@ jobs:
 
       - name: Integration Tests
         env:
+          VITEST_JUNIT_SUITE_NAME: "Backend E2E Tests"
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_TEST_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_TEST_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_TEST_SUBJECT }}

@@ -61,10 +61,12 @@ describe('ChecklistAckAlertSubscriber', () => {
     await vi.waitFor(() =>
       expect(cancelOpenAlert).toHaveBeenCalledWith('chk-1', 'marked_given'),
     );
-    expect(maybeSendLowStockAlert).toHaveBeenCalledWith({
-      medicationId: 'med-1',
-      groupId: 'group-1',
-    });
+    await vi.waitFor(() =>
+      expect(maybeSendLowStockAlert).toHaveBeenCalledWith({
+        medicationId: 'med-1',
+        groupId: 'group-1',
+      }),
+    );
   });
 
   it('calls cancelOpenAlert with marked_skipped for skipped status', async () => {
@@ -95,6 +97,7 @@ describe('ChecklistAckAlertSubscriber', () => {
     const subscriber = new ChecklistAckAlertSubscriber(
       supabase as never,
       { cancelOpenAlert } as never,
+      { sendDismissToUsers: vi.fn() } as never,
       { maybeSendLowStockAlert } as never,
     );
     subscriber.onModuleInit();

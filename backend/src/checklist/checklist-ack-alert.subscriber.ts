@@ -56,66 +56,51 @@ export class ChecklistAckAlertSubscriber
     const itemId = row.id as string | undefined;
     if (!itemId) return;
 
-    // Map the exact checklist action to a descriptive cancellation reason.
     const reason = status === 'given' ? 'marked_given' : 'marked_skipped';
 
     try {
       await this.alertRepo.cancelOpenAlert(itemId, reason);
       this.logger.log(`alert_cancelled itemId=${itemId} reason=${reason}`);
-    } catch (err) {
-      this.logger.warn(`alert_cancel_failed itemId=${itemId}`, err);
-      return; // If DB cancel failed, do not attempt the dismiss push.
-    }
 
-    // Determine the acting user so we can exclude their devices from the dismiss push.
-    // The checklist_items table exposes given_by_carer_id and given_by_user_id;
-    // we union both to be safe, then filter from the recipient list.
-    const actorIds = new Set<string>(
-      [
-        row.given_by_carer_id as string | null,
-        row.given_by_user_id as string | null,
-      ].filter((id): id is string => typeof id === 'string' && id.length > 0),
-    );
-
-    try {
       const alert = await this.alertRepo.findCancelledAlertByItemId(itemId);
-      if (!alert) {
-        // No alert row found (e.g. item was never overdue). Nothing to dismiss.
-        return;
+      if (alert) {
+        const actorIds = new Set<string>(
+          [
+            row.given_by_carer_id as string | null,
+            row.given_by_user_id as string | null,
+          ].filter((id): id is string => typeof id === 'string' && id.length > 0),
+        );
+
+        const recipientIds = alert.push_recipient_user_ids.filter(
+          (id) => !actorIds.has(id),
+        );
+
+        if (recipientIds.length > 0) {
+          await this.pushDispatch.sendDismissToUsers(recipientIds, itemId, alert.group_id);
+          this.logger.log(
+            `dismiss_push_sent itemId=${itemId} recipients=${recipientIds.length}`,
+          );
+        } else {
+          this.logger.log(`dismiss_push_skipped itemId=${itemId} reason=no_other_recipients`);
+        }
       }
-
-      const recipientIds = alert.push_recipient_user_ids.filter(
-        (id) => !actorIds.has(id),
-      );
-
-      if (recipientIds.length === 0) {
-        this.logger.log(`dismiss_push_skipped itemId=${itemId} reason=no_other_recipients`);
-        return;
-      }
-
-      await this.pushDispatch.sendDismissToUsers(recipientIds, itemId, alert.group_id);
-      this.logger.log(
-        `dismiss_push_sent itemId=${itemId} recipients=${recipientIds.length}`,
-      );
     } catch (err) {
-      // Dismiss push failure is non-fatal — the DB row is already cancelled,
-      // which prevents SMS escalation. The UI will also self-correct via Supabase Realtime.
-      this.logger.warn(`dismiss_push_failed itemId=${itemId}`, err);
+      this.logger.warn(`alert_cancel_or_dismiss_failed itemId=${itemId}`, err);
     }
 
-    if (status !== 'given') return;
-
-    const medicationId = row.medication_id as string | undefined;
-    const groupId = row.group_id as string | undefined;
-    if (!medicationId || !groupId) return;
-
-    try {
-      await this.lowStockAlerts.maybeSendLowStockAlert({
-        medicationId,
-        groupId,
-      });
-    } catch (err) {
-      this.logger.warn(`low_stock_alert_failed itemId=${itemId}`, err);
+    if (status === 'given') {
+      const medicationId = row.medication_id as string | undefined;
+      const groupId = row.group_id as string | undefined;
+      if (medicationId && groupId) {
+        try {
+          await this.lowStockAlerts.maybeSendLowStockAlert({
+            medicationId,
+            groupId,
+          });
+        } catch (err) {
+          this.logger.warn(`low_stock_alert_failed itemId=${itemId}`, err);
+        }
+      }
     }
   }
 }

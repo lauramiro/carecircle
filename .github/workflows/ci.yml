@@ -37,13 +37,19 @@ jobs:
         run: npm run lint
 
       - name: Unit Tests
-        run: npm run test
+        run: npm run test -- --reporter=default --reporter=junit --outputFile=unit-test-results.xml
 
       - name: Integration Tests
-        run: npm run test:integration
+        run: npm run test:integration -- --reporter=default --reporter=junit --outputFile=integration-test-results.xml
 
       - name: Build
         run: npm run build
+
+      - name: Publish Test Summary
+        uses: test-summary/action@v2
+        if: always()
+        with:
+          paths: "frontend/*-test-results.xml"
 
   backend:
     name: Backend - CI Pipeline
@@ -76,7 +82,7 @@ jobs:
           VAPID_TEST_ENDPOINT: ${{ secrets.VAPID_TEST_ENDPOINT }}
           VAPID_TEST_P256DH: ${{ secrets.VAPID_TEST_P256DH }}
           VAPID_TEST_AUTH: ${{ secrets.VAPID_TEST_AUTH }}
-        run: npm run test
+        run: npm run test -- --reporter=default --reporter=junit --outputFile=unit-test-results.xml
 
       - name: Integration Tests
         env:
@@ -86,7 +92,13 @@ jobs:
           VAPID_TEST_ENDPOINT: ${{ secrets.VAPID_TEST_ENDPOINT }}
           VAPID_TEST_P256DH: ${{ secrets.VAPID_TEST_P256DH }}
           VAPID_TEST_AUTH: ${{ secrets.VAPID_TEST_AUTH }}
-        run: npm run test:e2e
+        run: npm run test:e2e -- --reporter=default --reporter=junit --outputFile=e2e-test-results.xml
 
       - name: Build
         run: npm run build
+
+      - name: Publish Test Summary
+        uses: test-summary/action@v2
+        if: always()
+        with:
+          paths: "backend/*-test-results.xml"

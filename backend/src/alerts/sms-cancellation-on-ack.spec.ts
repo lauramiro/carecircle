@@ -60,7 +60,17 @@ describe('SMS cancellation on acknowledgement (CC-102)', () => {
     const client = { channel: vi.fn().mockReturnValue(chain), removeChannel: vi.fn() };
     const supabase = { isEnabled: () => true, getClient: () => client as never };
 
-    const subscriber = new ChecklistAckAlertSubscriber(supabase as never, alertRepo as never);
+    const mockAlertRepo = {
+      ...alertRepo,
+      findCancelledAlertByItemId: vi.fn().mockResolvedValue(null),
+    };
+    const mockPushDispatch = { sendDismissToUsers: vi.fn().mockResolvedValue(undefined) };
+
+    const subscriber = new ChecklistAckAlertSubscriber(
+      supabase as never,
+      mockAlertRepo as never,
+      mockPushDispatch as never,
+    );
     subscriber.onModuleInit();
 
     const handler = chain.on.mock.calls[0][2] as (payload: {
@@ -77,7 +87,7 @@ describe('SMS cancellation on acknowledgement (CC-102)', () => {
 
     // t+5: carer marks Given on any device — Realtime cancels open alert
     ackAtT5();
-    await vi.waitFor(() => expect(alertRepo.cancelOpenAlert).toHaveBeenCalledWith('item-1', 'acknowledged'));
+    await vi.waitFor(() => expect(alertRepo.cancelOpenAlert).toHaveBeenCalledWith('item-1', 'marked_given'));
 
     // t+10: SMS cron — cancelled alert excluded from query
     await smsService.runTick();

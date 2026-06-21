@@ -99,7 +99,9 @@ export class PushDispatchService implements OnModuleInit {
           await admin.messaging().send({
             token: sub.endpoint,
             notification: { title: 'Missed medication', body: alert.push_body },
-            data: { url: alert.deep_link_url },
+            // checklistItemId allows the service worker to tag the notification
+            // so it can be targeted for silent dismissal later.
+            data: { url: alert.deep_link_url, checklistItemId: alert.checklist_item_id },
           });
           statusCode = 200;
         } else {
@@ -111,6 +113,8 @@ export class PushDispatchService implements OnModuleInit {
             JSON.stringify({
               title: 'Missed medication',
               body: alert.push_body,
+              // tag is used by the service worker for getNotifications({ tag })
+              tag: alert.checklist_item_id,
               data: { url: alert.deep_link_url },
             }),
           );
@@ -176,6 +180,67 @@ export class PushDispatchService implements OnModuleInit {
               ? Number((err as { statusCode: unknown }).statusCode)
               : undefined;
           this.logger.warn(`push_failed sub=${sub.id} status=${statusCode ?? 'unknown'} err=${err instanceof Error ? err.message : 'Unknown'}`);
+        }
+      }),
+    );
+  }
+
+  /**
+   * Sends a silent "dismiss" push to all subscriptions for the given users.
+   * The payload carries no `notification` object — the service worker intercepts
+   * it, calls getNotifications({ tag: checklistItemId }), and closes any matching
+   * notification without ever showing a new banner.
+   *
+   * TTL is intentionally short (300 s) so that a push-server-queued dismissal
+   * doesn't arrive on a device that comes back online hours later.
+   */
+  async sendDismissToUsers(
+    userIds: string[],
+    checklistItemId: string,
+    groupId: string,
+  ): Promise<void> {
+    if (!this.vapidConfigured && !this.firebaseConfigured) {
+      this.logger.warn('sendDismissToUsers_skipped: Push not configured');
+      return;
+    }
+    if (userIds.length === 0) return;
+
+    const subscriptions = await this.pushSubRepo.findByUserIds(userIds);
+    if (subscriptions.length === 0) {
+      this.logger.warn(`sendDismissToUsers_no_subscriptions userIds=${userIds.join(',')}`);
+      return;
+    }
+
+    await Promise.all(
+      subscriptions.map(async (sub) => {
+        try {
+          if (sub.platform === 'fcm' && this.firebaseConfigured) {
+            // Data-only FCM message — no notification field means no banner is shown.
+            await admin.messaging().send({
+              token: sub.endpoint,
+              data: {
+                type: 'dismiss_alert',
+                checklistItemId,
+                groupId,
+              },
+              android: { priority: 'high' },
+              apns: { payload: { aps: { contentAvailable: true } } },
+            });
+          } else if (sub.platform === 'web_push' && this.vapidConfigured && sub.p256dh && sub.auth) {
+            await webpush.sendNotification(
+              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+              JSON.stringify({ type: 'dismiss_alert', checklistItemId, groupId }),
+              { TTL: 300 }, // 5-minute TTL — enough for brief network drops
+            );
+          }
+        } catch (err: unknown) {
+          const statusCode =
+            typeof err === 'object' && err !== null && 'statusCode' in err
+              ? Number((err as { statusCode: unknown }).statusCode)
+              : undefined;
+          this.logger.warn(
+            `dismiss_push_failed sub=${sub.id} status=${statusCode ?? 'unknown'} err=${err instanceof Error ? err.message : 'Unknown'}`,
+          );
         }
       }),
     );

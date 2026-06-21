@@ -78,25 +78,21 @@ export async function getWeeklyShiftAssignments(
 export async function saveWeeklyShiftAssignment(
   payload: SaveWeeklyShiftAssignmentPayload,
 ): Promise<WeeklyShiftAssignment> {
-  const { data, error } = await supabase
-    .from('weekly_shift_assignments')
-    .upsert(
-      {
-        group_id: payload.groupId,
-        shift_date: payload.shiftDate,
-        shift_slot: payload.slot,
-        assigned_caregiver_id: payload.assignedCaregiverId,
-      },
-      { onConflict: 'group_id,shift_date,shift_slot' },
-    )
-    .select(weeklyShiftAssignmentSelect)
-    .single();
+  const response = await fetch('/api/shifts/assignments', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
 
-  if (error || !data) {
-    console.error('saveWeeklyShiftAssignment:', error);
-    throw new Error('Unable to save the shift assignment');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Unable to save the shift assignment' }));
+    console.error('saveWeeklyShiftAssignment:', errorData);
+    throw new Error(errorData.message || 'Unable to save the shift assignment');
   }
 
+  const data = await response.json();
   return mapWeeklyShiftAssignment(data as WeeklyShiftAssignmentRow);
 }
 

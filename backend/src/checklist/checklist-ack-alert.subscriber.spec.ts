@@ -4,6 +4,8 @@ import { ChecklistAckAlertSubscriber } from './checklist-ack-alert.subscriber';
 describe('ChecklistAckAlertSubscriber', () => {
   function createSubscriber() {
     const cancelOpenAlert = vi.fn().mockResolvedValue(undefined);
+    const findCancelledAlertByItemId = vi.fn().mockResolvedValue(null);
+    const sendDismissToUsers = vi.fn().mockResolvedValue(undefined);
     const chain = {
       on: vi.fn().mockReturnThis(),
       subscribe: vi.fn(),
@@ -16,7 +18,8 @@ describe('ChecklistAckAlertSubscriber', () => {
 
     const subscriber = new ChecklistAckAlertSubscriber(
       supabase as never,
-      { cancelOpenAlert } as never,
+      { cancelOpenAlert, findCancelledAlertByItemId } as never,
+      { sendDismissToUsers } as never,
     );
     subscriber.onModuleInit();
 
@@ -24,10 +27,10 @@ describe('ChecklistAckAlertSubscriber', () => {
       new: Record<string, unknown>;
     }) => void;
 
-    return { subscriber, handler, cancelOpenAlert, client, chain };
+    return { subscriber, handler, cancelOpenAlert, findCancelledAlertByItemId, sendDismissToUsers, client, chain };
   }
 
-  it('calls cancelOpenAlert for given status updates', async () => {
+  it('calls cancelOpenAlert with marked_given for given status', async () => {
     const { handler, cancelOpenAlert } = createSubscriber();
 
     handler({ new: { id: 'chk-1', status: 'due' } });
@@ -35,17 +38,51 @@ describe('ChecklistAckAlertSubscriber', () => {
 
     handler({ new: { id: 'chk-1', status: 'given' } });
     await vi.waitFor(() =>
-      expect(cancelOpenAlert).toHaveBeenCalledWith('chk-1', 'acknowledged'),
+      expect(cancelOpenAlert).toHaveBeenCalledWith('chk-1', 'marked_given'),
     );
   });
 
-  it('calls cancelOpenAlert for skipped status updates', async () => {
+  it('calls cancelOpenAlert with marked_skipped for skipped status', async () => {
     const { handler, cancelOpenAlert } = createSubscriber();
 
     handler({ new: { id: 'chk-2', status: 'skipped' } });
     await vi.waitFor(() =>
-      expect(cancelOpenAlert).toHaveBeenCalledWith('chk-2', 'acknowledged'),
+      expect(cancelOpenAlert).toHaveBeenCalledWith('chk-2', 'marked_skipped'),
     );
+  });
+
+  it('fires sendDismissToUsers excluding the acting user', async () => {
+    const { handler, cancelOpenAlert, findCancelledAlertByItemId, sendDismissToUsers } = createSubscriber();
+
+    findCancelledAlertByItemId.mockResolvedValue({
+      id: 'alert-1',
+      group_id: 'group-1',
+      checklist_item_id: 'chk-1',
+      push_recipient_user_ids: ['user-a', 'user-b', 'user-c'],
+    });
+
+    handler({ new: { id: 'chk-1', status: 'given', given_by_carer_id: 'user-a' } });
+    await vi.waitFor(() => expect(cancelOpenAlert).toHaveBeenCalled());
+    await vi.waitFor(() =>
+      expect(sendDismissToUsers).toHaveBeenCalledWith(
+        expect.not.arrayContaining(['user-a']),
+        'chk-1',
+        'group-1',
+      ),
+    );
+    const [calledIds] = sendDismissToUsers.mock.calls[0] as [string[], string, string];
+    expect(calledIds).toEqual(['user-b', 'user-c']);
+  });
+
+  it('does not fire sendDismissToUsers when no alert row exists', async () => {
+    const { handler, sendDismissToUsers } = createSubscriber();
+    // findCancelledAlertByItemId returns null by default
+    handler({ new: { id: 'chk-3', status: 'given' } });
+    await vi.waitFor(() => {
+      // Give the async handleUpdate time to settle
+      return new Promise<void>((resolve) => setTimeout(resolve, 50));
+    });
+    expect(sendDismissToUsers).not.toHaveBeenCalled();
   });
 
   it('does not subscribe when Supabase admin client is disabled', () => {
@@ -56,6 +93,7 @@ describe('ChecklistAckAlertSubscriber', () => {
     const subscriber = new ChecklistAckAlertSubscriber(
       supabase as never,
       { cancelOpenAlert } as never,
+      { sendDismissToUsers: vi.fn() } as never,
     );
     subscriber.onModuleInit();
 
@@ -75,6 +113,7 @@ describe('ChecklistAckAlertSubscriber', () => {
     const subscriber = new ChecklistAckAlertSubscriber(
       supabase as never,
       { cancelOpenAlert } as never,
+      { sendDismissToUsers: vi.fn() } as never,
     );
     subscriber.onModuleInit();
     subscriber.onModuleDestroy();

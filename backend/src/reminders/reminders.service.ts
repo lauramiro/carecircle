@@ -15,6 +15,7 @@ const WELLBEING_REMINDER_BODY =
   'How are you doing this week? Take 2 minutes for your wellbeing check-in';
 const PATIENT_WELLBEING_NUDGE_TYPE = 'patient_wellbeing_checkin_nudge';
 const PATIENT_WELLBEING_NUDGE_TITLE = 'Daily wellbeing check-in';
+const SHIFT_REMINDER_TYPE = 'shift_reminder';
 const EVENING_SHIFT_SLOT = 'evening';
 
 interface AppointmentRow {
@@ -62,6 +63,12 @@ interface EveningShiftAssignmentRow {
   assigned_caregiver_id: string | null;
 }
 
+interface UpcomingShiftRow {
+  group_id: string;
+  shift_slot: string;
+  assigned_caregiver_id: string;
+}
+
 @Injectable()
 export class RemindersService {
   private readonly logger = new Logger(RemindersService.name);
@@ -95,6 +102,105 @@ export class RemindersService {
     await this.processEveningPatientWellbeingNudges(now).catch((err) =>
       this.logger.warn('patient_wellbeing_nudges_failed', err),
     );
+    await this.processUpcomingShiftReminders(now).catch((err) =>
+      this.logger.warn('upcoming_shift_reminders_failed', err),
+    );
+  }
+
+  private async processUpcomingShiftReminders(now: Date): Promise<void> {
+    const memberships = await this.fetchPrimaryCarerMemberships();
+    if (!memberships.length) return;
+
+    const groupIds = [...new Set(memberships.map((membership) => membership.group_id))];
+    const groupTimezones = await this.fetchCareGroupTimezones(groupIds);
+
+    const timezoneByGroupId = new Map(
+      groupTimezones.map((group) => [group.id, group.preferred_timezone ?? 'UTC']),
+    );
+
+    // Hardcode predefined shift boundaries
+    const shiftBounds = [
+      { slot: 'morning', hour: 8 },
+      { slot: 'afternoon', hour: 12 },
+      { slot: 'evening', hour: 16 },
+      { slot: 'overnight', hour: 20 },
+    ];
+
+    for (const group of groupTimezones) {
+      const timezone = group.preferred_timezone ?? 'UTC';
+
+      for (const bound of shiftBounds) {
+        // We want to trigger exactly 2 hours BEFORE the shift starts.
+        // So target start time = (bound.hour)
+        // target reminder time = (bound.hour - 2)
+        const reminderHour = bound.hour - 2;
+        if (!this.isWithinDailyReminderWindow(now, timezone, reminderHour, 0)) {
+          continue;
+        }
+
+        const shiftDate = this.getLocalDateForTimezone(now, timezone);
+        
+        await this.dispatchShiftReminderForGroup(group.id, shiftDate, bound.slot);
+      }
+    }
+  }
+
+  private async dispatchShiftReminderForGroup(groupId: string, shiftDate: string, shiftSlot: string): Promise<void> {
+    const { data: assignment, error } = await this.supabase
+      .getClient()
+      .from('weekly_shift_assignments')
+      .select('assigned_caregiver_id')
+      .eq('group_id', groupId)
+      .eq('shift_date', shiftDate)
+      .eq('shift_slot', shiftSlot)
+      .maybeSingle();
+
+    if (error || !assignment || !assignment.assigned_caregiver_id) {
+      return;
+    }
+
+    const assignedCaregiverId = assignment.assigned_caregiver_id;
+    const reminderKey = `${groupId}:${shiftDate}:${shiftSlot}`;
+
+    const alreadySent = await this.hasExistingNotification(
+      assignedCaregiverId,
+      SHIFT_REMINDER_TYPE,
+      reminderKey,
+    );
+
+    if (alreadySent) return;
+
+    const patient = await this.fetchPatientForGroup(groupId);
+    const patientName = patient ? patient.full_name : 'the patient';
+    const title = 'Upcoming Shift';
+    const body = `Your ${shiftSlot} shift for ${patientName} starts in 2 hours`;
+
+    const frontendUrl = (this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173').replace(/\/$/, '');
+    const actionUrl = `${frontendUrl}/groups/${groupId}/schedule`;
+
+    const { error: notifError } = await this.supabase.getClient().from('notifications').insert({
+      user_id: assignedCaregiverId,
+      type: SHIFT_REMINDER_TYPE,
+      title,
+      body,
+      action_url: actionUrl,
+      related_entity_type: 'weekly_shift_assignment',
+      related_entity_id: reminderKey,
+      sent_via: ['push'],
+    });
+
+    if (notifError) {
+      this.logger.warn(`insert_shift_reminder_failed user=${assignedCaregiverId} ${notifError.message}`);
+      return;
+    }
+
+    await this.pushDispatch
+      .sendToUsers([assignedCaregiverId], {
+        title,
+        body,
+        url: actionUrl,
+      })
+      .catch((err) => this.logger.warn(`shift_reminder_push_failed user=${assignedCaregiverId}`, err));
   }
 
   private async processWeeklyWellbeingReminders(now: Date): Promise<void> {

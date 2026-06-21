@@ -52,6 +52,9 @@ function makeRecord(
     status: 'active',
     perpetual: true,
     total_doses: null,
+    quantity_on_hand: null,
+    low_stock_alert_threshold_days: 7,
+    low_stock_alert_sent_at: null,
     materialization_cursor_at: null,
     ...overrides,
   };

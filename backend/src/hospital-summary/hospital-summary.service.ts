@@ -37,6 +37,12 @@ export interface GPContact {
   address?: string;
 }
 
+export interface EmergencyContact {
+  name: string;
+  role: string;
+  phone: string;
+}
+
 export interface HospitalSummaryDocument {
   fileName: string;
   documentType: string;
@@ -59,7 +65,10 @@ export interface HospitalSummaryData {
   
   // Care Team
   gpContacts: GPContact[];
-  
+
+  // Emergency contacts
+  emergencyContacts: EmergencyContact[];
+
   // Recent Care Data
   careNotesSummary: CareNoteEntry[];
   
@@ -119,6 +128,9 @@ export class HospitalSummaryService {
         validationErrors.push('No GP contacts found for patient');
       }
 
+      // Step 4b: Fetch emergency contacts
+      const emergencyContacts = await this.getEmergencyContacts(patientId);
+
       // Step 5: Fetch 7-day care notes summary
       const careNotesSummary = await this.getCareNotesSummary(patientId);
       if (!careNotesSummary || careNotesSummary.length === 0) {
@@ -147,6 +159,9 @@ export class HospitalSummaryService {
 
         // Care Team
         gpContacts: gpContacts || [],
+
+        // Emergency contacts
+        emergencyContacts: emergencyContacts || [],
 
         // Recent Care Data
         careNotesSummary: careNotesSummary || [],
@@ -293,6 +308,31 @@ export class HospitalSummaryService {
         phone: gp.phone,
         email: gp.email,
         address: gp.address,
+      })) || []
+    );
+  }
+
+  /**
+   * Fetch active emergency contacts for patient, ordered for display
+   */
+  private async getEmergencyContacts(patientId: string): Promise<EmergencyContact[]> {
+    const { data, error } = await this.supabase.getClient()
+      .from('emergency_contacts')
+      .select('contact_name, label, phone')
+      .eq('patient_id', patientId)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching emergency contacts:', error);
+      return [];
+    }
+
+    return (
+      data?.map((contact) => ({
+        name: contact.contact_name,
+        role: contact.label,
+        phone: contact.phone,
       })) || []
     );
   }

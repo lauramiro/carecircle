@@ -40,6 +40,7 @@ export class PDFGenerationService {
         this.addMedications(doc, summaryData);
         this.addConditions(doc, summaryData);
         this.addAllergies(doc, summaryData);
+        this.addEmergencyContacts(doc, summaryData);
         this.addGPContacts(doc, summaryData);
         this.addCareNotes(doc, summaryData);
         this.addFlaggedPatterns(doc, summaryData);
@@ -177,6 +178,23 @@ export class PDFGenerationService {
         .font('Helvetica')
         .text(`${idx + 1}. ${allergy}`, { indent: 20 });
     });
+
+    doc.moveDown();
+  }
+
+  private addEmergencyContacts(doc: any, data: HospitalSummaryData) {
+    if (data.emergencyContacts.length === 0) return;
+
+    this.ensureSpace(doc, 3);
+    this.addSectionTitle(doc, 'EMERGENCY CONTACTS');
+
+    for (const contact of data.emergencyContacts) {
+      this.ensureSpace(doc, 1);
+      doc
+        .fontSize(11)
+        .font('Helvetica')
+        .text(`${contact.name} (${contact.role}) — ${contact.phone}`, { indent: 20 });
+    }
 
     doc.moveDown();
   }

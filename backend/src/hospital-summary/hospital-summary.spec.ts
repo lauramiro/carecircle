@@ -58,6 +58,12 @@ const GP_CONTACTS: Record<string, Record<string, unknown>[]> = {
   ],
 };
 
+const EMERGENCY_CONTACTS: Record<string, Record<string, unknown>[]> = {
+  'test-patient-001': [
+    { contact_name: 'Mary Smith', label: 'Daughter', phone: '+447700900123' },
+  ],
+};
+
 const JOURNAL_BY_GROUP: Record<string, Record<string, unknown>[]> = {
   'group-001': [
     { created_at: isoNow(), content: '[NEUTRAL] Patient stable overnight.' },
@@ -99,6 +105,11 @@ const resolve = (
     case 'gp_contacts':
       return {
         data: GP_CONTACTS[filters.patient_id as string] ?? [],
+        error: null,
+      };
+    case 'emergency_contacts':
+      return {
+        data: EMERGENCY_CONTACTS[filters.patient_id as string] ?? [],
         error: null,
       };
     case 'handover_journal_entries':
@@ -193,6 +204,20 @@ describe('HospitalSummaryService', () => {
       expect(result.medications.length).toBeGreaterThan(0);
       expect(result.conditions.length).toBeGreaterThan(0);
       expect(result.allergies.length).toBeGreaterThan(0);
+    });
+
+    it('should include emergency contacts sourced from the emergency_contacts table', async () => {
+      const result = await service.assembleHospitalSummary('test-patient-001');
+
+      expect(result.emergencyContacts).toEqual([
+        { name: 'Mary Smith', role: 'Daughter', phone: '+447700900123' },
+      ]);
+    });
+
+    it('should return an empty emergency contacts list when none are stored', async () => {
+      const result = await service.assembleHospitalSummary('patient-incomplete-001');
+
+      expect(result.emergencyContacts).toEqual([]);
     });
 
     it('should fail loudly if patient not found', async () => {

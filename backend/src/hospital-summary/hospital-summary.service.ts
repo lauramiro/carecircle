@@ -417,30 +417,30 @@ export class HospitalSummaryService {
       return [];
     }
 
-    const flaggedDocuments: HospitalSummaryDocument[] = [];
+    const flaggedDocuments = await Promise.all(
+      data.map(async (document) => {
+        const entry: HospitalSummaryDocument = {
+          fileName: document.file_name,
+          documentType: document.document_type ?? 'other',
+          uploadedAt: document.created_at ?? new Date().toISOString(),
+          fileType: document.file_type,
+        };
 
-    for (const document of data) {
-      const entry: HospitalSummaryDocument = {
-        fileName: document.file_name,
-        documentType: document.document_type ?? 'other',
-        uploadedAt: document.created_at ?? new Date().toISOString(),
-        fileType: document.file_type,
-      };
+        const isImage = document.file_type === 'image/jpeg' || document.file_type === 'image/png';
+        if (isImage && document.storage_path) {
+          const { data: fileData, error: downloadError } = await this.supabase.getClient()
+            .storage
+            .from('care-documents')
+            .download(document.storage_path);
 
-      const isImage = document.file_type === 'image/jpeg' || document.file_type === 'image/png';
-      if (isImage && document.storage_path) {
-        const { data: fileData, error: downloadError } = await this.supabase.getClient()
-          .storage
-          .from('care-documents')
-          .download(document.storage_path);
-
-        if (!downloadError && fileData) {
-          entry.imageBuffer = Buffer.from(await fileData.arrayBuffer());
+          if (!downloadError && fileData) {
+            entry.imageBuffer = Buffer.from(await fileData.arrayBuffer());
+          }
         }
-      }
 
-      flaggedDocuments.push(entry);
-    }
+        return entry;
+      })
+    );
 
     return flaggedDocuments;
   }

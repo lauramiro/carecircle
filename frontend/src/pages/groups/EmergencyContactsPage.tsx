@@ -186,24 +186,36 @@ export default function EmergencyContactsPage() {
 
   async function handleAdd(data: EmergencyContactFormData) {
     if (!groupId) return;
-    const created = await addEmergencyContact(groupId, data);
-    await refresh([...contacts, created]);
-    setAdding(false);
+    try {
+      const created = await addEmergencyContact(groupId, data);
+      await refresh([...contacts, created]);
+      setAdding(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not add emergency contact');
+    }
   }
 
   async function handleUpdate(contactId: string, data: EmergencyContactFormData) {
     if (!groupId) return;
-    const updated = await updateEmergencyContact(groupId, contactId, data);
-    await refresh(
-      contacts.map((contact) => (contact.id === contactId ? updated : contact)),
-    );
-    setEditingId(null);
+    try {
+      const updated = await updateEmergencyContact(groupId, contactId, data);
+      await refresh(
+        contacts.map((contact) => (contact.id === contactId ? updated : contact)),
+      );
+      setEditingId(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not save emergency contact');
+    }
   }
 
   async function handleRemove(contactId: string) {
     if (!groupId) return;
-    await removeEmergencyContact(groupId, contactId);
-    await refresh(contacts.filter((contact) => contact.id !== contactId));
+    try {
+      await removeEmergencyContact(groupId, contactId);
+      await refresh(contacts.filter((contact) => contact.id !== contactId));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not remove emergency contact');
+    }
   }
 
   if (groupLoading || loading) {

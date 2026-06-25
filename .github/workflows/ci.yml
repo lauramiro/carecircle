@@ -6,6 +6,7 @@ on:
       - main
       - develop
       - CC-18-EPIC-4-CI-CD-Security-Documentation
+      - CC-116-GA-Pipelines
   pull_request:
 
 jobs:
@@ -20,10 +21,10 @@ jobs:
         working-directory: frontend
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -32,11 +33,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit Tests
+        run: npm run test
+
+      - name: Integration Tests
+        run: npm run test:integration
+
       - name: Build
         run: npm run build
-
-      - name: Test
-        run: npm run test
 
   backend:
     name: Backend - Build & Test
@@ -46,10 +53,10 @@ jobs:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -58,10 +65,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Lint
+        run: npm run lint
 
-      - name: Test
+      - name: Unit Tests
         env:
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_TEST_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_TEST_PRIVATE_KEY }}
@@ -70,3 +77,16 @@ jobs:
           VAPID_TEST_P256DH: ${{ secrets.VAPID_TEST_P256DH }}
           VAPID_TEST_AUTH: ${{ secrets.VAPID_TEST_AUTH }}
         run: npm run test
+
+      - name: Integration Tests
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_TEST_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_TEST_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_TEST_SUBJECT }}
+          VAPID_TEST_ENDPOINT: ${{ secrets.VAPID_TEST_ENDPOINT }}
+          VAPID_TEST_P256DH: ${{ secrets.VAPID_TEST_P256DH }}
+          VAPID_TEST_AUTH: ${{ secrets.VAPID_TEST_AUTH }}
+        run: npm run test:e2e
+
+      - name: Build
+        run: npm run build

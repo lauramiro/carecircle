@@ -37,11 +37,12 @@ describe('SMS cancellation on acknowledgement (CC-102)', () => {
     cancelled = false;
     appConfig.config = {};
 
-    alertRepo.cancelOpenAlert.mockImplementation(async () => {
+    alertRepo.cancelOpenAlert.mockImplementation(() => {
       cancelled = true;
+      return Promise.resolve();
     });
-    alertRepo.findSmsDueAlerts.mockImplementation(async () =>
-      cancelled ? [] : [dueAlert],
+    alertRepo.findSmsDueAlerts.mockImplementation(() =>
+      Promise.resolve(cancelled ? [] : [dueAlert]),
     );
     checklistRepo.findById.mockResolvedValue({
       id: 'item-1',

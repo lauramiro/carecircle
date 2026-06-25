@@ -90,7 +90,7 @@ export class PatientRepository {
     if (error) throw new Error(error.message);
     return data ?? [];
   }
-  
+
   async findRecentWellbeingCheckins(patientId: string, since: string) {
     const { data, error } = await this.supabase
       .getClient()

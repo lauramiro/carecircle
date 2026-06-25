@@ -7,7 +7,8 @@ import type { HospitalSummaryData } from './hospital-summary.service';
 
 @Injectable()
 export class PDFGenerationService {
-  private readonly WATERMARK_TEXT = 'PLEASE VERIFY BEFORE SHARING WITH MEDICAL STAFF';
+  private readonly WATERMARK_TEXT =
+    'PLEASE VERIFY BEFORE SHARING WITH MEDICAL STAFF';
   private readonly MEDICAL_DISCLAIMER =
     'This information is based on recorded care profile and is not medical advice. Always consult a qualified healthcare professional before making medical decisions.';
   private readonly PAGE_WIDTH = 612; // Letter size
@@ -18,7 +19,9 @@ export class PDFGenerationService {
    * Generate professional PDF from hospital summary data
    * Returns a Buffer containing the PDF document
    */
-  async generateHospitalSummaryPDF(summaryData: HospitalSummaryData): Promise<Buffer> {
+  async generateHospitalSummaryPDF(
+    summaryData: HospitalSummaryData,
+  ): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
         const doc = new PDFDocument({
@@ -29,7 +32,7 @@ export class PDFGenerationService {
 
         const chunks: Buffer[] = [];
 
-        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('data', (chunk: Buffer) => chunks.push(chunk));
         doc.on('end', () => {
           resolve(Buffer.concat(chunks));
         });
@@ -51,7 +54,11 @@ export class PDFGenerationService {
 
         doc.end();
       } catch (error) {
-        reject(new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : String(error)}`));
+        reject(
+          new Error(
+            `Failed to generate PDF: ${error instanceof Error ? error.message : String(error)}`,
+          ),
+        );
       }
     });
   }
@@ -60,7 +67,7 @@ export class PDFGenerationService {
   // Helper: ensure enough space on page
   // ========================================================================
 
-  private ensureSpace(doc: any, neededLines: number = 5): void {
+  private ensureSpace(doc: PDFKit.PDFDocument, neededLines: number = 5): void {
     // Estimate ~16pt per line, plus small buffer; leave 80pt for footer
     const neededHeight = neededLines * 16;
     if (doc.y + neededHeight > this.PAGE_HEIGHT - 80) {
@@ -72,7 +79,7 @@ export class PDFGenerationService {
   // PDF Building Methods
   // ========================================================================
 
-  private addHeader(doc: any, data: HospitalSummaryData) {
+  private addHeader(doc: PDFKit.PDFDocument, data: HospitalSummaryData) {
     const titleX = this.MARGIN;
     const titleY = this.MARGIN;
 
@@ -87,7 +94,7 @@ export class PDFGenerationService {
       .text(
         `Generated: ${new Date(data.generatedAt).toLocaleString()}`,
         titleX,
-        titleY + 35
+        titleY + 35,
       );
 
     doc
@@ -98,7 +105,10 @@ export class PDFGenerationService {
     doc.moveDown(2);
   }
 
-  private addPatientDetails(doc: any, data: HospitalSummaryData) {
+  private addPatientDetails(
+    doc: PDFKit.PDFDocument,
+    data: HospitalSummaryData,
+  ) {
     this.addSectionTitle(doc, 'PATIENT DETAILS');
 
     const details = [
@@ -109,7 +119,7 @@ export class PDFGenerationService {
     this.addDetailRows(doc, details);
   }
 
-  private addMedications(doc: any, data: HospitalSummaryData) {
+  private addMedications(doc: PDFKit.PDFDocument, data: HospitalSummaryData) {
     this.addSectionTitle(doc, 'CURRENT MEDICATIONS');
 
     if (data.medications.length === 0) {
@@ -138,7 +148,7 @@ export class PDFGenerationService {
     doc.moveDown();
   }
 
-  private addConditions(doc: any, data: HospitalSummaryData) {
+  private addConditions(doc: PDFKit.PDFDocument, data: HospitalSummaryData) {
     this.addSectionTitle(doc, 'MEDICAL CONDITIONS');
 
     if (data.conditions.length === 0) {
@@ -160,7 +170,7 @@ export class PDFGenerationService {
     doc.moveDown();
   }
 
-  private addAllergies(doc: any, data: HospitalSummaryData) {
+  private addAllergies(doc: PDFKit.PDFDocument, data: HospitalSummaryData) {
     this.addSectionTitle(doc, 'ALLERGIES');
 
     if (data.allergies.length === 0) {
@@ -182,7 +192,10 @@ export class PDFGenerationService {
     doc.moveDown();
   }
 
-  private addEmergencyContacts(doc: any, data: HospitalSummaryData) {
+  private addEmergencyContacts(
+    doc: PDFKit.PDFDocument,
+    data: HospitalSummaryData,
+  ) {
     if (data.emergencyContacts.length === 0) return;
 
     this.ensureSpace(doc, 3);
@@ -193,13 +206,15 @@ export class PDFGenerationService {
       doc
         .fontSize(11)
         .font('Helvetica')
-        .text(`${contact.name} (${contact.role}) — ${contact.phone}`, { indent: 20 });
+        .text(`${contact.name} (${contact.role}) — ${contact.phone}`, {
+          indent: 20,
+        });
     }
 
     doc.moveDown();
   }
 
-  private addGPContacts(doc: any, data: HospitalSummaryData) {
+  private addGPContacts(doc: PDFKit.PDFDocument, data: HospitalSummaryData) {
     this.addSectionTitle(doc, 'GP CONTACTS');
 
     if (data.gpContacts.length === 0) {
@@ -236,11 +251,14 @@ export class PDFGenerationService {
     doc.moveDown();
   }
 
-  private addCareNotes(doc: any, data: HospitalSummaryData) {
+  private addCareNotes(doc: PDFKit.PDFDocument, data: HospitalSummaryData) {
     this.addSectionTitle(doc, '7-DAY CARE NOTES SUMMARY');
 
     if (data.careNotesSummary.length === 0) {
-      doc.fontSize(11).font('Helvetica').text('No recent care notes.', { indent: 20 });
+      doc
+        .fontSize(11)
+        .font('Helvetica')
+        .text('No recent care notes.', { indent: 20 });
       doc.moveDown();
       return;
     }
@@ -248,16 +266,22 @@ export class PDFGenerationService {
     for (const note of data.careNotesSummary) {
       this.ensureSpace(doc, 3); // date line + content (~2 lines) + spacing
       doc.fontSize(11).font('Helvetica-Bold').text(note.date, { indent: 20 });
-      doc.fontSize(10).font('Helvetica').text(note.content, {
-        indent: 40,
-        width: this.PAGE_WIDTH - 2 * this.MARGIN - 40,
-      });
+      doc
+        .fontSize(10)
+        .font('Helvetica')
+        .text(note.content, {
+          indent: 40,
+          width: this.PAGE_WIDTH - 2 * this.MARGIN - 40,
+        });
       doc.moveDown(0.5);
     }
     doc.moveDown();
   }
 
-  private addFlaggedPatterns(doc: any, data: HospitalSummaryData) {
+  private addFlaggedPatterns(
+    doc: PDFKit.PDFDocument,
+    data: HospitalSummaryData,
+  ) {
     if (data.flaggedPatterns.length === 0) return;
 
     this.ensureSpace(doc, 3); // ensure space for title + at least one pattern
@@ -267,9 +291,13 @@ export class PDFGenerationService {
       this.ensureSpace(doc, 2); // pattern label + observation line
       const severityColor = this.getSeverityColor(pattern.severity);
       const patternLabel = `[${pattern.severity.toUpperCase()}] ${pattern.type}`;
-      doc.fontSize(11).font('Helvetica-Bold').fillColor(severityColor).text(patternLabel, {
-        indent: 20,
-      });
+      doc
+        .fontSize(11)
+        .font('Helvetica-Bold')
+        .fillColor(severityColor)
+        .text(patternLabel, {
+          indent: 20,
+        });
       doc
         .fillColor('black')
         .fontSize(10)
@@ -283,7 +311,10 @@ export class PDFGenerationService {
     doc.moveDown();
   }
 
-  private addFlaggedDocuments(doc: any, data: HospitalSummaryData) {
+  private addFlaggedDocuments(
+    doc: PDFKit.PDFDocument,
+    data: HospitalSummaryData,
+  ) {
     if (data.flaggedDocuments.length === 0) return;
 
     this.ensureSpace(doc, 3);
@@ -338,7 +369,7 @@ export class PDFGenerationService {
     doc.moveDown();
   }
 
-  private addWatermarkAndFooter(doc: any) {
+  private addWatermarkAndFooter(doc: PDFKit.PDFDocument) {
     const pages = doc.bufferedPageRange().count;
 
     for (let i = 0; i < pages; i++) {
@@ -393,16 +424,12 @@ export class PDFGenerationService {
   // Helper Methods
   // ========================================================================
 
-  private addSectionTitle(doc: any, title: string) {
+  private addSectionTitle(doc: PDFKit.PDFDocument, title: string) {
     // If there isn't enough room for the title line + at least one content line, add a new page
     if (doc.y > this.PAGE_HEIGHT - 80) {
       doc.addPage();
     }
-    doc
-      .fontSize(14)
-      .font('Helvetica-Bold')
-      .fillColor('black')
-      .text(title);
+    doc.fontSize(14).font('Helvetica-Bold').fillColor('black').text(title);
     doc
       .moveTo(this.MARGIN, doc.y)
       .lineTo(this.PAGE_WIDTH - this.MARGIN, doc.y)
@@ -410,7 +437,10 @@ export class PDFGenerationService {
     doc.moveDown(0.5);
   }
 
-  private addDetailRows(doc: any, details: Array<{ label: string; value: string }>) {
+  private addDetailRows(
+    doc: PDFKit.PDFDocument,
+    details: Array<{ label: string; value: string }>,
+  ) {
     const labelWidth = 120;
     const startX = this.MARGIN + 20;
 
@@ -419,10 +449,13 @@ export class PDFGenerationService {
       const labelX = startX;
       const valueX = startX + labelWidth;
 
-      doc.fontSize(11).font('Helvetica-Bold').text(detail.label, labelX, doc.y, {
-        width: labelWidth,
-        align: 'left',
-      });
+      doc
+        .fontSize(11)
+        .font('Helvetica-Bold')
+        .text(detail.label, labelX, doc.y, {
+          width: labelWidth,
+          align: 'left',
+        });
 
       doc
         .fontSize(11)

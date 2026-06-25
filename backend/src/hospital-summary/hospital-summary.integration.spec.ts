@@ -5,12 +5,13 @@ import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { HospitalSummaryService } from '../../src/hospital-summary/hospital-summary.service';
 import { PDFGenerationService } from '../../src/hospital-summary/pdf-generation.service';
-import { SupabaseAdminClient } from '../../src/integrations/supabase-admin.client';
 
 // Mock SupabaseAdminClient with a proper class constructor
 vi.mock('../../src/integrations/supabase-admin.client', () => {
   // Build the query chain to return a patient ID
-  const singleFn = vi.fn().mockResolvedValue({ data: { id: 'patient-123' }, error: null });
+  const singleFn = vi
+    .fn()
+    .mockResolvedValue({ data: { id: 'patient-123' }, error: null });
   const eqFn = vi.fn().mockReturnValue({ single: singleFn });
   const selectFn = vi.fn().mockReturnValue({ eq: eqFn });
   const fromFn = vi.fn().mockReturnValue({ select: selectFn });
@@ -75,22 +76,28 @@ describe('Hospital Summary Integration', () => {
   });
 
   it('should generate a PDF with correct headers and content', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as never)
       .post('/hospital-summary/generate-pdf')
       .send({ groupId: 'test-group-id' })
       .expect(201)
       .expect('Content-Type', /pdf/);
 
     expect(response.body).toBeInstanceOf(Buffer);
-    expect(response.body.length).toBeGreaterThan(0);
-    expect(mockHospitalSummaryService.assembleHospitalSummary).toHaveBeenCalledWith('patient-123');
-    expect(mockPDFGenerationService.generateHospitalSummaryPDF).toHaveBeenCalledWith(mockSummaryData);
+    expect((response.body as Buffer).length).toBeGreaterThan(0);
+    expect(
+      mockHospitalSummaryService.assembleHospitalSummary,
+    ).toHaveBeenCalledWith('patient-123');
+    expect(
+      mockPDFGenerationService.generateHospitalSummaryPDF,
+    ).toHaveBeenCalledWith(mockSummaryData);
   });
 
   it('should return 500 if assembling the profile fails', async () => {
-    mockHospitalSummaryService.assembleHospitalSummary.mockRejectedValueOnce(new Error('Supabase error'));
+    mockHospitalSummaryService.assembleHospitalSummary.mockRejectedValueOnce(
+      new Error('Supabase error'),
+    );
 
-    await request(app.getHttpServer())
+    await request(app.getHttpServer() as never)
       .post('/hospital-summary/generate-pdf')
       .send({ groupId: 'test-group-id' })
       .expect(500);

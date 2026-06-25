@@ -17,7 +17,9 @@ async function bootstrap() {
     resolve(backendRoot, '.env'),
   ]) {
     if (existsSync(candidate)) {
-      (process as NodeJS.Process & { loadEnvFile?(path: string): void }).loadEnvFile?.(candidate);
+      (
+        process as NodeJS.Process & { loadEnvFile?(path: string): void }
+      ).loadEnvFile?.(candidate);
       break;
     }
   }

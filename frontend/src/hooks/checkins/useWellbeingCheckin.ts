@@ -82,6 +82,16 @@ export function useWellbeingCheckin(
     onUpdate: refreshFromRealtime,
   });
 
+  const performUpsert = useCallback(async (payload: UpsertCheckinPayload) => {
+    setIsSubmitting(true);
+    try {
+      const saved = await upsertCheckin(payload);
+      setTodayCheckin(saved);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, []);
+
   const submitCheckin = useCallback(
     (partial: Omit<UpsertCheckinPayload, 'caregiverId' | 'checkinDate'>) => {
       const full: UpsertCheckinPayload = {
@@ -100,18 +110,8 @@ export function useWellbeingCheckin(
       // No existing check-in, proceed immediately
       void performUpsert(full);
     },
-    [caregiverId, todayDate, todayCheckin], // eslint-disable-line react-hooks/exhaustive-deps
+    [caregiverId, todayDate, todayCheckin, performUpsert],
   );
-
-  const performUpsert = useCallback(async (payload: UpsertCheckinPayload) => {
-    setIsSubmitting(true);
-    try {
-      const saved = await upsertCheckin(payload);
-      setTodayCheckin(saved);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, []);
 
   const confirmOverwrite = useCallback(async () => {
     if (!pendingPayload) return;

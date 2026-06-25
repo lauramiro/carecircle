@@ -174,7 +174,7 @@ export default function SettingsPage() {
     return () => {
       isActive = false;
     };
-  }, [session?.user?.id]);
+  }, [session?.user?.id, setFontSize]);
 
   async function handleFontSizeChange(nextFontSize: FontSize) {
     setFontSize(nextFontSize);

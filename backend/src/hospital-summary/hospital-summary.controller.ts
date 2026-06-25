@@ -1,6 +1,6 @@
 // Hospital Summary API Controller
 // Endpoints for PDF generation and hospital summary assembly
- 
+
 import {
   Controller,
   Post,
@@ -12,7 +12,10 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
-import { HospitalSummaryService, HospitalSummaryData } from './hospital-summary.service';
+import {
+  HospitalSummaryService,
+  HospitalSummaryData,
+} from './hospital-summary.service';
 import { PDFGenerationService } from './pdf-generation.service';
 
 @Controller('hospital-summary')
@@ -24,9 +27,10 @@ export class HospitalSummaryController {
     private readonly hospitalSummaryService: HospitalSummaryService,
     private readonly pdfGenerationService: PDFGenerationService,
   ) {}
- 
+
   private async resolvePatientId(groupId: string): Promise<string> {
-    const { data, error } = await this.supabase.getClient()
+    const { data, error } = await this.supabase
+      .getClient()
       .from('patients')
       .select('id')
       .eq('group_id', groupId)
@@ -39,9 +43,9 @@ export class HospitalSummaryController {
       );
     }
 
-    return data.id;
+    return data.id as string;
   }
- 
+
   /**
    * Single endpoint: Generate complete PDF from the group-owned patient profile
    * POST /api/hospital-summary/generate-pdf
@@ -58,63 +62,64 @@ export class HospitalSummaryController {
   @Post('generate-pdf')
   async generateHospitalSummaryPDF(
     @Body() dto: { groupId: string },
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     const startTime = Date.now();
- 
+
     try {
       const patientId = await this.resolvePatientId(dto.groupId);
       this.logger.log(
         `Generating hospital summary PDF for group: ${dto.groupId}, patient: ${patientId}`,
       );
- 
+
       // Step 1: Assemble complete care profile (CC-134)
-      const summaryData = await this.hospitalSummaryService.assembleHospitalSummary(
-        patientId,
-      );
- 
+      const summaryData =
+        await this.hospitalSummaryService.assembleHospitalSummary(patientId);
+
       // Validate assembly was successful
       if (!summaryData.isValid) {
         this.logger.warn(
           `Hospital summary for group ${dto.groupId} has validation errors:`,
           summaryData.validationErrors,
         );
- 
+
         // Still proceed with PDF generation, but include errors in response
         if (summaryData.validationErrors.length > 0) {
-          res.set('X-Validation-Errors', JSON.stringify(summaryData.validationErrors));
+          res.set(
+            'X-Validation-Errors',
+            JSON.stringify(summaryData.validationErrors),
+          );
         }
       }
- 
+
       // Step 2: Generate PDF from assembled data (CC-135)
-      const pdfBuffer = await this.pdfGenerationService.generateHospitalSummaryPDF(
-        summaryData
-      );
- 
+      const pdfBuffer =
+        await this.pdfGenerationService.generateHospitalSummaryPDF(summaryData);
+
       // Step 3: Return PDF as file
       const endTime = Date.now();
       const latencyMs = endTime - startTime;
- 
+
       this.logger.log(
         `Hospital summary PDF generated in ${latencyMs}ms for group: ${dto.groupId}`,
       );
- 
+
       // Set response headers
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="hospital-summary-${summaryData.fullName}-${new Date()
-          .toISOString()
-          .split('T')[0]}.pdf"`
+        `attachment; filename="hospital-summary-${summaryData.fullName}-${
+          new Date().toISOString().split('T')[0]
+        }.pdf"`,
       );
       res.setHeader('Content-Length', pdfBuffer.length);
       res.setHeader('X-Generation-Latency-Ms', latencyMs.toString());
- 
+
       // Send PDF
       res.send(pdfBuffer);
     } catch (error) {
       this.logger.error(`Failed to generate hospital summary PDF:`, error);
- 
+
       // Return error response
       throw new HttpException(
         {
@@ -125,47 +130,50 @@ export class HospitalSummaryController {
               : 'Failed to generate hospital summary PDF',
           error: 'GENERATION_FAILED',
         },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
- 
+
   /**
    * (Optional) Endpoint to get just the summary data without PDF
    * Useful for debugging and testing
    * POST /api/hospital-summary/assemble
    */
   @Post('assemble')
-  async assembleSummaryData(@Body() dto: { groupId: string }): Promise<HospitalSummaryData> {
+  async assembleSummaryData(
+    @Body() dto: { groupId: string },
+  ): Promise<HospitalSummaryData> {
     try {
       const patientId = await this.resolvePatientId(dto.groupId);
       this.logger.log(
         `Assembling hospital summary for group: ${dto.groupId}, patient: ${patientId}`,
       );
- 
-      const summaryData = await this.hospitalSummaryService.assembleHospitalSummary(
-        patientId,
-      );
- 
+
+      const summaryData =
+        await this.hospitalSummaryService.assembleHospitalSummary(patientId);
+
       if (!summaryData.isValid) {
         this.logger.warn(
           `Hospital summary for group ${dto.groupId} has validation errors`,
           summaryData.validationErrors,
         );
       }
- 
+
       return summaryData;
     } catch (error) {
       this.logger.error(`Failed to assemble hospital summary:`, error);
- 
+
       throw new HttpException(
         {
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
           message:
-            error instanceof Error ? error.message : 'Failed to assemble hospital summary',
+            error instanceof Error
+              ? error.message
+              : 'Failed to assemble hospital summary',
           error: 'ASSEMBLY_FAILED',
         },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

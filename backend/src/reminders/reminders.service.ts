@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unused-vars */
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { addDays, format } from 'date-fns';
@@ -106,8 +107,12 @@ export class RemindersService {
     const memberships = await this.fetchPrimaryCarerMemberships();
     if (!memberships.length) return;
 
-    const groupIds = [...new Set(memberships.map((membership) => membership.group_id))];
-    const caregiverIds = [...new Set(memberships.map((membership) => membership.caregiver_id))];
+    const groupIds = [
+      ...new Set(memberships.map((membership) => membership.group_id)),
+    ];
+    const caregiverIds = [
+      ...new Set(memberships.map((membership) => membership.caregiver_id)),
+    ];
 
     const [groupTimezones, profiles] = await Promise.all([
       this.fetchCareGroupTimezones(groupIds),
@@ -115,9 +120,14 @@ export class RemindersService {
     ]);
 
     const timezoneByGroupId = new Map(
-      groupTimezones.map((group) => [group.id, group.preferred_timezone ?? 'UTC']),
+      groupTimezones.map((group) => [
+        group.id,
+        group.preferred_timezone ?? 'UTC',
+      ]),
     );
-    const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
+    const profileById = new Map(
+      profiles.map((profile) => [profile.id, profile]),
+    );
 
     for (const membership of memberships) {
       const timezone = timezoneByGroupId.get(membership.group_id) ?? 'UTC';
@@ -150,7 +160,10 @@ export class RemindersService {
         continue;
       }
 
-      await this.sendWeeklyWellbeingReminder(membership.caregiver_id, reminderKey);
+      await this.sendWeeklyWellbeingReminder(
+        membership.caregiver_id,
+        reminderKey,
+      );
     }
   }
 
@@ -180,8 +193,7 @@ export class RemindersService {
     }
 
     const pending = ((data ?? []) as AppointmentRow[]).filter(
-      (a) =>
-        !((a.reminder_offsets ?? []) as number[]).includes(offsetMinutes),
+      (a) => !(a.reminder_offsets ?? []).includes(offsetMinutes),
     );
 
     if (!pending.length) return;
@@ -244,10 +256,7 @@ export class RemindersService {
     const { error } = await db
       .from('appointments')
       .update({
-        reminder_offsets: [
-          ...(appt.reminder_offsets ?? []),
-          offsetMinutes,
-        ],
+        reminder_offsets: [...(appt.reminder_offsets ?? []), offsetMinutes],
       })
       .eq('id', appt.id);
 
@@ -324,7 +333,7 @@ export class RemindersService {
       this.logger.warn(`fetch_profiles_failed ${error.message}`);
       return [];
     }
-    return (data ?? []) as ProfileRow[];
+    return data ?? [];
   }
 
   private async fetchPatient(patientId: string): Promise<PatientRow | null> {
@@ -340,10 +349,12 @@ export class RemindersService {
       );
       return null;
     }
-    return data as PatientRow | null;
+    return data;
   }
 
-  private async fetchPrimaryCarerMemberships(): Promise<PrimaryCarerMembershipRow[]> {
+  private async fetchPrimaryCarerMemberships(): Promise<
+    PrimaryCarerMembershipRow[]
+  > {
     const { data, error } = await this.supabase
       .getClient()
       .from('care_givers')
@@ -356,10 +367,12 @@ export class RemindersService {
       return [];
     }
 
-    return (data ?? []) as PrimaryCarerMembershipRow[];
+    return data ?? [];
   }
 
-  private async fetchCareGroupTimezones(groupIds: string[]): Promise<CareGroupTimezoneRow[]> {
+  private async fetchCareGroupTimezones(
+    groupIds: string[],
+  ): Promise<CareGroupTimezoneRow[]> {
     if (!groupIds.length) return [];
 
     const { data, error } = await this.supabase
@@ -373,10 +386,12 @@ export class RemindersService {
       return [];
     }
 
-    return (data ?? []) as CareGroupTimezoneRow[];
+    return data ?? [];
   }
 
-  private async fetchProfilePreferences(userIds: string[]): Promise<ProfilePreferenceRow[]> {
+  private async fetchProfilePreferences(
+    userIds: string[],
+  ): Promise<ProfilePreferenceRow[]> {
     if (!userIds.length) return [];
 
     const { data, error } = await this.supabase
@@ -390,7 +405,7 @@ export class RemindersService {
       return [];
     }
 
-    return (data ?? []) as ProfilePreferenceRow[];
+    return data ?? [];
   }
 
   private isWeeklyWellbeingReminderEnabled(
@@ -399,7 +414,8 @@ export class RemindersService {
     if (!preferences) return true;
 
     const notifications =
-      typeof preferences.notifications === 'object' && preferences.notifications !== null
+      typeof preferences.notifications === 'object' &&
+      preferences.notifications !== null
         ? (preferences.notifications as Record<string, unknown>)
         : null;
     const reminderValue = notifications?.weeklyWellbeingReminderEnabled;
@@ -422,7 +438,11 @@ export class RemindersService {
     return format(addDays(startOfToday, -offsetFromMonday), 'yyyy-MM-dd');
   }
 
-  private isWithinWeeklyReminderWindow(now: Date, timezone: string, weekStart: string): boolean {
+  private isWithinWeeklyReminderWindow(
+    now: Date,
+    timezone: string,
+    weekStart: string,
+  ): boolean {
     const targetUtc = fromZonedTime(`${weekStart}T09:00:00`, timezone);
     const diffMs = now.getTime() - targetUtc.getTime();
 
@@ -444,14 +464,19 @@ export class RemindersService {
       .limit(1);
 
     if (error) {
-      this.logger.warn(`fetch_existing_notification_failed user=${userId} ${error.message}`);
+      this.logger.warn(
+        `fetch_existing_notification_failed user=${userId} ${error.message}`,
+      );
       return false;
     }
 
     return (data?.length ?? 0) > 0;
   }
 
-  private async hasCurrentWeekWellbeingCheckIn(userId: string, weekStart: string): Promise<boolean> {
+  private async hasCurrentWeekWellbeingCheckIn(
+    userId: string,
+    weekStart: string,
+  ): Promise<boolean> {
     const { data, error } = await this.supabase
       .getClient()
       .from('primary_carer_wellbeing_checkins')
@@ -461,33 +486,42 @@ export class RemindersService {
       .limit(1);
 
     if (error) {
-      this.logger.warn(`fetch_wellbeing_checkin_failed user=${userId} ${error.message}`);
+      this.logger.warn(
+        `fetch_wellbeing_checkin_failed user=${userId} ${error.message}`,
+      );
       return false;
     }
 
     return (data?.length ?? 0) > 0;
   }
 
-  private async sendWeeklyWellbeingReminder(userId: string, reminderKey: string): Promise<void> {
-    const frontendUrl = (this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173').replace(
-      /\/$/,
-      '',
-    );
+  private async sendWeeklyWellbeingReminder(
+    userId: string,
+    reminderKey: string,
+  ): Promise<void> {
+    const frontendUrl = (
+      this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173'
+    ).replace(/\/$/, '');
     const actionUrl = `${frontendUrl}/settings#wellbeing-checkin`;
 
-    const { error } = await this.supabase.getClient().from('notifications').insert({
-      user_id: userId,
-      type: WELLBEING_REMINDER_TYPE,
-      title: WELLBEING_REMINDER_TITLE,
-      body: WELLBEING_REMINDER_BODY,
-      action_url: actionUrl,
-      related_entity_type: 'wellbeing_checkin',
-      related_entity_id: reminderKey,
-      sent_via: ['push'],
-    });
+    const { error } = await this.supabase
+      .getClient()
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        type: WELLBEING_REMINDER_TYPE,
+        title: WELLBEING_REMINDER_TITLE,
+        body: WELLBEING_REMINDER_BODY,
+        action_url: actionUrl,
+        related_entity_type: 'wellbeing_checkin',
+        related_entity_id: reminderKey,
+        sent_via: ['push'],
+      });
 
     if (error) {
-      this.logger.warn(`insert_wellbeing_notification_failed user=${userId} ${error.message}`);
+      this.logger.warn(
+        `insert_wellbeing_notification_failed user=${userId} ${error.message}`,
+      );
       return;
     }
 
@@ -497,7 +531,9 @@ export class RemindersService {
         body: WELLBEING_REMINDER_BODY,
         url: actionUrl,
       })
-      .catch((err) => this.logger.warn(`wellbeing_push_failed user=${userId}`, err));
+      .catch((err) =>
+        this.logger.warn(`wellbeing_push_failed user=${userId}`, err),
+      );
   }
 
   private async processEveningPatientWellbeingNudges(now: Date): Promise<void> {
@@ -525,17 +561,25 @@ export class RemindersService {
       const patient = await this.fetchPatientForGroup(group.id);
       if (!patient) continue;
 
-      const onDutyCarerId = await this.fetchEveningShiftAssignee(group.id, checkinDate);
+      const onDutyCarerId = await this.fetchEveningShiftAssignee(
+        group.id,
+        checkinDate,
+      );
       if (!onDutyCarerId) continue;
 
       const [alreadySent, checkinExists, profile] = await Promise.all([
-        this.hasExistingNotification(onDutyCarerId, PATIENT_WELLBEING_NUDGE_TYPE, reminderKey),
+        this.hasExistingNotification(
+          onDutyCarerId,
+          PATIENT_WELLBEING_NUDGE_TYPE,
+          reminderKey,
+        ),
         this.hasPatientWellbeingCheckinForDate(patient.id, checkinDate),
         this.fetchProfilePreference(onDutyCarerId),
       ]);
 
       if (alreadySent || checkinExists) continue;
-      if (!this.isEveningPatientCheckinNudgeEnabled(profile?.preferences)) continue;
+      if (!this.isEveningPatientCheckinNudgeEnabled(profile?.preferences))
+        continue;
 
       const patientFirstName = this.extractFirstName(patient.full_name);
       await this.sendEveningPatientWellbeingNudge({
@@ -547,7 +591,9 @@ export class RemindersService {
     }
   }
 
-  private async fetchPatientForGroup(groupId: string): Promise<GroupPatientRow | null> {
+  private async fetchPatientForGroup(
+    groupId: string,
+  ): Promise<GroupPatientRow | null> {
     const { data, error } = await this.supabase
       .getClient()
       .from('patients')
@@ -556,11 +602,13 @@ export class RemindersService {
       .maybeSingle();
 
     if (error) {
-      this.logger.warn(`fetch_group_patient_failed group=${groupId} ${error.message}`);
+      this.logger.warn(
+        `fetch_group_patient_failed group=${groupId} ${error.message}`,
+      );
       return null;
     }
 
-    return data as GroupPatientRow | null;
+    return data;
   }
 
   private async fetchEveningShiftAssignee(
@@ -577,14 +625,18 @@ export class RemindersService {
       .maybeSingle();
 
     if (error) {
-      this.logger.warn(`fetch_evening_shift_failed group=${groupId} ${error.message}`);
+      this.logger.warn(
+        `fetch_evening_shift_failed group=${groupId} ${error.message}`,
+      );
       return null;
     }
 
-    return (data as EveningShiftAssignmentRow | null)?.assigned_caregiver_id ?? null;
+    return data?.assigned_caregiver_id ?? null;
   }
 
-  private async fetchProfilePreference(userId: string): Promise<ProfilePreferenceRow | null> {
+  private async fetchProfilePreference(
+    userId: string,
+  ): Promise<ProfilePreferenceRow | null> {
     const profiles = await this.fetchProfilePreferences([userId]);
     return profiles[0] ?? null;
   }
@@ -602,7 +654,9 @@ export class RemindersService {
       .limit(1);
 
     if (error) {
-      this.logger.warn(`fetch_patient_checkin_failed patient=${patientId} ${error.message}`);
+      this.logger.warn(
+        `fetch_patient_checkin_failed patient=${patientId} ${error.message}`,
+      );
       return false;
     }
 
@@ -615,7 +669,8 @@ export class RemindersService {
     if (!preferences) return true;
 
     const notifications =
-      typeof preferences.notifications === 'object' && preferences.notifications !== null
+      typeof preferences.notifications === 'object' &&
+      preferences.notifications !== null
         ? (preferences.notifications as Record<string, unknown>)
         : null;
     const reminderValue = notifications?.eveningPatientCheckinNudgeEnabled;
@@ -654,26 +709,30 @@ export class RemindersService {
     patientFirstName: string;
     reminderKey: string;
   }): Promise<void> {
-    const frontendUrl = (this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173').replace(
-      /\/$/,
-      '',
-    );
+    const frontendUrl = (
+      this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173'
+    ).replace(/\/$/, '');
     const actionUrl = `${frontendUrl}/groups/${params.groupId}/journal#wellbeing-checkin`;
     const body = `${params.patientFirstName}'s daily wellbeing check-in hasn't been completed yet`;
 
-    const { error } = await this.supabase.getClient().from('notifications').insert({
-      user_id: params.userId,
-      type: PATIENT_WELLBEING_NUDGE_TYPE,
-      title: PATIENT_WELLBEING_NUDGE_TITLE,
-      body,
-      action_url: actionUrl,
-      related_entity_type: 'patient_wellbeing_checkin',
-      related_entity_id: params.reminderKey,
-      sent_via: ['push'],
-    });
+    const { error } = await this.supabase
+      .getClient()
+      .from('notifications')
+      .insert({
+        user_id: params.userId,
+        type: PATIENT_WELLBEING_NUDGE_TYPE,
+        title: PATIENT_WELLBEING_NUDGE_TITLE,
+        body,
+        action_url: actionUrl,
+        related_entity_type: 'patient_wellbeing_checkin',
+        related_entity_id: params.reminderKey,
+        sent_via: ['push'],
+      });
 
     if (error) {
-      this.logger.warn(`insert_patient_nudge_failed user=${params.userId} ${error.message}`);
+      this.logger.warn(
+        `insert_patient_nudge_failed user=${params.userId} ${error.message}`,
+      );
       return;
     }
 
@@ -683,6 +742,11 @@ export class RemindersService {
         body,
         url: actionUrl,
       })
-      .catch((err) => this.logger.warn(`patient_nudge_push_failed user=${params.userId}`, err));
+      .catch((err) =>
+        this.logger.warn(
+          `patient_nudge_push_failed user=${params.userId}`,
+          err,
+        ),
+      );
   }
 }

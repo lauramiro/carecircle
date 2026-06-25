@@ -38,6 +38,10 @@ export function isJournalReadOnly(role: ROLE): boolean {
   return role === ROLE.OBSERVER;
 }
 
+export function canFlagDocumentsForHospitalSummary(role: ROLE): boolean {
+  return role === ROLE.PRIMARY_CAREGIVER || role === ROLE.SECONDARY_CAREGIVER;
+}
+
 export function countActivePrimaryCarers(
   members: GroupMember[],
   excludeMemberId?: string,

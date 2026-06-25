@@ -37,6 +37,20 @@ export interface GPContact {
   address?: string;
 }
 
+export interface EmergencyContact {
+  name: string;
+  role: string;
+  phone: string;
+}
+
+export interface HospitalSummaryDocument {
+  fileName: string;
+  documentType: string;
+  uploadedAt: string;
+  fileType: string;
+  imageBuffer?: Buffer;
+}
+
 export interface HospitalSummaryData {
   // Patient Details
   fullName: string;
@@ -52,12 +66,18 @@ export interface HospitalSummaryData {
   // Care Team
   gpContacts: GPContact[];
 
+  // Emergency contacts
+  emergencyContacts: EmergencyContact[];
+
   // Recent Care Data
   careNotesSummary: CareNoteEntry[];
 
   // AI Analysis
   flaggedPatterns: FlaggedPattern[];
 
+  // Flagged documents for hospital summary
+  flaggedDocuments: HospitalSummaryDocument[];
+  
   // Metadata
   isValid: boolean;
   validationErrors: string[];
@@ -109,6 +129,9 @@ export class HospitalSummaryService {
         validationErrors.push('No GP contacts found for patient');
       }
 
+      // Step 4b: Fetch emergency contacts
+      const emergencyContacts = await this.getEmergencyContacts(patientId);
+
       // Step 5: Fetch 7-day care notes summary
       const careNotesSummary = await this.getCareNotesSummary(patientId);
       if (!careNotesSummary || careNotesSummary.length === 0) {
@@ -121,6 +144,9 @@ export class HospitalSummaryService {
         '[assembleHospitalSummary] flaggedPatterns length:',
         flaggedPatterns.length,
       );
+
+      // Step 7: Fetch documents flagged for hospital summary inclusion
+      const flaggedDocuments = await this.getFlaggedDocuments(patientId);
 
       // Assemble complete data object
       const summaryData: HospitalSummaryData = {
@@ -138,11 +164,17 @@ export class HospitalSummaryService {
         // Care Team
         gpContacts: gpContacts || [],
 
+        // Emergency contacts
+        emergencyContacts: emergencyContacts || [],
+
         // Recent Care Data
         careNotesSummary: careNotesSummary || [],
 
         // AI Analysis
         flaggedPatterns: flaggedPatterns || [],
+
+        // Flagged documents
+        flaggedDocuments: flaggedDocuments || [],
 
         // Validation
         isValid: validationErrors.length === 0,
@@ -326,6 +358,31 @@ export class HospitalSummaryService {
   }
 
   /**
+   * Fetch active emergency contacts for patient, ordered for display
+   */
+  private async getEmergencyContacts(patientId: string): Promise<EmergencyContact[]> {
+    const { data, error } = await this.supabase.getClient()
+      .from('emergency_contacts')
+      .select('contact_name, label, phone')
+      .eq('patient_id', patientId)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching emergency contacts:', error);
+      return [];
+    }
+
+    return (
+      data?.map((contact) => ({
+        name: contact.contact_name,
+        role: contact.label,
+        phone: contact.phone,
+      })) || []
+    );
+  }
+
+  /**
    * Fetch and summarize 7-day care notes
    */
   private async getCareNotesSummary(
@@ -398,5 +455,50 @@ export class HospitalSummaryService {
       observation: pattern.observation,
       severity: pattern.severity || 'low',
     }));
+  }
+
+  /**
+   * Fetch documents flagged for inclusion in the hospital summary PDF.
+   * Image files are downloaded so they can be embedded in the generated PDF.
+   */
+  private async getFlaggedDocuments(patientId: string): Promise<HospitalSummaryDocument[]> {
+    const { data, error } = await this.supabase.getClient()
+      .from('documents')
+      .select('file_name, file_type, document_type, created_at, storage_path')
+      .eq('patient_id', patientId)
+      .eq('include_in_hospital_summary', true)
+      .order('created_at', { ascending: false });
+
+    if (error || !data) {
+      console.error('Error fetching flagged documents:', error);
+      return [];
+    }
+
+    const flaggedDocuments = await Promise.all(
+      data.map(async (document) => {
+        const entry: HospitalSummaryDocument = {
+          fileName: document.file_name,
+          documentType: document.document_type ?? 'other',
+          uploadedAt: document.created_at ?? new Date().toISOString(),
+          fileType: document.file_type,
+        };
+
+        const isImage = document.file_type === 'image/jpeg' || document.file_type === 'image/png';
+        if (isImage && document.storage_path) {
+          const { data: fileData, error: downloadError } = await this.supabase.getClient()
+            .storage
+            .from('care-documents')
+            .download(document.storage_path);
+
+          if (!downloadError && fileData) {
+            entry.imageBuffer = Buffer.from(await fileData.arrayBuffer());
+          }
+        }
+
+        return entry;
+      })
+    );
+
+    return flaggedDocuments;
   }
 }

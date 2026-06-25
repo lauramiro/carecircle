@@ -77,7 +77,7 @@ export interface HospitalSummaryData {
 
   // Flagged documents for hospital summary
   flaggedDocuments: HospitalSummaryDocument[];
-  
+
   // Metadata
   isValid: boolean;
   validationErrors: string[];
@@ -360,8 +360,11 @@ export class HospitalSummaryService {
   /**
    * Fetch active emergency contacts for patient, ordered for display
    */
-  private async getEmergencyContacts(patientId: string): Promise<EmergencyContact[]> {
-    const { data, error } = await this.supabase.getClient()
+  private async getEmergencyContacts(
+    patientId: string,
+  ): Promise<EmergencyContact[]> {
+    const { data, error } = await this.supabase
+      .getClient()
       .from('emergency_contacts')
       .select('contact_name, label, phone')
       .eq('patient_id', patientId)
@@ -373,13 +376,17 @@ export class HospitalSummaryService {
       return [];
     }
 
-    return (
-      data?.map((contact) => ({
-        name: contact.contact_name,
-        role: contact.label,
-        phone: contact.phone,
-      })) || []
-    );
+    const contactsData = (data || []) as {
+      contact_name: string;
+      label: string;
+      phone: string;
+    }[];
+
+    return contactsData.map((contact) => ({
+      name: contact.contact_name,
+      role: contact.label,
+      phone: contact.phone,
+    }));
   }
 
   /**
@@ -461,8 +468,11 @@ export class HospitalSummaryService {
    * Fetch documents flagged for inclusion in the hospital summary PDF.
    * Image files are downloaded so they can be embedded in the generated PDF.
    */
-  private async getFlaggedDocuments(patientId: string): Promise<HospitalSummaryDocument[]> {
-    const { data, error } = await this.supabase.getClient()
+  private async getFlaggedDocuments(
+    patientId: string,
+  ): Promise<HospitalSummaryDocument[]> {
+    const { data, error } = await this.supabase
+      .getClient()
       .from('documents')
       .select('file_name, file_type, document_type, created_at, storage_path')
       .eq('patient_id', patientId)
@@ -474,8 +484,16 @@ export class HospitalSummaryService {
       return [];
     }
 
+    const documentsData = (data || []) as {
+      file_name: string;
+      file_type: string;
+      document_type?: string;
+      created_at?: string;
+      storage_path?: string;
+    }[];
+
     const flaggedDocuments = await Promise.all(
-      data.map(async (document) => {
+      documentsData.map(async (document) => {
         const entry: HospitalSummaryDocument = {
           fileName: document.file_name,
           documentType: document.document_type ?? 'other',
@@ -483,11 +501,13 @@ export class HospitalSummaryService {
           fileType: document.file_type,
         };
 
-        const isImage = document.file_type === 'image/jpeg' || document.file_type === 'image/png';
+        const isImage =
+          document.file_type === 'image/jpeg' ||
+          document.file_type === 'image/png';
         if (isImage && document.storage_path) {
-          const { data: fileData, error: downloadError } = await this.supabase.getClient()
-            .storage
-            .from('care-documents')
+          const { data: fileData, error: downloadError } = await this.supabase
+            .getClient()
+            .storage.from('care-documents')
             .download(document.storage_path);
 
           if (!downloadError && fileData) {
@@ -496,7 +516,7 @@ export class HospitalSummaryService {
         }
 
         return entry;
-      })
+      }),
     );
 
     return flaggedDocuments;

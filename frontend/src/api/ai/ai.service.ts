@@ -1,3 +1,4 @@
+import { parseResponseJson } from '../../utils/helper';
 import type { ChatMessage, SendMessageResponse } from './ai.types';
 
 export async function sendChatMessage(
@@ -21,5 +22,5 @@ export async function sendChatMessage(
     throw new Error(`AI chat request failed: ${response.status} ${errorText}`);
   }
 
-  return response.json();
-}
+  return parseResponseJson<SendMessageResponse>(response);
+}

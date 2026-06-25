@@ -1,3 +1,5 @@
+import { parseResponseJson } from '../utils/helper';
+
 export interface InsightCard {
   id: string;
   digest_id: string;
@@ -23,13 +25,13 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'
 export async function getLatestInsights(groupId: string, userId: string): Promise<{ digest: WeeklyDigest | null; cards: InsightCard[] }> {
   const response = await fetch(`${apiBaseUrl}/api/insights/${groupId}/latest?userId=${userId}`);
   if (!response.ok) throw new Error('Failed to fetch latest insights');
-  return response.json() as Promise<{ digest: WeeklyDigest | null; cards: InsightCard[] }>;
+  return parseResponseJson<{ digest: WeeklyDigest | null; cards: InsightCard[] }>(response);
 }
 
 export async function getArchivedDigests(groupId: string): Promise<WeeklyDigest[]> {
   const response = await fetch(`${apiBaseUrl}/api/insights/${groupId}/archive`);
   if (!response.ok) throw new Error('Failed to fetch archived digests');
-  return response.json() as Promise<WeeklyDigest[]>;
+  return parseResponseJson<WeeklyDigest[]>(response);
 }
 
 export async function dismissInsight(cardId: string, userId: string): Promise<void> {

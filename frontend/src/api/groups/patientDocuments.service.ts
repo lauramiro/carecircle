@@ -1,3 +1,4 @@
+import { parseResponseJson } from '../../utils/helper';
 import { supabase } from '../../lib/supabaseClient';
 
 const DOCUMENT_BUCKET = 'care-documents';
@@ -244,7 +245,7 @@ export async function getDocumentStorageUsage(groupId: string): Promise<Document
     `/api/document-storage/groups/${encodeURIComponent(groupId)}/usage`,
   );
 
-  return response.json() as Promise<DocumentStorageUsage>;
+  return parseResponseJson<DocumentStorageUsage>(response);
 }
 
 export async function getPatientDocumentDownloadUrl(storagePath: string): Promise<string> {

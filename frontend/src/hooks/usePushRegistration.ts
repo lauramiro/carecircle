@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken } from 'firebase/messaging';
 import { useAuth } from '../contexts/AuthContext';
+import { parseResponseJson } from '../utils/helper';
 
 export type PushRegistrationStatus =
   | 'idle'
@@ -55,7 +56,12 @@ async function syncSubscriptionToBackend(
   });
 
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string | string[] } | null;
+    let body: { message?: string | string[] } | null = null;
+    try {
+      body = await parseResponseJson<{ message?: string | string[] }>(response);
+    } catch {
+      // ignore
+    }
     const message = Array.isArray(body?.message)
       ? body.message.join(', ')
       : body?.message ?? `Server returned ${response.status}`;
@@ -135,7 +141,7 @@ export async function registerWebPushForUser(userId: string): Promise<void> {
     );
   }
 
-  const { publicKey } = (await keyResponse.json()) as { publicKey: string | null };
+  const { publicKey } = await parseResponseJson<{ publicKey: string | null }>(keyResponse);
   if (!publicKey) {
     throw new Error('Push notifications are not configured on the server.');
   }

@@ -1,3 +1,4 @@
+import { parseResponseJson } from '../../utils/helper';
 import { getGroups } from '../groups/groups.service';
 import { canAssignShifts } from '../../lib/carePermissions';
 import { supabase } from '../../lib/supabaseClient';
@@ -87,12 +88,17 @@ export async function saveWeeklyShiftAssignment(
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Unable to save the shift assignment' }));
+    let errorData: { message?: string } = {};
+    try {
+      errorData = await parseResponseJson(response);
+    } catch (err) {
+      errorData = { message: 'Unable to save the shift assignment' };
+    }
     console.error('saveWeeklyShiftAssignment:', errorData);
     throw new Error(errorData.message || 'Unable to save the shift assignment');
   }
 
-  const data = await response.json();
+  const data = await parseResponseJson(response);
   return mapWeeklyShiftAssignment(data as WeeklyShiftAssignmentRow);
 }
 

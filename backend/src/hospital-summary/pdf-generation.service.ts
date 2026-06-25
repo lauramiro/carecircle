@@ -192,7 +192,10 @@ export class PDFGenerationService {
     doc.moveDown();
   }
 
-  private addEmergencyContacts(doc: PDFKit.PDFDocument, data: HospitalSummaryData) {
+  private addEmergencyContacts(
+    doc: PDFKit.PDFDocument,
+    data: HospitalSummaryData,
+  ) {
     if (data.emergencyContacts.length === 0) return;
 
     this.ensureSpace(doc, 3);
@@ -203,7 +206,9 @@ export class PDFGenerationService {
       doc
         .fontSize(11)
         .font('Helvetica')
-        .text(`${contact.name} (${contact.role}) — ${contact.phone}`, { indent: 20 });
+        .text(`${contact.name} (${contact.role}) — ${contact.phone}`, {
+          indent: 20,
+        });
     }
 
     doc.moveDown();
@@ -306,7 +311,10 @@ export class PDFGenerationService {
     doc.moveDown();
   }
 
-  private addFlaggedDocuments(doc: PDFKit.PDFDocument, data: HospitalSummaryData) {
+  private addFlaggedDocuments(
+    doc: PDFKit.PDFDocument,
+    data: HospitalSummaryData,
+  ) {
     if (data.flaggedDocuments.length === 0) return;
 
     this.ensureSpace(doc, 3);

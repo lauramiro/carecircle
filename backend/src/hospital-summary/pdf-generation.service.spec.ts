@@ -70,7 +70,8 @@ describe('PDFGenerationService', () => {
   it('generates a larger PDF when emergency contacts are present than when absent', async () => {
     const service = new PDFGenerationService();
 
-    const withContacts = await service.generateHospitalSummaryPDF(sampleSummaryData);
+    const withContacts =
+      await service.generateHospitalSummaryPDF(sampleSummaryData);
     const withoutContacts = await service.generateHospitalSummaryPDF({
       ...sampleSummaryData,
       emergencyContacts: [],

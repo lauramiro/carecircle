@@ -215,7 +215,9 @@ describe('HospitalSummaryService', () => {
     });
 
     it('should return an empty emergency contacts list when none are stored', async () => {
-      const result = await service.assembleHospitalSummary('patient-incomplete-001');
+      const result = await service.assembleHospitalSummary(
+        'patient-incomplete-001',
+      );
 
       expect(result.emergencyContacts).toEqual([]);
     });

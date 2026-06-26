@@ -77,7 +77,9 @@ export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
         // ------------------------------
       } else {
         // ---------- REAL BACKEND (currently commented out) ----------
-         const response = await fetch('/api/ai/qa', {
+         const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+         const url = apiBaseUrl ? `${apiBaseUrl}/api/ai/qa` : '/api/ai/qa';
+         const response = await fetch(url, {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify({

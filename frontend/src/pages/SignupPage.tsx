@@ -69,8 +69,13 @@ export default function SignupPage() {
       const emailRedirectTo = inviteMatches
         ? `${window.location.origin}${buildInviteConfirmationPath(pendingInvite!)}`
         : window.location.origin;
-      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
+      const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
       if (error) throw error;
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        setEmailError('An account with this email already exists.');
+        setLoading(false);
+        return;
+      }
       setSubmitted(true);
     } catch (err: unknown) {
       if (getErrorMessage(err).includes('already registered')) {

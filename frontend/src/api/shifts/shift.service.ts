@@ -20,6 +20,8 @@ import {
   toISODate,
 } from './shift.utils';
 
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+
 type WeeklyShiftAssignmentRow = Database['public']['Tables']['weekly_shift_assignments']['Row'] & {
   assignee: { full_name: string | null } | null;
 };
@@ -79,7 +81,7 @@ export async function getWeeklyShiftAssignments(
 export async function saveWeeklyShiftAssignment(
   payload: SaveWeeklyShiftAssignmentPayload,
 ): Promise<WeeklyShiftAssignment> {
-  const response = await fetch('/api/shifts/assignments', {
+  const response = await fetch(`${apiBaseUrl}/api/shifts/assignments`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

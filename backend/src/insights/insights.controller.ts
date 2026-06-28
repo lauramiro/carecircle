@@ -19,11 +19,9 @@ export class InsightsController {
 
   constructor(
     private readonly supabase: SupabaseAdminClient,
-    weeklyInsightGenerationService: WeeklyInsightGenerationService,
+    private readonly weeklyInsightGenerationService: WeeklyInsightGenerationService,
     private readonly insightsService: InsightsService,
-  ) {
-    this.weeklyInsightGenerationService = weeklyInsightGenerationService;
-  }
+  ) {}
 
   /**
    * Returns the newest weekly digest and filters out cards dismissed by `userId`.

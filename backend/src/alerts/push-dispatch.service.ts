@@ -151,7 +151,7 @@ export class PushDispatchService implements OnModuleInit {
           error: message,
         });
         this.logger.warn(
-          `push_failed subscriptionId=${sub.id} status=${statusCode ?? 'unknown'}`,
+          `push_failed subscriptionId=${sub.id} status=${statusCode ?? 'unknown'} platform=${sub.platform} message=${message}`,
         );
       }
     }
@@ -261,7 +261,7 @@ export class PushDispatchService implements OnModuleInit {
           error: message,
         });
         this.logger.warn(
-          `push_failed sub=${sub.id} status=${statusCode ?? 'unknown'}`,
+          `push_failed sub=${sub.id} status=${statusCode ?? 'unknown'} platform=${sub.platform} message=${message}`,
         );
       }
     }

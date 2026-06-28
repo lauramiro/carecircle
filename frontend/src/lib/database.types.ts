@@ -2435,6 +2435,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_invite_status: {
+        Args: {
+          p_invite_id: string
+          p_status: Database["public"]["Enums"]["invite_status"]
+        }
+        Returns: {
+          group_id: string
+        }[]
+      }
       verify_profile_trigger: {
         Args: never
         Returns: {

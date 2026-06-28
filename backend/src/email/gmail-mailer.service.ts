@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { resolve4 } from 'node:dns/promises';
 import { AppConfigService } from '../config/app-config.service';
+
+const GMAIL_SMTP_HOST = 'smtp.gmail.com';
 
 @Injectable()
 export class GmailMailerService {
@@ -15,7 +18,16 @@ export class GmailMailerService {
     return Boolean(c.GMAIL_USER?.trim() && c.GMAIL_APP_PASSWORD?.trim());
   }
 
-  private getTransporter(): Transporter {
+  /**
+   * nodemailer's `service: 'Gmail'` shorthand resolves both A and AAAA
+   * records for smtp.gmail.com and picks a random address from the
+   * combined pool — Render has no outbound IPv6 route, so roughly half
+   * of all sends fail with ENETUNREACH. Pre-resolving the IPv4 address
+   * ourselves and connecting to that literal IP (with `tls.servername`
+   * set for correct cert/SNI validation) sidesteps nodemailer's resolver
+   * entirely.
+   */
+  private async getTransporter(): Promise<Transporter> {
     if (this.transporter) return this.transporter;
     const c = this.appConfig.config;
     const user = c.GMAIL_USER?.trim();
@@ -23,8 +35,12 @@ export class GmailMailerService {
     if (!user || !pass) {
       throw new Error('gmail_not_configured');
     }
+    const [address] = await resolve4(GMAIL_SMTP_HOST);
     this.transporter = nodemailer.createTransport({
-      service: 'Gmail',
+      host: address,
+      port: 465,
+      secure: true,
+      tls: { servername: GMAIL_SMTP_HOST },
       auth: { user, pass },
     });
     return this.transporter;
@@ -47,7 +63,7 @@ export class GmailMailerService {
       ? `"${fromName.replace(/"/g, '')}" <${fromAddress}>`
       : fromAddress;
 
-    const transport = this.getTransporter();
+    const transport = await this.getTransporter();
     const info = (await transport.sendMail({
       from,
       to: params.to,

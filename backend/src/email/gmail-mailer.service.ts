@@ -23,8 +23,6 @@ export class GmailMailerService {
     if (!user || !pass) {
       throw new Error('gmail_not_configured');
     }
-    console.log('getTransporter user:', user);
-    console.log('getTransporter pass:', pass);
     this.transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: { user, pass },

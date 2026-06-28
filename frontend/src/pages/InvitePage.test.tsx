@@ -63,10 +63,6 @@ describe('InvitePage', () => {
     authMock.value = { session: null };
     inviteServiceMock.fetchInviteGroupDetails.mockResolvedValue({
       groupId: 'group-demo',
-      patientId: 'patient-demo',
-      groupName: 'CareCircle Family Group',
-      description: 'A shared care group.',
-      totalCarers: 2,
     });
     inviteServiceMock.isUserInInviteGroup.mockResolvedValue(false);
     inviteServiceMock.isEmailRegistered.mockResolvedValue(false);
@@ -130,14 +126,11 @@ describe('InvitePage', () => {
     authMock.value = { session: { user: { email: 'new@example.com', id: 'user-confirm-1' } } };
     renderInvitePage(memberInviteSearch(INVITE_ID, 'new@example.com', 'true'));
 
-    expect(await screen.findByText('Join CareCircle Family Group')).toBeInTheDocument();
+    expect(await screen.findByText('Join this care circle')).toBeInTheDocument();
     expect(inviteServiceMock.isUserInInviteGroup).toHaveBeenCalledWith(
       'group-demo',
-      'patient-demo',
       'user-confirm-1',
     );
-    expect(screen.getByText('A shared care group.')).toBeInTheDocument();
-    expect(screen.getByText(/2 carers already linked/i)).toBeInTheDocument();
     expect(screen.getByRole('list', { name: /onboarding progress/i })).toBeInTheDocument();
     expect(screen.getByText('Open your secure invitation link')).toBeInTheDocument();
     expect(screen.getByText('Review the care circle details')).toBeInTheDocument();
@@ -156,7 +149,6 @@ describe('InvitePage', () => {
     expect(await screen.findByText('You are already a member')).toBeInTheDocument();
     expect(inviteServiceMock.isUserInInviteGroup).toHaveBeenCalledWith(
       'group-demo',
-      'patient-demo',
       'user-member-1',
     );
     expect(screen.getByRole('button', { name: /go to group/i })).toBeInTheDocument();

@@ -4,6 +4,8 @@ import { getMessaging, getToken } from 'firebase/messaging';
 import { useAuth } from '../contexts/AuthContext';
 import { parseResponseJson } from '../utils/helper';
 
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+
 export type PushRegistrationStatus =
   | 'idle'
   | 'unsupported'
@@ -42,7 +44,7 @@ async function syncSubscriptionToBackend(
   subscription: PushSubscription,
 ): Promise<void> {
   const json = subscription.toJSON();
-  const response = await fetch('/api/push/subscriptions', {
+  const response = await fetch(`${apiBaseUrl}/api/push/subscriptions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -115,7 +117,7 @@ export async function registerWebPushForUser(userId: string): Promise<void> {
       });
 
       if (currentToken) {
-        await fetch('/api/push/subscriptions', {
+        await fetch(`${apiBaseUrl}/api/push/subscriptions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -132,7 +134,7 @@ export async function registerWebPushForUser(userId: string): Promise<void> {
     }
   }
 
-  const keyResponse = await fetch('/api/push/vapid-public-key');
+  const keyResponse = await fetch(`${apiBaseUrl}/api/push/vapid-public-key`);
   if (!keyResponse.ok) {
     throw new Error(
       keyResponse.status === 404

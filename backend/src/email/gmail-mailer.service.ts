@@ -26,6 +26,11 @@ export class GmailMailerService {
    * ourselves and connecting to that literal IP (with `tls.servername`
    * set for correct cert/SNI validation) sidesteps nodemailer's resolver
    * entirely.
+   *
+   * Port 465 (implicit TLS) also times out outbound from Render — likely
+   * blocked at the network layer, a common cloud-host restriction to
+   * curb spam. Port 587 (STARTTLS) is far more commonly left open, so we
+   * connect there instead and let nodemailer upgrade the connection.
    */
   private async getTransporter(): Promise<Transporter> {
     if (this.transporter) return this.transporter;
@@ -38,8 +43,9 @@ export class GmailMailerService {
     const [address] = await resolve4(GMAIL_SMTP_HOST);
     this.transporter = nodemailer.createTransport({
       host: address,
-      port: 465,
-      secure: true,
+      port: 587,
+      secure: false,
+      requireTLS: true,
       tls: { servername: GMAIL_SMTP_HOST },
       auth: { user, pass },
     });

@@ -81,12 +81,17 @@ export async function getWeeklyShiftAssignments(
 export async function saveWeeklyShiftAssignment(
   payload: SaveWeeklyShiftAssignmentPayload,
 ): Promise<WeeklyShiftAssignment> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('You must be signed in to save a shift assignment.');
+  }
+
   const response = await fetch(`${apiBaseUrl}/api/shifts/assignments`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, changedBy: user.id }),
   });
 
   if (!response.ok) {

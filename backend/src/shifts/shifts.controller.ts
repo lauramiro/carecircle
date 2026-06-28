@@ -6,6 +6,7 @@ export interface AssignShiftDto {
   shiftDate: string;
   slot: string;
   assignedCaregiverId: string | null;
+  changedBy: string;
 }
 
 @Controller('shifts')

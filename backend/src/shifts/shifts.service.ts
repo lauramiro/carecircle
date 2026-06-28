@@ -58,6 +58,7 @@ export class ShiftsService {
           shift_date: dto.shiftDate,
           shift_slot: dto.slot,
           assigned_caregiver_id: dto.assignedCaregiverId,
+          last_changed_by: dto.changedBy,
         },
         { onConflict: 'group_id,shift_date,shift_slot' }
       )

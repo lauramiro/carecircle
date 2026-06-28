@@ -715,6 +715,77 @@ This section documents **every** RLS policy currently enforced in the CareCircle
 
 ---
 
+## RLS Direct Verification
+
+The repository now includes a direct database-level RLS verification harness at `supabase/verify_cross_circle_rls.sql` plus deterministic fixture data in `supabase/seeds/rls_cross_circle_verification_seed.sql`.
+
+This harness is intentionally kept outside the frontend and backend applications. It connects directly to PostgreSQL, switches to the `authenticated` role, sets `request.jwt.claim.sub` to simulate each caregiver role, and then attempts cross-circle `SELECT`, `INSERT`, `UPDATE`, and `DELETE` operations against Circle B rows while authenticated as Circle A users.
+
+### Verification Scope
+
+| Table | Role | Permitted operations in-scope | Cross-circle operations tested |
+|:---|:---|:---|:---|
+| `care_givers` | `primary_carer` | SELECT, INSERT, UPDATE, DELETE | SELECT, INSERT, UPDATE, DELETE |
+| `care_givers` | `secondary_carer` | SELECT, INSERT (self only) | SELECT, INSERT, UPDATE, DELETE |
+| `care_givers` | `observer` | SELECT, INSERT (self only) | SELECT, INSERT, UPDATE, DELETE |
+| `care_group` | `primary_carer` | SELECT, INSERT | SELECT, INSERT, UPDATE, DELETE |
+| `care_group` | `secondary_carer` | none | SELECT, INSERT, UPDATE, DELETE |
+| `care_group` | `observer` | none | SELECT, INSERT, UPDATE, DELETE |
+| `patients` | `primary_carer` | SELECT, INSERT, UPDATE, DELETE | SELECT, INSERT, UPDATE, DELETE |
+| `patients` | `secondary_carer` | SELECT | SELECT, INSERT, UPDATE, DELETE |
+| `patients` | `observer` | SELECT | SELECT, INSERT, UPDATE, DELETE |
+| `medications` | `primary_carer` | SELECT, INSERT | SELECT, INSERT, UPDATE, DELETE |
+| `medications` | `secondary_carer` | SELECT, INSERT | SELECT, INSERT, UPDATE, DELETE |
+| `medications` | `observer` | SELECT | SELECT, INSERT, UPDATE, DELETE |
+| `handover_journal_entries` | `primary_carer` | SELECT, INSERT, UPDATE (own, 60 mins) | SELECT, INSERT, UPDATE, DELETE |
+| `handover_journal_entries` | `secondary_carer` | SELECT, INSERT, UPDATE (own, 60 mins) | SELECT, INSERT, UPDATE, DELETE |
+| `handover_journal_entries` | `observer` | SELECT | SELECT, INSERT, UPDATE, DELETE |
+
+### Expected interpretation of direct-query results
+
+- Cross-circle `SELECT` should return **zero rows visible**.
+- Cross-circle `INSERT` should fail with a **database/RLS error**.
+- Cross-circle `UPDATE` and `DELETE` should either fail with a **database/RLS error** or affect **zero rows** because the target rows are invisible under RLS.
+
+This behavior is what PostgreSQL RLS enforces at the database layer for direct SQL queries. In practice, blocked reads usually appear as zero visible rows rather than a literal HTTP `403`.
+
+### Current test results status
+
+| Role | Table | SELECT | INSERT | UPDATE | DELETE | Status |
+|:---|:---|:---|:---|:---|:---|:---|
+| `primary_carer` | `care_givers` | Not run | Not run | Not run | Not run | Pending local execution |
+| `primary_carer` | `care_group` | Not run | Not run | Not run | Not run | Pending local execution |
+| `primary_carer` | `patients` | Not run | Not run | Not run | Not run | Pending local execution |
+| `primary_carer` | `medications` | Not run | Not run | Not run | Not run | Pending local execution |
+| `primary_carer` | `handover_journal_entries` | Not run | Not run | Not run | Not run | Pending local execution |
+| `secondary_carer` | `care_givers` | Not run | Not run | Not run | Not run | Pending local execution |
+| `secondary_carer` | `care_group` | Not run | Not run | Not run | Not run | Pending local execution |
+| `secondary_carer` | `patients` | Not run | Not run | Not run | Not run | Pending local execution |
+| `secondary_carer` | `medications` | Not run | Not run | Not run | Not run | Pending local execution |
+| `secondary_carer` | `handover_journal_entries` | Not run | Not run | Not run | Not run | Pending local execution |
+| `observer` | `care_givers` | Not run | Not run | Not run | Not run | Pending local execution |
+| `observer` | `care_group` | Not run | Not run | Not run | Not run | Pending local execution |
+| `observer` | `patients` | Not run | Not run | Not run | Not run | Pending local execution |
+| `observer` | `medications` | Not run | Not run | Not run | Not run | Pending local execution |
+| `observer` | `handover_journal_entries` | Not run | Not run | Not run | Not run | Pending local execution |
+
+### Execution note
+
+Validation was prepared but not executed in this workspace because `npx supabase db reset` prompted for a one-time install of the Supabase CLI package and that install was declined during this session. Once the CLI is available locally, run:
+
+```bash
+npx supabase db reset
+psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f supabase/verify_cross_circle_rls.sql
+```
+
+The script prints:
+
+- a per-role, per-table pass/fail matrix,
+- a detailed list of any failed checks, and
+- a final total of passed vs failed assertions.
+
+---
+
 ## **AI Q&A Acceptance Test Summary**
 
 **Test Date:** 2026-05-23

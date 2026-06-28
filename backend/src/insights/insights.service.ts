@@ -68,7 +68,7 @@ export class InsightsService {
           medicationName:
             (lr.medications as { medication_name?: string })?.medication_name ??
             'Unknown',
-          status: lr.status as "given" | "skipped" | "overdue",
+          status: lr.status as 'given' | 'skipped' | 'overdue',
           loggedAt: (lr.actual_time ?? lr.scheduled_time) as string,
           notes: lr.notes as string | undefined,
         };

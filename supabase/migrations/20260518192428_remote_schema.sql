@@ -6,6 +6,12 @@ drop policy "patients delete by active primary carer" on "public"."patients";
 
 drop policy "patients update by active primary carer" on "public"."patients";
 
+drop policy "patient avatars delete by primary carer" on "storage"."objects";
+
+drop policy "patient avatars insert by primary carer" on "storage"."objects";
+
+drop policy "patient avatars update by primary carer" on "storage"."objects";
+
 alter table "public"."checklist_items" drop constraint "checklist_items_status_check";
 
 alter table "public"."daily_medication_checklists" drop constraint "daily_medication_checklists_status_check";
@@ -222,13 +228,6 @@ using ((EXISTS ( SELECT 1
 using ((EXISTS ( SELECT 1
    FROM public.care_givers cg
   WHERE ((cg.patient_id = patients.id) AND (cg.caregiver_id = auth.uid()) AND (cg.role_in_care = 'primary_carer'::public.member_role) AND (cg.status = 'active'::text)))));
-
-
-drop policy "patient avatars delete by primary carer" on "storage"."objects";
-
-drop policy "patient avatars insert by primary carer" on "storage"."objects";
-
-drop policy "patient avatars update by primary carer" on "storage"."objects";
 
 
   create policy "patient avatars delete by primary carer"

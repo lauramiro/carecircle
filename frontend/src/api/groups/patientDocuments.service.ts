@@ -27,6 +27,7 @@ export interface PatientDocument {
   uploadedAt: string;
   uploadedByName: string;
   storagePath: string;
+  includeInHospitalSummary: boolean;
 }
 
 export interface DocumentStorageUsage {
@@ -45,6 +46,7 @@ type PatientDocumentRow = {
   document_type: PatientDocumentType | null;
   created_at: string | null;
   storage_path: string;
+  include_in_hospital_summary: boolean | null;
   uploader: { full_name: string | null } | null;
 };
 
@@ -56,6 +58,7 @@ const patientDocumentSelect = `
   document_type,
   created_at,
   storage_path,
+  include_in_hospital_summary,
   uploader:profiles!documents_uploaded_by_fkey (
     full_name
   )
@@ -134,6 +137,7 @@ function mapPatientDocument(row: PatientDocumentRow): PatientDocument {
     uploadedAt: row.created_at ?? new Date().toISOString(),
     uploadedByName: row.uploader?.full_name?.trim() || 'Unknown carer',
     storagePath: row.storage_path,
+    includeInHospitalSummary: row.include_in_hospital_summary ?? false,
   };
 }
 
@@ -260,4 +264,29 @@ export async function getPatientDocumentDownloadUrl(storagePath: string): Promis
   }
 
   return data.signedUrl;
+}
+
+export async function getPatientDocumentBlob(document: PatientDocument): Promise<Blob> {
+  const signedUrl = await getPatientDocumentDownloadUrl(document.storagePath);
+  const response = await fetch(signedUrl);
+
+  if (!response.ok) {
+    throw new Error('Unable to download this document.');
+  }
+
+  return response.blob();
+}
+
+export async function setPatientDocumentHospitalSummaryFlag(
+  documentId: string,
+  include: boolean,
+): Promise<void> {
+  const { error } = await supabase.rpc('set_document_include_in_hospital_summary', {
+    p_document_id: documentId,
+    p_include: include,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }

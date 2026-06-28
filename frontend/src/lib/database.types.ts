@@ -78,6 +78,8 @@ export type Database = {
           provider_id: string | null
           provider_name: string | null
           provider_phone: string | null
+          recurrence_rule: string | null
+          recurrence_series_id: string | null
           reminder_offsets: number[] | null
           reminder_sent: boolean | null
           reminder_sent_at: string | null
@@ -107,6 +109,8 @@ export type Database = {
           provider_id?: string | null
           provider_name?: string | null
           provider_phone?: string | null
+          recurrence_rule?: string | null
+          recurrence_series_id?: string | null
           reminder_offsets?: number[] | null
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
@@ -136,6 +140,8 @@ export type Database = {
           provider_id?: string | null
           provider_name?: string | null
           provider_phone?: string | null
+          recurrence_rule?: string | null
+          recurrence_series_id?: string | null
           reminder_offsets?: number[] | null
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null

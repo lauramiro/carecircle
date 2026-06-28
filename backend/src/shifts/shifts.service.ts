@@ -1,9 +1,11 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
 import { AssignShiftDto } from './shifts.controller';
 
 @Injectable()
 export class ShiftsService {
+  private readonly logger = new Logger(ShiftsService.name);
+
   constructor(private readonly supabase: SupabaseAdminClient) { }
 
   async assignShift(dto: AssignShiftDto) {
@@ -73,6 +75,9 @@ export class ShiftsService {
       .single();
 
     if (error || !data) {
+      this.logger.error(
+        `assignShift upsert failed for group=${dto.groupId} date=${dto.shiftDate} slot=${dto.slot}: ${JSON.stringify(error)}`,
+      );
       throw new HttpException('Failed to save shift assignment', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

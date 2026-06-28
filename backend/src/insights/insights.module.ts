@@ -8,7 +8,12 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { WeeklyInsightGenerationService } from './weekly-insight-generation.service';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), AiModule, SupabaseAdminModule, AlertsModule],
+  imports: [
+    ScheduleModule.forRoot(),
+    AiModule,
+    SupabaseAdminModule,
+    AlertsModule,
+  ],
   controllers: [InsightsController],
   providers: [InsightsService, WeeklyInsightGenerationService],
   exports: [InsightsService, WeeklyInsightGenerationService],

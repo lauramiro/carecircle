@@ -31,6 +31,9 @@ function makeMed(overrides: Partial<Medication> = {}): Medication {
     instructions: null,
     route: null,
     takeWithFood: null,
+    quantityOnHand: null,
+    lowStockAlertThresholdDays: 7,
+    lowStockAlertSentAt: null,
     startDate: '2025-01-01',
     endDate: null,
     status: 'active',
@@ -72,7 +75,7 @@ describe('EditMedicationForm', () => {
   it('pre-populates all fields from the initial medication', () => {
     render(
       <EditMedicationForm
-        initialValues={makeMed()}
+        initialValues={makeMed({ quantityOnHand: 24 })}
         isSubmitting={false}
         onSubmit={vi.fn()}
         onCancel={vi.fn()}
@@ -86,6 +89,7 @@ describe('EditMedicationForm', () => {
     expect(screen.getByRole('radio', { name: 'At specific times' })).toBeChecked();
     expect(screen.getByRole('button', { name: /Morning/i })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: /Evening/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText(/quantity on hand/i)).toHaveValue(24);
   });
 
   it('parses a dosage string with mcg unit correctly', () => {
@@ -145,6 +149,29 @@ describe('EditMedicationForm', () => {
     const changes = onSubmit.mock.calls[0][0];
     expect(changes.scheduleType).toBe('daily');
     expect(changes.specificTimes).toEqual(['08:00', '18:00']);
+  });
+
+  it('submits quantity on hand changes', async () => {
+    mockCheckDuplicateName.mockResolvedValue(false);
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <EditMedicationForm
+        initialValues={makeMed({ quantityOnHand: 24 })}
+        isSubmitting={false}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    const quantityInput = screen.getByLabelText(/quantity on hand/i);
+    await user.clear(quantityInput);
+    await user.type(quantityInput, '40');
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ quantityOnHand: 40 });
   });
 
   it('skips duplicate check and calls onSubmit when name changes to a unique name', async () => {

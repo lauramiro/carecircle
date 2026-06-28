@@ -58,6 +58,12 @@ const GP_CONTACTS: Record<string, Record<string, unknown>[]> = {
   ],
 };
 
+const EMERGENCY_CONTACTS: Record<string, Record<string, unknown>[]> = {
+  'test-patient-001': [
+    { contact_name: 'Mary Smith', label: 'Daughter', phone: '+447700900123' },
+  ],
+};
+
 const JOURNAL_BY_GROUP: Record<string, Record<string, unknown>[]> = {
   'group-001': [
     { created_at: isoNow(), content: '[NEUTRAL] Patient stable overnight.' },
@@ -101,6 +107,11 @@ const resolve = (
         data: GP_CONTACTS[filters.patient_id as string] ?? [],
         error: null,
       };
+    case 'emergency_contacts':
+      return {
+        data: EMERGENCY_CONTACTS[filters.patient_id as string] ?? [],
+        error: null,
+      };
     case 'handover_journal_entries':
       return {
         data: JOURNAL_BY_GROUP[filters.group_id as string] ?? [],
@@ -111,6 +122,8 @@ const resolve = (
         data: INSIGHTS[filters.patient_id as string] ?? [],
         error: null,
       };
+    case 'documents':
+      return { data: [], error: null };
     default:
       return { data: [], error: null };
   }
@@ -168,23 +181,45 @@ describe('HospitalSummaryService', () => {
       const syntheticPatientId = 'test-patient-001';
 
       const result = await service.assembleHospitalSummary(syntheticPatientId);
+      const requiredSections = [
+        'fullName',
+        'dateOfBirth',
+        'medications',
+        'conditions',
+        'allergies',
+        'gpContacts',
+        'careNotesSummary',
+        'flaggedPatterns',
+        'flaggedDocuments',
+      ] as const;
 
       // Verify all sections present
       expect(result).toBeDefined();
-      expect(result.fullName).toBeDefined();
-      expect(result.dateOfBirth).toBeDefined();
-      expect(result.medications).toBeDefined();
+      for (const section of requiredSections) {
+        expect(result[section]).toBeDefined();
+      }
       expect(Array.isArray(result.medications)).toBe(true);
-      expect(result.conditions).toBeDefined();
-      expect(result.allergies).toBeDefined();
-      expect(result.gpContacts).toBeDefined();
-      expect(result.careNotesSummary).toBeDefined();
-      expect(result.flaggedPatterns).toBeDefined();
 
       // Verify no critical sections are empty
       expect(result.medications.length).toBeGreaterThan(0);
       expect(result.conditions.length).toBeGreaterThan(0);
       expect(result.allergies.length).toBeGreaterThan(0);
+    });
+
+    it('should include emergency contacts sourced from the emergency_contacts table', async () => {
+      const result = await service.assembleHospitalSummary('test-patient-001');
+
+      expect(result.emergencyContacts).toEqual([
+        { name: 'Mary Smith', role: 'Daughter', phone: '+447700900123' },
+      ]);
+    });
+
+    it('should return an empty emergency contacts list when none are stored', async () => {
+      const result = await service.assembleHospitalSummary(
+        'patient-incomplete-001',
+      );
+
+      expect(result.emergencyContacts).toEqual([]);
     });
 
     it('should fail loudly if patient not found', async () => {

@@ -101,7 +101,7 @@ export function useMyShifts(
     return () => {
       active = false;
     };
-  }, [caregiverId, groupKey, today]);
+  }, [caregiverId, groupKey, today, groups]);
 
   const { todayShifts, upcomingShifts, historyShifts, todayByGroup, upcomingByGroup, historyByGroup } =
     useMemo(() => {

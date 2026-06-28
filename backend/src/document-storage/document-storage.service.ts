@@ -24,9 +24,14 @@ type DocumentFileSizeRow = {
 export class DocumentStorageService {
   constructor(private readonly supabase: SupabaseAdminClient) {}
 
-  async getGroupStorageUsage(groupId: string, accessToken: string): Promise<DocumentStorageUsage> {
+  async getGroupStorageUsage(
+    groupId: string,
+    accessToken: string,
+  ): Promise<DocumentStorageUsage> {
     if (!this.supabase.isEnabled()) {
-      throw new ServiceUnavailableException('Document storage usage is not available right now.');
+      throw new ServiceUnavailableException(
+        'Document storage usage is not available right now.',
+      );
     }
 
     const client = this.supabase.getClient();
@@ -36,7 +41,9 @@ export class DocumentStorageService {
     } = await client.auth.getUser(accessToken);
 
     if (userError || !user) {
-      throw new UnauthorizedException('You must be signed in to view document storage usage.');
+      throw new UnauthorizedException(
+        'You must be signed in to view document storage usage.',
+      );
     }
 
     const { data: membership, error: membershipError } = await client
@@ -48,11 +55,15 @@ export class DocumentStorageService {
       .maybeSingle();
 
     if (membershipError) {
-      throw new ServiceUnavailableException('Unable to verify care circle access right now.');
+      throw new ServiceUnavailableException(
+        'Unable to verify care circle access right now.',
+      );
     }
 
     if (!membership) {
-      throw new ForbiddenException('You do not have access to this care circle.');
+      throw new ForbiddenException(
+        'You do not have access to this care circle.',
+      );
     }
 
     const { data: patient, error: patientError } = await client
@@ -62,7 +73,9 @@ export class DocumentStorageService {
       .maybeSingle();
 
     if (patientError) {
-      throw new ServiceUnavailableException('Unable to resolve the patient for this care circle.');
+      throw new ServiceUnavailableException(
+        'Unable to resolve the patient for this care circle.',
+      );
     }
 
     if (!patient?.id) {
@@ -75,7 +88,9 @@ export class DocumentStorageService {
       .eq('patient_id', patient.id);
 
     if (documentsError) {
-      throw new ServiceUnavailableException('Unable to load document storage usage right now.');
+      throw new ServiceUnavailableException(
+        'Unable to load document storage usage right now.',
+      );
     }
 
     const usedBytes = ((documentRows ?? []) as DocumentFileSizeRow[]).reduce(

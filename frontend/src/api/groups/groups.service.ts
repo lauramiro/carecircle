@@ -1,8 +1,17 @@
 import axios from 'axios';
 import { INVITE_TYPES } from '../../services/inviteService';
 import { supabase } from '../../lib/supabaseClient';
-import type { GPContactInsert, GPContactRow, GPContactUpdate } from '../../lib/supabaseTables';
 import type {
+  EmergencyContactInsert,
+  EmergencyContactRow,
+  EmergencyContactUpdate,
+  GPContactInsert,
+  GPContactRow,
+  GPContactUpdate,
+} from '../../lib/supabaseTables';
+import type {
+  EmergencyContact,
+  EmergencyContactFormData,
   GroupMember,
   GPContact,
   Group,
@@ -35,6 +44,16 @@ type GPContactListRow = Pick<
   'id' | 'name' | 'phone' | 'address' | 'specialty' | 'email'
 >;
 
+type FreeFormEmergencyContactRow = Pick<
+  EmergencyContactRow,
+  'id' | 'label' | 'contact_name' | 'phone'
+>;
+
+type PrimaryCarerProfileRow = {
+  full_name: string | null;
+  phone: string | null;
+};
+
 function rowToGPContact(row: GPContactListRow): GPContact {
   return {
     id: row.id,
@@ -62,6 +81,20 @@ function payloadToRowFields(data: Omit<GPContact, 'id'>): Pick<
     specialty: data.specialty?.trim() || 'General Practice',
     email: data.email?.trim() || null,
   };
+}
+
+function emergencyPayloadToRowFields(
+  data: EmergencyContactFormData,
+): Pick<EmergencyContactInsert, 'contact_name' | 'label' | 'phone'> {
+  const contactName = data.name.trim();
+  const label = data.role.trim();
+  const phone = data.phoneNumber.trim();
+
+  if (!contactName) throw new Error('Contact name is required');
+  if (!label) throw new Error('Contact role is required');
+  if (!phone) throw new Error('Phone number is required');
+
+  return { contact_name: contactName, label, phone };
 }
 
 async function getPatientIdForGroup(groupId: string): Promise<string> {
@@ -97,6 +130,84 @@ async function fetchGPContactsForPatient(patientId: string): Promise<GPContact[]
   }
 
   return (data ?? []).map(rowToGPContact);
+}
+
+async function getPatientEmergencyContext(groupId: string): Promise<{
+  patientId: string;
+  primaryCaregiverId: string | null;
+}> {
+  const { data, error } = await supabase
+    .from('patients')
+    .select('id, primary_caregiver_id')
+    .eq('group_id', groupId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data?.id) throw new Error('Patient not found for this care group');
+
+  return {
+    patientId: data.id,
+    primaryCaregiverId: data.primary_caregiver_id ?? null,
+  };
+}
+
+async function findPrimaryCaregiverId(
+  groupId: string,
+  patientId: string,
+  fallbackId: string | null,
+): Promise<string | null> {
+  if (fallbackId) return fallbackId;
+
+  const { data, error } = await supabase
+    .from('care_givers')
+    .select('caregiver_id')
+    .eq('group_id', groupId)
+    .eq('patient_id', patientId)
+    .eq('role_in_care', ROLE.PRIMARY_CAREGIVER)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (error) {
+    console.warn('Primary carer lookup unavailable:', error.message);
+    return null;
+  }
+
+  return data?.caregiver_id ?? null;
+}
+
+function gpContactToEmergencyContact(contact: GPContact): EmergencyContact | null {
+  if (!contact.phoneNumber) return null;
+  return {
+    id: `gp:${contact.id}`,
+    name: contact.gpName || 'GP',
+    role: contact.specialty || 'GP',
+    phoneNumber: contact.phoneNumber,
+    source: 'gp',
+    editable: false,
+  };
+}
+
+function freeFormRowToEmergencyContact(row: FreeFormEmergencyContactRow): EmergencyContact {
+  return {
+    id: row.id,
+    name: row.contact_name,
+    role: row.label,
+    phoneNumber: row.phone,
+    source: 'free_form',
+    editable: true,
+  };
+}
+
+function postgrestErrorCode(error: unknown): string | null {
+  if (!error || typeof error !== 'object' || !('code' in error)) {
+    return null;
+  }
+  const code = error.code;
+  return typeof code === 'string' ? code : null;
+}
+
+function isMissingOptionalEmergencySchema(error: unknown): boolean {
+  return ['42703', '42P01'].includes(postgrestErrorCode(error) ?? '');
 }
 
 export async function getGroups(): Promise<GroupSummary[]> {
@@ -406,4 +517,166 @@ export async function removeGPContact(groupId: string, gpId: string): Promise<vo
   if (!removed) {
     throw new Error('GP contact not found');
   }
+}
+
+export async function getEmergencyContacts(groupId: string): Promise<EmergencyContact[]> {
+  const { patientId, primaryCaregiverId } = await getPatientEmergencyContext(groupId);
+  const resolvedPrimaryCaregiverId = await findPrimaryCaregiverId(
+    groupId,
+    patientId,
+    primaryCaregiverId,
+  );
+  const contacts: EmergencyContact[] = [];
+
+  const gpContacts = await fetchGPContactsForPatient(patientId);
+  contacts.push(
+    ...gpContacts
+      .map(gpContactToEmergencyContact)
+      .filter((contact): contact is EmergencyContact => contact !== null),
+  );
+
+  const { data: specialistRows, error: specialistError } = await supabase
+    .from('appointments')
+    .select('id, provider_name, provider_phone')
+    .eq('patient_id', patientId)
+    .neq('status', 'cancelled')
+    .not('provider_phone', 'is', null)
+    .order('start_time', { ascending: false });
+
+  if (specialistError) {
+    if (isMissingOptionalEmergencySchema(specialistError)) {
+      console.warn('Specialist emergency contacts unavailable:', specialistError.message);
+    } else {
+      throw new Error(specialistError.message);
+    }
+  } else {
+    const seenSpecialists = new Set<string>();
+    for (const row of specialistRows ?? []) {
+      const name = row.provider_name?.trim();
+      const phone = row.provider_phone?.trim();
+      if (!name || !phone) continue;
+      const key = `${name}:${phone}`;
+      if (seenSpecialists.has(key)) continue;
+      seenSpecialists.add(key);
+      contacts.push({
+        id: `specialist:${row.id}`,
+        name,
+        role: 'Specialist',
+        phoneNumber: phone,
+        source: 'specialist',
+        editable: false,
+      });
+    }
+  }
+
+  if (resolvedPrimaryCaregiverId) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, phone')
+      .eq('id', resolvedPrimaryCaregiverId)
+      .maybeSingle();
+
+    if (profile) {
+      const primaryCarerProfile = profile as PrimaryCarerProfileRow;
+      contacts.push({
+        id: `primary-carer:${resolvedPrimaryCaregiverId}`,
+        name: primaryCarerProfile.full_name || 'Primary carer',
+        role: 'Primary carer',
+        phoneNumber: primaryCarerProfile.phone?.trim() || undefined,
+        source: 'primary_carer',
+        editable: false,
+      });
+    }
+  }
+
+  const { data: freeFormRows, error: freeFormError } = await supabase
+    .from('emergency_contacts')
+    .select('id, label, contact_name, phone')
+    .eq('patient_id', patientId)
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true });
+
+  if (freeFormError) {
+    if (isMissingOptionalEmergencySchema(freeFormError)) {
+      console.warn('Free-form emergency contacts unavailable:', freeFormError.message);
+    } else {
+      throw new Error(freeFormError.message);
+    }
+  } else {
+    contacts.push(...(freeFormRows ?? []).map(freeFormRowToEmergencyContact));
+  }
+
+  return contacts;
+}
+
+export async function addEmergencyContact(
+  groupId: string,
+  data: EmergencyContactFormData,
+): Promise<EmergencyContact> {
+  const patientId = await getPatientIdForGroup(groupId);
+  const { data: existing } = await supabase
+    .from('emergency_contacts')
+    .select('id')
+    .eq('patient_id', patientId)
+    .eq('is_active', true);
+
+  if ((existing?.length ?? 0) >= 2) {
+    throw new Error('Only two emergency contacts can be added');
+  }
+
+  const { data: inserted, error } = await supabase
+    .from('emergency_contacts')
+    .insert({
+      patient_id: patientId,
+      ...emergencyPayloadToRowFields(data),
+      sort_order: existing?.length ?? 0,
+      is_active: true,
+    } satisfies EmergencyContactInsert)
+    .select('id, label, contact_name, phone')
+    .single();
+
+  if (error || !inserted) {
+    throw new Error(error?.message || 'Unable to add emergency contact');
+  }
+
+  return freeFormRowToEmergencyContact(inserted);
+}
+
+export async function updateEmergencyContact(
+  groupId: string,
+  contactId: string,
+  data: EmergencyContactFormData,
+): Promise<EmergencyContact> {
+  const patientId = await getPatientIdForGroup(groupId);
+  const { data: updated, error } = await supabase
+    .from('emergency_contacts')
+    .update(emergencyPayloadToRowFields(data) satisfies EmergencyContactUpdate)
+    .eq('id', contactId)
+    .eq('patient_id', patientId)
+    .eq('is_active', true)
+    .select('id, label, contact_name, phone')
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!updated) throw new Error('Emergency contact not found');
+
+  return freeFormRowToEmergencyContact(updated);
+}
+
+export async function removeEmergencyContact(
+  groupId: string,
+  contactId: string,
+): Promise<void> {
+  const patientId = await getPatientIdForGroup(groupId);
+  const { data: removed, error } = await supabase
+    .from('emergency_contacts')
+    .update({ is_active: false } satisfies EmergencyContactUpdate)
+    .eq('id', contactId)
+    .eq('patient_id', patientId)
+    .eq('is_active', true)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!removed) throw new Error('Emergency contact not found');
 }

@@ -112,7 +112,7 @@ describe('SmsDispatchService', () => {
       expect.objectContaining({
         smsDeliveryLog: expect.arrayContaining([
           { phone: '+447700900999', success: true, sid: 'SM-dev' },
-        ]),
+        ]) as unknown,
       }),
     );
   });

@@ -251,6 +251,7 @@ describe('group invite integration flow', () => {
     await user.type(screen.getByLabelText(/patient full name/i), 'Jane Doe');
     await user.type(screen.getByLabelText(/date of birth/i), '1955-05-01');
     await user.type(screen.getByLabelText(/^email\b/i), 'jane@example.com');
+    await user.selectOptions(screen.getByLabelText(/preferred group time zone/i), 'UTC');
     await user.selectOptions(screen.getByLabelText(/relationship to the patient/i), 'parent');
     await user.click(screen.getByRole('button', { name: /create circle/i }));
 

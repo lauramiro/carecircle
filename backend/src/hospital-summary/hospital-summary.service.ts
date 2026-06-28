@@ -37,6 +37,20 @@ export interface GPContact {
   address?: string;
 }
 
+export interface EmergencyContact {
+  name: string;
+  role: string;
+  phone: string;
+}
+
+export interface HospitalSummaryDocument {
+  fileName: string;
+  documentType: string;
+  uploadedAt: string;
+  fileType: string;
+  imageBuffer?: Buffer;
+}
+
 export interface HospitalSummaryData {
   // Patient Details
   fullName: string;
@@ -48,16 +62,22 @@ export interface HospitalSummaryData {
   medications: MedicationData[];
   conditions: string[];
   allergies: string[];
-  
+
   // Care Team
   gpContacts: GPContact[];
-  
+
+  // Emergency contacts
+  emergencyContacts: EmergencyContact[];
+
   // Recent Care Data
   careNotesSummary: CareNoteEntry[];
-  
+
   // AI Analysis
   flaggedPatterns: FlaggedPattern[];
-  
+
+  // Flagged documents for hospital summary
+  flaggedDocuments: HospitalSummaryDocument[];
+
   // Metadata
   isValid: boolean;
   validationErrors: string[];
@@ -74,8 +94,9 @@ export class HospitalSummaryService {
    * Main method: Assemble complete care profile for hospital summary PDF
    * Fetches fresh data from Supabase and validates all required sections
    */
-  async assembleHospitalSummary(patientId: string): Promise<HospitalSummaryData> {
-    const errors: string[] = [];
+  async assembleHospitalSummary(
+    patientId: string,
+  ): Promise<HospitalSummaryData> {
     const validationErrors: string[] = [];
 
     try {
@@ -108,6 +129,9 @@ export class HospitalSummaryService {
         validationErrors.push('No GP contacts found for patient');
       }
 
+      // Step 4b: Fetch emergency contacts
+      const emergencyContacts = await this.getEmergencyContacts(patientId);
+
       // Step 5: Fetch 7-day care notes summary
       const careNotesSummary = await this.getCareNotesSummary(patientId);
       if (!careNotesSummary || careNotesSummary.length === 0) {
@@ -116,7 +140,13 @@ export class HospitalSummaryService {
 
       // Step 6: Get AI flagged patterns (if any exist)
       const flaggedPatterns = await this.getFlaggedPatterns(patientId);
-      console.log('[assembleHospitalSummary] flaggedPatterns length:', flaggedPatterns.length);
+      console.log(
+        '[assembleHospitalSummary] flaggedPatterns length:',
+        flaggedPatterns.length,
+      );
+
+      // Step 7: Fetch documents flagged for hospital summary inclusion
+      const flaggedDocuments = await this.getFlaggedDocuments(patientId);
 
       // Assemble complete data object
       const summaryData: HospitalSummaryData = {
@@ -134,11 +164,17 @@ export class HospitalSummaryService {
         // Care Team
         gpContacts: gpContacts || [],
 
+        // Emergency contacts
+        emergencyContacts: emergencyContacts || [],
+
         // Recent Care Data
         careNotesSummary: careNotesSummary || [],
 
         // AI Analysis
         flaggedPatterns: flaggedPatterns || [],
+
+        // Flagged documents
+        flaggedDocuments: flaggedDocuments || [],
 
         // Validation
         isValid: validationErrors.length === 0,
@@ -160,7 +196,8 @@ export class HospitalSummaryService {
    * Fetch patient details: name, DOB
    */
   private async getPatientDetails(patientId: string) {
-    const { data, error } = await this.supabase.getClient()
+    const { data, error } = await this.supabase
+      .getClient()
       .from('patients')
       .select('id, full_name, date_of_birth, chronic_conditions, allergies')
       .eq('id', patientId)
@@ -171,16 +208,27 @@ export class HospitalSummaryService {
       return null;
     }
 
-    return data;
+    return data as {
+      id: string;
+      full_name?: string;
+      date_of_birth?: string;
+      chronic_conditions?: string[];
+      allergies?: string[];
+    };
   }
 
   /**
    * Fetch current active medications with last given timestamp
    */
-  private async getCurrentMedications(patientId: string): Promise<MedicationData[]> {
-    const { data: medications, error: medError } = await this.supabase.getClient()
+  private async getCurrentMedications(
+    patientId: string,
+  ): Promise<MedicationData[]> {
+    const { data: medications, error: medError } = await this.supabase
+      .getClient()
       .from('medications')
-      .select('id, medication_name, dose, dosage_unit, schedule_type, interval_hours, start_date, status')
+      .select(
+        'id, medication_name, dose, dosage_unit, schedule_type, interval_hours, start_date, status',
+      )
       .eq('patient_id', patientId)
       .eq('status', 'active');
 
@@ -189,9 +237,21 @@ export class HospitalSummaryService {
       return [];
     }
 
+    const meds = (medications || []) as {
+      id: string;
+      medication_name: string;
+      dose?: number;
+      dosage_unit?: string;
+      schedule_type?: string;
+      interval_hours?: number;
+      start_date?: string;
+      status?: string;
+    }[];
+
     const medsWithTimestamps = await Promise.all(
-      medications.map(async (med) => {
-        const { data: logs } = await this.supabase.getClient()
+      meds.map(async (med) => {
+        const { data: logs } = await this.supabase
+          .getClient()
           .from('medication_logs')
           .select('actual_time, scheduled_time')
           .eq('medication_id', med.id)
@@ -200,9 +260,15 @@ export class HospitalSummaryService {
           .limit(1)
           .maybeSingle();
 
-        const frequency = med.schedule_type === 'interval' && med.interval_hours
-          ? `every ${med.interval_hours} hours`
-          : med.schedule_type || 'Unknown';
+        const logsData = logs as {
+          actual_time?: string;
+          scheduled_time?: string;
+        } | null;
+
+        const frequency =
+          med.schedule_type === 'interval' && med.interval_hours
+            ? `every ${med.interval_hours} hours`
+            : med.schedule_type || 'Unknown';
 
         return {
           name: med.medication_name,
@@ -210,9 +276,10 @@ export class HospitalSummaryService {
           unit: med.dosage_unit || 'mg',
           frequency,
           startDate: med.start_date || new Date().toISOString().split('T')[0],
-          lastGivenTimestamp: logs?.actual_time || logs?.scheduled_time || null,
+          lastGivenTimestamp:
+            logsData?.actual_time || logsData?.scheduled_time || undefined,
         };
-      })
+      }),
     );
 
     return medsWithTimestamps;
@@ -222,7 +289,8 @@ export class HospitalSummaryService {
    * Fetch chronic conditions for patient
    */
   private async getConditions(patientId: string): Promise<string[]> {
-    const { data, error } = await this.supabase.getClient()
+    const { data, error } = await this.supabase
+      .getClient()
       .from('patients')
       .select('chronic_conditions')
       .eq('id', patientId)
@@ -233,14 +301,17 @@ export class HospitalSummaryService {
       return [];
     }
 
-    return (data?.chronic_conditions as string[]) || [];
+    return (
+      (data as { chronic_conditions?: string[] })?.chronic_conditions || []
+    );
   }
 
   /**
    * Fetch allergies for patient
    */
   private async getAllergies(patientId: string): Promise<string[]> {
-    const { data, error } = await this.supabase.getClient()
+    const { data, error } = await this.supabase
+      .getClient()
       .from('patients')
       .select('allergies')
       .eq('id', patientId)
@@ -251,14 +322,15 @@ export class HospitalSummaryService {
       return [];
     }
 
-    return (data?.allergies as string[]) || [];
+    return (data as { allergies?: string[] })?.allergies || [];
   }
 
   /**
    * Fetch GP/doctor contacts
    */
   private async getGPContacts(patientId: string): Promise<GPContact[]> {
-    const { data, error } = await this.supabase.getClient()
+    const { data, error } = await this.supabase
+      .getClient()
       .from('gp_contacts')
       .select('name, specialty, phone, email, address')
       .eq('patient_id', patientId)
@@ -269,29 +341,70 @@ export class HospitalSummaryService {
       return [];
     }
 
-    return (
-      data?.map((gp) => ({
-        name: gp.name,
-        specialty: gp.specialty,
-        phone: gp.phone,
-        email: gp.email,
-        address: gp.address,
-      })) || []
-    );
+    const gpData = (data || []) as {
+      name: string;
+      specialty: string;
+      phone?: string;
+      email?: string;
+      address?: string;
+    }[];
+    return gpData.map((gp) => ({
+      name: gp.name,
+      specialty: gp.specialty,
+      phone: gp.phone,
+      email: gp.email,
+      address: gp.address,
+    }));
+  }
+
+  /**
+   * Fetch active emergency contacts for patient, ordered for display
+   */
+  private async getEmergencyContacts(
+    patientId: string,
+  ): Promise<EmergencyContact[]> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('emergency_contacts')
+      .select('contact_name, label, phone')
+      .eq('patient_id', patientId)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching emergency contacts:', error);
+      return [];
+    }
+
+    const contactsData = (data || []) as {
+      contact_name: string;
+      label: string;
+      phone: string;
+    }[];
+
+    return contactsData.map((contact) => ({
+      name: contact.contact_name,
+      role: contact.label,
+      phone: contact.phone,
+    }));
   }
 
   /**
    * Fetch and summarize 7-day care notes
    */
-  private async getCareNotesSummary(patientId: string): Promise<CareNoteEntry[]> {
+  private async getCareNotesSummary(
+    patientId: string,
+  ): Promise<CareNoteEntry[]> {
     // First, get the group_id for this patient
-    const { data: patient, error: patientError } = await this.supabase.getClient()
+    const { data: patient, error: patientError } = await this.supabase
+      .getClient()
       .from('patients')
       .select('group_id')
       .eq('id', patientId)
       .single();
 
-    if (patientError || !patient?.group_id) {
+    const patientData = patient as { group_id?: string } | null;
+    if (patientError || !patientData?.group_id) {
       console.error('Could not find group_id for patient:', patientError);
       return [];
     }
@@ -299,10 +412,11 @@ export class HospitalSummaryService {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const { data, error } = await this.supabase.getClient()
+    const { data, error } = await this.supabase
+      .getClient()
       .from('handover_journal_entries')
       .select('created_at, content')
-      .eq('group_id', patient.group_id)
+      .eq('group_id', patientData.group_id)
       .gte('created_at', sevenDaysAgo.toISOString())
       .order('created_at', { ascending: false });
 
@@ -311,17 +425,21 @@ export class HospitalSummaryService {
       return [];
     }
 
-    return (data?.map((note) => ({
+    const notesData = (data || []) as { created_at: string; content: string }[];
+    return notesData.map((note) => ({
       date: new Date(note.created_at).toISOString().split('T')[0],
       // Remove any leading tone tag like [NEUTRAL], [POSITIVE], [CONCERNING]
       content: note.content.replace(/^\[[A-Z]+\]\s*/, ''),
-    })) || []);
+    }));
   }
   /**
    * Fetch AI-flagged patterns or insights
    */
-  private async getFlaggedPatterns(patientId: string): Promise<FlaggedPattern[]> {
-    const { data, error } = await this.supabase.getClient()
+  private async getFlaggedPatterns(
+    patientId: string,
+  ): Promise<FlaggedPattern[]> {
+    const { data, error } = await this.supabase
+      .getClient()
       .from('ai_insights')
       .select('insight_type, observation, severity')
       .eq('patient_id', patientId)
@@ -334,14 +452,73 @@ export class HospitalSummaryService {
       return [];
     }
 
-    return (
-      data?.map((pattern) => ({
-        type: pattern.insight_type,
-        observation: pattern.observation,
-        severity: pattern.severity || 'low',
-      })) || []
+    const patternsData = (data || []) as {
+      insight_type: string;
+      observation: string;
+      severity?: 'low' | 'medium' | 'high';
+    }[];
+    return patternsData.map((pattern) => ({
+      type: pattern.insight_type,
+      observation: pattern.observation,
+      severity: pattern.severity || 'low',
+    }));
+  }
+
+  /**
+   * Fetch documents flagged for inclusion in the hospital summary PDF.
+   * Image files are downloaded so they can be embedded in the generated PDF.
+   */
+  private async getFlaggedDocuments(
+    patientId: string,
+  ): Promise<HospitalSummaryDocument[]> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('documents')
+      .select('file_name, file_type, document_type, created_at, storage_path')
+      .eq('patient_id', patientId)
+      .eq('include_in_hospital_summary', true)
+      .order('created_at', { ascending: false });
+
+    if (error || !data) {
+      console.error('Error fetching flagged documents:', error);
+      return [];
+    }
+
+    const documentsData = (data || []) as {
+      file_name: string;
+      file_type: string;
+      document_type?: string;
+      created_at?: string;
+      storage_path?: string;
+    }[];
+
+    const flaggedDocuments = await Promise.all(
+      documentsData.map(async (document) => {
+        const entry: HospitalSummaryDocument = {
+          fileName: document.file_name,
+          documentType: document.document_type ?? 'other',
+          uploadedAt: document.created_at ?? new Date().toISOString(),
+          fileType: document.file_type,
+        };
+
+        const isImage =
+          document.file_type === 'image/jpeg' ||
+          document.file_type === 'image/png';
+        if (isImage && document.storage_path) {
+          const { data: fileData, error: downloadError } = await this.supabase
+            .getClient()
+            .storage.from('care-documents')
+            .download(document.storage_path);
+
+          if (!downloadError && fileData) {
+            entry.imageBuffer = Buffer.from(await fileData.arrayBuffer());
+          }
+        }
+
+        return entry;
+      }),
     );
+
+    return flaggedDocuments;
   }
 }
-
-

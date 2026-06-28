@@ -25,9 +25,10 @@ export function HospitalSummaryPDF() {
       );
  
       setGeneratedPdf(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorResponse = err as { response?: { data?: { message?: string } } };
       const errorMessage =
-        err.response?.data?.message || 'Failed to generate PDF. Please try again.';
+        errorResponse.response?.data?.message || 'Failed to generate PDF. Please try again.';
       setError(errorMessage);
     } finally {
       setIsGenerating(false);
@@ -61,9 +62,10 @@ export function HospitalSummaryPDF() {
         text: 'Care profile summary for hospital/emergency department',
         files: [file],
       });
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        console.error('Share error:', err);
+    } catch (err: unknown) {
+      const error = err as Error;
+      if (error.name !== 'AbortError') {
+        console.error('Share error:', error);
         alert('Sharing failed. You can download the PDF instead.');
         downloadPDF();
       }

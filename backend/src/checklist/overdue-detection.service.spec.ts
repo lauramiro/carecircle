@@ -143,7 +143,7 @@ describe('OverdueDetectionService', () => {
       'alert-1',
       expect.objectContaining({
         status: 'push_sent',
-        pushDeliveryLog: expect.any(Array),
+        pushDeliveryLog: expect.any(Array) as unknown,
       }),
     );
 

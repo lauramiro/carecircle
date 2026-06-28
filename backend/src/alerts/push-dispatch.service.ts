@@ -98,7 +98,7 @@ export class PushDispatchService {
       } catch (err: unknown) {
         const statusCode =
           typeof err === 'object' && err !== null && 'statusCode' in err
-            ? Number((err as { statusCode: unknown }).statusCode)
+            ? Number(err.statusCode)
             : undefined;
         const message = err instanceof Error ? err.message : 'push_failed';
         log.push({
@@ -120,45 +120,92 @@ export class PushDispatchService {
   async sendToUsers(
     userIds: string[],
     payload: GenericPushPayload,
-  ): Promise<void> {
+  ): Promise<PushDispatchResult> {
+    const log: PushDispatchResult['log'] = [];
+
+    if (userIds.length === 0) return { log, allFailed: true };
+
     if (!this.vapidConfigured) {
       this.logger.warn('sendToUsers_skipped: VAPID not configured');
-      return;
+      for (const userId of userIds) {
+        log.push({
+          userId,
+          subscriptionId: 'none',
+          success: false,
+          error: 'vapid_not_configured',
+        });
+      }
+      return { log, allFailed: true };
     }
-    if (userIds.length === 0) return;
 
     const subscriptions = await this.pushSubRepo.findByUserIds(userIds);
     if (subscriptions.length === 0) {
       this.logger.warn(
         `sendToUsers_no_subscriptions userIds=${userIds.join(',')}`,
       );
-      return;
+      for (const userId of userIds) {
+        log.push({
+          userId,
+          subscriptionId: 'none',
+          success: false,
+          error: 'no_subscription',
+        });
+      }
+      return { log, allFailed: true };
     }
-    await Promise.all(
-      subscriptions.map(async (sub) => {
-        if (sub.platform !== 'web_push' || !sub.p256dh || !sub.auth) return;
-        try {
-          await webpush.sendNotification(
-            {
-              endpoint: sub.endpoint,
-              keys: { p256dh: sub.p256dh, auth: sub.auth },
-            },
-            JSON.stringify({
-              title: payload.title,
-              body: payload.body,
-              data: { url: payload.url },
-            }),
-          );
-        } catch (err: unknown) {
-          const statusCode =
-            typeof err === 'object' && err !== null && 'statusCode' in err
-              ? Number((err as { statusCode: unknown }).statusCode)
-              : undefined;
-          this.logger.warn(
-            `push_failed sub=${sub.id} status=${statusCode ?? 'unknown'}`,
-          );
-        }
-      }),
-    );
+
+    let successCount = 0;
+    for (const sub of subscriptions) {
+      if (sub.platform !== 'web_push' || !sub.p256dh || !sub.auth) {
+        log.push({
+          userId: sub.user_id,
+          subscriptionId: sub.id,
+          success: false,
+          error: 'unsupported_platform',
+        });
+        continue;
+      }
+
+      const p256dh = sub.p256dh;
+      const auth = sub.auth;
+      try {
+        const result = await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: { p256dh, auth },
+          },
+          JSON.stringify({
+            title: payload.title,
+            body: payload.body,
+            data: { url: payload.url },
+          }),
+        );
+        successCount++;
+        log.push({
+          userId: sub.user_id,
+          subscriptionId: sub.id,
+          success: true,
+          statusCode: result.statusCode,
+        });
+      } catch (err: unknown) {
+        const statusCode =
+          typeof err === 'object' && err !== null && 'statusCode' in err
+            ? Number(err.statusCode)
+            : undefined;
+        const message = err instanceof Error ? err.message : 'push_failed';
+        log.push({
+          userId: sub.user_id,
+          subscriptionId: sub.id,
+          success: false,
+          statusCode,
+          error: message,
+        });
+        this.logger.warn(
+          `push_failed sub=${sub.id} status=${statusCode ?? 'unknown'}`,
+        );
+      }
+    }
+
+    return { log, allFailed: successCount === 0 };
   }
 }

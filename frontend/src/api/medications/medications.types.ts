@@ -20,6 +20,9 @@ export interface Medication {
   instructions: string | null;
   route: string | null;
   takeWithFood: boolean | null;
+  quantityOnHand: number | null;
+  lowStockAlertThresholdDays: number;
+  lowStockAlertSentAt: string | null;
   startDate: string;
   endDate: string | null;
   perpetual?: boolean;
@@ -43,6 +46,7 @@ export type MedicationOptionalFields = {
   route?: string;
   instructions?: string;
   takeWithFood?: boolean;
+  quantityOnHand?: number | null;
   endDate?: string;
   perpetual?: boolean;
   totalDoses?: number;
@@ -83,6 +87,7 @@ export type EditMedicationPayload = Partial<
     | 'route'
     | 'instructions'
     | 'takeWithFood'
+    | 'quantityOnHand'
     | 'endDate'
     | 'perpetual'
     | 'totalDoses'

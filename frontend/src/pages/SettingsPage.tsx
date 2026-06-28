@@ -1,19 +1,27 @@
-import { Moon, Sun, Bell, CircleUserRound, Shield } from 'lucide-react';
+import { Moon, Sun, Bell, CircleUserRound, Shield, ALargeSmall } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import WellbeingCheckInSection from '../components/wellbeing/WellbeingCheckInSection';
 import PageHeader from '../components/ui/PageHeader';
 import { useTheme, type Theme } from '../contexts/ThemeContext';
+import { useFontSize, type FontSize } from '../contexts/FontSizeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import type { Json } from '../lib/database.types';
 import { isCurrentUserPrimaryCarer } from '../api/wellbeing/wellbeing.service';
 
+const VALID_FONT_SIZES: FontSize[] = ['standard', 'large', 'extra-large'];
+
 interface NotificationPreferences {
   weeklyWellbeingReminderEnabled?: boolean;
 }
 
+interface AccessibilityPreferences {
+  fontSize?: FontSize;
+}
+
 interface ProfilePreferences {
   notifications?: NotificationPreferences;
+  accessibility?: AccessibilityPreferences;
   [key: string]: unknown;
 }
 
@@ -65,8 +73,45 @@ function ThemeOption({ label, description, value, icon, selected, onSelect }: Th
   );
 }
 
+interface FontSizeOptionProps {
+  label: string;
+  description: string;
+  value: FontSize;
+  selected: boolean;
+  onSelect: (value: FontSize) => void;
+}
+
+function FontSizeOption({ label, description, value, selected, onSelect }: FontSizeOptionProps) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={selected}
+      onClick={() => onSelect(value)}
+      className="flex flex-1 items-start gap-3 rounded-xl border p-4 text-left transition-colors"
+      style={{
+        borderColor: selected ? 'var(--color-primary)' : 'var(--color-border)',
+        backgroundColor: selected ? 'var(--color-primary-light)' : 'var(--color-card)',
+        cursor: 'pointer',
+        fontFamily: 'Plus Jakarta Sans, sans-serif',
+        minHeight: '44px',
+      }}
+    >
+      <span>
+        <span className="block text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          {label}
+        </span>
+        <span className="mt-1 block text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+          {description}
+        </span>
+      </span>
+    </button>
+  );
+}
+
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const { fontSize, setFontSize } = useFontSize();
   const { session } = useAuth();
   const [isPrimaryCarer, setIsPrimaryCarer] = useState(false);
   const [preferences, setPreferences] = useState<ProfilePreferences | null>(null);
@@ -103,7 +148,13 @@ export default function SettingsPage() {
         }
 
         setIsPrimaryCarer(primaryCarer);
-        setPreferences((profileResult.data?.preferences as ProfilePreferences | null) ?? null);
+        const loadedPreferences = (profileResult.data?.preferences as ProfilePreferences | null) ?? null;
+        setPreferences(loadedPreferences);
+
+        const dbFontSize = loadedPreferences?.accessibility?.fontSize;
+        if (dbFontSize && VALID_FONT_SIZES.includes(dbFontSize)) {
+          setFontSize(dbFontSize);
+        }
       } catch (error) {
         if (!isActive) return;
         setNotificationError(
@@ -123,7 +174,28 @@ export default function SettingsPage() {
     return () => {
       isActive = false;
     };
-  }, [session?.user?.id]);
+  }, [session?.user?.id, setFontSize]);
+
+  async function handleFontSizeChange(nextFontSize: FontSize) {
+    setFontSize(nextFontSize);
+
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    const nextPreferences: ProfilePreferences = {
+      ...(preferences ?? {}),
+      accessibility: { fontSize: nextFontSize },
+    };
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ preferences: nextPreferences as Json })
+      .eq('id', userId);
+
+    if (!error) {
+      setPreferences(nextPreferences);
+    }
+  }
 
   async function handleWeeklyWellbeingReminderToggle(enabled: boolean) {
     const userId = session?.user?.id;
@@ -193,6 +265,52 @@ export default function SettingsPage() {
             icon={<Moon size={18} strokeWidth={1.9} />}
             selected={theme === 'dark'}
             onSelect={setTheme}
+          />
+        </div>
+      </article>
+
+      <article
+        className="rounded-2xl border bg-white p-5"
+        style={{ borderColor: 'var(--color-border)' }}
+      >
+        <div className="mb-4 flex items-start gap-3">
+          <span
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+            style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}
+          >
+            <ALargeSmall size={20} strokeWidth={1.9} />
+          </span>
+          <div>
+            <h2 className="text-base font-bold" style={{ color: 'var(--color-text-primary)' }}>
+              Text size
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+              Choose a text size that is comfortable to read. Your preference is saved across sessions.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <FontSizeOption
+            label="Standard"
+            description="Default browser text size."
+            value="standard"
+            selected={fontSize === 'standard'}
+            onSelect={handleFontSizeChange}
+          />
+          <FontSizeOption
+            label="Large"
+            description="12% larger than standard."
+            value="large"
+            selected={fontSize === 'large'}
+            onSelect={handleFontSizeChange}
+          />
+          <FontSizeOption
+            label="Extra-Large"
+            description="25% larger than standard."
+            value="extra-large"
+            selected={fontSize === 'extra-large'}
+            onSelect={handleFontSizeChange}
           />
         </div>
       </article>

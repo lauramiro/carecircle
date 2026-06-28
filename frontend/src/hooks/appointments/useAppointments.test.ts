@@ -43,6 +43,7 @@ function makeAppt(overrides: Partial<Appointment> = {}): Appointment {
     endTime: '2026-07-01T10:00:00.000Z',
     attendingCarerId: 'carer-1',
     specialistName: null,
+    specialistPhone: null,
     location: null,
     preVisitNotes: null,
     postVisitNotes: null,

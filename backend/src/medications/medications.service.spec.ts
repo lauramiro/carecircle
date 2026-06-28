@@ -20,6 +20,9 @@ function makeMed(overrides: Partial<MedicationRecord> = {}): MedicationRecord {
     status: 'active',
     perpetual: true,
     total_doses: null,
+    quantity_on_hand: null,
+    low_stock_alert_threshold_days: 7,
+    low_stock_alert_sent_at: null,
     materialization_cursor_at: null,
     ...overrides,
   };
@@ -80,6 +83,36 @@ describe('MedicationsService', () => {
     expect(materialization.materializeForMedication).toHaveBeenCalledWith(
       'med-1',
       'medication_create',
+    );
+    expect(medicationRepo.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ quantity_on_hand: null }),
+    );
+  });
+
+  it('create persists quantity on hand when provided', async () => {
+    careGroupRepo.getGroupContext.mockResolvedValue({
+      groupId: 'group-1',
+      patientId: 'patient-1',
+      preferredTimezone: 'UTC',
+      patientFirstName: 'Alex',
+    });
+    medicationRepo.insert.mockResolvedValue(makeMed({ quantity_on_hand: 28 }));
+    materialization.materializeForMedication.mockResolvedValue(undefined);
+
+    await service.create('group-1', {
+      patientId: 'patient-1',
+      medicationName: 'Metformin',
+      dose: 500,
+      unit: 'mg',
+      startDate: '2025-01-01',
+      scheduleType: 'daily',
+      specificTimes: ['08:00'],
+      perpetual: true,
+      quantityOnHand: 28,
+    });
+
+    expect(medicationRepo.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ quantity_on_hand: 28 }),
     );
   });
 
@@ -153,6 +186,22 @@ describe('MedicationsService', () => {
       medicationName: 'Metformin XR',
     });
 
+    expect(reconciliation.reconcileAfterMedicationEdit).not.toHaveBeenCalled();
+  });
+
+  it('updates quantity on hand without checklist reconciliation', async () => {
+    const oldMed = makeMed({ quantity_on_hand: 12 });
+    const newMed = makeMed({ quantity_on_hand: 20 });
+    medicationRepo.findById.mockResolvedValueOnce(oldMed);
+    medicationRepo.update.mockResolvedValue(newMed);
+
+    await service.update('group-1', 'med-1', {
+      quantityOnHand: 20,
+    });
+
+    expect(medicationRepo.update).toHaveBeenCalledWith('med-1', {
+      quantity_on_hand: 20,
+    });
     expect(reconciliation.reconcileAfterMedicationEdit).not.toHaveBeenCalled();
   });
 

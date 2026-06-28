@@ -40,6 +40,7 @@ async function fillPasswordLogin(email: string, password: string) {
 describe('LoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     window.history.pushState({}, '', '/login');
     supabaseMock.auth.signInWithPassword.mockResolvedValue({ error: null });
     supabaseMock.auth.signInWithOtp.mockResolvedValue({ error: null });
@@ -173,7 +174,10 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: /send me a magic link instead/i }));
     await user.click(screen.getByRole('button', { name: /^send magic link$/i }));
 
-    expect(supabaseMock.auth.signInWithOtp).toHaveBeenCalledWith({ email: 'magic@example.com' });
+    expect(supabaseMock.auth.signInWithOtp).toHaveBeenCalledWith({
+      email: 'magic@example.com',
+      options: { emailRedirectTo: undefined },
+    });
     expect(await screen.findByText('Check your email')).toBeInTheDocument();
     expect(screen.getByText('magic@example.com')).toBeInTheDocument();
   });
@@ -191,6 +195,32 @@ describe('LoginPage', () => {
     expect(
       await screen.findByText('Something went wrong. Please check your connection and try again.'),
     ).toBeInTheDocument();
+  });
+
+  it('sends pending invite magic links back to invite confirmation', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(
+      'carecircle:pendingInvite',
+      JSON.stringify({
+        email: 'magic@example.com',
+        inviteId: '550e8400-e29b-41d4-a716-446655440000',
+        savedAt: Date.now(),
+      }),
+    );
+
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/email address/i), 'magic@example.com');
+    await user.click(screen.getByRole('button', { name: /send me a magic link instead/i }));
+    await user.click(screen.getByRole('button', { name: /^send magic link$/i }));
+
+    expect(supabaseMock.auth.signInWithOtp).toHaveBeenCalledWith({
+      email: 'magic@example.com',
+      options: {
+        emailRedirectTo:
+          'http://localhost:3000/group-invite?inviteId=550e8400-e29b-41d4-a716-446655440000&email=magic%40example.com&confirmation=true',
+      },
+    });
   });
 
   it('returns from magic-link confirmation to password login', async () => {

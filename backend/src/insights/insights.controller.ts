@@ -1,13 +1,13 @@
 import {
-  Body,
   Controller,
   Get,
+  Post,
+  Param,
+  Query,
+  Body,
+  Logger,
   HttpException,
   HttpStatus,
-  Logger,
-  Param,
-  Post,
-  Query,
 } from '@nestjs/common';
 import { InsightsService } from './insights.service';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
@@ -19,10 +19,11 @@ export class InsightsController {
 
   constructor(
     private readonly supabase: SupabaseAdminClient,
-    private readonly weeklyInsightGenerationService: WeeklyInsightGenerationService,
+    weeklyInsightGenerationService: WeeklyInsightGenerationService,
     private readonly insightsService: InsightsService,
-  ) {}
- 
+  ) {
+    this.weeklyInsightGenerationService = weeklyInsightGenerationService;
+  }
 
   /**
    * Returns the newest weekly digest and filters out cards dismissed by `userId`.
@@ -96,10 +97,11 @@ export class InsightsController {
   async debugGenerate(@Param('groupId') groupId: string) {
     await this.insightsService.generateWeeklyDigest(groupId);
     return { success: true };
-  }  
+  }
 
   private async resolvePatientId(groupId: string): Promise<string> {
-    const { data, error } = await this.supabase.getClient()
+    const { data, error } = await this.supabase
+      .getClient()
       .from('patients')
       .select('id')
       .eq('group_id', groupId)
@@ -112,10 +114,8 @@ export class InsightsController {
       );
     }
 
-    return data.id;
+    return data.id as string;
   }
-  
-
 
   /**
    * Returns active rule-based/legacy AI insights for the patient in a group.
@@ -132,9 +132,12 @@ export class InsightsController {
   async getInsightsForGroup(@Param('groupId') groupId: string) {
     try {
       const patientId = await this.resolvePatientId(groupId);
-      const { data, error } = await this.supabase.getClient()
+      const { data, error } = await this.supabase
+        .getClient()
         .from('ai_insights')
-        .select('insight_type, observation, suggested_action, severity, generated_at')
+        .select(
+          'insight_type, observation, suggested_action, severity, generated_at',
+        )
         .eq('patient_id', patientId)
         .eq('is_active', true)
         .order('generated_at', { ascending: false })
@@ -142,13 +145,19 @@ export class InsightsController {
 
       if (error) {
         this.logger.error('Supabase query failed:', error);
-        throw new HttpException('Failed to fetch insights', HttpStatus.INTERNAL_SERVER_ERROR);
+        throw new HttpException(
+          'Failed to fetch insights',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
 
       return { insights: data ?? [] };
     } catch (err) {
-      this.logger.error('Failed to get insights for patient', err as any);
-      throw new HttpException('Failed to get insights', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('Failed to get insights for patient', err);
+      throw new HttpException(
+        'Failed to get insights',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

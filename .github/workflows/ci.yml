@@ -69,13 +69,6 @@ jobs:
         run: npm run lint
 
       - name: Unit Tests
-        env:
-          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_TEST_PUBLIC_KEY }}
-          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_TEST_PRIVATE_KEY }}
-          VAPID_SUBJECT: ${{ secrets.VAPID_TEST_SUBJECT }}
-          VAPID_TEST_ENDPOINT: ${{ secrets.VAPID_TEST_ENDPOINT }}
-          VAPID_TEST_P256DH: ${{ secrets.VAPID_TEST_P256DH }}
-          VAPID_TEST_AUTH: ${{ secrets.VAPID_TEST_AUTH }}
         run: npm run test
 
       - name: Integration Tests

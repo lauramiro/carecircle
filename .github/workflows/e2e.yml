@@ -1,0 +1,74 @@
+name: E2E Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - CC-18-EPIC-4-CI-CD-Security-Documentation
+      - CC-116-GA-Pipelines
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: E2E — API smoke + Browser regression
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: e2e
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      # -----------------------------------------------------------------------
+      # API smoke tests — no browser, no login needed
+      # Always run as long as E2E_API_URL is set.
+      # -----------------------------------------------------------------------
+      - name: Run API smoke tests
+        env:
+          E2E_API_URL: ${{ secrets.E2E_API_URL }}
+        run: npx playwright test tests/api-smoke.spec.ts --project=api-smoke
+
+      # -----------------------------------------------------------------------
+      # All browser tests (auth, signup, groups, meds, checklist, appts,
+      # settings, ai, insights, hospital).
+      # Skipped entirely when E2E_FRONTEND_URL is not configured (e.g. forks).
+      # -----------------------------------------------------------------------
+      - name: Run browser tests
+        if: ${{ env.E2E_FRONTEND_URL != '' }}
+        env:
+          E2E_FRONTEND_URL: ${{ secrets.E2E_FRONTEND_URL }}
+          E2E_API_URL: ${{ secrets.E2E_API_URL }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          E2E_TEST_GROUP_ID: ${{ secrets.E2E_TEST_GROUP_ID }}
+        run: |
+          # Create .auth dir so the setup project can write the session file
+          mkdir -p .auth
+          npx playwright test \
+            --project=setup \
+            --project=auth-browser \
+            --project=signup-browser \
+            --project=chromium
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 14

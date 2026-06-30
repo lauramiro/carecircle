@@ -254,8 +254,7 @@ export default function GroupMembersPage() {
             <motion.button
               type="button"
               onClick={() => setInviteOpen(true)}
-              className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-white"
-              style={{ backgroundColor: 'var(--color-primary)' }}
+              className="cc-primary-action inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold"
               animate={shouldReduceMotion ? STATIC_CTA_ATTENTION_ANIMATION : CTA_ATTENTION_ANIMATION}
               transition={{ ...TRANSITIONS.modal, delay: 0.35 }}
               whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}

@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: carecircle-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod

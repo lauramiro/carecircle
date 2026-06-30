@@ -1,0 +1,1 @@
+[   34776ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://fxkwepyjqfwjznsetkcf.supabase.co/rest/v1/weekly_shift_assignment_history?select=*&order=changed_at.desc&limit=5:0

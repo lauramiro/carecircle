@@ -1,0 +1,169 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - link "CareCircle" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e9]
+        - generic [ref=e12]: CareCircle
+      - navigation "Dashboard navigation" [ref=e13]:
+        - generic [ref=e14]:
+          - link "Dashboard" [ref=e15] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e17]
+            - generic [ref=e22]: Dashboard
+          - generic [ref=e23]:
+            - generic [ref=e24]:
+              - link "Groups" [ref=e26] [cursor=pointer]:
+                - /url: /groups/list
+                - img [ref=e27]
+                - text: Groups
+              - button "Toggle groups menu" [expanded] [ref=e32] [cursor=pointer]:
+                - img [ref=e33]
+            - generic [ref=e36]:
+              - link "All groups" [ref=e37] [cursor=pointer]:
+                - /url: /groups/list
+                - img [ref=e38]
+                - text: All groups
+              - link "Create group" [ref=e40] [cursor=pointer]:
+                - /url: /groups/create
+                - img [ref=e41]
+                - text: Create group
+          - link "Settings" [ref=e42] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e44]
+            - generic [ref=e47]: Settings
+        - generic [ref=e48]:
+          - paragraph [ref=e49]: Current care circle
+          - generic [ref=e50]:
+            - paragraph [ref=e51]: QA Test Circle
+            - paragraph [ref=e137]: "Your role: primary_carer"
+            - link "View profile →" [ref=e138] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/profile
+          - generic [ref=e52]:
+            - link "Overview" [ref=e53] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b
+              - img [ref=e54]
+              - text: Overview
+            - link "Emergency" [ref=e59] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/emergency-contacts
+              - img [ref=e60]
+              - text: Emergency
+            - link "Members" [ref=e64] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/members
+              - img [ref=e65]
+              - text: Members
+            - link "Today's medications" [ref=e70] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/checklist
+              - img [ref=e71]
+              - text: Today's medications
+            - link "Schedule" [ref=e74] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/medications
+              - img [ref=e75]
+              - text: Schedule
+            - link "Journal" [ref=e78] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/journal
+              - img [ref=e79]
+              - text: Journal
+            - link "Insights" [ref=e81] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/insights
+              - img [ref=e82]
+              - text: Insights
+            - link "Shifts" [ref=e85] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/shifts
+              - img [ref=e86]
+              - text: Shifts
+            - link "Appointments" [ref=e88] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/appointments
+              - img [ref=e89]
+              - text: Appointments
+            - link "Administration log" [ref=e92] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/administration-log
+              - img [ref=e93]
+              - text: Administration log
+            - link "AI assistant" [ref=e96] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/ai-assistant
+              - img [ref=e97]
+              - text: AI assistant
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - generic [ref=e103]: TA
+          - generic [ref=e104]:
+            - paragraph [ref=e105]: QA Test Circle
+            - paragraph [ref=e106]: tahirahmadshah@outlook.com
+        - button "Sign out" [ref=e107] [cursor=pointer]:
+          - img [ref=e108]
+          - text: Sign out
+    - generic [ref=e111]:
+      - banner [ref=e112]:
+        - generic "Page history controls" [ref=e113]:
+          - button "Go back" [disabled] [ref=e114]:
+            - img [ref=e115]
+          - button "Go forward" [ref=e117] [cursor=pointer]:
+            - img [ref=e118]
+        - button "Notifications enabled" [ref=e139] [cursor=pointer]:
+          - img [ref=e121]
+        - img [ref=e125]
+      - main [ref=e129]:
+        - generic [ref=e131]:
+          - generic [ref=e132]:
+            - generic [ref=e133]:
+              - paragraph [ref=e140]: Care circle
+              - heading "Members" [level=1] [ref=e134]
+              - paragraph [ref=e135]: Manage who has access to QA Test Circle, their roles, and member status.
+            - button "Invite member" [ref=e142] [cursor=pointer]:
+              - img [ref=e143]
+              - text: Invite member
+          - generic [ref=e146]:
+            - generic [ref=e148]: 2 total
+            - table [ref=e150]:
+              - rowgroup [ref=e151]:
+                - row "Name Email Join Date Role Actions" [ref=e152]:
+                  - columnheader "Name" [ref=e153]
+                  - columnheader "Email" [ref=e154]
+                  - columnheader "Join Date" [ref=e155]
+                  - columnheader "Role" [ref=e156]
+                  - columnheader "Actions" [ref=e157]
+              - rowgroup [ref=e158]:
+                - row "tahirahmadshah Active tahirahmadshah@outlook.com 27 Jun 2026 Primary carer —" [ref=e159]:
+                  - cell "tahirahmadshah Active" [ref=e160]:
+                    - generic [ref=e161]:
+                      - generic [ref=e162]: tahirahmadshah
+                      - generic [ref=e163]: Active
+                  - cell "tahirahmadshah@outlook.com" [ref=e164]
+                  - cell "27 Jun 2026" [ref=e165]
+                  - cell "Primary carer" [ref=e166]:
+                    - combobox "Change role for tahirahmadshah" [disabled] [ref=e167]:
+                      - option "Primary carer" [selected]
+                  - cell "—" [ref=e168]
+                - row "tahirahmadshah+qa2 Active tahirahmadshah+qa2@outlook.com 28 Jun 2026 Observer Remove Suspend" [ref=e169]:
+                  - cell "tahirahmadshah+qa2 Active" [ref=e170]:
+                    - generic [ref=e171]:
+                      - generic [ref=e172]: tahirahmadshah+qa2
+                      - generic [ref=e173]: Active
+                  - cell "tahirahmadshah+qa2@outlook.com" [ref=e174]
+                  - cell "28 Jun 2026" [ref=e175]
+                  - cell "Observer" [ref=e176]:
+                    - combobox "Change role for tahirahmadshah+qa2" [ref=e177]:
+                      - option "Primary carer"
+                      - option "Secondary carer"
+                      - option "Observer" [selected]
+                  - cell "Remove Suspend" [ref=e178]:
+                    - generic [ref=e179]:
+                      - button "Remove" [ref=e180] [cursor=pointer]
+                      - button "Suspend" [ref=e181] [cursor=pointer]
+          - dialog "Invite Member" [ref=e182]:
+            - generic [ref=e183]:
+              - generic [ref=e184]:
+                - heading "Invite Member" [level=2] [ref=e185]
+                - paragraph [ref=e186]: Send an invitation to join this care circle.
+              - button "Close invite modal" [ref=e187] [cursor=pointer]:
+                - img [ref=e188]
+            - generic [ref=e191]:
+              - text: Email address
+              - textbox "Email address" [ref=e192]:
+                - /placeholder: john@example.com
+                - text: tahirahmadshah+qa3@outlook.com
+            - generic [ref=e193]:
+              - button "Cancel" [ref=e194] [cursor=pointer]
+              - button "Sending..." [disabled] [ref=e198]
+  - region "Notifications Alt+T"

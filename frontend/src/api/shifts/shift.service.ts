@@ -95,14 +95,15 @@ export async function saveWeeklyShiftAssignment(
   });
 
   if (!response.ok) {
-    let errorData: { message?: string } = {};
+    let message = 'Unable to save the shift assignment';
     try {
-      errorData = await parseResponseJson(response);
-    } catch (err) {
-      errorData = { message: 'Unable to save the shift assignment' };
+      const errorData = await parseResponseJson(response) as { message?: string };
+      if (errorData.message) message = errorData.message;
+    } catch {
+      // keep default message
     }
-    console.error('saveWeeklyShiftAssignment:', errorData);
-    throw new Error(errorData.message || 'Unable to save the shift assignment');
+    console.error('saveWeeklyShiftAssignment:', message);
+    throw new Error(message);
   }
 
   const data = await parseResponseJson(response);

@@ -1,0 +1,2337 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - link "CareCircle" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e9]
+        - generic [ref=e12]: CareCircle
+      - navigation "Dashboard navigation" [ref=e13]:
+        - generic [ref=e14]:
+          - link "Dashboard" [ref=e15] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e17]
+            - generic [ref=e22]: Dashboard
+          - generic [ref=e23]:
+            - generic [ref=e24]:
+              - link "Groups" [ref=e26] [cursor=pointer]:
+                - /url: /groups/list
+                - img [ref=e27]
+                - text: Groups
+              - button "Toggle groups menu" [expanded] [ref=e32] [cursor=pointer]:
+                - img [ref=e33]
+            - generic [ref=e36]:
+              - link "All groups" [ref=e37] [cursor=pointer]:
+                - /url: /groups/list
+                - img [ref=e38]
+                - text: All groups
+              - link "Create group" [ref=e40] [cursor=pointer]:
+                - /url: /groups/create
+                - img [ref=e41]
+                - text: Create group
+          - link "Settings" [ref=e42] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e44]
+            - generic [ref=e47]: Settings
+        - generic [ref=e48]:
+          - paragraph [ref=e49]: Current care circle
+          - generic [ref=e50]:
+            - paragraph [ref=e51]: QA Test Circle
+            - paragraph [ref=e137]: "Your role: primary_carer"
+            - link "View profile →" [ref=e138] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/profile
+          - generic [ref=e52]:
+            - link "Overview" [ref=e53] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b
+              - img [ref=e54]
+              - text: Overview
+            - link "Emergency" [ref=e59] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/emergency-contacts
+              - img [ref=e60]
+              - text: Emergency
+            - link "Members" [ref=e64] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/members
+              - img [ref=e65]
+              - text: Members
+            - link "Today's medications" [ref=e70] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/checklist
+              - img [ref=e71]
+              - text: Today's medications
+            - link "Schedule" [ref=e74] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/medications
+              - img [ref=e75]
+              - text: Schedule
+            - link "Journal" [ref=e78] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/journal
+              - img [ref=e79]
+              - text: Journal
+            - link "Insights" [ref=e81] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/insights
+              - img [ref=e82]
+              - text: Insights
+            - link "Shifts" [ref=e85] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/shifts
+              - img [ref=e86]
+              - text: Shifts
+            - link "Appointments" [ref=e88] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/appointments
+              - img [ref=e89]
+              - text: Appointments
+            - link "Administration log" [ref=e92] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/administration-log
+              - img [ref=e93]
+              - text: Administration log
+            - link "AI assistant" [ref=e96] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/ai-assistant
+              - img [ref=e97]
+              - text: AI assistant
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - generic [ref=e103]: TA
+          - generic [ref=e104]:
+            - paragraph [ref=e105]: QA Test Circle
+            - paragraph [ref=e106]: tahirahmadshah@outlook.com
+        - button "Sign out" [ref=e107] [cursor=pointer]:
+          - img [ref=e108]
+          - text: Sign out
+    - generic [ref=e111]:
+      - banner [ref=e112]:
+        - generic "Page history controls" [ref=e113]:
+          - button "Go back" [disabled] [ref=e114]:
+            - img [ref=e115]
+          - button "Go forward" [ref=e117] [cursor=pointer]:
+            - img [ref=e118]
+        - button "Notifications enabled" [ref=e1903] [cursor=pointer]:
+          - img [ref=e121]
+        - img [ref=e125]
+      - main [ref=e129]:
+        - generic [ref=e1947]:
+          - generic [ref=e1948]:
+            - generic [ref=e1949]:
+              - paragraph [ref=e1964]: Care group
+              - heading "Appointments" [level=1] [ref=e1950]
+              - paragraph [ref=e1951]: View and manage appointments for QA Test Circle.
+            - button "New appointment" [ref=e1966] [cursor=pointer]:
+              - img [ref=e1967]
+              - generic [ref=e1968]: New appointment
+          - generic [ref=e1969]:
+            - button "List" [pressed] [ref=e1970] [cursor=pointer]:
+              - img [ref=e1971]
+              - text: List
+            - button "Week" [ref=e1974] [cursor=pointer]:
+              - img [ref=e1975]
+              - text: Week
+            - button "Month" [ref=e1978] [cursor=pointer]:
+              - img [ref=e1979]
+              - text: Month
+          - generic [ref=e1982]:
+            - heading "Upcoming" [level=2] [ref=e1983]
+            - generic [ref=e1984]:
+              - generic [ref=e1987]:
+                - generic [ref=e1988]:
+                  - generic [ref=e1989]:
+                    - paragraph [ref=e1990]: Regression Test Appt
+                    - generic [ref=e1991]:
+                      - img [ref=e1992]
+                      - text: Weekly
+                  - generic [ref=e1997]:
+                    - generic [ref=e1998]:
+                      - img [ref=e1999]
+                      - generic [ref=e2001]: 1 Jul 2026
+                      - img [ref=e2002]
+                      - generic [ref=e2005]: 10:00
+                    - generic [ref=e2006]:
+                      - img [ref=e2007]
+                      - generic [ref=e2011]: tahirahmadshah
+                - generic [ref=e2012]:
+                  - button "Edit" [active] [ref=e2013] [cursor=pointer]
+                  - button "Cancel" [ref=e2014] [cursor=pointer]:
+                    - img [ref=e2015]
+                    - text: Cancel
+              - generic [ref=e2020]:
+                - generic [ref=e2021]:
+                  - paragraph [ref=e2023]: QA Checkup
+                  - generic [ref=e2024]:
+                    - generic [ref=e2025]:
+                      - img [ref=e2026]
+                      - generic [ref=e2028]: 5 Jul 2026
+                      - img [ref=e2029]
+                      - generic [ref=e2032]: 10:00
+                    - generic [ref=e2033]:
+                      - img [ref=e2034]
+                      - generic [ref=e2038]: tahirahmadshah
+                - generic [ref=e2039]:
+                  - button "Edit" [ref=e2040] [cursor=pointer]
+                  - button "Cancel" [ref=e2041] [cursor=pointer]:
+                    - img [ref=e2042]
+                    - text: Cancel
+              - generic [ref=e2047]:
+                - generic [ref=e2048]:
+                  - generic [ref=e2049]:
+                    - paragraph [ref=e2050]: QA Recurring Visit 2
+                    - generic [ref=e2051]:
+                      - img [ref=e2052]
+                      - text: Weekly
+                  - generic [ref=e2057]:
+                    - generic [ref=e2058]:
+                      - img [ref=e2059]
+                      - generic [ref=e2061]: 7 Jul 2026
+                      - img [ref=e2062]
+                      - generic [ref=e2065]: 09:00
+                    - generic [ref=e2066]:
+                      - img [ref=e2067]
+                      - generic [ref=e2071]: tahirahmadshah
+                - generic [ref=e2072]:
+                  - button "Edit" [ref=e2073] [cursor=pointer]
+                  - button "Cancel" [ref=e2074] [cursor=pointer]:
+                    - img [ref=e2075]
+                    - text: Cancel
+              - generic [ref=e2080]:
+                - generic [ref=e2081]:
+                  - generic [ref=e2082]:
+                    - paragraph [ref=e2083]: Regression Test Appt
+                    - generic [ref=e2084]:
+                      - img [ref=e2085]
+                      - text: Weekly
+                  - generic [ref=e2090]:
+                    - generic [ref=e2091]:
+                      - img [ref=e2092]
+                      - generic [ref=e2094]: 8 Jul 2026
+                      - img [ref=e2095]
+                      - generic [ref=e2098]: 10:00
+                    - generic [ref=e2099]:
+                      - img [ref=e2100]
+                      - generic [ref=e2104]: tahirahmadshah
+                - generic [ref=e2105]:
+                  - button "Edit" [ref=e2106] [cursor=pointer]
+                  - button "Cancel" [ref=e2107] [cursor=pointer]:
+                    - img [ref=e2108]
+                    - text: Cancel
+              - generic [ref=e2113]:
+                - generic [ref=e2114]:
+                  - generic [ref=e2115]:
+                    - paragraph [ref=e2116]: QA Recurring Visit 2
+                    - generic [ref=e2117]:
+                      - img [ref=e2118]
+                      - text: Weekly
+                  - generic [ref=e2123]:
+                    - generic [ref=e2124]:
+                      - img [ref=e2125]
+                      - generic [ref=e2127]: 14 Jul 2026
+                      - img [ref=e2128]
+                      - generic [ref=e2131]: 09:00
+                    - generic [ref=e2132]:
+                      - img [ref=e2133]
+                      - generic [ref=e2137]: tahirahmadshah
+                - generic [ref=e2138]:
+                  - button "Edit" [ref=e2139] [cursor=pointer]
+                  - button "Cancel" [ref=e2140] [cursor=pointer]:
+                    - img [ref=e2141]
+                    - text: Cancel
+              - generic [ref=e2146]:
+                - generic [ref=e2147]:
+                  - generic [ref=e2148]:
+                    - paragraph [ref=e2149]: Regression Test Appt
+                    - generic [ref=e2150]:
+                      - img [ref=e2151]
+                      - text: Weekly
+                  - generic [ref=e2156]:
+                    - generic [ref=e2157]:
+                      - img [ref=e2158]
+                      - generic [ref=e2160]: 15 Jul 2026
+                      - img [ref=e2161]
+                      - generic [ref=e2164]: 10:00
+                    - generic [ref=e2165]:
+                      - img [ref=e2166]
+                      - generic [ref=e2170]: tahirahmadshah
+                - generic [ref=e2171]:
+                  - button "Edit" [ref=e2172] [cursor=pointer]
+                  - button "Cancel" [ref=e2173] [cursor=pointer]:
+                    - img [ref=e2174]
+                    - text: Cancel
+              - generic [ref=e2179]:
+                - generic [ref=e2180]:
+                  - generic [ref=e2181]:
+                    - paragraph [ref=e2182]: QA Recurring Visit 2
+                    - generic [ref=e2183]:
+                      - img [ref=e2184]
+                      - text: Weekly
+                  - generic [ref=e2189]:
+                    - generic [ref=e2190]:
+                      - img [ref=e2191]
+                      - generic [ref=e2193]: 21 Jul 2026
+                      - img [ref=e2194]
+                      - generic [ref=e2197]: 09:00
+                    - generic [ref=e2198]:
+                      - img [ref=e2199]
+                      - generic [ref=e2203]: tahirahmadshah
+                - generic [ref=e2204]:
+                  - button "Edit" [ref=e2205] [cursor=pointer]
+                  - button "Cancel" [ref=e2206] [cursor=pointer]:
+                    - img [ref=e2207]
+                    - text: Cancel
+              - generic [ref=e2212]:
+                - generic [ref=e2213]:
+                  - generic [ref=e2214]:
+                    - paragraph [ref=e2215]: Regression Test Appt
+                    - generic [ref=e2216]:
+                      - img [ref=e2217]
+                      - text: Weekly
+                  - generic [ref=e2222]:
+                    - generic [ref=e2223]:
+                      - img [ref=e2224]
+                      - generic [ref=e2226]: 22 Jul 2026
+                      - img [ref=e2227]
+                      - generic [ref=e2230]: 10:00
+                    - generic [ref=e2231]:
+                      - img [ref=e2232]
+                      - generic [ref=e2236]: tahirahmadshah
+                - generic [ref=e2237]:
+                  - button "Edit" [ref=e2238] [cursor=pointer]
+                  - button "Cancel" [ref=e2239] [cursor=pointer]:
+                    - img [ref=e2240]
+                    - text: Cancel
+              - generic [ref=e2245]:
+                - generic [ref=e2246]:
+                  - generic [ref=e2247]:
+                    - paragraph [ref=e2248]: QA Recurring Visit 2
+                    - generic [ref=e2249]:
+                      - img [ref=e2250]
+                      - text: Weekly
+                  - generic [ref=e2255]:
+                    - generic [ref=e2256]:
+                      - img [ref=e2257]
+                      - generic [ref=e2259]: 28 Jul 2026
+                      - img [ref=e2260]
+                      - generic [ref=e2263]: 09:00
+                    - generic [ref=e2264]:
+                      - img [ref=e2265]
+                      - generic [ref=e2269]: tahirahmadshah
+                - generic [ref=e2270]:
+                  - button "Edit" [ref=e2271] [cursor=pointer]
+                  - button "Cancel" [ref=e2272] [cursor=pointer]:
+                    - img [ref=e2273]
+                    - text: Cancel
+              - generic [ref=e2278]:
+                - generic [ref=e2279]:
+                  - generic [ref=e2280]:
+                    - paragraph [ref=e2281]: Regression Test Appt
+                    - generic [ref=e2282]:
+                      - img [ref=e2283]
+                      - text: Weekly
+                  - generic [ref=e2288]:
+                    - generic [ref=e2289]:
+                      - img [ref=e2290]
+                      - generic [ref=e2292]: 29 Jul 2026
+                      - img [ref=e2293]
+                      - generic [ref=e2296]: 10:00
+                    - generic [ref=e2297]:
+                      - img [ref=e2298]
+                      - generic [ref=e2302]: tahirahmadshah
+                - generic [ref=e2303]:
+                  - button "Edit" [ref=e2304] [cursor=pointer]
+                  - button "Cancel" [ref=e2305] [cursor=pointer]:
+                    - img [ref=e2306]
+                    - text: Cancel
+              - generic [ref=e2311]:
+                - generic [ref=e2312]:
+                  - generic [ref=e2313]:
+                    - paragraph [ref=e2314]: QA Recurring Visit 2
+                    - generic [ref=e2315]:
+                      - img [ref=e2316]
+                      - text: Weekly
+                  - generic [ref=e2321]:
+                    - generic [ref=e2322]:
+                      - img [ref=e2323]
+                      - generic [ref=e2325]: 4 Aug 2026
+                      - img [ref=e2326]
+                      - generic [ref=e2329]: 09:00
+                    - generic [ref=e2330]:
+                      - img [ref=e2331]
+                      - generic [ref=e2335]: tahirahmadshah
+                - generic [ref=e2336]:
+                  - button "Edit" [ref=e2337] [cursor=pointer]
+                  - button "Cancel" [ref=e2338] [cursor=pointer]:
+                    - img [ref=e2339]
+                    - text: Cancel
+              - generic [ref=e2344]:
+                - generic [ref=e2345]:
+                  - generic [ref=e2346]:
+                    - paragraph [ref=e2347]: Regression Test Appt
+                    - generic [ref=e2348]:
+                      - img [ref=e2349]
+                      - text: Weekly
+                  - generic [ref=e2354]:
+                    - generic [ref=e2355]:
+                      - img [ref=e2356]
+                      - generic [ref=e2358]: 5 Aug 2026
+                      - img [ref=e2359]
+                      - generic [ref=e2362]: 10:00
+                    - generic [ref=e2363]:
+                      - img [ref=e2364]
+                      - generic [ref=e2368]: tahirahmadshah
+                - generic [ref=e2369]:
+                  - button "Edit" [ref=e2370] [cursor=pointer]
+                  - button "Cancel" [ref=e2371] [cursor=pointer]:
+                    - img [ref=e2372]
+                    - text: Cancel
+              - generic [ref=e2377]:
+                - generic [ref=e2378]:
+                  - generic [ref=e2379]:
+                    - paragraph [ref=e2380]: QA Recurring Visit 2
+                    - generic [ref=e2381]:
+                      - img [ref=e2382]
+                      - text: Weekly
+                  - generic [ref=e2387]:
+                    - generic [ref=e2388]:
+                      - img [ref=e2389]
+                      - generic [ref=e2391]: 11 Aug 2026
+                      - img [ref=e2392]
+                      - generic [ref=e2395]: 09:00
+                    - generic [ref=e2396]:
+                      - img [ref=e2397]
+                      - generic [ref=e2401]: tahirahmadshah
+                - generic [ref=e2402]:
+                  - button "Edit" [ref=e2403] [cursor=pointer]
+                  - button "Cancel" [ref=e2404] [cursor=pointer]:
+                    - img [ref=e2405]
+                    - text: Cancel
+              - generic [ref=e2410]:
+                - generic [ref=e2411]:
+                  - generic [ref=e2412]:
+                    - paragraph [ref=e2413]: Regression Test Appt
+                    - generic [ref=e2414]:
+                      - img [ref=e2415]
+                      - text: Weekly
+                  - generic [ref=e2420]:
+                    - generic [ref=e2421]:
+                      - img [ref=e2422]
+                      - generic [ref=e2424]: 12 Aug 2026
+                      - img [ref=e2425]
+                      - generic [ref=e2428]: 10:00
+                    - generic [ref=e2429]:
+                      - img [ref=e2430]
+                      - generic [ref=e2434]: tahirahmadshah
+                - generic [ref=e2435]:
+                  - button "Edit" [ref=e2436] [cursor=pointer]
+                  - button "Cancel" [ref=e2437] [cursor=pointer]:
+                    - img [ref=e2438]
+                    - text: Cancel
+              - generic [ref=e2443]:
+                - generic [ref=e2444]:
+                  - generic [ref=e2445]:
+                    - paragraph [ref=e2446]: QA Recurring Visit 2
+                    - generic [ref=e2447]:
+                      - img [ref=e2448]
+                      - text: Weekly
+                  - generic [ref=e2453]:
+                    - generic [ref=e2454]:
+                      - img [ref=e2455]
+                      - generic [ref=e2457]: 18 Aug 2026
+                      - img [ref=e2458]
+                      - generic [ref=e2461]: 09:00
+                    - generic [ref=e2462]:
+                      - img [ref=e2463]
+                      - generic [ref=e2467]: tahirahmadshah
+                - generic [ref=e2468]:
+                  - button "Edit" [ref=e2469] [cursor=pointer]
+                  - button "Cancel" [ref=e2470] [cursor=pointer]:
+                    - img [ref=e2471]
+                    - text: Cancel
+              - generic [ref=e2476]:
+                - generic [ref=e2477]:
+                  - generic [ref=e2478]:
+                    - paragraph [ref=e2479]: Regression Test Appt
+                    - generic [ref=e2480]:
+                      - img [ref=e2481]
+                      - text: Weekly
+                  - generic [ref=e2486]:
+                    - generic [ref=e2487]:
+                      - img [ref=e2488]
+                      - generic [ref=e2490]: 19 Aug 2026
+                      - img [ref=e2491]
+                      - generic [ref=e2494]: 10:00
+                    - generic [ref=e2495]:
+                      - img [ref=e2496]
+                      - generic [ref=e2500]: tahirahmadshah
+                - generic [ref=e2501]:
+                  - button "Edit" [ref=e2502] [cursor=pointer]
+                  - button "Cancel" [ref=e2503] [cursor=pointer]:
+                    - img [ref=e2504]
+                    - text: Cancel
+              - generic [ref=e2509]:
+                - generic [ref=e2510]:
+                  - generic [ref=e2511]:
+                    - paragraph [ref=e2512]: QA Recurring Visit 2
+                    - generic [ref=e2513]:
+                      - img [ref=e2514]
+                      - text: Weekly
+                  - generic [ref=e2519]:
+                    - generic [ref=e2520]:
+                      - img [ref=e2521]
+                      - generic [ref=e2523]: 25 Aug 2026
+                      - img [ref=e2524]
+                      - generic [ref=e2527]: 09:00
+                    - generic [ref=e2528]:
+                      - img [ref=e2529]
+                      - generic [ref=e2533]: tahirahmadshah
+                - generic [ref=e2534]:
+                  - button "Edit" [ref=e2535] [cursor=pointer]
+                  - button "Cancel" [ref=e2536] [cursor=pointer]:
+                    - img [ref=e2537]
+                    - text: Cancel
+              - generic [ref=e2542]:
+                - generic [ref=e2543]:
+                  - generic [ref=e2544]:
+                    - paragraph [ref=e2545]: Regression Test Appt
+                    - generic [ref=e2546]:
+                      - img [ref=e2547]
+                      - text: Weekly
+                  - generic [ref=e2552]:
+                    - generic [ref=e2553]:
+                      - img [ref=e2554]
+                      - generic [ref=e2556]: 26 Aug 2026
+                      - img [ref=e2557]
+                      - generic [ref=e2560]: 10:00
+                    - generic [ref=e2561]:
+                      - img [ref=e2562]
+                      - generic [ref=e2566]: tahirahmadshah
+                - generic [ref=e2567]:
+                  - button "Edit" [ref=e2568] [cursor=pointer]
+                  - button "Cancel" [ref=e2569] [cursor=pointer]:
+                    - img [ref=e2570]
+                    - text: Cancel
+              - generic [ref=e2575]:
+                - generic [ref=e2576]:
+                  - generic [ref=e2577]:
+                    - paragraph [ref=e2578]: QA Recurring Visit 2
+                    - generic [ref=e2579]:
+                      - img [ref=e2580]
+                      - text: Weekly
+                  - generic [ref=e2585]:
+                    - generic [ref=e2586]:
+                      - img [ref=e2587]
+                      - generic [ref=e2589]: 1 Sept 2026
+                      - img [ref=e2590]
+                      - generic [ref=e2593]: 09:00
+                    - generic [ref=e2594]:
+                      - img [ref=e2595]
+                      - generic [ref=e2599]: tahirahmadshah
+                - generic [ref=e2600]:
+                  - button "Edit" [ref=e2601] [cursor=pointer]
+                  - button "Cancel" [ref=e2602] [cursor=pointer]:
+                    - img [ref=e2603]
+                    - text: Cancel
+              - generic [ref=e2608]:
+                - generic [ref=e2609]:
+                  - generic [ref=e2610]:
+                    - paragraph [ref=e2611]: Regression Test Appt
+                    - generic [ref=e2612]:
+                      - img [ref=e2613]
+                      - text: Weekly
+                  - generic [ref=e2618]:
+                    - generic [ref=e2619]:
+                      - img [ref=e2620]
+                      - generic [ref=e2622]: 2 Sept 2026
+                      - img [ref=e2623]
+                      - generic [ref=e2626]: 10:00
+                    - generic [ref=e2627]:
+                      - img [ref=e2628]
+                      - generic [ref=e2632]: tahirahmadshah
+                - generic [ref=e2633]:
+                  - button "Edit" [ref=e2634] [cursor=pointer]
+                  - button "Cancel" [ref=e2635] [cursor=pointer]:
+                    - img [ref=e2636]
+                    - text: Cancel
+              - generic [ref=e2641]:
+                - generic [ref=e2642]:
+                  - generic [ref=e2643]:
+                    - paragraph [ref=e2644]: QA Recurring Visit 2
+                    - generic [ref=e2645]:
+                      - img [ref=e2646]
+                      - text: Weekly
+                  - generic [ref=e2651]:
+                    - generic [ref=e2652]:
+                      - img [ref=e2653]
+                      - generic [ref=e2655]: 8 Sept 2026
+                      - img [ref=e2656]
+                      - generic [ref=e2659]: 09:00
+                    - generic [ref=e2660]:
+                      - img [ref=e2661]
+                      - generic [ref=e2665]: tahirahmadshah
+                - generic [ref=e2666]:
+                  - button "Edit" [ref=e2667] [cursor=pointer]
+                  - button "Cancel" [ref=e2668] [cursor=pointer]:
+                    - img [ref=e2669]
+                    - text: Cancel
+              - generic [ref=e2674]:
+                - generic [ref=e2675]:
+                  - generic [ref=e2676]:
+                    - paragraph [ref=e2677]: Regression Test Appt
+                    - generic [ref=e2678]:
+                      - img [ref=e2679]
+                      - text: Weekly
+                  - generic [ref=e2684]:
+                    - generic [ref=e2685]:
+                      - img [ref=e2686]
+                      - generic [ref=e2688]: 9 Sept 2026
+                      - img [ref=e2689]
+                      - generic [ref=e2692]: 10:00
+                    - generic [ref=e2693]:
+                      - img [ref=e2694]
+                      - generic [ref=e2698]: tahirahmadshah
+                - generic [ref=e2699]:
+                  - button "Edit" [ref=e2700] [cursor=pointer]
+                  - button "Cancel" [ref=e2701] [cursor=pointer]:
+                    - img [ref=e2702]
+                    - text: Cancel
+              - generic [ref=e2707]:
+                - generic [ref=e2708]:
+                  - generic [ref=e2709]:
+                    - paragraph [ref=e2710]: QA Recurring Visit 2
+                    - generic [ref=e2711]:
+                      - img [ref=e2712]
+                      - text: Weekly
+                  - generic [ref=e2717]:
+                    - generic [ref=e2718]:
+                      - img [ref=e2719]
+                      - generic [ref=e2721]: 15 Sept 2026
+                      - img [ref=e2722]
+                      - generic [ref=e2725]: 09:00
+                    - generic [ref=e2726]:
+                      - img [ref=e2727]
+                      - generic [ref=e2731]: tahirahmadshah
+                - generic [ref=e2732]:
+                  - button "Edit" [ref=e2733] [cursor=pointer]
+                  - button "Cancel" [ref=e2734] [cursor=pointer]:
+                    - img [ref=e2735]
+                    - text: Cancel
+              - generic [ref=e2740]:
+                - generic [ref=e2741]:
+                  - generic [ref=e2742]:
+                    - paragraph [ref=e2743]: Regression Test Appt
+                    - generic [ref=e2744]:
+                      - img [ref=e2745]
+                      - text: Weekly
+                  - generic [ref=e2750]:
+                    - generic [ref=e2751]:
+                      - img [ref=e2752]
+                      - generic [ref=e2754]: 16 Sept 2026
+                      - img [ref=e2755]
+                      - generic [ref=e2758]: 10:00
+                    - generic [ref=e2759]:
+                      - img [ref=e2760]
+                      - generic [ref=e2764]: tahirahmadshah
+                - generic [ref=e2765]:
+                  - button "Edit" [ref=e2766] [cursor=pointer]
+                  - button "Cancel" [ref=e2767] [cursor=pointer]:
+                    - img [ref=e2768]
+                    - text: Cancel
+              - generic [ref=e2773]:
+                - generic [ref=e2774]:
+                  - generic [ref=e2775]:
+                    - paragraph [ref=e2776]: QA Recurring Visit 2
+                    - generic [ref=e2777]:
+                      - img [ref=e2778]
+                      - text: Weekly
+                  - generic [ref=e2783]:
+                    - generic [ref=e2784]:
+                      - img [ref=e2785]
+                      - generic [ref=e2787]: 22 Sept 2026
+                      - img [ref=e2788]
+                      - generic [ref=e2791]: 09:00
+                    - generic [ref=e2792]:
+                      - img [ref=e2793]
+                      - generic [ref=e2797]: tahirahmadshah
+                - generic [ref=e2798]:
+                  - button "Edit" [ref=e2799] [cursor=pointer]
+                  - button "Cancel" [ref=e2800] [cursor=pointer]:
+                    - img [ref=e2801]
+                    - text: Cancel
+              - generic [ref=e2806]:
+                - generic [ref=e2807]:
+                  - generic [ref=e2808]:
+                    - paragraph [ref=e2809]: Regression Test Appt
+                    - generic [ref=e2810]:
+                      - img [ref=e2811]
+                      - text: Weekly
+                  - generic [ref=e2816]:
+                    - generic [ref=e2817]:
+                      - img [ref=e2818]
+                      - generic [ref=e2820]: 23 Sept 2026
+                      - img [ref=e2821]
+                      - generic [ref=e2824]: 10:00
+                    - generic [ref=e2825]:
+                      - img [ref=e2826]
+                      - generic [ref=e2830]: tahirahmadshah
+                - generic [ref=e2831]:
+                  - button "Edit" [ref=e2832] [cursor=pointer]
+                  - button "Cancel" [ref=e2833] [cursor=pointer]:
+                    - img [ref=e2834]
+                    - text: Cancel
+              - generic [ref=e2839]:
+                - generic [ref=e2840]:
+                  - generic [ref=e2841]:
+                    - paragraph [ref=e2842]: QA Recurring Visit 2
+                    - generic [ref=e2843]:
+                      - img [ref=e2844]
+                      - text: Weekly
+                  - generic [ref=e2849]:
+                    - generic [ref=e2850]:
+                      - img [ref=e2851]
+                      - generic [ref=e2853]: 29 Sept 2026
+                      - img [ref=e2854]
+                      - generic [ref=e2857]: 09:00
+                    - generic [ref=e2858]:
+                      - img [ref=e2859]
+                      - generic [ref=e2863]: tahirahmadshah
+                - generic [ref=e2864]:
+                  - button "Edit" [ref=e2865] [cursor=pointer]
+                  - button "Cancel" [ref=e2866] [cursor=pointer]:
+                    - img [ref=e2867]
+                    - text: Cancel
+              - generic [ref=e2872]:
+                - generic [ref=e2873]:
+                  - generic [ref=e2874]:
+                    - paragraph [ref=e2875]: Regression Test Appt
+                    - generic [ref=e2876]:
+                      - img [ref=e2877]
+                      - text: Weekly
+                  - generic [ref=e2882]:
+                    - generic [ref=e2883]:
+                      - img [ref=e2884]
+                      - generic [ref=e2886]: 30 Sept 2026
+                      - img [ref=e2887]
+                      - generic [ref=e2890]: 10:00
+                    - generic [ref=e2891]:
+                      - img [ref=e2892]
+                      - generic [ref=e2896]: tahirahmadshah
+                - generic [ref=e2897]:
+                  - button "Edit" [ref=e2898] [cursor=pointer]
+                  - button "Cancel" [ref=e2899] [cursor=pointer]:
+                    - img [ref=e2900]
+                    - text: Cancel
+              - generic [ref=e2905]:
+                - generic [ref=e2906]:
+                  - generic [ref=e2907]:
+                    - paragraph [ref=e2908]: QA Recurring Visit 2
+                    - generic [ref=e2909]:
+                      - img [ref=e2910]
+                      - text: Weekly
+                  - generic [ref=e2915]:
+                    - generic [ref=e2916]:
+                      - img [ref=e2917]
+                      - generic [ref=e2919]: 6 Oct 2026
+                      - img [ref=e2920]
+                      - generic [ref=e2923]: 09:00
+                    - generic [ref=e2924]:
+                      - img [ref=e2925]
+                      - generic [ref=e2929]: tahirahmadshah
+                - generic [ref=e2930]:
+                  - button "Edit" [ref=e2931] [cursor=pointer]
+                  - button "Cancel" [ref=e2932] [cursor=pointer]:
+                    - img [ref=e2933]
+                    - text: Cancel
+              - generic [ref=e2938]:
+                - generic [ref=e2939]:
+                  - generic [ref=e2940]:
+                    - paragraph [ref=e2941]: Regression Test Appt
+                    - generic [ref=e2942]:
+                      - img [ref=e2943]
+                      - text: Weekly
+                  - generic [ref=e2948]:
+                    - generic [ref=e2949]:
+                      - img [ref=e2950]
+                      - generic [ref=e2952]: 7 Oct 2026
+                      - img [ref=e2953]
+                      - generic [ref=e2956]: 10:00
+                    - generic [ref=e2957]:
+                      - img [ref=e2958]
+                      - generic [ref=e2962]: tahirahmadshah
+                - generic [ref=e2963]:
+                  - button "Edit" [ref=e2964] [cursor=pointer]
+                  - button "Cancel" [ref=e2965] [cursor=pointer]:
+                    - img [ref=e2966]
+                    - text: Cancel
+              - generic [ref=e2971]:
+                - generic [ref=e2972]:
+                  - generic [ref=e2973]:
+                    - paragraph [ref=e2974]: QA Recurring Visit 2
+                    - generic [ref=e2975]:
+                      - img [ref=e2976]
+                      - text: Weekly
+                  - generic [ref=e2981]:
+                    - generic [ref=e2982]:
+                      - img [ref=e2983]
+                      - generic [ref=e2985]: 13 Oct 2026
+                      - img [ref=e2986]
+                      - generic [ref=e2989]: 09:00
+                    - generic [ref=e2990]:
+                      - img [ref=e2991]
+                      - generic [ref=e2995]: tahirahmadshah
+                - generic [ref=e2996]:
+                  - button "Edit" [ref=e2997] [cursor=pointer]
+                  - button "Cancel" [ref=e2998] [cursor=pointer]:
+                    - img [ref=e2999]
+                    - text: Cancel
+              - generic [ref=e3004]:
+                - generic [ref=e3005]:
+                  - generic [ref=e3006]:
+                    - paragraph [ref=e3007]: Regression Test Appt
+                    - generic [ref=e3008]:
+                      - img [ref=e3009]
+                      - text: Weekly
+                  - generic [ref=e3014]:
+                    - generic [ref=e3015]:
+                      - img [ref=e3016]
+                      - generic [ref=e3018]: 14 Oct 2026
+                      - img [ref=e3019]
+                      - generic [ref=e3022]: 10:00
+                    - generic [ref=e3023]:
+                      - img [ref=e3024]
+                      - generic [ref=e3028]: tahirahmadshah
+                - generic [ref=e3029]:
+                  - button "Edit" [ref=e3030] [cursor=pointer]
+                  - button "Cancel" [ref=e3031] [cursor=pointer]:
+                    - img [ref=e3032]
+                    - text: Cancel
+              - generic [ref=e3037]:
+                - generic [ref=e3038]:
+                  - generic [ref=e3039]:
+                    - paragraph [ref=e3040]: QA Recurring Visit 2
+                    - generic [ref=e3041]:
+                      - img [ref=e3042]
+                      - text: Weekly
+                  - generic [ref=e3047]:
+                    - generic [ref=e3048]:
+                      - img [ref=e3049]
+                      - generic [ref=e3051]: 20 Oct 2026
+                      - img [ref=e3052]
+                      - generic [ref=e3055]: 09:00
+                    - generic [ref=e3056]:
+                      - img [ref=e3057]
+                      - generic [ref=e3061]: tahirahmadshah
+                - generic [ref=e3062]:
+                  - button "Edit" [ref=e3063] [cursor=pointer]
+                  - button "Cancel" [ref=e3064] [cursor=pointer]:
+                    - img [ref=e3065]
+                    - text: Cancel
+              - generic [ref=e3070]:
+                - generic [ref=e3071]:
+                  - generic [ref=e3072]:
+                    - paragraph [ref=e3073]: Regression Test Appt
+                    - generic [ref=e3074]:
+                      - img [ref=e3075]
+                      - text: Weekly
+                  - generic [ref=e3080]:
+                    - generic [ref=e3081]:
+                      - img [ref=e3082]
+                      - generic [ref=e3084]: 21 Oct 2026
+                      - img [ref=e3085]
+                      - generic [ref=e3088]: 10:00
+                    - generic [ref=e3089]:
+                      - img [ref=e3090]
+                      - generic [ref=e3094]: tahirahmadshah
+                - generic [ref=e3095]:
+                  - button "Edit" [ref=e3096] [cursor=pointer]
+                  - button "Cancel" [ref=e3097] [cursor=pointer]:
+                    - img [ref=e3098]
+                    - text: Cancel
+              - generic [ref=e3103]:
+                - generic [ref=e3104]:
+                  - generic [ref=e3105]:
+                    - paragraph [ref=e3106]: QA Recurring Visit 2
+                    - generic [ref=e3107]:
+                      - img [ref=e3108]
+                      - text: Weekly
+                  - generic [ref=e3113]:
+                    - generic [ref=e3114]:
+                      - img [ref=e3115]
+                      - generic [ref=e3117]: 27 Oct 2026
+                      - img [ref=e3118]
+                      - generic [ref=e3121]: 09:00
+                    - generic [ref=e3122]:
+                      - img [ref=e3123]
+                      - generic [ref=e3127]: tahirahmadshah
+                - generic [ref=e3128]:
+                  - button "Edit" [ref=e3129] [cursor=pointer]
+                  - button "Cancel" [ref=e3130] [cursor=pointer]:
+                    - img [ref=e3131]
+                    - text: Cancel
+              - generic [ref=e3136]:
+                - generic [ref=e3137]:
+                  - generic [ref=e3138]:
+                    - paragraph [ref=e3139]: Regression Test Appt
+                    - generic [ref=e3140]:
+                      - img [ref=e3141]
+                      - text: Weekly
+                  - generic [ref=e3146]:
+                    - generic [ref=e3147]:
+                      - img [ref=e3148]
+                      - generic [ref=e3150]: 28 Oct 2026
+                      - img [ref=e3151]
+                      - generic [ref=e3154]: 10:00
+                    - generic [ref=e3155]:
+                      - img [ref=e3156]
+                      - generic [ref=e3160]: tahirahmadshah
+                - generic [ref=e3161]:
+                  - button "Edit" [ref=e3162] [cursor=pointer]
+                  - button "Cancel" [ref=e3163] [cursor=pointer]:
+                    - img [ref=e3164]
+                    - text: Cancel
+              - generic [ref=e3169]:
+                - generic [ref=e3170]:
+                  - generic [ref=e3171]:
+                    - paragraph [ref=e3172]: QA Recurring Visit 2
+                    - generic [ref=e3173]:
+                      - img [ref=e3174]
+                      - text: Weekly
+                  - generic [ref=e3179]:
+                    - generic [ref=e3180]:
+                      - img [ref=e3181]
+                      - generic [ref=e3183]: 3 Nov 2026
+                      - img [ref=e3184]
+                      - generic [ref=e3187]: 09:00
+                    - generic [ref=e3188]:
+                      - img [ref=e3189]
+                      - generic [ref=e3193]: tahirahmadshah
+                - generic [ref=e3194]:
+                  - button "Edit" [ref=e3195] [cursor=pointer]
+                  - button "Cancel" [ref=e3196] [cursor=pointer]:
+                    - img [ref=e3197]
+                    - text: Cancel
+              - generic [ref=e3202]:
+                - generic [ref=e3203]:
+                  - generic [ref=e3204]:
+                    - paragraph [ref=e3205]: Regression Test Appt
+                    - generic [ref=e3206]:
+                      - img [ref=e3207]
+                      - text: Weekly
+                  - generic [ref=e3212]:
+                    - generic [ref=e3213]:
+                      - img [ref=e3214]
+                      - generic [ref=e3216]: 4 Nov 2026
+                      - img [ref=e3217]
+                      - generic [ref=e3220]: 10:00
+                    - generic [ref=e3221]:
+                      - img [ref=e3222]
+                      - generic [ref=e3226]: tahirahmadshah
+                - generic [ref=e3227]:
+                  - button "Edit" [ref=e3228] [cursor=pointer]
+                  - button "Cancel" [ref=e3229] [cursor=pointer]:
+                    - img [ref=e3230]
+                    - text: Cancel
+              - generic [ref=e3235]:
+                - generic [ref=e3236]:
+                  - generic [ref=e3237]:
+                    - paragraph [ref=e3238]: QA Recurring Visit 2
+                    - generic [ref=e3239]:
+                      - img [ref=e3240]
+                      - text: Weekly
+                  - generic [ref=e3245]:
+                    - generic [ref=e3246]:
+                      - img [ref=e3247]
+                      - generic [ref=e3249]: 10 Nov 2026
+                      - img [ref=e3250]
+                      - generic [ref=e3253]: 09:00
+                    - generic [ref=e3254]:
+                      - img [ref=e3255]
+                      - generic [ref=e3259]: tahirahmadshah
+                - generic [ref=e3260]:
+                  - button "Edit" [ref=e3261] [cursor=pointer]
+                  - button "Cancel" [ref=e3262] [cursor=pointer]:
+                    - img [ref=e3263]
+                    - text: Cancel
+              - generic [ref=e3268]:
+                - generic [ref=e3269]:
+                  - generic [ref=e3270]:
+                    - paragraph [ref=e3271]: Regression Test Appt
+                    - generic [ref=e3272]:
+                      - img [ref=e3273]
+                      - text: Weekly
+                  - generic [ref=e3278]:
+                    - generic [ref=e3279]:
+                      - img [ref=e3280]
+                      - generic [ref=e3282]: 11 Nov 2026
+                      - img [ref=e3283]
+                      - generic [ref=e3286]: 10:00
+                    - generic [ref=e3287]:
+                      - img [ref=e3288]
+                      - generic [ref=e3292]: tahirahmadshah
+                - generic [ref=e3293]:
+                  - button "Edit" [ref=e3294] [cursor=pointer]
+                  - button "Cancel" [ref=e3295] [cursor=pointer]:
+                    - img [ref=e3296]
+                    - text: Cancel
+              - generic [ref=e3301]:
+                - generic [ref=e3302]:
+                  - generic [ref=e3303]:
+                    - paragraph [ref=e3304]: QA Recurring Visit 2
+                    - generic [ref=e3305]:
+                      - img [ref=e3306]
+                      - text: Weekly
+                  - generic [ref=e3311]:
+                    - generic [ref=e3312]:
+                      - img [ref=e3313]
+                      - generic [ref=e3315]: 17 Nov 2026
+                      - img [ref=e3316]
+                      - generic [ref=e3319]: 09:00
+                    - generic [ref=e3320]:
+                      - img [ref=e3321]
+                      - generic [ref=e3325]: tahirahmadshah
+                - generic [ref=e3326]:
+                  - button "Edit" [ref=e3327] [cursor=pointer]
+                  - button "Cancel" [ref=e3328] [cursor=pointer]:
+                    - img [ref=e3329]
+                    - text: Cancel
+              - generic [ref=e3334]:
+                - generic [ref=e3335]:
+                  - generic [ref=e3336]:
+                    - paragraph [ref=e3337]: Regression Test Appt
+                    - generic [ref=e3338]:
+                      - img [ref=e3339]
+                      - text: Weekly
+                  - generic [ref=e3344]:
+                    - generic [ref=e3345]:
+                      - img [ref=e3346]
+                      - generic [ref=e3348]: 18 Nov 2026
+                      - img [ref=e3349]
+                      - generic [ref=e3352]: 10:00
+                    - generic [ref=e3353]:
+                      - img [ref=e3354]
+                      - generic [ref=e3358]: tahirahmadshah
+                - generic [ref=e3359]:
+                  - button "Edit" [ref=e3360] [cursor=pointer]
+                  - button "Cancel" [ref=e3361] [cursor=pointer]:
+                    - img [ref=e3362]
+                    - text: Cancel
+              - generic [ref=e3367]:
+                - generic [ref=e3368]:
+                  - generic [ref=e3369]:
+                    - paragraph [ref=e3370]: QA Recurring Visit 2
+                    - generic [ref=e3371]:
+                      - img [ref=e3372]
+                      - text: Weekly
+                  - generic [ref=e3377]:
+                    - generic [ref=e3378]:
+                      - img [ref=e3379]
+                      - generic [ref=e3381]: 24 Nov 2026
+                      - img [ref=e3382]
+                      - generic [ref=e3385]: 09:00
+                    - generic [ref=e3386]:
+                      - img [ref=e3387]
+                      - generic [ref=e3391]: tahirahmadshah
+                - generic [ref=e3392]:
+                  - button "Edit" [ref=e3393] [cursor=pointer]
+                  - button "Cancel" [ref=e3394] [cursor=pointer]:
+                    - img [ref=e3395]
+                    - text: Cancel
+              - generic [ref=e3400]:
+                - generic [ref=e3401]:
+                  - generic [ref=e3402]:
+                    - paragraph [ref=e3403]: Regression Test Appt
+                    - generic [ref=e3404]:
+                      - img [ref=e3405]
+                      - text: Weekly
+                  - generic [ref=e3410]:
+                    - generic [ref=e3411]:
+                      - img [ref=e3412]
+                      - generic [ref=e3414]: 25 Nov 2026
+                      - img [ref=e3415]
+                      - generic [ref=e3418]: 10:00
+                    - generic [ref=e3419]:
+                      - img [ref=e3420]
+                      - generic [ref=e3424]: tahirahmadshah
+                - generic [ref=e3425]:
+                  - button "Edit" [ref=e3426] [cursor=pointer]
+                  - button "Cancel" [ref=e3427] [cursor=pointer]:
+                    - img [ref=e3428]
+                    - text: Cancel
+              - generic [ref=e3433]:
+                - generic [ref=e3434]:
+                  - generic [ref=e3435]:
+                    - paragraph [ref=e3436]: QA Recurring Visit 2
+                    - generic [ref=e3437]:
+                      - img [ref=e3438]
+                      - text: Weekly
+                  - generic [ref=e3443]:
+                    - generic [ref=e3444]:
+                      - img [ref=e3445]
+                      - generic [ref=e3447]: 1 Dec 2026
+                      - img [ref=e3448]
+                      - generic [ref=e3451]: 09:00
+                    - generic [ref=e3452]:
+                      - img [ref=e3453]
+                      - generic [ref=e3457]: tahirahmadshah
+                - generic [ref=e3458]:
+                  - button "Edit" [ref=e3459] [cursor=pointer]
+                  - button "Cancel" [ref=e3460] [cursor=pointer]:
+                    - img [ref=e3461]
+                    - text: Cancel
+              - generic [ref=e3466]:
+                - generic [ref=e3467]:
+                  - generic [ref=e3468]:
+                    - paragraph [ref=e3469]: Regression Test Appt
+                    - generic [ref=e3470]:
+                      - img [ref=e3471]
+                      - text: Weekly
+                  - generic [ref=e3476]:
+                    - generic [ref=e3477]:
+                      - img [ref=e3478]
+                      - generic [ref=e3480]: 2 Dec 2026
+                      - img [ref=e3481]
+                      - generic [ref=e3484]: 10:00
+                    - generic [ref=e3485]:
+                      - img [ref=e3486]
+                      - generic [ref=e3490]: tahirahmadshah
+                - generic [ref=e3491]:
+                  - button "Edit" [ref=e3492] [cursor=pointer]
+                  - button "Cancel" [ref=e3493] [cursor=pointer]:
+                    - img [ref=e3494]
+                    - text: Cancel
+              - generic [ref=e3499]:
+                - generic [ref=e3500]:
+                  - generic [ref=e3501]:
+                    - paragraph [ref=e3502]: QA Recurring Visit 2
+                    - generic [ref=e3503]:
+                      - img [ref=e3504]
+                      - text: Weekly
+                  - generic [ref=e3509]:
+                    - generic [ref=e3510]:
+                      - img [ref=e3511]
+                      - generic [ref=e3513]: 8 Dec 2026
+                      - img [ref=e3514]
+                      - generic [ref=e3517]: 09:00
+                    - generic [ref=e3518]:
+                      - img [ref=e3519]
+                      - generic [ref=e3523]: tahirahmadshah
+                - generic [ref=e3524]:
+                  - button "Edit" [ref=e3525] [cursor=pointer]
+                  - button "Cancel" [ref=e3526] [cursor=pointer]:
+                    - img [ref=e3527]
+                    - text: Cancel
+              - generic [ref=e3532]:
+                - generic [ref=e3533]:
+                  - generic [ref=e3534]:
+                    - paragraph [ref=e3535]: Regression Test Appt
+                    - generic [ref=e3536]:
+                      - img [ref=e3537]
+                      - text: Weekly
+                  - generic [ref=e3542]:
+                    - generic [ref=e3543]:
+                      - img [ref=e3544]
+                      - generic [ref=e3546]: 9 Dec 2026
+                      - img [ref=e3547]
+                      - generic [ref=e3550]: 10:00
+                    - generic [ref=e3551]:
+                      - img [ref=e3552]
+                      - generic [ref=e3556]: tahirahmadshah
+                - generic [ref=e3557]:
+                  - button "Edit" [ref=e3558] [cursor=pointer]
+                  - button "Cancel" [ref=e3559] [cursor=pointer]:
+                    - img [ref=e3560]
+                    - text: Cancel
+              - generic [ref=e3565]:
+                - generic [ref=e3566]:
+                  - generic [ref=e3567]:
+                    - paragraph [ref=e3568]: QA Recurring Visit 2
+                    - generic [ref=e3569]:
+                      - img [ref=e3570]
+                      - text: Weekly
+                  - generic [ref=e3575]:
+                    - generic [ref=e3576]:
+                      - img [ref=e3577]
+                      - generic [ref=e3579]: 15 Dec 2026
+                      - img [ref=e3580]
+                      - generic [ref=e3583]: 09:00
+                    - generic [ref=e3584]:
+                      - img [ref=e3585]
+                      - generic [ref=e3589]: tahirahmadshah
+                - generic [ref=e3590]:
+                  - button "Edit" [ref=e3591] [cursor=pointer]
+                  - button "Cancel" [ref=e3592] [cursor=pointer]:
+                    - img [ref=e3593]
+                    - text: Cancel
+              - generic [ref=e3598]:
+                - generic [ref=e3599]:
+                  - generic [ref=e3600]:
+                    - paragraph [ref=e3601]: Regression Test Appt
+                    - generic [ref=e3602]:
+                      - img [ref=e3603]
+                      - text: Weekly
+                  - generic [ref=e3608]:
+                    - generic [ref=e3609]:
+                      - img [ref=e3610]
+                      - generic [ref=e3612]: 16 Dec 2026
+                      - img [ref=e3613]
+                      - generic [ref=e3616]: 10:00
+                    - generic [ref=e3617]:
+                      - img [ref=e3618]
+                      - generic [ref=e3622]: tahirahmadshah
+                - generic [ref=e3623]:
+                  - button "Edit" [ref=e3624] [cursor=pointer]
+                  - button "Cancel" [ref=e3625] [cursor=pointer]:
+                    - img [ref=e3626]
+                    - text: Cancel
+              - generic [ref=e3631]:
+                - generic [ref=e3632]:
+                  - generic [ref=e3633]:
+                    - paragraph [ref=e3634]: QA Recurring Visit 2
+                    - generic [ref=e3635]:
+                      - img [ref=e3636]
+                      - text: Weekly
+                  - generic [ref=e3641]:
+                    - generic [ref=e3642]:
+                      - img [ref=e3643]
+                      - generic [ref=e3645]: 22 Dec 2026
+                      - img [ref=e3646]
+                      - generic [ref=e3649]: 09:00
+                    - generic [ref=e3650]:
+                      - img [ref=e3651]
+                      - generic [ref=e3655]: tahirahmadshah
+                - generic [ref=e3656]:
+                  - button "Edit" [ref=e3657] [cursor=pointer]
+                  - button "Cancel" [ref=e3658] [cursor=pointer]:
+                    - img [ref=e3659]
+                    - text: Cancel
+              - generic [ref=e3664]:
+                - generic [ref=e3665]:
+                  - generic [ref=e3666]:
+                    - paragraph [ref=e3667]: Regression Test Appt
+                    - generic [ref=e3668]:
+                      - img [ref=e3669]
+                      - text: Weekly
+                  - generic [ref=e3674]:
+                    - generic [ref=e3675]:
+                      - img [ref=e3676]
+                      - generic [ref=e3678]: 23 Dec 2026
+                      - img [ref=e3679]
+                      - generic [ref=e3682]: 10:00
+                    - generic [ref=e3683]:
+                      - img [ref=e3684]
+                      - generic [ref=e3688]: tahirahmadshah
+                - generic [ref=e3689]:
+                  - button "Edit" [ref=e3690] [cursor=pointer]
+                  - button "Cancel" [ref=e3691] [cursor=pointer]:
+                    - img [ref=e3692]
+                    - text: Cancel
+              - generic [ref=e3697]:
+                - generic [ref=e3698]:
+                  - generic [ref=e3699]:
+                    - paragraph [ref=e3700]: QA Recurring Visit 2
+                    - generic [ref=e3701]:
+                      - img [ref=e3702]
+                      - text: Weekly
+                  - generic [ref=e3707]:
+                    - generic [ref=e3708]:
+                      - img [ref=e3709]
+                      - generic [ref=e3711]: 29 Dec 2026
+                      - img [ref=e3712]
+                      - generic [ref=e3715]: 09:00
+                    - generic [ref=e3716]:
+                      - img [ref=e3717]
+                      - generic [ref=e3721]: tahirahmadshah
+                - generic [ref=e3722]:
+                  - button "Edit" [ref=e3723] [cursor=pointer]
+                  - button "Cancel" [ref=e3724] [cursor=pointer]:
+                    - img [ref=e3725]
+                    - text: Cancel
+              - generic [ref=e3730]:
+                - generic [ref=e3731]:
+                  - generic [ref=e3732]:
+                    - paragraph [ref=e3733]: Regression Test Appt
+                    - generic [ref=e3734]:
+                      - img [ref=e3735]
+                      - text: Weekly
+                  - generic [ref=e3740]:
+                    - generic [ref=e3741]:
+                      - img [ref=e3742]
+                      - generic [ref=e3744]: 30 Dec 2026
+                      - img [ref=e3745]
+                      - generic [ref=e3748]: 10:00
+                    - generic [ref=e3749]:
+                      - img [ref=e3750]
+                      - generic [ref=e3754]: tahirahmadshah
+                - generic [ref=e3755]:
+                  - button "Edit" [ref=e3756] [cursor=pointer]
+                  - button "Cancel" [ref=e3757] [cursor=pointer]:
+                    - img [ref=e3758]
+                    - text: Cancel
+              - generic [ref=e3763]:
+                - generic [ref=e3764]:
+                  - generic [ref=e3765]:
+                    - paragraph [ref=e3766]: QA Recurring Visit 2
+                    - generic [ref=e3767]:
+                      - img [ref=e3768]
+                      - text: Weekly
+                  - generic [ref=e3773]:
+                    - generic [ref=e3774]:
+                      - img [ref=e3775]
+                      - generic [ref=e3777]: 5 Jan 2027
+                      - img [ref=e3778]
+                      - generic [ref=e3781]: 09:00
+                    - generic [ref=e3782]:
+                      - img [ref=e3783]
+                      - generic [ref=e3787]: tahirahmadshah
+                - generic [ref=e3788]:
+                  - button "Edit" [ref=e3789] [cursor=pointer]
+                  - button "Cancel" [ref=e3790] [cursor=pointer]:
+                    - img [ref=e3791]
+                    - text: Cancel
+              - generic [ref=e3796]:
+                - generic [ref=e3797]:
+                  - generic [ref=e3798]:
+                    - paragraph [ref=e3799]: Regression Test Appt
+                    - generic [ref=e3800]:
+                      - img [ref=e3801]
+                      - text: Weekly
+                  - generic [ref=e3806]:
+                    - generic [ref=e3807]:
+                      - img [ref=e3808]
+                      - generic [ref=e3810]: 6 Jan 2027
+                      - img [ref=e3811]
+                      - generic [ref=e3814]: 10:00
+                    - generic [ref=e3815]:
+                      - img [ref=e3816]
+                      - generic [ref=e3820]: tahirahmadshah
+                - generic [ref=e3821]:
+                  - button "Edit" [ref=e3822] [cursor=pointer]
+                  - button "Cancel" [ref=e3823] [cursor=pointer]:
+                    - img [ref=e3824]
+                    - text: Cancel
+              - generic [ref=e3829]:
+                - generic [ref=e3830]:
+                  - generic [ref=e3831]:
+                    - paragraph [ref=e3832]: QA Recurring Visit 2
+                    - generic [ref=e3833]:
+                      - img [ref=e3834]
+                      - text: Weekly
+                  - generic [ref=e3839]:
+                    - generic [ref=e3840]:
+                      - img [ref=e3841]
+                      - generic [ref=e3843]: 12 Jan 2027
+                      - img [ref=e3844]
+                      - generic [ref=e3847]: 09:00
+                    - generic [ref=e3848]:
+                      - img [ref=e3849]
+                      - generic [ref=e3853]: tahirahmadshah
+                - generic [ref=e3854]:
+                  - button "Edit" [ref=e3855] [cursor=pointer]
+                  - button "Cancel" [ref=e3856] [cursor=pointer]:
+                    - img [ref=e3857]
+                    - text: Cancel
+              - generic [ref=e3862]:
+                - generic [ref=e3863]:
+                  - generic [ref=e3864]:
+                    - paragraph [ref=e3865]: Regression Test Appt
+                    - generic [ref=e3866]:
+                      - img [ref=e3867]
+                      - text: Weekly
+                  - generic [ref=e3872]:
+                    - generic [ref=e3873]:
+                      - img [ref=e3874]
+                      - generic [ref=e3876]: 13 Jan 2027
+                      - img [ref=e3877]
+                      - generic [ref=e3880]: 10:00
+                    - generic [ref=e3881]:
+                      - img [ref=e3882]
+                      - generic [ref=e3886]: tahirahmadshah
+                - generic [ref=e3887]:
+                  - button "Edit" [ref=e3888] [cursor=pointer]
+                  - button "Cancel" [ref=e3889] [cursor=pointer]:
+                    - img [ref=e3890]
+                    - text: Cancel
+              - generic [ref=e3895]:
+                - generic [ref=e3896]:
+                  - generic [ref=e3897]:
+                    - paragraph [ref=e3898]: QA Recurring Visit 2
+                    - generic [ref=e3899]:
+                      - img [ref=e3900]
+                      - text: Weekly
+                  - generic [ref=e3905]:
+                    - generic [ref=e3906]:
+                      - img [ref=e3907]
+                      - generic [ref=e3909]: 19 Jan 2027
+                      - img [ref=e3910]
+                      - generic [ref=e3913]: 09:00
+                    - generic [ref=e3914]:
+                      - img [ref=e3915]
+                      - generic [ref=e3919]: tahirahmadshah
+                - generic [ref=e3920]:
+                  - button "Edit" [ref=e3921] [cursor=pointer]
+                  - button "Cancel" [ref=e3922] [cursor=pointer]:
+                    - img [ref=e3923]
+                    - text: Cancel
+              - generic [ref=e3928]:
+                - generic [ref=e3929]:
+                  - generic [ref=e3930]:
+                    - paragraph [ref=e3931]: Regression Test Appt
+                    - generic [ref=e3932]:
+                      - img [ref=e3933]
+                      - text: Weekly
+                  - generic [ref=e3938]:
+                    - generic [ref=e3939]:
+                      - img [ref=e3940]
+                      - generic [ref=e3942]: 20 Jan 2027
+                      - img [ref=e3943]
+                      - generic [ref=e3946]: 10:00
+                    - generic [ref=e3947]:
+                      - img [ref=e3948]
+                      - generic [ref=e3952]: tahirahmadshah
+                - generic [ref=e3953]:
+                  - button "Edit" [ref=e3954] [cursor=pointer]
+                  - button "Cancel" [ref=e3955] [cursor=pointer]:
+                    - img [ref=e3956]
+                    - text: Cancel
+              - generic [ref=e3961]:
+                - generic [ref=e3962]:
+                  - generic [ref=e3963]:
+                    - paragraph [ref=e3964]: QA Recurring Visit 2
+                    - generic [ref=e3965]:
+                      - img [ref=e3966]
+                      - text: Weekly
+                  - generic [ref=e3971]:
+                    - generic [ref=e3972]:
+                      - img [ref=e3973]
+                      - generic [ref=e3975]: 26 Jan 2027
+                      - img [ref=e3976]
+                      - generic [ref=e3979]: 09:00
+                    - generic [ref=e3980]:
+                      - img [ref=e3981]
+                      - generic [ref=e3985]: tahirahmadshah
+                - generic [ref=e3986]:
+                  - button "Edit" [ref=e3987] [cursor=pointer]
+                  - button "Cancel" [ref=e3988] [cursor=pointer]:
+                    - img [ref=e3989]
+                    - text: Cancel
+              - generic [ref=e3994]:
+                - generic [ref=e3995]:
+                  - generic [ref=e3996]:
+                    - paragraph [ref=e3997]: Regression Test Appt
+                    - generic [ref=e3998]:
+                      - img [ref=e3999]
+                      - text: Weekly
+                  - generic [ref=e4004]:
+                    - generic [ref=e4005]:
+                      - img [ref=e4006]
+                      - generic [ref=e4008]: 27 Jan 2027
+                      - img [ref=e4009]
+                      - generic [ref=e4012]: 10:00
+                    - generic [ref=e4013]:
+                      - img [ref=e4014]
+                      - generic [ref=e4018]: tahirahmadshah
+                - generic [ref=e4019]:
+                  - button "Edit" [ref=e4020] [cursor=pointer]
+                  - button "Cancel" [ref=e4021] [cursor=pointer]:
+                    - img [ref=e4022]
+                    - text: Cancel
+              - generic [ref=e4027]:
+                - generic [ref=e4028]:
+                  - generic [ref=e4029]:
+                    - paragraph [ref=e4030]: QA Recurring Visit 2
+                    - generic [ref=e4031]:
+                      - img [ref=e4032]
+                      - text: Weekly
+                  - generic [ref=e4037]:
+                    - generic [ref=e4038]:
+                      - img [ref=e4039]
+                      - generic [ref=e4041]: 2 Feb 2027
+                      - img [ref=e4042]
+                      - generic [ref=e4045]: 09:00
+                    - generic [ref=e4046]:
+                      - img [ref=e4047]
+                      - generic [ref=e4051]: tahirahmadshah
+                - generic [ref=e4052]:
+                  - button "Edit" [ref=e4053] [cursor=pointer]
+                  - button "Cancel" [ref=e4054] [cursor=pointer]:
+                    - img [ref=e4055]
+                    - text: Cancel
+              - generic [ref=e4060]:
+                - generic [ref=e4061]:
+                  - generic [ref=e4062]:
+                    - paragraph [ref=e4063]: Regression Test Appt
+                    - generic [ref=e4064]:
+                      - img [ref=e4065]
+                      - text: Weekly
+                  - generic [ref=e4070]:
+                    - generic [ref=e4071]:
+                      - img [ref=e4072]
+                      - generic [ref=e4074]: 3 Feb 2027
+                      - img [ref=e4075]
+                      - generic [ref=e4078]: 10:00
+                    - generic [ref=e4079]:
+                      - img [ref=e4080]
+                      - generic [ref=e4084]: tahirahmadshah
+                - generic [ref=e4085]:
+                  - button "Edit" [ref=e4086] [cursor=pointer]
+                  - button "Cancel" [ref=e4087] [cursor=pointer]:
+                    - img [ref=e4088]
+                    - text: Cancel
+              - generic [ref=e4093]:
+                - generic [ref=e4094]:
+                  - generic [ref=e4095]:
+                    - paragraph [ref=e4096]: QA Recurring Visit 2
+                    - generic [ref=e4097]:
+                      - img [ref=e4098]
+                      - text: Weekly
+                  - generic [ref=e4103]:
+                    - generic [ref=e4104]:
+                      - img [ref=e4105]
+                      - generic [ref=e4107]: 9 Feb 2027
+                      - img [ref=e4108]
+                      - generic [ref=e4111]: 09:00
+                    - generic [ref=e4112]:
+                      - img [ref=e4113]
+                      - generic [ref=e4117]: tahirahmadshah
+                - generic [ref=e4118]:
+                  - button "Edit" [ref=e4119] [cursor=pointer]
+                  - button "Cancel" [ref=e4120] [cursor=pointer]:
+                    - img [ref=e4121]
+                    - text: Cancel
+              - generic [ref=e4126]:
+                - generic [ref=e4127]:
+                  - generic [ref=e4128]:
+                    - paragraph [ref=e4129]: Regression Test Appt
+                    - generic [ref=e4130]:
+                      - img [ref=e4131]
+                      - text: Weekly
+                  - generic [ref=e4136]:
+                    - generic [ref=e4137]:
+                      - img [ref=e4138]
+                      - generic [ref=e4140]: 10 Feb 2027
+                      - img [ref=e4141]
+                      - generic [ref=e4144]: 10:00
+                    - generic [ref=e4145]:
+                      - img [ref=e4146]
+                      - generic [ref=e4150]: tahirahmadshah
+                - generic [ref=e4151]:
+                  - button "Edit" [ref=e4152] [cursor=pointer]
+                  - button "Cancel" [ref=e4153] [cursor=pointer]:
+                    - img [ref=e4154]
+                    - text: Cancel
+              - generic [ref=e4159]:
+                - generic [ref=e4160]:
+                  - generic [ref=e4161]:
+                    - paragraph [ref=e4162]: QA Recurring Visit 2
+                    - generic [ref=e4163]:
+                      - img [ref=e4164]
+                      - text: Weekly
+                  - generic [ref=e4169]:
+                    - generic [ref=e4170]:
+                      - img [ref=e4171]
+                      - generic [ref=e4173]: 16 Feb 2027
+                      - img [ref=e4174]
+                      - generic [ref=e4177]: 09:00
+                    - generic [ref=e4178]:
+                      - img [ref=e4179]
+                      - generic [ref=e4183]: tahirahmadshah
+                - generic [ref=e4184]:
+                  - button "Edit" [ref=e4185] [cursor=pointer]
+                  - button "Cancel" [ref=e4186] [cursor=pointer]:
+                    - img [ref=e4187]
+                    - text: Cancel
+              - generic [ref=e4192]:
+                - generic [ref=e4193]:
+                  - generic [ref=e4194]:
+                    - paragraph [ref=e4195]: Regression Test Appt
+                    - generic [ref=e4196]:
+                      - img [ref=e4197]
+                      - text: Weekly
+                  - generic [ref=e4202]:
+                    - generic [ref=e4203]:
+                      - img [ref=e4204]
+                      - generic [ref=e4206]: 17 Feb 2027
+                      - img [ref=e4207]
+                      - generic [ref=e4210]: 10:00
+                    - generic [ref=e4211]:
+                      - img [ref=e4212]
+                      - generic [ref=e4216]: tahirahmadshah
+                - generic [ref=e4217]:
+                  - button "Edit" [ref=e4218] [cursor=pointer]
+                  - button "Cancel" [ref=e4219] [cursor=pointer]:
+                    - img [ref=e4220]
+                    - text: Cancel
+              - generic [ref=e4225]:
+                - generic [ref=e4226]:
+                  - generic [ref=e4227]:
+                    - paragraph [ref=e4228]: QA Recurring Visit 2
+                    - generic [ref=e4229]:
+                      - img [ref=e4230]
+                      - text: Weekly
+                  - generic [ref=e4235]:
+                    - generic [ref=e4236]:
+                      - img [ref=e4237]
+                      - generic [ref=e4239]: 23 Feb 2027
+                      - img [ref=e4240]
+                      - generic [ref=e4243]: 09:00
+                    - generic [ref=e4244]:
+                      - img [ref=e4245]
+                      - generic [ref=e4249]: tahirahmadshah
+                - generic [ref=e4250]:
+                  - button "Edit" [ref=e4251] [cursor=pointer]
+                  - button "Cancel" [ref=e4252] [cursor=pointer]:
+                    - img [ref=e4253]
+                    - text: Cancel
+              - generic [ref=e4258]:
+                - generic [ref=e4259]:
+                  - generic [ref=e4260]:
+                    - paragraph [ref=e4261]: Regression Test Appt
+                    - generic [ref=e4262]:
+                      - img [ref=e4263]
+                      - text: Weekly
+                  - generic [ref=e4268]:
+                    - generic [ref=e4269]:
+                      - img [ref=e4270]
+                      - generic [ref=e4272]: 24 Feb 2027
+                      - img [ref=e4273]
+                      - generic [ref=e4276]: 10:00
+                    - generic [ref=e4277]:
+                      - img [ref=e4278]
+                      - generic [ref=e4282]: tahirahmadshah
+                - generic [ref=e4283]:
+                  - button "Edit" [ref=e4284] [cursor=pointer]
+                  - button "Cancel" [ref=e4285] [cursor=pointer]:
+                    - img [ref=e4286]
+                    - text: Cancel
+              - generic [ref=e4291]:
+                - generic [ref=e4292]:
+                  - generic [ref=e4293]:
+                    - paragraph [ref=e4294]: QA Recurring Visit 2
+                    - generic [ref=e4295]:
+                      - img [ref=e4296]
+                      - text: Weekly
+                  - generic [ref=e4301]:
+                    - generic [ref=e4302]:
+                      - img [ref=e4303]
+                      - generic [ref=e4305]: 2 Mar 2027
+                      - img [ref=e4306]
+                      - generic [ref=e4309]: 09:00
+                    - generic [ref=e4310]:
+                      - img [ref=e4311]
+                      - generic [ref=e4315]: tahirahmadshah
+                - generic [ref=e4316]:
+                  - button "Edit" [ref=e4317] [cursor=pointer]
+                  - button "Cancel" [ref=e4318] [cursor=pointer]:
+                    - img [ref=e4319]
+                    - text: Cancel
+              - generic [ref=e4324]:
+                - generic [ref=e4325]:
+                  - generic [ref=e4326]:
+                    - paragraph [ref=e4327]: Regression Test Appt
+                    - generic [ref=e4328]:
+                      - img [ref=e4329]
+                      - text: Weekly
+                  - generic [ref=e4334]:
+                    - generic [ref=e4335]:
+                      - img [ref=e4336]
+                      - generic [ref=e4338]: 3 Mar 2027
+                      - img [ref=e4339]
+                      - generic [ref=e4342]: 10:00
+                    - generic [ref=e4343]:
+                      - img [ref=e4344]
+                      - generic [ref=e4348]: tahirahmadshah
+                - generic [ref=e4349]:
+                  - button "Edit" [ref=e4350] [cursor=pointer]
+                  - button "Cancel" [ref=e4351] [cursor=pointer]:
+                    - img [ref=e4352]
+                    - text: Cancel
+              - generic [ref=e4357]:
+                - generic [ref=e4358]:
+                  - generic [ref=e4359]:
+                    - paragraph [ref=e4360]: QA Recurring Visit 2
+                    - generic [ref=e4361]:
+                      - img [ref=e4362]
+                      - text: Weekly
+                  - generic [ref=e4367]:
+                    - generic [ref=e4368]:
+                      - img [ref=e4369]
+                      - generic [ref=e4371]: 9 Mar 2027
+                      - img [ref=e4372]
+                      - generic [ref=e4375]: 09:00
+                    - generic [ref=e4376]:
+                      - img [ref=e4377]
+                      - generic [ref=e4381]: tahirahmadshah
+                - generic [ref=e4382]:
+                  - button "Edit" [ref=e4383] [cursor=pointer]
+                  - button "Cancel" [ref=e4384] [cursor=pointer]:
+                    - img [ref=e4385]
+                    - text: Cancel
+              - generic [ref=e4390]:
+                - generic [ref=e4391]:
+                  - generic [ref=e4392]:
+                    - paragraph [ref=e4393]: Regression Test Appt
+                    - generic [ref=e4394]:
+                      - img [ref=e4395]
+                      - text: Weekly
+                  - generic [ref=e4400]:
+                    - generic [ref=e4401]:
+                      - img [ref=e4402]
+                      - generic [ref=e4404]: 10 Mar 2027
+                      - img [ref=e4405]
+                      - generic [ref=e4408]: 10:00
+                    - generic [ref=e4409]:
+                      - img [ref=e4410]
+                      - generic [ref=e4414]: tahirahmadshah
+                - generic [ref=e4415]:
+                  - button "Edit" [ref=e4416] [cursor=pointer]
+                  - button "Cancel" [ref=e4417] [cursor=pointer]:
+                    - img [ref=e4418]
+                    - text: Cancel
+              - generic [ref=e4423]:
+                - generic [ref=e4424]:
+                  - generic [ref=e4425]:
+                    - paragraph [ref=e4426]: QA Recurring Visit 2
+                    - generic [ref=e4427]:
+                      - img [ref=e4428]
+                      - text: Weekly
+                  - generic [ref=e4433]:
+                    - generic [ref=e4434]:
+                      - img [ref=e4435]
+                      - generic [ref=e4437]: 16 Mar 2027
+                      - img [ref=e4438]
+                      - generic [ref=e4441]: 09:00
+                    - generic [ref=e4442]:
+                      - img [ref=e4443]
+                      - generic [ref=e4447]: tahirahmadshah
+                - generic [ref=e4448]:
+                  - button "Edit" [ref=e4449] [cursor=pointer]
+                  - button "Cancel" [ref=e4450] [cursor=pointer]:
+                    - img [ref=e4451]
+                    - text: Cancel
+              - generic [ref=e4456]:
+                - generic [ref=e4457]:
+                  - generic [ref=e4458]:
+                    - paragraph [ref=e4459]: Regression Test Appt
+                    - generic [ref=e4460]:
+                      - img [ref=e4461]
+                      - text: Weekly
+                  - generic [ref=e4466]:
+                    - generic [ref=e4467]:
+                      - img [ref=e4468]
+                      - generic [ref=e4470]: 17 Mar 2027
+                      - img [ref=e4471]
+                      - generic [ref=e4474]: 10:00
+                    - generic [ref=e4475]:
+                      - img [ref=e4476]
+                      - generic [ref=e4480]: tahirahmadshah
+                - generic [ref=e4481]:
+                  - button "Edit" [ref=e4482] [cursor=pointer]
+                  - button "Cancel" [ref=e4483] [cursor=pointer]:
+                    - img [ref=e4484]
+                    - text: Cancel
+              - generic [ref=e4489]:
+                - generic [ref=e4490]:
+                  - generic [ref=e4491]:
+                    - paragraph [ref=e4492]: QA Recurring Visit 2
+                    - generic [ref=e4493]:
+                      - img [ref=e4494]
+                      - text: Weekly
+                  - generic [ref=e4499]:
+                    - generic [ref=e4500]:
+                      - img [ref=e4501]
+                      - generic [ref=e4503]: 23 Mar 2027
+                      - img [ref=e4504]
+                      - generic [ref=e4507]: 09:00
+                    - generic [ref=e4508]:
+                      - img [ref=e4509]
+                      - generic [ref=e4513]: tahirahmadshah
+                - generic [ref=e4514]:
+                  - button "Edit" [ref=e4515] [cursor=pointer]
+                  - button "Cancel" [ref=e4516] [cursor=pointer]:
+                    - img [ref=e4517]
+                    - text: Cancel
+              - generic [ref=e4522]:
+                - generic [ref=e4523]:
+                  - generic [ref=e4524]:
+                    - paragraph [ref=e4525]: Regression Test Appt
+                    - generic [ref=e4526]:
+                      - img [ref=e4527]
+                      - text: Weekly
+                  - generic [ref=e4532]:
+                    - generic [ref=e4533]:
+                      - img [ref=e4534]
+                      - generic [ref=e4536]: 24 Mar 2027
+                      - img [ref=e4537]
+                      - generic [ref=e4540]: 10:00
+                    - generic [ref=e4541]:
+                      - img [ref=e4542]
+                      - generic [ref=e4546]: tahirahmadshah
+                - generic [ref=e4547]:
+                  - button "Edit" [ref=e4548] [cursor=pointer]
+                  - button "Cancel" [ref=e4549] [cursor=pointer]:
+                    - img [ref=e4550]
+                    - text: Cancel
+              - generic [ref=e4555]:
+                - generic [ref=e4556]:
+                  - generic [ref=e4557]:
+                    - paragraph [ref=e4558]: QA Recurring Visit 2
+                    - generic [ref=e4559]:
+                      - img [ref=e4560]
+                      - text: Weekly
+                  - generic [ref=e4565]:
+                    - generic [ref=e4566]:
+                      - img [ref=e4567]
+                      - generic [ref=e4569]: 30 Mar 2027
+                      - img [ref=e4570]
+                      - generic [ref=e4573]: 09:00
+                    - generic [ref=e4574]:
+                      - img [ref=e4575]
+                      - generic [ref=e4579]: tahirahmadshah
+                - generic [ref=e4580]:
+                  - button "Edit" [ref=e4581] [cursor=pointer]
+                  - button "Cancel" [ref=e4582] [cursor=pointer]:
+                    - img [ref=e4583]
+                    - text: Cancel
+              - generic [ref=e4588]:
+                - generic [ref=e4589]:
+                  - generic [ref=e4590]:
+                    - paragraph [ref=e4591]: Regression Test Appt
+                    - generic [ref=e4592]:
+                      - img [ref=e4593]
+                      - text: Weekly
+                  - generic [ref=e4598]:
+                    - generic [ref=e4599]:
+                      - img [ref=e4600]
+                      - generic [ref=e4602]: 31 Mar 2027
+                      - img [ref=e4603]
+                      - generic [ref=e4606]: 10:00
+                    - generic [ref=e4607]:
+                      - img [ref=e4608]
+                      - generic [ref=e4612]: tahirahmadshah
+                - generic [ref=e4613]:
+                  - button "Edit" [ref=e4614] [cursor=pointer]
+                  - button "Cancel" [ref=e4615] [cursor=pointer]:
+                    - img [ref=e4616]
+                    - text: Cancel
+              - generic [ref=e4621]:
+                - generic [ref=e4622]:
+                  - generic [ref=e4623]:
+                    - paragraph [ref=e4624]: QA Recurring Visit 2
+                    - generic [ref=e4625]:
+                      - img [ref=e4626]
+                      - text: Weekly
+                  - generic [ref=e4631]:
+                    - generic [ref=e4632]:
+                      - img [ref=e4633]
+                      - generic [ref=e4635]: 6 Apr 2027
+                      - img [ref=e4636]
+                      - generic [ref=e4639]: 09:00
+                    - generic [ref=e4640]:
+                      - img [ref=e4641]
+                      - generic [ref=e4645]: tahirahmadshah
+                - generic [ref=e4646]:
+                  - button "Edit" [ref=e4647] [cursor=pointer]
+                  - button "Cancel" [ref=e4648] [cursor=pointer]:
+                    - img [ref=e4649]
+                    - text: Cancel
+              - generic [ref=e4654]:
+                - generic [ref=e4655]:
+                  - generic [ref=e4656]:
+                    - paragraph [ref=e4657]: Regression Test Appt
+                    - generic [ref=e4658]:
+                      - img [ref=e4659]
+                      - text: Weekly
+                  - generic [ref=e4664]:
+                    - generic [ref=e4665]:
+                      - img [ref=e4666]
+                      - generic [ref=e4668]: 7 Apr 2027
+                      - img [ref=e4669]
+                      - generic [ref=e4672]: 10:00
+                    - generic [ref=e4673]:
+                      - img [ref=e4674]
+                      - generic [ref=e4678]: tahirahmadshah
+                - generic [ref=e4679]:
+                  - button "Edit" [ref=e4680] [cursor=pointer]
+                  - button "Cancel" [ref=e4681] [cursor=pointer]:
+                    - img [ref=e4682]
+                    - text: Cancel
+              - generic [ref=e4687]:
+                - generic [ref=e4688]:
+                  - generic [ref=e4689]:
+                    - paragraph [ref=e4690]: QA Recurring Visit 2
+                    - generic [ref=e4691]:
+                      - img [ref=e4692]
+                      - text: Weekly
+                  - generic [ref=e4697]:
+                    - generic [ref=e4698]:
+                      - img [ref=e4699]
+                      - generic [ref=e4701]: 13 Apr 2027
+                      - img [ref=e4702]
+                      - generic [ref=e4705]: 09:00
+                    - generic [ref=e4706]:
+                      - img [ref=e4707]
+                      - generic [ref=e4711]: tahirahmadshah
+                - generic [ref=e4712]:
+                  - button "Edit" [ref=e4713] [cursor=pointer]
+                  - button "Cancel" [ref=e4714] [cursor=pointer]:
+                    - img [ref=e4715]
+                    - text: Cancel
+              - generic [ref=e4720]:
+                - generic [ref=e4721]:
+                  - generic [ref=e4722]:
+                    - paragraph [ref=e4723]: Regression Test Appt
+                    - generic [ref=e4724]:
+                      - img [ref=e4725]
+                      - text: Weekly
+                  - generic [ref=e4730]:
+                    - generic [ref=e4731]:
+                      - img [ref=e4732]
+                      - generic [ref=e4734]: 14 Apr 2027
+                      - img [ref=e4735]
+                      - generic [ref=e4738]: 10:00
+                    - generic [ref=e4739]:
+                      - img [ref=e4740]
+                      - generic [ref=e4744]: tahirahmadshah
+                - generic [ref=e4745]:
+                  - button "Edit" [ref=e4746] [cursor=pointer]
+                  - button "Cancel" [ref=e4747] [cursor=pointer]:
+                    - img [ref=e4748]
+                    - text: Cancel
+              - generic [ref=e4753]:
+                - generic [ref=e4754]:
+                  - generic [ref=e4755]:
+                    - paragraph [ref=e4756]: QA Recurring Visit 2
+                    - generic [ref=e4757]:
+                      - img [ref=e4758]
+                      - text: Weekly
+                  - generic [ref=e4763]:
+                    - generic [ref=e4764]:
+                      - img [ref=e4765]
+                      - generic [ref=e4767]: 20 Apr 2027
+                      - img [ref=e4768]
+                      - generic [ref=e4771]: 09:00
+                    - generic [ref=e4772]:
+                      - img [ref=e4773]
+                      - generic [ref=e4777]: tahirahmadshah
+                - generic [ref=e4778]:
+                  - button "Edit" [ref=e4779] [cursor=pointer]
+                  - button "Cancel" [ref=e4780] [cursor=pointer]:
+                    - img [ref=e4781]
+                    - text: Cancel
+              - generic [ref=e4786]:
+                - generic [ref=e4787]:
+                  - generic [ref=e4788]:
+                    - paragraph [ref=e4789]: Regression Test Appt
+                    - generic [ref=e4790]:
+                      - img [ref=e4791]
+                      - text: Weekly
+                  - generic [ref=e4796]:
+                    - generic [ref=e4797]:
+                      - img [ref=e4798]
+                      - generic [ref=e4800]: 21 Apr 2027
+                      - img [ref=e4801]
+                      - generic [ref=e4804]: 10:00
+                    - generic [ref=e4805]:
+                      - img [ref=e4806]
+                      - generic [ref=e4810]: tahirahmadshah
+                - generic [ref=e4811]:
+                  - button "Edit" [ref=e4812] [cursor=pointer]
+                  - button "Cancel" [ref=e4813] [cursor=pointer]:
+                    - img [ref=e4814]
+                    - text: Cancel
+              - generic [ref=e4819]:
+                - generic [ref=e4820]:
+                  - generic [ref=e4821]:
+                    - paragraph [ref=e4822]: QA Recurring Visit 2
+                    - generic [ref=e4823]:
+                      - img [ref=e4824]
+                      - text: Weekly
+                  - generic [ref=e4829]:
+                    - generic [ref=e4830]:
+                      - img [ref=e4831]
+                      - generic [ref=e4833]: 27 Apr 2027
+                      - img [ref=e4834]
+                      - generic [ref=e4837]: 09:00
+                    - generic [ref=e4838]:
+                      - img [ref=e4839]
+                      - generic [ref=e4843]: tahirahmadshah
+                - generic [ref=e4844]:
+                  - button "Edit" [ref=e4845] [cursor=pointer]
+                  - button "Cancel" [ref=e4846] [cursor=pointer]:
+                    - img [ref=e4847]
+                    - text: Cancel
+              - generic [ref=e4852]:
+                - generic [ref=e4853]:
+                  - generic [ref=e4854]:
+                    - paragraph [ref=e4855]: Regression Test Appt
+                    - generic [ref=e4856]:
+                      - img [ref=e4857]
+                      - text: Weekly
+                  - generic [ref=e4862]:
+                    - generic [ref=e4863]:
+                      - img [ref=e4864]
+                      - generic [ref=e4866]: 28 Apr 2027
+                      - img [ref=e4867]
+                      - generic [ref=e4870]: 10:00
+                    - generic [ref=e4871]:
+                      - img [ref=e4872]
+                      - generic [ref=e4876]: tahirahmadshah
+                - generic [ref=e4877]:
+                  - button "Edit" [ref=e4878] [cursor=pointer]
+                  - button "Cancel" [ref=e4879] [cursor=pointer]:
+                    - img [ref=e4880]
+                    - text: Cancel
+              - generic [ref=e4885]:
+                - generic [ref=e4886]:
+                  - generic [ref=e4887]:
+                    - paragraph [ref=e4888]: QA Recurring Visit 2
+                    - generic [ref=e4889]:
+                      - img [ref=e4890]
+                      - text: Weekly
+                  - generic [ref=e4895]:
+                    - generic [ref=e4896]:
+                      - img [ref=e4897]
+                      - generic [ref=e4899]: 4 May 2027
+                      - img [ref=e4900]
+                      - generic [ref=e4903]: 09:00
+                    - generic [ref=e4904]:
+                      - img [ref=e4905]
+                      - generic [ref=e4909]: tahirahmadshah
+                - generic [ref=e4910]:
+                  - button "Edit" [ref=e4911] [cursor=pointer]
+                  - button "Cancel" [ref=e4912] [cursor=pointer]:
+                    - img [ref=e4913]
+                    - text: Cancel
+              - generic [ref=e4918]:
+                - generic [ref=e4919]:
+                  - generic [ref=e4920]:
+                    - paragraph [ref=e4921]: Regression Test Appt
+                    - generic [ref=e4922]:
+                      - img [ref=e4923]
+                      - text: Weekly
+                  - generic [ref=e4928]:
+                    - generic [ref=e4929]:
+                      - img [ref=e4930]
+                      - generic [ref=e4932]: 5 May 2027
+                      - img [ref=e4933]
+                      - generic [ref=e4936]: 10:00
+                    - generic [ref=e4937]:
+                      - img [ref=e4938]
+                      - generic [ref=e4942]: tahirahmadshah
+                - generic [ref=e4943]:
+                  - button "Edit" [ref=e4944] [cursor=pointer]
+                  - button "Cancel" [ref=e4945] [cursor=pointer]:
+                    - img [ref=e4946]
+                    - text: Cancel
+              - generic [ref=e4951]:
+                - generic [ref=e4952]:
+                  - generic [ref=e4953]:
+                    - paragraph [ref=e4954]: QA Recurring Visit 2
+                    - generic [ref=e4955]:
+                      - img [ref=e4956]
+                      - text: Weekly
+                  - generic [ref=e4961]:
+                    - generic [ref=e4962]:
+                      - img [ref=e4963]
+                      - generic [ref=e4965]: 11 May 2027
+                      - img [ref=e4966]
+                      - generic [ref=e4969]: 09:00
+                    - generic [ref=e4970]:
+                      - img [ref=e4971]
+                      - generic [ref=e4975]: tahirahmadshah
+                - generic [ref=e4976]:
+                  - button "Edit" [ref=e4977] [cursor=pointer]
+                  - button "Cancel" [ref=e4978] [cursor=pointer]:
+                    - img [ref=e4979]
+                    - text: Cancel
+              - generic [ref=e4984]:
+                - generic [ref=e4985]:
+                  - generic [ref=e4986]:
+                    - paragraph [ref=e4987]: Regression Test Appt
+                    - generic [ref=e4988]:
+                      - img [ref=e4989]
+                      - text: Weekly
+                  - generic [ref=e4994]:
+                    - generic [ref=e4995]:
+                      - img [ref=e4996]
+                      - generic [ref=e4998]: 12 May 2027
+                      - img [ref=e4999]
+                      - generic [ref=e5002]: 10:00
+                    - generic [ref=e5003]:
+                      - img [ref=e5004]
+                      - generic [ref=e5008]: tahirahmadshah
+                - generic [ref=e5009]:
+                  - button "Edit" [ref=e5010] [cursor=pointer]
+                  - button "Cancel" [ref=e5011] [cursor=pointer]:
+                    - img [ref=e5012]
+                    - text: Cancel
+              - generic [ref=e5017]:
+                - generic [ref=e5018]:
+                  - generic [ref=e5019]:
+                    - paragraph [ref=e5020]: QA Recurring Visit 2
+                    - generic [ref=e5021]:
+                      - img [ref=e5022]
+                      - text: Weekly
+                  - generic [ref=e5027]:
+                    - generic [ref=e5028]:
+                      - img [ref=e5029]
+                      - generic [ref=e5031]: 18 May 2027
+                      - img [ref=e5032]
+                      - generic [ref=e5035]: 09:00
+                    - generic [ref=e5036]:
+                      - img [ref=e5037]
+                      - generic [ref=e5041]: tahirahmadshah
+                - generic [ref=e5042]:
+                  - button "Edit" [ref=e5043] [cursor=pointer]
+                  - button "Cancel" [ref=e5044] [cursor=pointer]:
+                    - img [ref=e5045]
+                    - text: Cancel
+              - generic [ref=e5050]:
+                - generic [ref=e5051]:
+                  - generic [ref=e5052]:
+                    - paragraph [ref=e5053]: Regression Test Appt
+                    - generic [ref=e5054]:
+                      - img [ref=e5055]
+                      - text: Weekly
+                  - generic [ref=e5060]:
+                    - generic [ref=e5061]:
+                      - img [ref=e5062]
+                      - generic [ref=e5064]: 19 May 2027
+                      - img [ref=e5065]
+                      - generic [ref=e5068]: 10:00
+                    - generic [ref=e5069]:
+                      - img [ref=e5070]
+                      - generic [ref=e5074]: tahirahmadshah
+                - generic [ref=e5075]:
+                  - button "Edit" [ref=e5076] [cursor=pointer]
+                  - button "Cancel" [ref=e5077] [cursor=pointer]:
+                    - img [ref=e5078]
+                    - text: Cancel
+              - generic [ref=e5083]:
+                - generic [ref=e5084]:
+                  - generic [ref=e5085]:
+                    - paragraph [ref=e5086]: QA Recurring Visit 2
+                    - generic [ref=e5087]:
+                      - img [ref=e5088]
+                      - text: Weekly
+                  - generic [ref=e5093]:
+                    - generic [ref=e5094]:
+                      - img [ref=e5095]
+                      - generic [ref=e5097]: 25 May 2027
+                      - img [ref=e5098]
+                      - generic [ref=e5101]: 09:00
+                    - generic [ref=e5102]:
+                      - img [ref=e5103]
+                      - generic [ref=e5107]: tahirahmadshah
+                - generic [ref=e5108]:
+                  - button "Edit" [ref=e5109] [cursor=pointer]
+                  - button "Cancel" [ref=e5110] [cursor=pointer]:
+                    - img [ref=e5111]
+                    - text: Cancel
+              - generic [ref=e5116]:
+                - generic [ref=e5117]:
+                  - generic [ref=e5118]:
+                    - paragraph [ref=e5119]: Regression Test Appt
+                    - generic [ref=e5120]:
+                      - img [ref=e5121]
+                      - text: Weekly
+                  - generic [ref=e5126]:
+                    - generic [ref=e5127]:
+                      - img [ref=e5128]
+                      - generic [ref=e5130]: 26 May 2027
+                      - img [ref=e5131]
+                      - generic [ref=e5134]: 10:00
+                    - generic [ref=e5135]:
+                      - img [ref=e5136]
+                      - generic [ref=e5140]: tahirahmadshah
+                - generic [ref=e5141]:
+                  - button "Edit" [ref=e5142] [cursor=pointer]
+                  - button "Cancel" [ref=e5143] [cursor=pointer]:
+                    - img [ref=e5144]
+                    - text: Cancel
+              - generic [ref=e5149]:
+                - generic [ref=e5150]:
+                  - generic [ref=e5151]:
+                    - paragraph [ref=e5152]: QA Recurring Visit 2
+                    - generic [ref=e5153]:
+                      - img [ref=e5154]
+                      - text: Weekly
+                  - generic [ref=e5159]:
+                    - generic [ref=e5160]:
+                      - img [ref=e5161]
+                      - generic [ref=e5163]: 1 Jun 2027
+                      - img [ref=e5164]
+                      - generic [ref=e5167]: 09:00
+                    - generic [ref=e5168]:
+                      - img [ref=e5169]
+                      - generic [ref=e5173]: tahirahmadshah
+                - generic [ref=e5174]:
+                  - button "Edit" [ref=e5175] [cursor=pointer]
+                  - button "Cancel" [ref=e5176] [cursor=pointer]:
+                    - img [ref=e5177]
+                    - text: Cancel
+              - generic [ref=e5182]:
+                - generic [ref=e5183]:
+                  - generic [ref=e5184]:
+                    - paragraph [ref=e5185]: Regression Test Appt
+                    - generic [ref=e5186]:
+                      - img [ref=e5187]
+                      - text: Weekly
+                  - generic [ref=e5192]:
+                    - generic [ref=e5193]:
+                      - img [ref=e5194]
+                      - generic [ref=e5196]: 2 Jun 2027
+                      - img [ref=e5197]
+                      - generic [ref=e5200]: 10:00
+                    - generic [ref=e5201]:
+                      - img [ref=e5202]
+                      - generic [ref=e5206]: tahirahmadshah
+                - generic [ref=e5207]:
+                  - button "Edit" [ref=e5208] [cursor=pointer]
+                  - button "Cancel" [ref=e5209] [cursor=pointer]:
+                    - img [ref=e5210]
+                    - text: Cancel
+              - generic [ref=e5215]:
+                - generic [ref=e5216]:
+                  - generic [ref=e5217]:
+                    - paragraph [ref=e5218]: QA Recurring Visit 2
+                    - generic [ref=e5219]:
+                      - img [ref=e5220]
+                      - text: Weekly
+                  - generic [ref=e5225]:
+                    - generic [ref=e5226]:
+                      - img [ref=e5227]
+                      - generic [ref=e5229]: 8 Jun 2027
+                      - img [ref=e5230]
+                      - generic [ref=e5233]: 09:00
+                    - generic [ref=e5234]:
+                      - img [ref=e5235]
+                      - generic [ref=e5239]: tahirahmadshah
+                - generic [ref=e5240]:
+                  - button "Edit" [ref=e5241] [cursor=pointer]
+                  - button "Cancel" [ref=e5242] [cursor=pointer]:
+                    - img [ref=e5243]
+                    - text: Cancel
+              - generic [ref=e5248]:
+                - generic [ref=e5249]:
+                  - generic [ref=e5250]:
+                    - paragraph [ref=e5251]: Regression Test Appt
+                    - generic [ref=e5252]:
+                      - img [ref=e5253]
+                      - text: Weekly
+                  - generic [ref=e5258]:
+                    - generic [ref=e5259]:
+                      - img [ref=e5260]
+                      - generic [ref=e5262]: 9 Jun 2027
+                      - img [ref=e5263]
+                      - generic [ref=e5266]: 10:00
+                    - generic [ref=e5267]:
+                      - img [ref=e5268]
+                      - generic [ref=e5272]: tahirahmadshah
+                - generic [ref=e5273]:
+                  - button "Edit" [ref=e5274] [cursor=pointer]
+                  - button "Cancel" [ref=e5275] [cursor=pointer]:
+                    - img [ref=e5276]
+                    - text: Cancel
+              - generic [ref=e5281]:
+                - generic [ref=e5282]:
+                  - generic [ref=e5283]:
+                    - paragraph [ref=e5284]: QA Recurring Visit 2
+                    - generic [ref=e5285]:
+                      - img [ref=e5286]
+                      - text: Weekly
+                  - generic [ref=e5291]:
+                    - generic [ref=e5292]:
+                      - img [ref=e5293]
+                      - generic [ref=e5295]: 15 Jun 2027
+                      - img [ref=e5296]
+                      - generic [ref=e5299]: 09:00
+                    - generic [ref=e5300]:
+                      - img [ref=e5301]
+                      - generic [ref=e5305]: tahirahmadshah
+                - generic [ref=e5306]:
+                  - button "Edit" [ref=e5307] [cursor=pointer]
+                  - button "Cancel" [ref=e5308] [cursor=pointer]:
+                    - img [ref=e5309]
+                    - text: Cancel
+              - generic [ref=e5314]:
+                - generic [ref=e5315]:
+                  - generic [ref=e5316]:
+                    - paragraph [ref=e5317]: Regression Test Appt
+                    - generic [ref=e5318]:
+                      - img [ref=e5319]
+                      - text: Weekly
+                  - generic [ref=e5324]:
+                    - generic [ref=e5325]:
+                      - img [ref=e5326]
+                      - generic [ref=e5328]: 16 Jun 2027
+                      - img [ref=e5329]
+                      - generic [ref=e5332]: 10:00
+                    - generic [ref=e5333]:
+                      - img [ref=e5334]
+                      - generic [ref=e5338]: tahirahmadshah
+                - generic [ref=e5339]:
+                  - button "Edit" [ref=e5340] [cursor=pointer]
+                  - button "Cancel" [ref=e5341] [cursor=pointer]:
+                    - img [ref=e5342]
+                    - text: Cancel
+              - generic [ref=e5347]:
+                - generic [ref=e5348]:
+                  - generic [ref=e5349]:
+                    - paragraph [ref=e5350]: QA Recurring Visit 2
+                    - generic [ref=e5351]:
+                      - img [ref=e5352]
+                      - text: Weekly
+                  - generic [ref=e5357]:
+                    - generic [ref=e5358]:
+                      - img [ref=e5359]
+                      - generic [ref=e5361]: 22 Jun 2027
+                      - img [ref=e5362]
+                      - generic [ref=e5365]: 09:00
+                    - generic [ref=e5366]:
+                      - img [ref=e5367]
+                      - generic [ref=e5371]: tahirahmadshah
+                - generic [ref=e5372]:
+                  - button "Edit" [ref=e5373] [cursor=pointer]
+                  - button "Cancel" [ref=e5374] [cursor=pointer]:
+                    - img [ref=e5375]
+                    - text: Cancel
+              - generic [ref=e5380]:
+                - generic [ref=e5381]:
+                  - generic [ref=e5382]:
+                    - paragraph [ref=e5383]: Regression Test Appt
+                    - generic [ref=e5384]:
+                      - img [ref=e5385]
+                      - text: Weekly
+                  - generic [ref=e5390]:
+                    - generic [ref=e5391]:
+                      - img [ref=e5392]
+                      - generic [ref=e5394]: 23 Jun 2027
+                      - img [ref=e5395]
+                      - generic [ref=e5398]: 10:00
+                    - generic [ref=e5399]:
+                      - img [ref=e5400]
+                      - generic [ref=e5404]: tahirahmadshah
+                - generic [ref=e5405]:
+                  - button "Edit" [ref=e5406] [cursor=pointer]
+                  - button "Cancel" [ref=e5407] [cursor=pointer]:
+                    - img [ref=e5408]
+                    - text: Cancel
+              - generic [ref=e5413]:
+                - generic [ref=e5414]:
+                  - generic [ref=e5415]:
+                    - paragraph [ref=e5416]: QA Recurring Visit 2
+                    - generic [ref=e5417]:
+                      - img [ref=e5418]
+                      - text: Weekly
+                  - generic [ref=e5423]:
+                    - generic [ref=e5424]:
+                      - img [ref=e5425]
+                      - generic [ref=e5427]: 29 Jun 2027
+                      - img [ref=e5428]
+                      - generic [ref=e5431]: 09:00
+                    - generic [ref=e5432]:
+                      - img [ref=e5433]
+                      - generic [ref=e5437]: tahirahmadshah
+                - generic [ref=e5438]:
+                  - button "Edit" [ref=e5439] [cursor=pointer]
+                  - button "Cancel" [ref=e5440] [cursor=pointer]:
+                    - img [ref=e5441]
+                    - text: Cancel
+          - generic [ref=e5445]:
+            - heading "Edit recurring appointment" [level=3] [ref=e5446]
+            - paragraph [ref=e5447]: "\"Regression Test Appt\""
+            - generic [ref=e5448]:
+              - button "This appointment only" [ref=e5449] [cursor=pointer]
+              - button "This and all future appointments" [ref=e5450] [cursor=pointer]
+            - button "Dismiss" [ref=e5451] [cursor=pointer]
+  - region "Notifications Alt+T"

@@ -1,0 +1,33 @@
+- generic [ref=e2]:
+  - generic [ref=e421]:
+    - generic [ref=e422]:
+      - img [ref=e424]
+      - heading "Welcome back" [level=1] [ref=e426]
+      - paragraph [ref=e427]: Sign in to your CareCircle account
+    - generic [ref=e428]:
+      - generic [ref=e429]:
+        - generic [ref=e430]:
+          - generic [ref=e431]: Email address
+          - textbox "Email address" [ref=e432]:
+            - /placeholder: you@example.com
+        - generic [ref=e433]:
+          - generic [ref=e434]:
+            - generic [ref=e435]: Password
+            - link "Forgot password?" [ref=e436] [cursor=pointer]:
+              - /url: /forgot-password
+          - generic [ref=e437]:
+            - textbox "Password" [ref=e438]:
+              - /placeholder: Your password
+            - button "Show password" [ref=e439] [cursor=pointer]:
+              - img [ref=e440]
+        - button "Sign in" [ref=e443] [cursor=pointer]
+      - generic [ref=e446]: or
+      - button "Send me a magic link instead" [ref=e448] [cursor=pointer]
+      - paragraph [ref=e449]:
+        - text: Don't have an account?
+        - link "Create one" [ref=e450] [cursor=pointer]:
+          - /url: /signup
+    - paragraph [ref=e451]:
+      - text: CareCircle is a coordination tool, not a medical device.
+      - text: Always consult a doctor for medical decisions.
+  - region "Notifications Alt+T"

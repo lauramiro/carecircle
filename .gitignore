@@ -16,6 +16,7 @@ backend/.env.production
 # Build output
 frontend/dist/
 backend/dist/
+./playwright-mcp/
 
 # OS files
 .DS_Store

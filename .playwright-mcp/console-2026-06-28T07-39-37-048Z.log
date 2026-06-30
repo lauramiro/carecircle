@@ -1,0 +1,5 @@
+[   11304ms] [ERROR] Failed to load resource: the server responded with a status of 500 () @ https://carecircle-backend-v3j7.onrender.com/api/shifts/assignments:0
+[   11305ms] [ERROR] saveWeeklyShiftAssignment: {statusCode: 500, message: Failed to save shift assignment, path: /api/shifts/assignments, traceId: null, timestamp: 2026-06-28T07:39:47.422Z} @ https://carecircle-frontend.onrender.com/assets/index-tydnTvzz.js:95
+[   11315ms] Error: Failed to save shift assignment
+    at bM (https://carecircle-frontend.onrender.com/assets/index-tydnTvzz.js:96:794)
+    at async u (https://carecircle-frontend.onrender.com/assets/index-tydnTvzz.js:921:121377)

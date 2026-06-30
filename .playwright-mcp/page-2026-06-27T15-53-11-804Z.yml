@@ -1,0 +1,10 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - img [ref=e37]
+    - paragraph [ref=e39]: Check your email
+    - paragraph [ref=e34]:
+      - text: We sent a magic link to
+      - strong [ref=e40]: tahirahmadshah@outlook.com
+      - text: . It expires in 1 hour.
+    - button "Back to sign in" [ref=e41] [cursor=pointer]
+  - region "Notifications Alt+T"

@@ -1,0 +1,4 @@
+[   11482ms] [LOG] useMock value: false @ https://carecircle-frontend.onrender.com/assets/index-D3xJyazZ.js:934
+[   11482ms] [LOG] env var: undefined @ https://carecircle-frontend.onrender.com/assets/index-D3xJyazZ.js:934
+[   53862ms] [ERROR] Failed to load resource: the server responded with a status of 500 () @ https://carecircle-backend-v3j7.onrender.com/api/hospital-summary/generate-pdf:0
+[   53994ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://carecircle-backend-v3j7.onrender.com/api/document-storage/groups/60872536-533b-464b-b0bf-a7f93e76578b/usage:0

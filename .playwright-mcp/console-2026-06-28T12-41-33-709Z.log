@@ -1,0 +1,3 @@
+[   76289ms] [WARNING] FCM token generation failed, falling back to Web Push TypeError: Failed to fetch
+    at qT (https://carecircle-frontend.onrender.com/assets/index-D3xJyazZ.js:42:95683)
+    at async https://carecircle-frontend.onrender.com/assets/index-D3xJyazZ.js:42:96747 @ https://carecircle-frontend.onrender.com/assets/index-D3xJyazZ.js:41

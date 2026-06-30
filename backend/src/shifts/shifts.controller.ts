@@ -1,4 +1,10 @@
-import { Body, Controller, Post, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { ShiftsService } from './shifts.service';
 
 export interface AssignShiftDto {
@@ -21,7 +27,10 @@ export class ShiftsController {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new HttpException('Unable to save shift assignment', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'Unable to save shift assignment',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

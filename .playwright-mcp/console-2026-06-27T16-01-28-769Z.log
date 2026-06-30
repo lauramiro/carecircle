@@ -1,0 +1,5 @@
+[  436968ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://carecircle-backend-v3j7.onrender.com/api/dev/push/test:0
+[  437247ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://carecircle-backend-v3j7.onrender.com/api/dev/sms/test:0
+[  437656ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://carecircle-backend-v3j7.onrender.com/api/dev/reminders/run:0
+[  449574ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/ai/qa:0
+[  449713ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/ai/qa:0

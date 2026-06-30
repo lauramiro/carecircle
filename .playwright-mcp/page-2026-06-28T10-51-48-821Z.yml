@@ -1,0 +1,142 @@
+- generic [ref=e2]:
+  - generic [ref=e18]:
+    - complementary [ref=e19]:
+      - link "CareCircle" [ref=e21] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e23]
+        - generic [ref=e26]: CareCircle
+      - navigation "Dashboard navigation" [ref=e27]:
+        - generic [ref=e28]:
+          - link "Dashboard" [ref=e29] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e31]
+            - generic [ref=e36]: Dashboard
+          - generic [ref=e37]:
+            - generic [ref=e38]:
+              - link "Groups" [ref=e40] [cursor=pointer]:
+                - /url: /groups/list
+                - img [ref=e41]
+                - text: Groups
+              - button "Toggle groups menu" [expanded] [ref=e46] [cursor=pointer]:
+                - img [ref=e47]
+            - generic [ref=e50]:
+              - link "All groups" [ref=e51] [cursor=pointer]:
+                - /url: /groups/list
+                - img [ref=e52]
+                - text: All groups
+              - link "Create group" [ref=e54] [cursor=pointer]:
+                - /url: /groups/create
+                - img [ref=e55]
+                - text: Create group
+          - link "Settings" [ref=e56] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e58]
+            - generic [ref=e61]: Settings
+        - generic [ref=e62]:
+          - paragraph [ref=e63]: Current care circle
+          - generic [ref=e64]:
+            - paragraph [ref=e65]: QA Test Circle
+            - paragraph [ref=e66]: "Your role: observer"
+            - link "View profile →" [ref=e67] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/profile
+          - generic [ref=e68]:
+            - link "Overview" [ref=e69] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b
+              - img [ref=e70]
+              - text: Overview
+            - link "Emergency" [ref=e75] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/emergency-contacts
+              - img [ref=e76]
+              - text: Emergency
+            - link "Members" [ref=e80] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/members
+              - img [ref=e81]
+              - text: Members
+            - link "Today's medications" [active] [ref=e86] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/checklist
+              - img [ref=e87]
+              - text: Today's medications
+            - link "Schedule" [ref=e90] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/medications
+              - img [ref=e91]
+              - text: Schedule
+            - link "Journal" [ref=e94] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/journal
+              - img [ref=e95]
+              - text: Journal
+            - link "Insights" [ref=e97] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/insights
+              - img [ref=e98]
+              - text: Insights
+            - link "Shifts" [ref=e101] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/shifts
+              - img [ref=e102]
+              - text: Shifts
+            - link "Appointments" [ref=e104] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/appointments
+              - img [ref=e105]
+              - text: Appointments
+            - link "Administration log" [ref=e108] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/administration-log
+              - img [ref=e109]
+              - text: Administration log
+            - link "AI assistant" [ref=e112] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/ai-assistant
+              - img [ref=e113]
+              - text: AI assistant
+      - generic [ref=e117]:
+        - generic [ref=e118]:
+          - generic [ref=e119]: TA
+          - generic [ref=e120]:
+            - paragraph [ref=e121]: QA Test Circle
+            - paragraph [ref=e122]: tahirahmadshah+qa2@outlook.com
+        - button "Sign out" [ref=e123] [cursor=pointer]:
+          - img [ref=e124]
+          - text: Sign out
+    - generic [ref=e127]:
+      - banner [ref=e128]:
+        - generic "Page history controls" [ref=e129]:
+          - button "Go back" [ref=e130] [cursor=pointer]:
+            - img [ref=e131]
+          - button "Go forward" [disabled] [ref=e133]:
+            - img [ref=e134]
+        - button "Notifications enabled" [ref=e136] [cursor=pointer]:
+          - img [ref=e137]
+        - img [ref=e140]
+      - main [ref=e144]:
+        - generic [ref=e286]:
+          - generic [ref=e288]:
+            - paragraph [ref=e289]: Care group
+            - heading "QA Test Circle" [level=1] [ref=e290]
+            - paragraph [ref=e291]: Mark each dose as given, skip with a reason, or add optional notes and photo proof. Use the arrows to browse other days.
+          - generic [ref=e294]:
+            - generic [ref=e295]:
+              - button "Previous week" [ref=e296] [cursor=pointer]:
+                - img [ref=e297]
+              - paragraph [ref=e300]: Today
+              - button "Next week" [disabled] [ref=e301]:
+                - img [ref=e302]
+            - generic [ref=e305]:
+              - button "Mon 22" [ref=e306] [cursor=pointer]:
+                - generic [ref=e307]: Mon
+                - generic [ref=e308]: "22"
+              - button "Tue 23" [ref=e309] [cursor=pointer]:
+                - generic [ref=e310]: Tue
+                - generic [ref=e311]: "23"
+              - button "Wed 24" [ref=e312] [cursor=pointer]:
+                - generic [ref=e313]: Wed
+                - generic [ref=e314]: "24"
+              - button "Thu 25" [ref=e315] [cursor=pointer]:
+                - generic [ref=e316]: Thu
+                - generic [ref=e317]: "25"
+              - button "Fri 26" [ref=e318] [cursor=pointer]:
+                - generic [ref=e319]: Fri
+                - generic [ref=e320]: "26"
+              - button "Sat 27" [ref=e321] [cursor=pointer]:
+                - generic [ref=e322]: Sat
+                - generic [ref=e323]: "27"
+              - button "Sun 28" [ref=e324] [cursor=pointer]:
+                - generic [ref=e325]: Sun
+                - generic [ref=e326]: "28"
+          - generic [ref=e327]: Loading checklist for 2026-06-28…
+  - region "Notifications Alt+T"

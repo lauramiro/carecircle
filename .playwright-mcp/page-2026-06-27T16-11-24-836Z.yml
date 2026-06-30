@@ -1,0 +1,216 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - link "CareCircle" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e9]
+        - generic [ref=e12]: CareCircle
+      - navigation "Dashboard navigation" [ref=e13]:
+        - generic [ref=e14]:
+          - link "Dashboard" [ref=e15] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e17]
+            - generic [ref=e22]: Dashboard
+          - generic [ref=e24]:
+            - link "Groups" [ref=e25] [cursor=pointer]:
+              - /url: /groups/list
+              - img [ref=e26]
+              - text: Groups
+            - button "Toggle groups menu" [ref=e31] [cursor=pointer]:
+              - img [ref=e32]
+          - link "Settings" [ref=e34] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e37]
+            - generic [ref=e40]: Settings
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e44]: TA
+          - generic [ref=e45]:
+            - paragraph [ref=e46]: Caregiver
+            - paragraph [ref=e47]: tahirahmadshah@outlook.com
+        - button "Sign out" [ref=e48] [cursor=pointer]:
+          - img [ref=e49]
+          - text: Sign out
+    - generic [ref=e52]:
+      - banner [ref=e53]:
+        - generic "Page history controls" [ref=e54]:
+          - button "Go back" [disabled] [ref=e55]:
+            - img [ref=e56]
+          - button "Go forward" [ref=e58] [cursor=pointer]:
+            - img [ref=e59]
+        - button "Enable notifications" [ref=e61] [cursor=pointer]:
+          - img [ref=e62]
+        - img [ref=e66]
+      - main [ref=e70]:
+        - generic [ref=e71]:
+          - generic [ref=e72]:
+            - paragraph [ref=e73]: Enable notifications
+            - paragraph [ref=e74]: Allow browser notifications for overdue medication alerts and appointment reminders (24h and 1h before). The backend must be running locally.
+          - button "Enable notifications" [ref=e75] [cursor=pointer]
+        - generic [ref=e77]:
+          - generic [ref=e79]:
+            - heading "Settings" [level=1] [ref=e80]
+            - paragraph [ref=e81]: Manage your account preferences, appearance, and notification settings.
+          - article [ref=e82]:
+            - generic [ref=e83]:
+              - heading "Appearance" [level=2] [ref=e84]
+              - paragraph [ref=e85]: Choose light or dark mode for the CareCircle interface.
+            - generic [ref=e86]:
+              - button "Light mode Bright surfaces with blue accents." [pressed] [ref=e87] [cursor=pointer]:
+                - img [ref=e89]
+                - generic [ref=e95]:
+                  - generic [ref=e96]: Light mode
+                  - generic [ref=e97]: Bright surfaces with blue accents.
+              - button "Dark mode Dimmed surfaces that are easier on the eyes at night." [ref=e98] [cursor=pointer]:
+                - img [ref=e100]
+                - generic [ref=e102]:
+                  - generic [ref=e103]: Dark mode
+                  - generic [ref=e104]: Dimmed surfaces that are easier on the eyes at night.
+          - article [ref=e105]:
+            - generic [ref=e106]:
+              - img [ref=e108]
+              - generic [ref=e111]:
+                - heading "Text size" [level=2] [ref=e112]
+                - paragraph [ref=e113]: Choose a text size that is comfortable to read. Your preference is saved across sessions.
+            - generic [ref=e114]:
+              - button "Standard" [ref=e115] [cursor=pointer]:
+                - generic [ref=e116]:
+                  - generic [ref=e117]: Standard
+                  - generic [ref=e118]: Default browser text size.
+              - button "Large" [active] [pressed] [ref=e119] [cursor=pointer]:
+                - generic [ref=e120]:
+                  - generic [ref=e121]: Large
+                  - generic [ref=e122]: 12% larger than standard.
+              - button "Extra-Large" [ref=e123] [cursor=pointer]:
+                - generic [ref=e124]:
+                  - generic [ref=e125]: Extra-Large
+                  - generic [ref=e126]: 25% larger than standard.
+          - generic [ref=e127]:
+            - article [ref=e128]:
+              - generic [ref=e129]:
+                - img [ref=e131]
+                - generic [ref=e135]:
+                  - heading "Account" [level=2] [ref=e136]
+                  - paragraph [ref=e137]: Profile details, email, and sign-in preferences will be configurable here.
+            - article [ref=e138]:
+              - generic [ref=e139]:
+                - img [ref=e141]
+                - generic [ref=e144]:
+                  - heading "Notifications" [level=2] [ref=e145]
+                  - paragraph [ref=e146]: Use the bell icon in the header to enable browser push alerts. Weekly wellbeing reminders can be managed here.
+              - paragraph [ref=e276]: Loading notification preferences...
+            - article [ref=e149]:
+              - generic [ref=e150]:
+                - img [ref=e152]
+                - generic [ref=e154]:
+                  - heading "Privacy & access" [level=2] [ref=e155]
+                  - paragraph [ref=e156]: Role-based access for each care circle is managed from the members page on individual group pages.
+            - article [ref=e158]:
+              - generic [ref=e159]:
+                - img [ref=e161]
+                - generic [ref=e164]:
+                  - heading "Weekly wellbeing check-in" [level=2] [ref=e165]
+                  - paragraph [ref=e166]: A private five-question check-in for primary carers. One response can be submitted each week.
+              - generic [ref=e174]:
+                - generic [ref=e175]:
+                  - group "How well have you been sleeping this week?" [ref=e176]:
+                    - generic [ref=e177]: How well have you been sleeping this week?
+                    - paragraph [ref=e178]: 1 = Very poorly, 5 = Very well
+                    - generic [ref=e179]:
+                      - generic [ref=e180] [cursor=pointer]:
+                        - radio "1" [ref=e181]
+                        - generic [ref=e182]: "1"
+                      - generic [ref=e183] [cursor=pointer]:
+                        - radio "2" [ref=e184]
+                        - generic [ref=e185]: "2"
+                      - generic [ref=e186] [cursor=pointer]:
+                        - radio "3" [ref=e187]
+                        - generic [ref=e188]: "3"
+                      - generic [ref=e189] [cursor=pointer]:
+                        - radio "4" [ref=e190]
+                        - generic [ref=e191]: "4"
+                      - generic [ref=e192] [cursor=pointer]:
+                        - radio "5" [ref=e193]
+                        - generic [ref=e194]: "5"
+                  - group "How stressed have you felt this week?" [ref=e195]:
+                    - generic [ref=e196]: How stressed have you felt this week?
+                    - paragraph [ref=e197]: 1 = Not at all, 5 = Extremely
+                    - generic [ref=e198]:
+                      - generic [ref=e199] [cursor=pointer]:
+                        - radio "1" [ref=e200]
+                        - generic [ref=e201]: "1"
+                      - generic [ref=e202] [cursor=pointer]:
+                        - radio "2" [ref=e203]
+                        - generic [ref=e204]: "2"
+                      - generic [ref=e205] [cursor=pointer]:
+                        - radio "3" [ref=e206]
+                        - generic [ref=e207]: "3"
+                      - generic [ref=e208] [cursor=pointer]:
+                        - radio "4" [ref=e209]
+                        - generic [ref=e210]: "4"
+                      - generic [ref=e211] [cursor=pointer]:
+                        - radio "5" [ref=e212]
+                        - generic [ref=e213]: "5"
+                  - group "How overwhelmed have you felt by caring responsibilities?" [ref=e214]:
+                    - generic [ref=e215]: How overwhelmed have you felt by caring responsibilities?
+                    - paragraph [ref=e216]: 1 = Not at all, 5 = Extremely
+                    - generic [ref=e217]:
+                      - generic [ref=e218] [cursor=pointer]:
+                        - radio "1" [ref=e219]
+                        - generic [ref=e220]: "1"
+                      - generic [ref=e221] [cursor=pointer]:
+                        - radio "2" [ref=e222]
+                        - generic [ref=e223]: "2"
+                      - generic [ref=e224] [cursor=pointer]:
+                        - radio "3" [ref=e225]
+                        - generic [ref=e226]: "3"
+                      - generic [ref=e227] [cursor=pointer]:
+                        - radio "4" [ref=e228]
+                        - generic [ref=e229]: "4"
+                      - generic [ref=e230] [cursor=pointer]:
+                        - radio "5" [ref=e231]
+                        - generic [ref=e232]: "5"
+                  - group "How connected have you felt to your support network?" [ref=e233]:
+                    - generic [ref=e234]: How connected have you felt to your support network?
+                    - paragraph [ref=e235]: 1 = Very isolated, 5 = Very connected
+                    - generic [ref=e236]:
+                      - generic [ref=e237] [cursor=pointer]:
+                        - radio "1" [ref=e238]
+                        - generic [ref=e239]: "1"
+                      - generic [ref=e240] [cursor=pointer]:
+                        - radio "2" [ref=e241]
+                        - generic [ref=e242]: "2"
+                      - generic [ref=e243] [cursor=pointer]:
+                        - radio "3" [ref=e244]
+                        - generic [ref=e245]: "3"
+                      - generic [ref=e246] [cursor=pointer]:
+                        - radio "4" [ref=e247]
+                        - generic [ref=e248]: "4"
+                      - generic [ref=e249] [cursor=pointer]:
+                        - radio "5" [ref=e250]
+                        - generic [ref=e251]: "5"
+                  - group "How would you rate your overall mood this week?" [ref=e252]:
+                    - generic [ref=e253]: How would you rate your overall mood this week?
+                    - paragraph [ref=e254]: 1 = Very low, 5 = Very positive
+                    - generic [ref=e255]:
+                      - generic [ref=e256] [cursor=pointer]:
+                        - radio "1" [ref=e257]
+                        - generic [ref=e258]: "1"
+                      - generic [ref=e259] [cursor=pointer]:
+                        - radio "2" [ref=e260]
+                        - generic [ref=e261]: "2"
+                      - generic [ref=e262] [cursor=pointer]:
+                        - radio "3" [ref=e263]
+                        - generic [ref=e264]: "3"
+                      - generic [ref=e265] [cursor=pointer]:
+                        - radio "4" [ref=e266]
+                        - generic [ref=e267]: "4"
+                      - generic [ref=e268] [cursor=pointer]:
+                        - radio "5" [ref=e269]
+                        - generic [ref=e270]: "5"
+                  - button "Submit weekly check-in" [ref=e271] [cursor=pointer]
+                - generic [ref=e272]:
+                  - heading "Recent private check-ins" [level=3] [ref=e273]
+                  - paragraph [ref=e274]: Scores are visible only to you and help track your recent trend.
+                  - paragraph [ref=e275]: No wellbeing check-ins recorded yet.
+  - region "Notifications Alt+T"

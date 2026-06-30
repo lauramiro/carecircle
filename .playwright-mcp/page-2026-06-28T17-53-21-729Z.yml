@@ -1,0 +1,552 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - link "CareCircle" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e9]
+        - generic [ref=e12]: CareCircle
+      - navigation "Dashboard navigation" [ref=e13]:
+        - generic [ref=e14]:
+          - link "Dashboard" [ref=e15] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e17]
+            - generic [ref=e22]: Dashboard
+          - generic [ref=e23]:
+            - generic [ref=e24]:
+              - link "Groups" [ref=e26] [cursor=pointer]:
+                - /url: /groups/list
+                - img [ref=e27]
+                - text: Groups
+              - button "Toggle groups menu" [expanded] [ref=e32] [cursor=pointer]:
+                - img [ref=e33]
+            - generic [ref=e36]:
+              - link "All groups" [ref=e37] [cursor=pointer]:
+                - /url: /groups/list
+                - img [ref=e38]
+                - text: All groups
+              - link "Create group" [ref=e40] [cursor=pointer]:
+                - /url: /groups/create
+                - img [ref=e41]
+                - text: Create group
+          - link "Settings" [ref=e42] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e44]
+            - generic [ref=e47]: Settings
+        - generic [ref=e48]:
+          - paragraph [ref=e49]: Current care circle
+          - generic [ref=e50]:
+            - paragraph [ref=e51]: QA Test Circle
+            - paragraph [ref=e134]: "Your role: primary_carer"
+            - link "View profile →" [ref=e135] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/profile
+          - generic [ref=e52]:
+            - link "Overview" [ref=e53] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b
+              - img [ref=e54]
+              - text: Overview
+            - link "Emergency" [ref=e59] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/emergency-contacts
+              - img [ref=e60]
+              - text: Emergency
+            - link "Members" [ref=e64] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/members
+              - img [ref=e65]
+              - text: Members
+            - link "Today's medications" [ref=e70] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/checklist
+              - img [ref=e71]
+              - text: Today's medications
+            - link "Schedule" [ref=e74] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/medications
+              - img [ref=e75]
+              - text: Schedule
+            - link "Journal" [ref=e78] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/journal
+              - img [ref=e79]
+              - text: Journal
+            - link "Insights" [ref=e81] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/insights
+              - img [ref=e82]
+              - text: Insights
+            - link "Shifts" [ref=e85] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/shifts
+              - img [ref=e86]
+              - text: Shifts
+            - link "Appointments" [ref=e88] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/appointments
+              - img [ref=e89]
+              - text: Appointments
+            - link "Administration log" [ref=e92] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/administration-log
+              - img [ref=e93]
+              - text: Administration log
+            - link "AI assistant" [ref=e96] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/ai-assistant
+              - img [ref=e97]
+              - text: AI assistant
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - generic [ref=e103]: TA
+          - generic [ref=e104]:
+            - paragraph [ref=e105]: QA Test Circle
+            - paragraph [ref=e106]: tahirahmadshah@outlook.com
+        - button "Sign out" [ref=e107] [cursor=pointer]:
+          - img [ref=e108]
+          - text: Sign out
+    - generic [ref=e111]:
+      - banner [ref=e112]:
+        - generic "Page history controls" [ref=e113]:
+          - button "Go back" [disabled] [ref=e114]:
+            - img [ref=e115]
+          - button "Go forward" [disabled] [ref=e117]:
+            - img [ref=e118]
+        - button "Notifications enabled" [ref=e136] [cursor=pointer]:
+          - img [ref=e121]
+        - img [ref=e125]
+      - main [ref=e129]:
+        - generic [ref=e131]:
+          - generic [ref=e137]:
+            - generic [ref=e138]:
+              - heading "QA Test Circle Shift Coverage" [level=1] [ref=e139]
+              - paragraph [ref=e140]: Assign daily, weekly, or custom session coverage for your care circle.
+            - generic [ref=e141]:
+              - img [ref=e142]
+              - text: 27 of 28 sessions need coverage
+          - generic [ref=e133]:
+            - generic [ref=e144]:
+              - button "Week view" [ref=e145] [cursor=pointer]
+              - button "Day view" [ref=e146] [cursor=pointer]
+              - button "Custom shift" [ref=e147] [cursor=pointer]
+            - generic [ref=e148]:
+              - button "Previous week" [ref=e149] [cursor=pointer]:
+                - img [ref=e150]
+              - generic [ref=e152]: Mon 22 Jun – Sun 28 Jun
+              - button "Next week" [ref=e153] [cursor=pointer]:
+                - img [ref=e154]
+          - table [ref=e157]:
+            - rowgroup [ref=e158]:
+              - row "Session Mon 22 Jun Tue 23 Jun Wed 24 Jun Thu 25 Jun Fri 26 Jun Sat 27 Jun Sun 28 Jun" [ref=e159]:
+                - columnheader "Session" [ref=e160]
+                - columnheader "Mon 22 Jun" [ref=e161]
+                - columnheader "Tue 23 Jun" [ref=e162]
+                - columnheader "Wed 24 Jun" [ref=e163]
+                - columnheader "Thu 25 Jun" [ref=e164]
+                - columnheader "Fri 26 Jun" [ref=e165]
+                - columnheader "Sat 27 Jun" [ref=e166]
+                - columnheader "Sun 28 Jun" [ref=e167]
+            - rowgroup [ref=e168]:
+              - row "Morning (08:00-12:00) Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed tahirahmadshah Assigned to tahirahmadshah Unassigned Coverage needed" [ref=e472]:
+                - rowheader "Morning (08:00-12:00)" [ref=e170]
+                - cell "Unassigned Coverage needed" [ref=e473]:
+                  - generic [ref=e172]:
+                    - combobox "Morning shift on Mon 22 Jun" [ref=e173]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e174]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e175]:
+                  - generic [ref=e176]:
+                    - combobox "Morning shift on Tue 23 Jun" [ref=e177]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e178]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e179]:
+                  - generic [ref=e180]:
+                    - combobox "Morning shift on Wed 24 Jun" [ref=e181]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e182]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e183]:
+                  - generic [ref=e184]:
+                    - combobox "Morning shift on Thu 25 Jun" [ref=e185]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e186]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e187]:
+                  - generic [ref=e188]:
+                    - combobox "Morning shift on Fri 26 Jun" [ref=e189]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e190]: Coverage needed
+                - cell "tahirahmadshah Assigned to tahirahmadshah" [ref=e191]:
+                  - generic [ref=e192]:
+                    - combobox "Morning shift on Sat 27 Jun" [ref=e193]:
+                      - option "Unassigned"
+                      - option "tahirahmadshah" [selected]
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e194]: Assigned to tahirahmadshah
+                - cell "Unassigned Coverage needed" [ref=e195]:
+                  - generic [ref=e196]:
+                    - combobox "Morning shift on Sun 28 Jun" [ref=e197]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e198]: Coverage needed
+              - row "Afternoon (12:00-16:00) Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed" [ref=e199]:
+                - rowheader "Afternoon (12:00-16:00)" [ref=e200]
+                - cell "Unassigned Coverage needed" [ref=e201]:
+                  - generic [ref=e202]:
+                    - combobox "Afternoon shift on Mon 22 Jun" [ref=e203]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e204]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e205]:
+                  - generic [ref=e206]:
+                    - combobox "Afternoon shift on Tue 23 Jun" [ref=e207]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e208]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e209]:
+                  - generic [ref=e210]:
+                    - combobox "Afternoon shift on Wed 24 Jun" [ref=e211]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e212]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e213]:
+                  - generic [ref=e214]:
+                    - combobox "Afternoon shift on Thu 25 Jun" [ref=e215]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e216]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e217]:
+                  - generic [ref=e218]:
+                    - combobox "Afternoon shift on Fri 26 Jun" [ref=e219]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e220]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e221]:
+                  - generic [ref=e222]:
+                    - combobox "Afternoon shift on Sat 27 Jun" [ref=e223]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e224]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e225]:
+                  - generic [ref=e226]:
+                    - combobox "Afternoon shift on Sun 28 Jun" [ref=e227]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e228]: Coverage needed
+              - row "Evening (16:00-20:00) Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed" [ref=e229]:
+                - rowheader "Evening (16:00-20:00)" [ref=e230]
+                - cell "Unassigned Coverage needed" [ref=e231]:
+                  - generic [ref=e232]:
+                    - combobox "Evening shift on Mon 22 Jun" [ref=e233]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e234]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e235]:
+                  - generic [ref=e236]:
+                    - combobox "Evening shift on Tue 23 Jun" [ref=e237]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e238]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e239]:
+                  - generic [ref=e240]:
+                    - combobox "Evening shift on Wed 24 Jun" [ref=e241]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e242]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e243]:
+                  - generic [ref=e244]:
+                    - combobox "Evening shift on Thu 25 Jun" [ref=e245]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e246]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e247]:
+                  - generic [ref=e248]:
+                    - combobox "Evening shift on Fri 26 Jun" [ref=e249]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e250]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e251]:
+                  - generic [ref=e252]:
+                    - combobox "Evening shift on Sat 27 Jun" [ref=e253]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e254]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e255]:
+                  - generic [ref=e256]:
+                    - combobox "Evening shift on Sun 28 Jun" [ref=e257]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e258]: Coverage needed
+              - row "Overnight (20:00-08:00) Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed Unassigned Coverage needed" [ref=e259]:
+                - rowheader "Overnight (20:00-08:00)" [ref=e260]
+                - cell "Unassigned Coverage needed" [ref=e261]:
+                  - generic [ref=e262]:
+                    - combobox "Overnight shift on Mon 22 Jun" [ref=e263]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e264]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e265]:
+                  - generic [ref=e266]:
+                    - combobox "Overnight shift on Tue 23 Jun" [ref=e267]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e268]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e269]:
+                  - generic [ref=e270]:
+                    - combobox "Overnight shift on Wed 24 Jun" [ref=e271]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e272]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e273]:
+                  - generic [ref=e274]:
+                    - combobox "Overnight shift on Thu 25 Jun" [ref=e275]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e276]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e277]:
+                  - generic [ref=e278]:
+                    - combobox "Overnight shift on Fri 26 Jun" [ref=e279]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e280]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e281]:
+                  - generic [ref=e282]:
+                    - combobox "Overnight shift on Sat 27 Jun" [ref=e283]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e284]: Coverage needed
+                - cell "Unassigned Coverage needed" [ref=e285]:
+                  - generic [ref=e286]:
+                    - combobox "Overnight shift on Sun 28 Jun" [ref=e287]:
+                      - option "Unassigned" [selected]
+                      - option "tahirahmadshah"
+                      - option "tahirahmadshah+qa2"
+                      - option "tahirahmadshah+qa3"
+                    - paragraph [ref=e288]: Coverage needed
+          - generic [ref=e289]:
+            - heading "Group schedule overview" [level=2] [ref=e290]
+            - paragraph [ref=e291]: Rolling view of who is covering each session this week.
+            - table [ref=e293]:
+              - rowgroup [ref=e294]:
+                - row "Member Mon 22 mor Mon 22 aft Mon 22 eve Mon 22 ove Tue 23 mor Tue 23 aft Tue 23 eve Tue 23 ove Wed 24 mor Wed 24 aft Wed 24 eve Wed 24 ove Thu 25 mor Thu 25 aft Thu 25 eve Thu 25 ove Fri 26 mor Fri 26 aft Fri 26 eve Fri 26 ove Sat 27 mor Sat 27 aft Sat 27 eve Sat 27 ove Sun 28 mor Sun 28 aft Sun 28 eve Sun 28 ove" [ref=e295]:
+                  - columnheader "Member" [ref=e296]
+                  - columnheader "Mon 22 mor" [ref=e297]:
+                    - generic [ref=e298]: Mon 22
+                    - generic [ref=e299]: mor
+                  - columnheader "Mon 22 aft" [ref=e300]:
+                    - generic [ref=e301]: Mon 22
+                    - generic [ref=e302]: aft
+                  - columnheader "Mon 22 eve" [ref=e303]:
+                    - generic [ref=e304]: Mon 22
+                    - generic [ref=e305]: eve
+                  - columnheader "Mon 22 ove" [ref=e306]:
+                    - generic [ref=e307]: Mon 22
+                    - generic [ref=e308]: ove
+                  - columnheader "Tue 23 mor" [ref=e309]:
+                    - generic [ref=e310]: Tue 23
+                    - generic [ref=e311]: mor
+                  - columnheader "Tue 23 aft" [ref=e312]:
+                    - generic [ref=e313]: Tue 23
+                    - generic [ref=e314]: aft
+                  - columnheader "Tue 23 eve" [ref=e315]:
+                    - generic [ref=e316]: Tue 23
+                    - generic [ref=e317]: eve
+                  - columnheader "Tue 23 ove" [ref=e318]:
+                    - generic [ref=e319]: Tue 23
+                    - generic [ref=e320]: ove
+                  - columnheader "Wed 24 mor" [ref=e321]:
+                    - generic [ref=e322]: Wed 24
+                    - generic [ref=e323]: mor
+                  - columnheader "Wed 24 aft" [ref=e324]:
+                    - generic [ref=e325]: Wed 24
+                    - generic [ref=e326]: aft
+                  - columnheader "Wed 24 eve" [ref=e327]:
+                    - generic [ref=e328]: Wed 24
+                    - generic [ref=e329]: eve
+                  - columnheader "Wed 24 ove" [ref=e330]:
+                    - generic [ref=e331]: Wed 24
+                    - generic [ref=e332]: ove
+                  - columnheader "Thu 25 mor" [ref=e333]:
+                    - generic [ref=e334]: Thu 25
+                    - generic [ref=e335]: mor
+                  - columnheader "Thu 25 aft" [ref=e336]:
+                    - generic [ref=e337]: Thu 25
+                    - generic [ref=e338]: aft
+                  - columnheader "Thu 25 eve" [ref=e339]:
+                    - generic [ref=e340]: Thu 25
+                    - generic [ref=e341]: eve
+                  - columnheader "Thu 25 ove" [ref=e342]:
+                    - generic [ref=e343]: Thu 25
+                    - generic [ref=e344]: ove
+                  - columnheader "Fri 26 mor" [ref=e345]:
+                    - generic [ref=e346]: Fri 26
+                    - generic [ref=e347]: mor
+                  - columnheader "Fri 26 aft" [ref=e348]:
+                    - generic [ref=e349]: Fri 26
+                    - generic [ref=e350]: aft
+                  - columnheader "Fri 26 eve" [ref=e351]:
+                    - generic [ref=e352]: Fri 26
+                    - generic [ref=e353]: eve
+                  - columnheader "Fri 26 ove" [ref=e354]:
+                    - generic [ref=e355]: Fri 26
+                    - generic [ref=e356]: ove
+                  - columnheader "Sat 27 mor" [ref=e357]:
+                    - generic [ref=e358]: Sat 27
+                    - generic [ref=e359]: mor
+                  - columnheader "Sat 27 aft" [ref=e360]:
+                    - generic [ref=e361]: Sat 27
+                    - generic [ref=e362]: aft
+                  - columnheader "Sat 27 eve" [ref=e363]:
+                    - generic [ref=e364]: Sat 27
+                    - generic [ref=e365]: eve
+                  - columnheader "Sat 27 ove" [ref=e366]:
+                    - generic [ref=e367]: Sat 27
+                    - generic [ref=e368]: ove
+                  - columnheader "Sun 28 mor" [ref=e369]:
+                    - generic [ref=e370]: Sun 28
+                    - generic [ref=e371]: mor
+                  - columnheader "Sun 28 aft" [ref=e372]:
+                    - generic [ref=e373]: Sun 28
+                    - generic [ref=e374]: aft
+                  - columnheader "Sun 28 eve" [ref=e375]:
+                    - generic [ref=e376]: Sun 28
+                    - generic [ref=e377]: eve
+                  - columnheader "Sun 28 ove" [ref=e378]:
+                    - generic [ref=e379]: Sun 28
+                    - generic [ref=e380]: ove
+              - rowgroup [ref=e381]:
+                - row "tahirahmadshah · · · · · · · · · · · · · · · · · · · · ● · · · · · · ·" [ref=e382]:
+                  - rowheader "tahirahmadshah" [ref=e383]
+                  - cell "·" [ref=e384]
+                  - cell "·" [ref=e385]
+                  - cell "·" [ref=e386]
+                  - cell "·" [ref=e387]
+                  - cell "·" [ref=e388]
+                  - cell "·" [ref=e389]
+                  - cell "·" [ref=e390]
+                  - cell "·" [ref=e391]
+                  - cell "·" [ref=e392]
+                  - cell "·" [ref=e393]
+                  - cell "·" [ref=e394]
+                  - cell "·" [ref=e395]
+                  - cell "·" [ref=e396]
+                  - cell "·" [ref=e397]
+                  - cell "·" [ref=e398]
+                  - cell "·" [ref=e399]
+                  - cell "·" [ref=e400]
+                  - cell "·" [ref=e401]
+                  - cell "·" [ref=e402]
+                  - cell "·" [ref=e403]
+                  - cell "●" [ref=e404]
+                  - cell "·" [ref=e405]
+                  - cell "·" [ref=e406]
+                  - cell "·" [ref=e407]
+                  - cell "·" [ref=e408]
+                  - cell "·" [ref=e409]
+                  - cell "·" [ref=e410]
+                  - cell "·" [ref=e411]
+                - row "tahirahmadshah+qa2 · · · · · · · · · · · · · · · · · · · · · · · · · · · ·" [ref=e474]:
+                  - rowheader "tahirahmadshah+qa2" [ref=e413]
+                  - cell "·" [ref=e475]
+                  - cell "·" [ref=e415]
+                  - cell "·" [ref=e416]
+                  - cell "·" [ref=e417]
+                  - cell "·" [ref=e418]
+                  - cell "·" [ref=e419]
+                  - cell "·" [ref=e420]
+                  - cell "·" [ref=e421]
+                  - cell "·" [ref=e422]
+                  - cell "·" [ref=e423]
+                  - cell "·" [ref=e424]
+                  - cell "·" [ref=e425]
+                  - cell "·" [ref=e426]
+                  - cell "·" [ref=e427]
+                  - cell "·" [ref=e428]
+                  - cell "·" [ref=e429]
+                  - cell "·" [ref=e430]
+                  - cell "·" [ref=e431]
+                  - cell "·" [ref=e432]
+                  - cell "·" [ref=e433]
+                  - cell "·" [ref=e434]
+                  - cell "·" [ref=e435]
+                  - cell "·" [ref=e436]
+                  - cell "·" [ref=e437]
+                  - cell "·" [ref=e438]
+                  - cell "·" [ref=e439]
+                  - cell "·" [ref=e440]
+                  - cell "·" [ref=e441]
+                - row "tahirahmadshah+qa3 · · · · · · · · · · · · · · · · · · · · · · · · · · · ·" [ref=e442]:
+                  - rowheader "tahirahmadshah+qa3" [ref=e443]
+                  - cell "·" [ref=e444]
+                  - cell "·" [ref=e445]
+                  - cell "·" [ref=e446]
+                  - cell "·" [ref=e447]
+                  - cell "·" [ref=e448]
+                  - cell "·" [ref=e449]
+                  - cell "·" [ref=e450]
+                  - cell "·" [ref=e451]
+                  - cell "·" [ref=e452]
+                  - cell "·" [ref=e453]
+                  - cell "·" [ref=e454]
+                  - cell "·" [ref=e455]
+                  - cell "·" [ref=e456]
+                  - cell "·" [ref=e457]
+                  - cell "·" [ref=e458]
+                  - cell "·" [ref=e459]
+                  - cell "·" [ref=e460]
+                  - cell "·" [ref=e461]
+                  - cell "·" [ref=e462]
+                  - cell "·" [ref=e463]
+                  - cell "·" [ref=e464]
+                  - cell "·" [ref=e465]
+                  - cell "·" [ref=e466]
+                  - cell "·" [ref=e467]
+                  - cell "·" [ref=e468]
+                  - cell "·" [ref=e469]
+                  - cell "·" [ref=e470]
+                  - cell "·" [ref=e471]
+  - region "Notifications Alt+T"

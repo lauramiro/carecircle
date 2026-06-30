@@ -176,7 +176,7 @@ describe('LoginPage', () => {
 
     expect(supabaseMock.auth.signInWithOtp).toHaveBeenCalledWith({
       email: 'magic@example.com',
-      options: { emailRedirectTo: undefined },
+      options: { emailRedirectTo: window.location.origin },
     });
     expect(await screen.findByText('Check your email')).toBeInTheDocument();
     expect(screen.getByText('magic@example.com')).toBeInTheDocument();

@@ -1,0 +1,5 @@
+[  142914ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/invites/group/send-email:0
+[  142915ms] [ERROR] sendGroupInviteEmail: {statusCode: 400, message: mail_transport_failed, path: /api/invites/group/send-email, traceId: null, timestamp: 2026-06-28T10:16:42.506Z} @ https://carecircle-frontend.onrender.com/assets/index-Cx6rQSzD.js:74
+[  429104ms] [WARNING] FCM token generation failed, falling back to Web Push TypeError: Failed to fetch
+    at YT (https://carecircle-frontend.onrender.com/assets/index-Cx6rQSzD.js:42:95679)
+    at async https://carecircle-frontend.onrender.com/assets/index-Cx6rQSzD.js:42:96743 @ https://carecircle-frontend.onrender.com/assets/index-Cx6rQSzD.js:41

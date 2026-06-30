@@ -49,7 +49,6 @@ export class PushDispatchService implements OnModuleInit {
     this.vapidConfigured = true;
   }
 
-
   private configureFirebase(): void {
     const { FIREBASE_SERVICE_ACCOUNT_PATH } = process.env;
     if (FIREBASE_SERVICE_ACCOUNT_PATH) {
@@ -64,13 +63,18 @@ export class PushDispatchService implements OnModuleInit {
     }
   }
 
-  async dispatch(alert: MissedMedicationAlertRecord): Promise<PushDispatchResult> {
+  async dispatch(
+    alert: MissedMedicationAlertRecord,
+  ): Promise<PushDispatchResult> {
     const log: PushDispatchResult['log'] = [];
     const subscriptions = await this.pushSubRepo.findByUserIds(
       alert.push_recipient_user_ids,
     );
 
-    if (!this.vapidConfigured && !this.firebaseConfigured || subscriptions.length === 0) {
+    if (
+      (!this.vapidConfigured && !this.firebaseConfigured) ||
+      subscriptions.length === 0
+    ) {
       for (const userId of alert.push_recipient_user_ids) {
         log.push({
           userId,
@@ -93,7 +97,10 @@ export class PushDispatchService implements OnModuleInit {
         });
         continue;
       }
-      if (sub.platform === 'web_push' && (!this.vapidConfigured || !sub.p256dh || !sub.auth)) {
+      if (
+        sub.platform === 'web_push' &&
+        (!this.vapidConfigured || !sub.p256dh || !sub.auth)
+      ) {
         log.push({
           userId: sub.user_id,
           subscriptionId: sub.id,
@@ -111,7 +118,10 @@ export class PushDispatchService implements OnModuleInit {
             notification: { title: 'Missed medication', body: alert.push_body },
             // checklistItemId allows the service worker to tag the notification
             // so it can be targeted for silent dismissal later.
-            data: { url: alert.deep_link_url, checklistItemId: alert.checklist_item_id },
+            data: {
+              url: alert.deep_link_url,
+              checklistItemId: alert.checklist_item_id,
+            },
           });
           statusCode = 200;
         } else {
@@ -207,7 +217,10 @@ export class PushDispatchService implements OnModuleInit {
         });
         continue;
       }
-      if (sub.platform === 'web_push' && (!this.vapidConfigured || !sub.p256dh || !sub.auth)) {
+      if (
+        sub.platform === 'web_push' &&
+        (!this.vapidConfigured || !sub.p256dh || !sub.auth)
+      ) {
         log.push({
           userId: sub.user_id,
           subscriptionId: sub.id,
@@ -291,7 +304,9 @@ export class PushDispatchService implements OnModuleInit {
 
     const subscriptions = await this.pushSubRepo.findByUserIds(userIds);
     if (subscriptions.length === 0) {
-      this.logger.warn(`sendDismissToUsers_no_subscriptions userIds=${userIds.join(',')}`);
+      this.logger.warn(
+        `sendDismissToUsers_no_subscriptions userIds=${userIds.join(',')}`,
+      );
       return;
     }
 
@@ -310,17 +325,29 @@ export class PushDispatchService implements OnModuleInit {
               android: { priority: 'high' },
               apns: { payload: { aps: { contentAvailable: true } } },
             });
-          } else if (sub.platform === 'web_push' && this.vapidConfigured && sub.p256dh && sub.auth) {
+          } else if (
+            sub.platform === 'web_push' &&
+            this.vapidConfigured &&
+            sub.p256dh &&
+            sub.auth
+          ) {
             await webpush.sendNotification(
-              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-              JSON.stringify({ type: 'dismiss_alert', checklistItemId, groupId }),
+              {
+                endpoint: sub.endpoint,
+                keys: { p256dh: sub.p256dh, auth: sub.auth },
+              },
+              JSON.stringify({
+                type: 'dismiss_alert',
+                checklistItemId,
+                groupId,
+              }),
               { TTL: 300 }, // 5-minute TTL — enough for brief network drops
             );
           }
         } catch (err: unknown) {
           const statusCode =
             typeof err === 'object' && err !== null && 'statusCode' in err
-              ? Number((err as { statusCode: unknown }).statusCode)
+              ? Number(err.statusCode)
               : undefined;
           this.logger.warn(
             `dismiss_push_failed sub=${sub.id} status=${statusCode ?? 'unknown'} err=${err instanceof Error ? err.message : 'Unknown'}`,

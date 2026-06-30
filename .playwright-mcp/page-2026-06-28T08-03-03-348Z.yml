@@ -1,0 +1,111 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - link "CareCircle" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e9]
+        - generic [ref=e12]: CareCircle
+      - navigation "Dashboard navigation" [ref=e13]:
+        - generic [ref=e14]:
+          - link "Dashboard" [ref=e15] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e17]
+            - generic [ref=e22]: Dashboard
+          - generic [ref=e23]:
+            - generic [ref=e24]:
+              - link "Groups" [ref=e26] [cursor=pointer]:
+                - /url: /groups/list
+                - img [ref=e27]
+                - text: Groups
+              - button "Toggle groups menu" [expanded] [ref=e32] [cursor=pointer]:
+                - img [ref=e33]
+            - generic [ref=e36]:
+              - link "All groups" [ref=e37] [cursor=pointer]:
+                - /url: /groups/list
+                - img [ref=e38]
+                - text: All groups
+              - link "Create group" [ref=e40] [cursor=pointer]:
+                - /url: /groups/create
+                - img [ref=e41]
+                - text: Create group
+          - link "Settings" [ref=e42] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e44]
+            - generic [ref=e47]: Settings
+        - generic [ref=e48]:
+          - paragraph [ref=e49]: Current care circle
+          - paragraph [ref=e51]: Loading care circle...
+          - generic [ref=e52]:
+            - link "Overview" [ref=e53] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b
+              - img [ref=e54]
+              - text: Overview
+            - link "Emergency" [ref=e59] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/emergency-contacts
+              - img [ref=e60]
+              - text: Emergency
+            - link "Members" [ref=e64] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/members
+              - img [ref=e65]
+              - text: Members
+            - link "Today's medications" [ref=e70] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/checklist
+              - img [ref=e71]
+              - text: Today's medications
+            - link "Schedule" [ref=e74] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/medications
+              - img [ref=e75]
+              - text: Schedule
+            - link "Journal" [ref=e78] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/journal
+              - img [ref=e79]
+              - text: Journal
+            - link "Insights" [ref=e81] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/insights
+              - img [ref=e82]
+              - text: Insights
+            - link "Shifts" [ref=e85] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/shifts
+              - img [ref=e86]
+              - text: Shifts
+            - link "Appointments" [ref=e88] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/appointments
+              - img [ref=e89]
+              - text: Appointments
+            - link "Administration log" [ref=e92] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/administration-log
+              - img [ref=e93]
+              - text: Administration log
+            - link "AI assistant" [ref=e96] [cursor=pointer]:
+              - /url: /groups/60872536-533b-464b-b0bf-a7f93e76578b/ai-assistant
+              - img [ref=e97]
+              - text: AI assistant
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - generic [ref=e103]: TA
+          - generic [ref=e104]:
+            - paragraph [ref=e105]: Caregiver
+            - paragraph [ref=e106]: tahirahmadshah@outlook.com
+        - button "Sign out" [ref=e107] [cursor=pointer]:
+          - img [ref=e108]
+          - text: Sign out
+    - generic [ref=e111]:
+      - banner [ref=e112]:
+        - generic "Page history controls" [ref=e113]:
+          - button "Go back" [disabled] [ref=e114]:
+            - img [ref=e115]
+          - button "Go forward" [ref=e117] [cursor=pointer]:
+            - img [ref=e118]
+        - button "Enable notifications" [ref=e120] [cursor=pointer]:
+          - img [ref=e121]
+        - img [ref=e125]
+      - main [ref=e129]:
+        - generic [ref=e130]:
+          - generic [ref=e131]:
+            - paragraph [ref=e132]: Enable notifications
+            - paragraph [ref=e133]: Allow browser notifications for overdue medication alerts and appointment reminders (24h and 1h before). The backend must be running locally.
+          - button "Enable notifications" [ref=e134] [cursor=pointer]
+        - generic [ref=e136]:
+          - heading "Shift Assignments" [level=1] [ref=e137]
+          - generic [ref=e138]: Loading group details...
+  - region "Notifications Alt+T"

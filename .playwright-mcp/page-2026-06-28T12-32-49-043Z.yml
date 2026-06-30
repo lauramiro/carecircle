@@ -1,0 +1,52 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - link "CareCircle" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e9]
+        - generic [ref=e12]: CareCircle
+      - navigation "Dashboard navigation" [ref=e13]:
+        - generic [ref=e14]:
+          - link "Dashboard" [ref=e15] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e18]
+            - generic [ref=e23]: Dashboard
+          - generic [ref=e25]:
+            - link "Groups" [ref=e26] [cursor=pointer]:
+              - /url: /groups/list
+              - img [ref=e27]
+              - text: Groups
+            - button "Toggle groups menu" [ref=e32] [cursor=pointer]:
+              - img [ref=e33]
+          - link "Settings" [ref=e35] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e37]
+            - generic [ref=e40]: Settings
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e44]: TA
+          - generic [ref=e45]:
+            - paragraph [ref=e46]: Caregiver
+            - paragraph [ref=e47]: tahirahmadshah@outlook.com
+        - button "Sign out" [ref=e48] [cursor=pointer]:
+          - img [ref=e49]
+          - text: Sign out
+    - generic [ref=e52]:
+      - banner [ref=e53]:
+        - generic "Page history controls" [ref=e54]:
+          - button "Go back" [disabled] [ref=e55]:
+            - img [ref=e56]
+          - button "Go forward" [ref=e58] [cursor=pointer]:
+            - img [ref=e59]
+        - button "Enable notifications" [disabled] [ref=e61]:
+          - img [ref=e62]
+        - img [ref=e66]
+      - main [ref=e70]:
+        - generic [ref=e72]:
+          - generic [ref=e73]:
+            - generic [ref=e74]:
+              - heading "Good evening, Tahirahmadshah" [level=1] [ref=e75]
+              - paragraph [ref=e76]: Here's an overview of your care circles today.
+            - generic [ref=e78]: 28 Jun 2026
+          - generic [ref=e79]: Loading your care circles...
+  - region "Notifications Alt+T"

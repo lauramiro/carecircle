@@ -1,0 +1,7 @@
+- generic [ref=e2]:
+  - generic [ref=e30]:
+    - img [ref=e32]
+    - heading "Invitation unavailable" [level=1] [ref=e34]
+    - paragraph [ref=e35]: We could not accept this invitation. Please try again.
+    - button "Go home" [ref=e36] [cursor=pointer]
+  - region "Notifications Alt+T"

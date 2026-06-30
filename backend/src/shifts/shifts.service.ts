@@ -6,7 +6,7 @@ import { AssignShiftDto } from './shifts.controller';
 export class ShiftsService {
   private readonly logger = new Logger(ShiftsService.name);
 
-  constructor(private readonly supabase: SupabaseAdminClient) { }
+  constructor(private readonly supabase: SupabaseAdminClient) {}
 
   async assignShift(dto: AssignShiftDto) {
     const db = this.supabase.getClient();
@@ -60,9 +60,10 @@ export class ShiftsService {
           assigned_caregiver_id: dto.assignedCaregiverId,
           last_changed_by: dto.changedBy,
         },
-        { onConflict: 'group_id,shift_date,shift_slot' }
+        { onConflict: 'group_id,shift_date,shift_slot' },
       )
-      .select(`
+      .select(
+        `
         id,
         group_id,
         shift_date,
@@ -72,14 +73,18 @@ export class ShiftsService {
         assignee:profiles!weekly_shift_assignments_assigned_caregiver_id_fkey (
           full_name
         )
-      `)
+      `,
+      )
       .single();
 
     if (error || !data) {
       this.logger.error(
         `assignShift upsert failed for group=${dto.groupId} date=${dto.shiftDate} slot=${dto.slot}: ${JSON.stringify(error)}`,
       );
-      throw new HttpException('Failed to save shift assignment', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'Failed to save shift assignment',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     return data;

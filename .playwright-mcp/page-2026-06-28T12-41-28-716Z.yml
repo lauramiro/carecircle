@@ -1,0 +1,162 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - link "CareCircle" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e9]
+        - generic [ref=e12]: CareCircle
+      - navigation "Dashboard navigation" [ref=e13]:
+        - generic [ref=e14]:
+          - link "Dashboard" [ref=e15] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e18]
+            - generic [ref=e23]: Dashboard
+          - generic [ref=e25]:
+            - link "Groups" [ref=e26] [cursor=pointer]:
+              - /url: /groups/list
+              - img [ref=e27]
+              - text: Groups
+            - button "Toggle groups menu" [ref=e32] [cursor=pointer]:
+              - img [ref=e33]
+          - link "Settings" [ref=e35] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e37]
+            - generic [ref=e40]: Settings
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e44]: TA
+          - generic [ref=e45]:
+            - paragraph [ref=e46]: Caregiver
+            - paragraph [ref=e47]: tahirahmadshah@outlook.com
+        - button "Sign out" [ref=e48] [cursor=pointer]:
+          - img [ref=e49]
+          - text: Sign out
+    - generic [ref=e52]:
+      - banner [ref=e53]:
+        - generic "Page history controls" [ref=e54]:
+          - button "Go back" [ref=e55] [cursor=pointer]:
+            - img [ref=e56]
+          - button "Go forward" [disabled] [ref=e58]:
+            - img [ref=e59]
+        - button "Notifications enabled" [ref=e61] [cursor=pointer]:
+          - img [ref=e62]
+        - img [ref=e65]
+      - main [ref=e69]:
+        - generic [ref=e71]:
+          - generic [ref=e72]:
+            - generic [ref=e73]:
+              - heading "Good evening, Tahirahmadshah" [level=1] [ref=e74]
+              - paragraph [ref=e75]: Here's an overview of your care circles today.
+            - generic [ref=e76]:
+              - generic [ref=e77]: 28 Jun 2026
+              - link "All groups" [ref=e78] [cursor=pointer]:
+                - /url: /groups/list
+              - link "Create group" [ref=e79] [cursor=pointer]:
+                - /url: /groups/create
+                - img [ref=e80]
+                - text: Create group
+          - generic [ref=e81]:
+            - article [ref=e82]:
+              - generic [ref=e83]:
+                - img [ref=e85]
+                - generic [ref=e88]:
+                  - heading "Today's Medications" [level=2] [ref=e89]
+                  - paragraph [ref=e90]: Tahir
+              - paragraph [ref=e91]: Loading medication data…
+            - article [ref=e92]:
+              - generic [ref=e93]:
+                - img [ref=e95]
+                - generic [ref=e98]:
+                  - heading "On Duty" [level=2] [ref=e99]
+                  - paragraph [ref=e100]: Tahir
+              - paragraph [ref=e101]: Loading shift data…
+          - generic [ref=e102]:
+            - article [ref=e103]:
+              - generic [ref=e104]:
+                - img [ref=e106]
+                - generic [ref=e109]:
+                  - heading "Next Appointment" [level=2] [ref=e110]
+                  - paragraph [ref=e111]: Tahir
+              - paragraph [ref=e112]: Loading appointment…
+            - article [ref=e113]:
+              - generic [ref=e114]:
+                - img [ref=e116]
+                - generic [ref=e118]:
+                  - heading "Latest Journal Entry" [level=2] [ref=e119]
+                  - paragraph [ref=e120]: Tahir
+              - paragraph [ref=e121]: Loading journal entry…
+            - article [ref=e122]:
+              - generic [ref=e123]:
+                - img [ref=e125]
+                - generic [ref=e128]:
+                  - heading "AI Insight" [level=2] [ref=e129]
+                  - paragraph [ref=e130]: Tahir
+                - link "View all AI insights" [ref=e131] [cursor=pointer]:
+                  - /url: /groups/721b8933-e3b7-4115-a9cf-e50e52127269/ai-assistant
+                  - text: View all
+                  - img [ref=e132]
+              - paragraph [ref=e134]: Loading insight…
+          - article [ref=e135]:
+            - generic [ref=e136]:
+              - generic [ref=e137]:
+                - img [ref=e139]
+                - generic [ref=e143]:
+                  - heading "My Shifts Today" [level=2] [ref=e144]
+                  - paragraph [ref=e145]: Across 2 care circles
+              - link "View all" [ref=e146] [cursor=pointer]:
+                - /url: /dashboard/my-shifts
+            - paragraph [ref=e147]: Loading your shifts…
+          - generic [ref=e148]:
+            - article [ref=e149]:
+              - generic [ref=e150]:
+                - img [ref=e152]
+                - generic [ref=e157]:
+                  - generic [ref=e158]: "2"
+                  - paragraph [ref=e159]: Active groups
+            - article [ref=e160]:
+              - generic [ref=e161]:
+                - img [ref=e163]
+                - generic [ref=e165]:
+                  - generic [ref=e166]: "2"
+                  - paragraph [ref=e167]: Groups you manage
+            - article [ref=e168]:
+              - generic [ref=e169]:
+                - img [ref=e171]
+                - generic [ref=e173]:
+                  - generic [ref=e174]: "2"
+                  - paragraph [ref=e175]: Total members
+          - generic [ref=e176]:
+            - generic [ref=e177]:
+              - heading "Recent care circles" [level=2] [ref=e178]
+              - link "View all" [ref=e179] [cursor=pointer]:
+                - /url: /groups/list
+                - text: View all
+                - img [ref=e180]
+            - generic [ref=e182]:
+              - button "Tahir No description yet. Primary carer 18 May 2026 1 member" [ref=e183] [cursor=pointer]:
+                - generic [ref=e184]:
+                  - generic [ref=e185]:
+                    - heading "Tahir" [level=3] [ref=e186]
+                    - paragraph [ref=e187]: No description yet.
+                  - generic [ref=e188]: Primary carer
+                - generic [ref=e189]:
+                  - generic [ref=e190]: 18 May 2026
+                  - generic [ref=e191]: 1 member
+              - button "QA Test Circle No description yet. Primary carer 27 Jun 2026 1 member" [ref=e192] [cursor=pointer]:
+                - generic [ref=e193]:
+                  - generic [ref=e194]:
+                    - heading "QA Test Circle" [level=3] [ref=e195]
+                    - paragraph [ref=e196]: No description yet.
+                  - generic [ref=e197]: Primary carer
+                - generic [ref=e198]:
+                  - generic [ref=e199]: 27 Jun 2026
+                  - generic [ref=e200]: 1 member
+          - generic [ref=e201]:
+            - generic [ref=e203]:
+              - img [ref=e205]
+              - generic [ref=e207]:
+                - paragraph [ref=e208]: Weekly roster
+                - heading "Shift coverage gaps" [level=2] [ref=e209]
+                - paragraph [ref=e210]: Sessions you still need to assign as primary carer this week.
+            - paragraph [ref=e211]: Checking weekly coverage…
+  - region "Notifications Alt+T"

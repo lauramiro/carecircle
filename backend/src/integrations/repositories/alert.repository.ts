@@ -155,9 +155,6 @@ export class AlertRepository {
       .maybeSingle();
 
     if (error) throw new Error(error.message);
-    return (data ?? null) as Pick<
-      MissedMedicationAlertRecord,
-      'id' | 'group_id' | 'push_recipient_user_ids' | 'checklist_item_id'
-    > | null;
+    return data ?? null;
   }
 }

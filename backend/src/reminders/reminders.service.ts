@@ -117,11 +117,16 @@ export class RemindersService {
     const memberships = await this.fetchPrimaryCarerMemberships();
     if (!memberships.length) return;
 
-    const groupIds = [...new Set(memberships.map((membership) => membership.group_id))];
+    const groupIds = [
+      ...new Set(memberships.map((membership) => membership.group_id)),
+    ];
     const groupTimezones = await this.fetchCareGroupTimezones(groupIds);
 
     const timezoneByGroupId = new Map(
-      groupTimezones.map((group) => [group.id, group.preferred_timezone ?? 'UTC']),
+      groupTimezones.map((group) => [
+        group.id,
+        group.preferred_timezone ?? 'UTC',
+      ]),
     );
 
     // Hardcode predefined shift boundaries
@@ -145,13 +150,21 @@ export class RemindersService {
         }
 
         const shiftDate = this.getLocalDateForTimezone(now, timezone);
-        
-        await this.dispatchShiftReminderForGroup(group.id, shiftDate, bound.slot);
+
+        await this.dispatchShiftReminderForGroup(
+          group.id,
+          shiftDate,
+          bound.slot,
+        );
       }
     }
   }
 
-  private async dispatchShiftReminderForGroup(groupId: string, shiftDate: string, shiftSlot: string): Promise<void> {
+  private async dispatchShiftReminderForGroup(
+    groupId: string,
+    shiftDate: string,
+    shiftSlot: string,
+  ): Promise<void> {
     const { data: assignment, error } = await this.supabase
       .getClient()
       .from('weekly_shift_assignments')
@@ -165,7 +178,7 @@ export class RemindersService {
       return;
     }
 
-    const assignedCaregiverId = assignment.assigned_caregiver_id;
+    const assignedCaregiverId = assignment.assigned_caregiver_id as string;
     const reminderKey = `${groupId}:${shiftDate}:${shiftSlot}`;
 
     const alreadySent = await this.hasExistingNotification(
@@ -181,22 +194,29 @@ export class RemindersService {
     const title = 'Upcoming Shift';
     const body = `Your ${shiftSlot} shift for ${patientName} starts in 2 hours`;
 
-    const frontendUrl = (this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173').replace(/\/$/, '');
+    const frontendUrl = (
+      this.appConfig.config.FRONTEND_PUBLIC_URL ?? 'http://localhost:5173'
+    ).replace(/\/$/, '');
     const actionUrl = `${frontendUrl}/groups/${groupId}/schedule`;
 
-    const { error: notifError } = await this.supabase.getClient().from('notifications').insert({
-      user_id: assignedCaregiverId,
-      type: SHIFT_REMINDER_TYPE,
-      title,
-      body,
-      action_url: actionUrl,
-      related_entity_type: 'weekly_shift_assignment',
-      related_entity_id: reminderKey,
-      sent_via: ['push'],
-    });
+    const { error: notifError } = await this.supabase
+      .getClient()
+      .from('notifications')
+      .insert({
+        user_id: assignedCaregiverId,
+        type: SHIFT_REMINDER_TYPE,
+        title,
+        body,
+        action_url: actionUrl,
+        related_entity_type: 'weekly_shift_assignment',
+        related_entity_id: reminderKey,
+        sent_via: ['push'],
+      });
 
     if (notifError) {
-      this.logger.warn(`insert_shift_reminder_failed user=${assignedCaregiverId} ${notifError.message}`);
+      this.logger.warn(
+        `insert_shift_reminder_failed user=${assignedCaregiverId} ${notifError.message}`,
+      );
       return;
     }
 
@@ -206,7 +226,12 @@ export class RemindersService {
         body,
         url: actionUrl,
       })
-      .catch((err) => this.logger.warn(`shift_reminder_push_failed user=${assignedCaregiverId}`, err));
+      .catch((err) =>
+        this.logger.warn(
+          `shift_reminder_push_failed user=${assignedCaregiverId}`,
+          err,
+        ),
+      );
   }
 
   private async processWeeklyWellbeingReminders(now: Date): Promise<void> {

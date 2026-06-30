@@ -76,8 +76,12 @@ describe('SMS cancellation on acknowledgement (CC-102)', () => {
       ...alertRepo,
       findCancelledAlertByItemId: vi.fn().mockResolvedValue(null),
     };
-    const mockPushDispatch = { sendDismissToUsers: vi.fn().mockResolvedValue(undefined) };
-    const mockLowStockAlerts = { maybeSendLowStockAlert: vi.fn().mockResolvedValue(undefined) };
+    const mockPushDispatch = {
+      sendDismissToUsers: vi.fn().mockResolvedValue(undefined),
+    };
+    const mockLowStockAlerts = {
+      maybeSendLowStockAlert: vi.fn().mockResolvedValue(undefined),
+    };
 
     const subscriber = new ChecklistAckAlertSubscriber(
       supabase as never,
@@ -101,7 +105,12 @@ describe('SMS cancellation on acknowledgement (CC-102)', () => {
 
     // t+5: carer marks Given on any device — Realtime cancels open alert
     ackAtT5();
-    await vi.waitFor(() => expect(alertRepo.cancelOpenAlert).toHaveBeenCalledWith('item-1', 'marked_given'));
+    await vi.waitFor(() =>
+      expect(alertRepo.cancelOpenAlert).toHaveBeenCalledWith(
+        'item-1',
+        'marked_given',
+      ),
+    );
 
     // t+10: SMS cron — cancelled alert excluded from query
     await smsService.runTick();

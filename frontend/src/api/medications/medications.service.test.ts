@@ -16,8 +16,10 @@ describe('medications.service API mutations', () => {
   });
 
   function mockJsonResponse(data: Record<string, unknown>) {
+    const body = JSON.stringify(data);
     fetchMock.mockResolvedValue({
       ok: true,
+      text: async () => body,
       json: async () => data,
     });
   }
@@ -76,7 +78,7 @@ describe('medications.service API mutations', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/groups/group-1/medications',
+      expect.stringContaining('/api/groups/group-1/medications'),
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({
@@ -148,7 +150,7 @@ describe('medications.service API mutations', () => {
     await pauseMedication('group-1', 'med-1');
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/groups/group-1/medications/med-1/pause',
+      expect.stringContaining('/api/groups/group-1/medications/med-1/pause'),
       expect.objectContaining({ method: 'POST' }),
     );
   });
@@ -159,7 +161,7 @@ describe('medications.service API mutations', () => {
     await activateMedication('group-1', 'med-1');
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/groups/group-1/medications/med-1/activate',
+      expect.stringContaining('/api/groups/group-1/medications/med-1/activate'),
       expect.objectContaining({ method: 'POST' }),
     );
   });
@@ -170,7 +172,7 @@ describe('medications.service API mutations', () => {
     await archiveMedication('group-1', 'med-1');
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/groups/group-1/medications/med-1/archive',
+      expect.stringContaining('/api/groups/group-1/medications/med-1/archive'),
       expect.objectContaining({ method: 'POST' }),
     );
   });

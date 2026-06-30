@@ -1,0 +1,5 @@
+[  109812ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://fxkwepyjqfwjznsetkcf.supabase.co/rest/v1/missed_medications_alert?id=eq.783ea45c-c07a-4045-b72c-5559556bc0fe&select=*:0
+[  199574ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://fxkwepyjqfwjznsetkcf.supabase.co/rest/v1/missed_medications_alert?id=eq.783ea45c-c07a-4045-b72c-5559556bc0fe&select=*:0
+[  470662ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://fxkwepyjqfwjznsetkcf.supabase.co/auth/v1/token?grant_type=password:0
+[  478540ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://fxkwepyjqfwjznsetkcf.supabase.co/auth/v1/token?grant_type=password:0
+[  511072ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://fxkwepyjqfwjznsetkcf.supabase.co/auth/v1/token?grant_type=password:0

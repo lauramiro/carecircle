@@ -45,7 +45,8 @@ describe('ChecklistAckAlertSubscriber', () => {
   }
 
   it('calls cancelOpenAlert with marked_given for given status', async () => {
-    const { handler, cancelOpenAlert, maybeSendLowStockAlert } = createSubscriber();
+    const { handler, cancelOpenAlert, maybeSendLowStockAlert } =
+      createSubscriber();
 
     handler({ new: { id: 'chk-1', status: 'due' } });
     expect(cancelOpenAlert).not.toHaveBeenCalled();
@@ -70,7 +71,8 @@ describe('ChecklistAckAlertSubscriber', () => {
   });
 
   it('calls cancelOpenAlert with marked_skipped for skipped status', async () => {
-    const { handler, cancelOpenAlert, maybeSendLowStockAlert } = createSubscriber();
+    const { handler, cancelOpenAlert, maybeSendLowStockAlert } =
+      createSubscriber();
 
     handler({ new: { id: 'chk-2', status: 'skipped' } });
     await vi.waitFor(() =>
@@ -125,7 +127,12 @@ describe('ChecklistAckAlertSubscriber', () => {
   });
 
   it('fires sendDismissToUsers excluding the acting user', async () => {
-    const { handler, cancelOpenAlert, findCancelledAlertByItemId, sendDismissToUsers } = createSubscriber();
+    const {
+      handler,
+      cancelOpenAlert,
+      findCancelledAlertByItemId,
+      sendDismissToUsers,
+    } = createSubscriber();
 
     findCancelledAlertByItemId.mockResolvedValue({
       id: 'alert-1',
@@ -134,7 +141,9 @@ describe('ChecklistAckAlertSubscriber', () => {
       push_recipient_user_ids: ['user-a', 'user-b', 'user-c'],
     });
 
-    handler({ new: { id: 'chk-1', status: 'given', given_by_carer_id: 'user-a' } });
+    handler({
+      new: { id: 'chk-1', status: 'given', given_by_carer_id: 'user-a' },
+    });
     await vi.waitFor(() => expect(cancelOpenAlert).toHaveBeenCalled());
     await vi.waitFor(() =>
       expect(sendDismissToUsers).toHaveBeenCalledWith(
@@ -143,7 +152,11 @@ describe('ChecklistAckAlertSubscriber', () => {
         'group-1',
       ),
     );
-    const [calledIds] = sendDismissToUsers.mock.calls[0] as [string[], string, string];
+    const [calledIds] = sendDismissToUsers.mock.calls[0] as [
+      string[],
+      string,
+      string,
+    ];
     expect(calledIds).toEqual(['user-b', 'user-c']);
   });
 

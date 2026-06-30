@@ -1,0 +1,9 @@
+[   45686ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/groups/00000000-0000-4000-8000-000000000000/medications:0
+[   45922ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/groups/60872536-533b-464b-b0bf-a7f93e76578b/medications:0
+[   46049ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/groups/60872536-533b-464b-b0bf-a7f93e76578b/medications:0
+[   46176ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/groups/60872536-533b-464b-b0bf-a7f93e76578b/medications:0
+[   46628ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://carecircle-backend-v3j7.onrender.com/api/groups/60872536-533b-464b-b0bf-a7f93e76578b/medications/00000000-0000-4000-8000-000000000000:0
+[   60833ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://carecircle-backend-v3j7.onrender.com/api/groups/00000000-0000-4000-8000-000000000000/medications:0
+[   61096ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/groups/60872536-533b-464b-b0bf-a7f93e76578b/medications:0
+[   61211ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/groups/60872536-533b-464b-b0bf-a7f93e76578b/medications:0
+[   61338ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/groups/60872536-533b-464b-b0bf-a7f93e76578b/medications:0

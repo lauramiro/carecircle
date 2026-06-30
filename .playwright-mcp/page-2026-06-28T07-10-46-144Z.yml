@@ -1,0 +1,10 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - img [ref=e37]
+    - paragraph [ref=e39]: Check your email
+    - paragraph [ref=e36]:
+      - text: We sent a confirmation link to
+      - strong [ref=e40]: tahirahmadshah+qa2@outlook.com
+      - text: .
+      - text: It expires in 1 hour.
+  - region "Notifications Alt+T"

@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { PushDispatchService } from '../alerts/push-dispatch.service';
 import { AlertRepository } from '../integrations/repositories/alert.repository';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
@@ -68,7 +73,9 @@ export class ChecklistAckAlertSubscriber
           [
             row.given_by_carer_id as string | null,
             row.given_by_user_id as string | null,
-          ].filter((id): id is string => typeof id === 'string' && id.length > 0),
+          ].filter(
+            (id): id is string => typeof id === 'string' && id.length > 0,
+          ),
         );
 
         const recipientIds = alert.push_recipient_user_ids.filter(
@@ -76,12 +83,18 @@ export class ChecklistAckAlertSubscriber
         );
 
         if (recipientIds.length > 0) {
-          await this.pushDispatch.sendDismissToUsers(recipientIds, itemId, alert.group_id);
+          await this.pushDispatch.sendDismissToUsers(
+            recipientIds,
+            itemId,
+            alert.group_id,
+          );
           this.logger.log(
             `dismiss_push_sent itemId=${itemId} recipients=${recipientIds.length}`,
           );
         } else {
-          this.logger.log(`dismiss_push_skipped itemId=${itemId} reason=no_other_recipients`);
+          this.logger.log(
+            `dismiss_push_skipped itemId=${itemId} reason=no_other_recipients`,
+          );
         }
       }
     } catch (err) {

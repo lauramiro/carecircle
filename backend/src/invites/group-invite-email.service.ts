@@ -98,8 +98,9 @@ export class GroupInviteEmailService {
     };
     try {
       await this.mailer.sendMail(params);
-    } catch {
-      throw new BadRequestException('mail_transport_failed');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new BadRequestException(`mail_transport_failed: ${msg}`);
     }
 
     return { ok: true };

@@ -25,3 +25,15 @@ export function isAbortError(e: unknown): boolean {
     ? e.name === 'AbortError'
     : e instanceof Error && e.name === 'AbortError';
 }
+
+/**
+ * Safely parses JSON from a fetch Response, returning an empty object if the body is empty.
+ * Prevents "Unexpected end of JSON input" errors when APIs return 200/204 with no body.
+ */
+export async function parseResponseJson<T = unknown>(response: Response): Promise<T> {
+  const text = await response.text();
+  if (!text || text.trim() === '') {
+    return {} as T;
+  }
+  return JSON.parse(text) as T;
+}

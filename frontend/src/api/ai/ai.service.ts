@@ -1,3 +1,4 @@
+import { parseResponseJson } from '../../utils/helper';
 import type { ChatMessage, SendMessageResponse } from './ai.types';
 
 export async function sendChatMessage(
@@ -5,7 +6,9 @@ export async function sendChatMessage(
   message: string,
   conversationHistory?: ChatMessage[]
 ): Promise<SendMessageResponse> {
-  const response = await fetch(`/api/ai/chat/${patientId}`, {
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+  const url = apiBaseUrl ? `${apiBaseUrl}/api/ai/chat/${patientId}` : `/api/ai/chat/${patientId}`;
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -21,5 +24,5 @@ export async function sendChatMessage(
     throw new Error(`AI chat request failed: ${response.status} ${errorText}`);
   }
 
-  return response.json();
-}
+  return parseResponseJson<SendMessageResponse>(response);
+}

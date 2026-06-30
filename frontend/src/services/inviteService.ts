@@ -4,11 +4,6 @@ import { isAbortError } from '../utils/helper';
 
 export interface InviteGroupDetails {
   groupId: string;
-  patientId: string;
-  groupName: string;
-  description: string;
-  /** Rows in `carer_givers` for this group and the patient from `care_groups`. */
-  totalCarers: number;
 }
 
 /** `invites.invite_type` value for care-group membership invites. */
@@ -63,6 +58,14 @@ export async function isEmailRegistered(
   }
 }
 
+/**
+ * Resolves the invite's target group id from the `invites` row alone.
+ *
+ * Deliberately does NOT read `care_group`/`patients` for a name/description
+ * preview: RLS on those tables only grants SELECT to existing members, and
+ * the invitee is by definition not a member yet, so any such read returns
+ * null and previously caused this whole flow to fail with a generic error.
+ */
 export async function fetchInviteGroupDetails(inviteId: string): Promise<InviteGroupDetails> {
   const expiresAfter = new Date().toISOString();
 
@@ -83,59 +86,18 @@ export async function fetchInviteGroupDetails(inviteId: string): Promise<InviteG
     throw new Error('Invitation not found or no longer valid.');
   }
 
-  const { data: group, error: groupError } = await supabase
-    .from('care_group')
-    .select('name, description')
-    .eq('id', invite.group_id)
-    .maybeSingle();
-
-  if (groupError) {
-    throw new Error(groupError.message);
-  }
-
-  const { data: patient, error: patientError } = await supabase
-    .from('patients')
-    .select('id')
-    .eq('group_id', invite.group_id)
-    .maybeSingle();
-
-  if (patientError) {
-    throw new Error(patientError.message);
-  }
-
-  if (!group?.name || !patient?.id) {
-    throw new Error('Care group not found.');
-  }
-
-  const { count, error: countError } = await supabase
-    .from('care_givers')
-    .select('*', { count: 'exact', head: true })
-    .eq('group_id', invite.group_id)
-    .eq('patient_id', patient.id);
-
-  if (countError) {
-    throw new Error(countError.message);
-  }
-
-  return {
-    groupId: invite.group_id,
-    patientId: patient.id,
-    groupName: group.name,
-    description: group.description ?? '',
-    totalCarers: count ?? 0,
-  };
+  return { groupId: invite.group_id };
 }
 
 /**
- * Whether the signed-in user already has a `care_givers` row for this group and patient.
+ * Whether the signed-in user already has a `care_givers` row for this group.
  * @param careGiverId `auth.users.id` — when absent (logged out), returns false.
  */
 export async function isUserInInviteGroup(
   groupId: string,
-  patientId: string,
   careGiverId: string | undefined,
 ): Promise<boolean> {
-  if (!groupId || !patientId || !careGiverId) {
+  if (!groupId || !careGiverId) {
     return false;
   }
 
@@ -144,7 +106,6 @@ export async function isUserInInviteGroup(
       .from('care_givers')
       .select('id')
       .eq('group_id', groupId)
-      .eq('patient_id', patientId)
       .eq('caregiver_id', careGiverId)
       .maybeSingle();
 

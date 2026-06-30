@@ -1,3 +1,5 @@
+import { parseResponseJson } from '../utils/helper';
+
 export interface InsightCard {
   id: string;
   digest_id: string;
@@ -18,20 +20,22 @@ export interface WeeklyDigest {
   insight_cards?: InsightCard[];
 }
 
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+
 export async function getLatestInsights(groupId: string, userId: string): Promise<{ digest: WeeklyDigest | null; cards: InsightCard[] }> {
-  const response = await fetch(`/api/insights/${groupId}/latest?userId=${userId}`);
+  const response = await fetch(`${apiBaseUrl}/api/insights/${groupId}/latest?userId=${userId}`);
   if (!response.ok) throw new Error('Failed to fetch latest insights');
-  return response.json();
+  return parseResponseJson<{ digest: WeeklyDigest | null; cards: InsightCard[] }>(response);
 }
 
 export async function getArchivedDigests(groupId: string): Promise<WeeklyDigest[]> {
-  const response = await fetch(`/api/insights/${groupId}/archive`);
+  const response = await fetch(`${apiBaseUrl}/api/insights/${groupId}/archive`);
   if (!response.ok) throw new Error('Failed to fetch archived digests');
-  return response.json();
+  return parseResponseJson<WeeklyDigest[]>(response);
 }
 
 export async function dismissInsight(cardId: string, userId: string): Promise<void> {
-  const response = await fetch(`/api/insights/cards/${cardId}/dismiss`, {
+  const response = await fetch(`${apiBaseUrl}/api/insights/cards/${cardId}/dismiss`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId }),
@@ -40,8 +44,9 @@ export async function dismissInsight(cardId: string, userId: string): Promise<vo
 }
 
 export async function triggerInsightGeneration(groupId: string): Promise<void> {
-  const response = await fetch(`/api/insights/debug/generate/${groupId}`, {
+  const response = await fetch(`${apiBaseUrl}/api/insights/debug/generate/${groupId}`, {
     method: 'POST',
   });
   if (!response.ok) throw new Error('Failed to trigger insight generation');
 }
+

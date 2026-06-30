@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getMessaging, getToken } from 'firebase/messaging';
 import { useAuth } from '../contexts/AuthContext';
+import { parseResponseJson } from '../utils/helper';
+
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
 export type PushRegistrationStatus =
   | 'idle'
@@ -39,7 +44,7 @@ async function syncSubscriptionToBackend(
   subscription: PushSubscription,
 ): Promise<void> {
   const json = subscription.toJSON();
-  const response = await fetch('/api/push/subscriptions', {
+  const response = await fetch(`${apiBaseUrl}/api/push/subscriptions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -53,13 +58,25 @@ async function syncSubscriptionToBackend(
   });
 
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string | string[] } | null;
+    let body: { message?: string | string[] } | null = null;
+    try {
+      body = await parseResponseJson<{ message?: string | string[] }>(response);
+    } catch {
+      // ignore
+    }
     const message = Array.isArray(body?.message)
       ? body.message.join(', ')
       : body?.message ?? `Server returned ${response.status}`;
     throw new Error(message);
   }
 }
+
+const isChromeOrAndroid = () => {
+  const ua = navigator.userAgent;
+  const isAndroid = /android/i.test(ua);
+  const isChrome = /chrome|chromium|crios/i.test(ua);
+  return isAndroid || isChrome;
+};
 
 export async function registerWebPushForUser(userId: string): Promise<void> {
   const unsupported = pushUnsupportedReason();
@@ -78,10 +95,46 @@ export async function registerWebPushForUser(userId: string): Promise<void> {
     );
   }
 
-  const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+  const firebaseConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  };
+
+  const swUrl = `/sw.js?apiKey=${firebaseConfig.apiKey ?? ''}&projectId=${firebaseConfig.projectId ?? ''}&senderId=${firebaseConfig.messagingSenderId ?? ''}&appId=${firebaseConfig.appId ?? ''}`;
+  const registration = await navigator.serviceWorker.register(swUrl, { scope: '/' });
   await navigator.serviceWorker.ready;
 
-  const keyResponse = await fetch('/api/push/vapid-public-key');
+  if (isChromeOrAndroid() && firebaseConfig.apiKey) {
+    const app = initializeApp(firebaseConfig);
+    const messaging = getMessaging(app);
+    
+    try {
+      const currentToken = await getToken(messaging, { 
+        serviceWorkerRegistration: registration,
+        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY 
+      });
+
+      if (currentToken) {
+        await fetch(`${apiBaseUrl}/api/push/subscriptions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            platform: 'fcm',
+            endpoint: currentToken,
+            userAgent: navigator.userAgent,
+          }),
+        });
+        return;
+      }
+    } catch (e) {
+      console.warn('FCM token generation failed, falling back to Web Push', e);
+    }
+  }
+
+  const keyResponse = await fetch(`${apiBaseUrl}/api/push/vapid-public-key`);
   if (!keyResponse.ok) {
     throw new Error(
       keyResponse.status === 404
@@ -90,7 +143,7 @@ export async function registerWebPushForUser(userId: string): Promise<void> {
     );
   }
 
-  const { publicKey } = (await keyResponse.json()) as { publicKey: string | null };
+  const { publicKey } = await parseResponseJson<{ publicKey: string | null }>(keyResponse);
   if (!publicKey) {
     throw new Error('Push notifications are not configured on the server.');
   }

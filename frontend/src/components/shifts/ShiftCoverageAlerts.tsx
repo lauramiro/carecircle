@@ -114,8 +114,12 @@ export default function ShiftCoverageAlerts({
 
                 <Link
                   to={`/groups/${warning.groupId}/shifts`}
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-bold no-underline"
-                  style={{ color: 'var(--color-primary)' }}
+                  className="mt-3 inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-bold no-underline"
+                  style={{
+                    borderColor: 'var(--color-status-overdue)',
+                    backgroundColor: 'var(--color-status-overdue-bg)',
+                    color: 'var(--color-status-overdue)',
+                  }}
                 >
                   Assign shifts
                   <ArrowRight size={14} strokeWidth={2} />

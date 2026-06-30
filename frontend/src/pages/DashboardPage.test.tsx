@@ -109,6 +109,10 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Shift coverage gaps')).toBeInTheDocument();
     expect(screen.getAllByText('Dad Care Circle').length).toBeGreaterThan(0);
     expect(screen.getByText(/3 of 28 sessions need coverage/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /assign shifts/i })).toHaveAttribute(
+      'href',
+      '/groups/group-001/shifts',
+    );
     expect(screen.getByText('Groups you manage')).toBeInTheDocument();
     expect(screen.getByText('Total members')).toBeInTheDocument();
   });

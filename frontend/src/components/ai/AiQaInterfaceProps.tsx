@@ -128,7 +128,7 @@ export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
 
   return (
     <section
-      className="flex flex-col h-screen"
+      className="flex flex-col h-full"
       style={{
         backgroundColor: 'var(--color-bg-primary)',
         fontFamily: 'Plus Jakarta Sans, sans-serif',

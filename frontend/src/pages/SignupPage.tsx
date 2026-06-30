@@ -72,7 +72,7 @@ export default function SignupPage() {
       const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
       if (error && !getErrorMessage(error).includes('already registered')) throw error;
       setSubmitted(true);
-    } catch (err: unknown) {
+    } catch {
       setFormError('Something went wrong. Please check your connection and try again.');
     }
     setLoading(false);

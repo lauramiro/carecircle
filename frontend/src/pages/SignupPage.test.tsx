@@ -154,7 +154,7 @@ describe('SignupPage', () => {
     expect(await screen.findByText('Check your email')).toBeInTheDocument();
   });
 
-  it('shows a duplicate account error returned by Supabase', async () => {
+  it('shows the confirmation screen when the account already exists (anti-enumeration)', async () => {
     supabaseMock.auth.signUp.mockResolvedValue({
       error: new Error('User already registered'),
     });
@@ -162,8 +162,8 @@ describe('SignupPage', () => {
 
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
-    expect(await screen.findByText('An account with this email already exists.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /create account/i })).toBeEnabled();
+    expect(await screen.findByText('Check your email')).toBeInTheDocument();
+    expect(screen.getByText('user@example.com')).toBeInTheDocument();
   });
 
   it('shows a generic signup error for unexpected Supabase failures', async () => {

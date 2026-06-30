@@ -44,6 +44,7 @@ vi.mock('../components/shifts/MyShiftsTodayWidget', () => ({
 }));
 
 const authMock = vi.hoisted(() => ({
+  displayName: 'Sarah Hamilton',
   session: {
     user: {
       email: 'sarah.caregiver@example.com',
@@ -103,7 +104,7 @@ describe('DashboardPage', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/good (morning|afternoon|evening), sarah caregiver/i)).toBeInTheDocument();
+    expect(screen.getByText(/good (morning|afternoon|evening), sarah hamilton/i)).toBeInTheDocument();
     expect(screen.getByText(/overview of your care circles/i)).toBeInTheDocument();
     expect(screen.getByText('Active groups')).toBeInTheDocument();
     expect(screen.getByText('Shift coverage gaps')).toBeInTheDocument();

@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { getInitialsFromLabel } from '../../utils/greeting';
 import {
   buildGroupNavPath,
   dashboardNavItems,
@@ -31,10 +32,6 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { usePushRegistration } from '../../hooks/usePushRegistration';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 
-function getInitials(email?: string): string {
-  if (!email) return 'CC';
-  return email.slice(0, 2).toUpperCase();
-}
 
 function getNavLinkStyle(isActive: boolean): CSSProperties {
   return {
@@ -253,7 +250,7 @@ function useDashboardNavigationHistory(location: DashboardLocationSnapshot) {
 }
 
 export default function DashboardLayout() {
-  const { session, signOut } = useAuth();
+  const { session, displayName, signOut } = useAuth();
   const pushRegistration = usePushRegistration();
   const location = useLocation();
   const navigate = useNavigate();
@@ -579,14 +576,14 @@ export default function DashboardLayout() {
                     color: 'var(--color-primary)',
                   }}
                 >
-                  {getInitials(email)}
+                  {getInitialsFromLabel(displayName)}
                 </div>
                 <div className="min-w-0">
                   <p
                     className="truncate text-sm font-semibold"
                     style={{ color: 'var(--color-text-primary)' }}
                   >
-                    {activeGroup?.name ?? 'Caregiver'}
+                    {displayName}
                   </p>
                   <p
                     className="truncate text-xs"

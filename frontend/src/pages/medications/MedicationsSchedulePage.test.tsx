@@ -64,6 +64,9 @@ function makeMed(overrides: Partial<Medication>): Medication {
     instructions: null,
     route: null,
     takeWithFood: null,
+    quantityOnHand: null,
+    lowStockAlertThresholdDays: 7,
+    lowStockAlertSentAt: null,
     startDate: '2025-01-01',
     endDate: null,
     status: 'active',
@@ -130,6 +133,29 @@ describe('MedicationsSchedulePage', () => {
     expect(screen.getByText('Paused')).toBeInTheDocument();
   });
 
+  it('shows a Low stock badge for tracked medications below the threshold', () => {
+    medsHookMock.value.medications = [
+      makeMed({
+        id: 'med-1',
+        medicationName: 'Metformin',
+        specificTimes: ['08:00', '18:00'],
+        quantityOnHand: 10,
+        lowStockAlertThresholdDays: 7,
+      }),
+      makeMed({
+        id: 'med-2',
+        medicationName: 'Untracked',
+        quantityOnHand: null,
+        lowStockAlertThresholdDays: 7,
+      }),
+    ];
+    renderPage();
+
+    expect(screen.getByText('Low stock')).toBeInTheDocument();
+    expect(screen.getAllByText('Untracked').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Low stock')).toHaveLength(1);
+  });
+
   it('does not render archived medications', () => {
     medsHookMock.value.medications = [
       makeMed({ id: 'med-1', medicationName: 'ArchivedMed', status: 'archived' }),
@@ -161,6 +187,8 @@ describe('MedicationsSchedulePage', () => {
         medicationName: 'Metformin',
         form: 'Tablet',
         pharmacy: 'Boots Pharmacy',
+        quantityOnHand: 10,
+        specificTimes: ['08:00', '18:00'],
       }),
     ];
     renderPage();
@@ -171,6 +199,8 @@ describe('MedicationsSchedulePage', () => {
     expect(screen.getByText('Form')).toBeInTheDocument();
     expect(screen.getByText('Tablet')).toBeInTheDocument();
     expect(screen.getByText('Boots Pharmacy')).toBeInTheDocument();
+    expect(screen.getByText('Quantity on hand')).toBeInTheDocument();
+    expect(screen.getByText('5 days')).toBeInTheDocument();
   });
 
   it('does not show the Add medication button for non-Admin users', () => {

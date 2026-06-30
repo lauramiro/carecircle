@@ -38,7 +38,7 @@ function renderLayout(
   initialEntries: string[] = ['/dashboard'],
   initialIndex = initialEntries.length - 1,
 ) {
-  render(
+  return render(
     <MemoryRouter initialEntries={initialEntries} initialIndex={initialIndex}>
       <Routes>
         <Route path="/" element={<DashboardLayout />}>
@@ -205,6 +205,8 @@ describe('DashboardLayout', () => {
 
     expect(screen.getByText('Current care circle')).toBeInTheDocument();
     expect(screen.getAllByText('Dad Care Circle').length).toBeGreaterThan(0);
+    expect(screen.getByText('Your role: Primary carer')).toBeInTheDocument();
+    expect(screen.queryByText(/primary_carer/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /today's medications/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /view profile/i })).toHaveAttribute(
       'href',
@@ -220,5 +222,25 @@ describe('DashboardLayout', () => {
     await user.click(screen.getByRole('button', { name: /open navigation/i }));
 
     expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument();
+  });
+
+  it('does not force the sidebar/content row to a fixed viewport height', () => {
+    // Regression test for CC-173: a `min-h-screen` on the sidebar/content
+    // flex row (in addition to the outer shell wrapper) forced the content
+    // area to always be 100vh tall via flex-stretch, leaving a large blank
+    // region below short page content. The row must size to its content
+    // instead; only the outer shell wrapper should guarantee viewport-filling
+    // background.
+    const { container } = renderLayout();
+
+    const main = screen.getByRole('main');
+    const row = main.closest('.flex.w-full');
+
+    expect(row).not.toBeNull();
+    expect(row?.className).not.toMatch(/\bmin-h-screen\b/);
+    expect(main.className).toMatch(/\bflex-1\b/);
+
+    const outerShell = container.firstElementChild;
+    expect(outerShell?.className).toMatch(/\bmin-h-screen\b/);
   });
 });

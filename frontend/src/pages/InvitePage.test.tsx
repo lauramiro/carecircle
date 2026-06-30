@@ -138,6 +138,11 @@ describe('InvitePage', () => {
     );
     expect(screen.getByText('A shared care group.')).toBeInTheDocument();
     expect(screen.getByText(/2 carers already linked/i)).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: /onboarding progress/i })).toBeInTheDocument();
+    expect(screen.getByText('Open your secure invitation link')).toBeInTheDocument();
+    expect(screen.getByText('Review the care circle details')).toBeInTheDocument();
+    expect(screen.getByText('Accept the invitation')).toBeInTheDocument();
+    expect(screen.getByText('Continue to the group dashboard')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /accept invitation/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /reject invitation/i })).toBeInTheDocument();
   });

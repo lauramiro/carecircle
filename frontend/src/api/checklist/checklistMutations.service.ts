@@ -1,6 +1,11 @@
 import { supabase } from '@lib/supabaseClient';
+import { callRpc } from '@lib/supabaseRpc';
 import { CHECKLIST_PROOF_BUCKET } from '@components/checklist/medicationChecklist.constants';
-import type { ChecklistItemPatch, MarkAsGivenInput, SkipChecklistItemInput } from './checklist.types';
+import type {
+  ChecklistItemPatch,
+  MarkAsGivenInput,
+  SkipChecklistItemInput,
+} from './checklist.types';
 
 export async function getCurrentCarerProfileId(): Promise<string | null> {
   const {
@@ -43,12 +48,16 @@ export async function markChecklistItemGiven(
     updated_at: givenAt,
   };
 
-  const { error } = await supabase
-    .from('checklist_items')
-    .update(patch)
-    .eq('id', input.itemId);
+  const { data: updatedItemId, error } = await callRpc<string | null>('mark_checklist_item_given', {
+    p_item_id: input.itemId,
+    p_given_at: givenAt,
+    p_given_notes: patch.given_notes,
+    p_overdue_hours: patch.overdue_hours,
+    p_overdue_minutes: patch.overdue_minutes,
+  });
 
   if (error) throw error;
+  if (!updatedItemId) throw new Error('checklist_item_already_confirmed');
 
   if (photoUrl && carerId) {
     const { error: confirmationErr } = await supabase.from('medication_confirmations').insert({

@@ -1,7 +1,25 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { describe, expect, it, vi } from 'vitest';
 import { GroupInviteEmailService } from './group-invite-email.service';
 
 describe('GroupInviteEmailService', () => {
+  const supabase = {
+    getClient: vi.fn(() => ({
+      auth: {
+        admin: {
+          generateLink: vi.fn().mockResolvedValue({
+            data: {
+              properties: {
+                action_link: 'https://auth.example/magic-link',
+              },
+            },
+            error: null,
+          }),
+        },
+      },
+    })),
+  };
+
   it('buildGroupInviteUrl matches InvitePage search params', () => {
     const appConfig = {
       config: {
@@ -12,6 +30,7 @@ describe('GroupInviteEmailService', () => {
     const svc = new GroupInviteEmailService(
       appConfig as never,
       mailer as never,
+      supabase as never,
     );
     const url = svc.buildGroupInviteUrl(
       '33333333-3333-4333-8333-333333333333',
@@ -31,6 +50,7 @@ describe('GroupInviteEmailService', () => {
     const svc = new GroupInviteEmailService(
       appConfig as never,
       mailer as never,
+      supabase as never,
     );
 
     await svc.sendInviteEmail({
@@ -41,7 +61,48 @@ describe('GroupInviteEmailService', () => {
     });
 
     expect(sendMail).toHaveBeenCalledOnce();
+    expect(sendMail.mock.calls[0][0].html).toContain(
+      'https://auth.example/magic-link',
+    );
     const html = sendMail.mock.calls[0][0].html as string;
     expect(html).toContain('Sunrise Circle');
+  });
+
+  it('generates a magic link that redirects back to invite confirmation mode', async () => {
+    const generateLink = vi.fn().mockResolvedValue({
+      data: {
+        properties: {
+          action_link: 'https://auth.example/magic-link',
+        },
+      },
+      error: null,
+    });
+    const appConfig = {
+      config: { FRONTEND_PUBLIC_URL: 'https://app.example' },
+    };
+    const svc = new GroupInviteEmailService(
+      appConfig as never,
+      { isConfigured: () => true, sendMail: vi.fn() } as never,
+      {
+        getClient: () => ({
+          auth: { admin: { generateLink } },
+        }),
+      } as never,
+    );
+
+    await expect(
+      svc.buildGroupInviteMagicLink(
+        '33333333-3333-4333-8333-333333333333',
+        'invitee@example.com',
+      ),
+    ).resolves.toBe('https://auth.example/magic-link');
+    expect(generateLink).toHaveBeenCalledWith({
+      type: 'magiclink',
+      email: 'invitee@example.com',
+      options: {
+        redirectTo:
+          'https://app.example/group-invite?inviteId=33333333-3333-4333-8333-333333333333&email=invitee%40example.com&confirmation=true',
+      },
+    });
   });
 });

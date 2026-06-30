@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  compareScheduleToLog,
   computeDoseTimesForDate,
   deriveWindowBounds,
   enumerateFutureDoseSlots,
@@ -214,5 +215,70 @@ describe('slot-computation', () => {
   it('buildDoseSummary formats dose and unit', () => {
     expect(buildDoseSummary(500, 'mg')).toBe('500 mg');
     expect(buildDoseSummary(null, 'mg')).toBe('mg');
+  });
+
+  it.each([
+    {
+      name: 'on-time dose inside the scheduled window',
+      item: {
+        checklistItemId: 'morning',
+        scheduledAt: new Date('2025-05-21T08:00:00Z'),
+        windowStart: '07:30',
+        windowEnd: '08:30',
+        status: 'given' as const,
+        givenAt: new Date('2025-05-21T08:15:00Z'),
+      },
+      expected: { status: 'on_time', minutesLate: 0 },
+    },
+    {
+      name: 'late dose after the scheduled window',
+      item: {
+        checklistItemId: 'late',
+        scheduledAt: new Date('2025-05-21T08:00:00Z'),
+        windowStart: '07:30',
+        windowEnd: '08:30',
+        status: 'given' as const,
+        givenAt: new Date('2025-05-21T08:47:00Z'),
+      },
+      expected: { status: 'late', minutesLate: 17 },
+    },
+    {
+      name: 'skipped dose is reported as skipped',
+      item: {
+        checklistItemId: 'skipped',
+        scheduledAt: new Date('2025-05-21T08:00:00Z'),
+        windowStart: '07:30',
+        windowEnd: '08:30',
+        status: 'skipped' as const,
+        givenAt: null,
+      },
+      expected: { status: 'skipped', minutesLate: 0 },
+    },
+    {
+      name: 'already-given terminal item without a log timestamp',
+      item: {
+        checklistItemId: 'already-given',
+        scheduledAt: new Date('2025-05-21T08:00:00Z'),
+        windowStart: '07:30',
+        windowEnd: '08:30',
+        status: 'given' as const,
+        givenAt: null,
+      },
+      expected: { status: 'already_given', minutesLate: 0 },
+    },
+    {
+      name: 'multi-window schedule keeps each dose independent',
+      item: {
+        checklistItemId: 'evening',
+        scheduledAt: new Date('2025-05-21T20:00:00Z'),
+        windowStart: '19:30',
+        windowEnd: '20:30',
+        status: 'given' as const,
+        givenAt: new Date('2025-05-21T20:29:00Z'),
+      },
+      expected: { status: 'on_time', minutesLate: 0 },
+    },
+  ])('compares schedule to administration log: $name', ({ item, expected }) => {
+    expect(compareScheduleToLog(item)).toMatchObject(expected);
   });
 });

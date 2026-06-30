@@ -29,7 +29,17 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (showMagic) {
-        const { error } = await supabase.auth.signInWithOtp({ email });
+        const pendingInvite = getPendingInvite();
+        const inviteMatches =
+          pendingInvite &&
+          pendingInvite.email.toLowerCase() === email.toLowerCase();
+        const emailRedirectTo = inviteMatches
+          ? `${window.location.origin}${buildInviteConfirmationPath(pendingInvite)}`
+          : undefined;
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo, shouldCreateUser: false },
+        });
         if (error) throw error;
         setMagicSent(true);
       } else {
@@ -191,6 +201,7 @@ export default function LoginPage() {
                   </label>
                   <a
                     href="/forgot-password"
+                    tabIndex={-1}
                     style={{
                       fontSize: '12px', color: 'var(--color-primary)',
                       fontFamily: 'Plus Jakarta Sans, sans-serif',

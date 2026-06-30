@@ -62,6 +62,29 @@ export type AppConfig = z.infer<typeof appConfigSchema>;
 export function validateEnv(config: Record<string, unknown>): AppConfig {
   // Accept legacy SUPABASE_SERVICE_KEY name locally; prefer SUPABASE_SERVICE_ROLE_KEY in new .env files.
   const normalized = { ...config };
+  for (const key of [
+    'FRONTEND_PUBLIC_URL',
+    'GMAIL_USER',
+    'GMAIL_APP_PASSWORD',
+    'MAIL_FROM',
+    'MAIL_FROM_NAME',
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'INTERNAL_MISSED_MED_SMS_KEY',
+    'TWILIO_ACCOUNT_SID',
+    'TWILIO_AUTH_TOKEN',
+    'TWILIO_FROM_NUMBER',
+    'TWILIO_DEV_TEST_TO_NUMBER',
+    'VAPID_PUBLIC_KEY',
+    'VAPID_PRIVATE_KEY',
+    'VAPID_SUBJECT',
+    'SMS_FALLBACK_DELAY_MINUTES',
+    'MATERIALIZATION_BATCH_SIZE',
+  ]) {
+    if (normalized[key] === '') {
+      normalized[key] = undefined;
+    }
+  }
+
   if (
     !normalized.SUPABASE_SERVICE_ROLE_KEY &&
     typeof normalized.SUPABASE_SERVICE_KEY === 'string' &&

@@ -3,8 +3,8 @@ import { assembleHospitalSummary, generateHospitalSummaryPDF, fetchInsights } fr
 
 export default function HospitalSummaryPanel() {
   const [groupId, setGroupId] = useState('');
-  const [summary, setSummary] = useState<any | null>(null);
-  const [insights, setInsights] = useState<any[]>([]);
+  const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
+  const [insights, setInsights] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);
 
   const onAssemble = async () => {
@@ -13,7 +13,7 @@ export default function HospitalSummaryPanel() {
     try {
       const s = await assembleHospitalSummary(groupId);
       setSummary(s);
-    } catch (err) {
+    } catch {
       alert('Failed to assemble summary');
     } finally {
       setLoading(false);
@@ -33,7 +33,7 @@ export default function HospitalSummaryPanel() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       alert('Failed to download PDF');
     } finally {
       setLoading(false);
@@ -46,7 +46,7 @@ export default function HospitalSummaryPanel() {
     try {
       const data = await fetchInsights(groupId);
       setInsights(data);
-    } catch (err) {
+    } catch {
       alert('Failed to fetch insights');
     } finally {
       setLoading(false);
@@ -67,7 +67,7 @@ export default function HospitalSummaryPanel() {
 
       {summary && (
         <div style={{ border: '1px solid #ddd', padding: 12 }}>
-          <h3>Summary for {summary.fullName || summary.full_name || summary.patientId}</h3>
+          <h3>Summary for {(summary.fullName as string) || (summary.full_name as string) || (summary.patientId as string)}</h3>
           <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(summary, null, 2)}</pre>
         </div>
       )}
@@ -77,7 +77,7 @@ export default function HospitalSummaryPanel() {
           <h3>Insights</h3>
           <ul>
             {insights.map((ins, idx) => (
-              <li key={idx}><strong>{ins.insight_type}</strong>: {ins.observation} ({ins.severity})</li>
+              <li key={idx}><strong>{ins.insight_type as string}</strong>: {ins.observation as string} ({ins.severity as string})</li>
             ))}
           </ul>
         </div>

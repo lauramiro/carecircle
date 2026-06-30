@@ -1,5 +1,37 @@
 # Design & Testing
 
+
+## CC-129 Magic-Link Onboarding Test Notes
+
+The invite flow is designed as a four-step path from email to the care circle group details page:
+
+1. Open the secure invitation magic link.
+2. Review the care circle details.
+3. Accept the invitation.
+4. Continue to the group dashboard.
+
+Automated coverage:
+
+| Area | Test | Purpose |
+| :--- | :--- | :--- |
+| Invite email magic link | `backend/src/invites/group-invite-email.service.spec.ts` | Verifies invitation email links are Supabase magic links that redirect to `/group-invite` confirmation mode. |
+| Pending invite login resume | `frontend/src/pages/LoginPage.test.tsx` | Verifies login magic links preserve matching pending invite redirects. |
+| Invite onboarding progress | `frontend/src/pages/InvitePage.test.tsx` | Verifies the explicit accept screen shows the numbered onboarding steps. |
+
+Manual sprint-review evidence should include one non-technical user attempting the invitation flow from email link to group details page, with notes on step count, points of confusion, and whether assistance was needed.
+
+## CC-117 Automated Test Matrix
+
+| Area | Test | Purpose | CI visibility |
+| :--- | :--- | :--- | :--- |
+| Medication schedule-vs-log comparison | `backend/src/checklist/slot-computation.spec.ts` | Verifies on-time, late, skipped, already-given, and multi-window dose classifications against known datasets. | Backend Vitest job |
+| Push notification delivery | `backend/src/alerts/vapid-delivery.integration.spec.ts` | Sends a real VAPID/Web Push notification to a configured test subscription when `VAPID_TEST_*` secrets are present; skips explicitly otherwise. | Backend Vitest job |
+| AI hospital summary completeness | `backend/src/hospital-summary/hospital-summary.spec.ts` | Verifies required generated payload sections are present before hospital summary output is used. | Backend Vitest job |
+| Medication confirmation concurrency | `frontend/src/api/checklist/checklistMutations.service.test.ts` | Verifies simultaneous medication confirmations result in one successful update and exactly one confirmation record insert. | Frontend Vitest job |
+
+The CI workflow runs deterministic backend and frontend build/test jobs on pull requests. The VAPID delivery check is intentionally opt-in because it requires a live browser push subscription and VAPID test secrets.
+
+
 ## Permission Matrix
 This section defines the access control levels for users within a care group based on their role in the `group_members` table.
 
@@ -680,6 +712,77 @@ This section documents **every** RLS policy currently enforced in the CareCircle
 | `notifications` | SELECT (own), UPDATE (own) | SELECT (own), UPDATE (own) | SELECT (own), UPDATE (own) |
 | `profiles` | SELECT (all), UPDATE (own) | SELECT (all), UPDATE (own) | SELECT (all), UPDATE (own) |
 | `storage.objects` | SELECT, INSERT, UPDATE, DELETE | SELECT | SELECT |
+
+---
+
+## RLS Direct Verification
+
+The repository now includes a direct database-level RLS verification harness at `supabase/verify_cross_circle_rls.sql` plus deterministic fixture data in `supabase/seeds/rls_cross_circle_verification_seed.sql`.
+
+This harness is intentionally kept outside the frontend and backend applications. It connects directly to PostgreSQL, switches to the `authenticated` role, sets `request.jwt.claim.sub` to simulate each caregiver role, and then attempts cross-circle `SELECT`, `INSERT`, `UPDATE`, and `DELETE` operations against Circle B rows while authenticated as Circle A users.
+
+### Verification Scope
+
+| Table | Role | Permitted operations in-scope | Cross-circle operations tested |
+|:---|:---|:---|:---|
+| `care_givers` | `primary_carer` | SELECT, INSERT, UPDATE, DELETE | SELECT, INSERT, UPDATE, DELETE |
+| `care_givers` | `secondary_carer` | SELECT, INSERT (self only) | SELECT, INSERT, UPDATE, DELETE |
+| `care_givers` | `observer` | SELECT, INSERT (self only) | SELECT, INSERT, UPDATE, DELETE |
+| `care_group` | `primary_carer` | SELECT, INSERT | SELECT, INSERT, UPDATE, DELETE |
+| `care_group` | `secondary_carer` | none | SELECT, INSERT, UPDATE, DELETE |
+| `care_group` | `observer` | none | SELECT, INSERT, UPDATE, DELETE |
+| `patients` | `primary_carer` | SELECT, INSERT, UPDATE, DELETE | SELECT, INSERT, UPDATE, DELETE |
+| `patients` | `secondary_carer` | SELECT | SELECT, INSERT, UPDATE, DELETE |
+| `patients` | `observer` | SELECT | SELECT, INSERT, UPDATE, DELETE |
+| `medications` | `primary_carer` | SELECT, INSERT | SELECT, INSERT, UPDATE, DELETE |
+| `medications` | `secondary_carer` | SELECT, INSERT | SELECT, INSERT, UPDATE, DELETE |
+| `medications` | `observer` | SELECT | SELECT, INSERT, UPDATE, DELETE |
+| `handover_journal_entries` | `primary_carer` | SELECT, INSERT, UPDATE (own, 60 mins) | SELECT, INSERT, UPDATE, DELETE |
+| `handover_journal_entries` | `secondary_carer` | SELECT, INSERT, UPDATE (own, 60 mins) | SELECT, INSERT, UPDATE, DELETE |
+| `handover_journal_entries` | `observer` | SELECT | SELECT, INSERT, UPDATE, DELETE |
+
+### Expected interpretation of direct-query results
+
+- Cross-circle `SELECT` should return **zero rows visible**.
+- Cross-circle `INSERT` should fail with a **database/RLS error**.
+- Cross-circle `UPDATE` and `DELETE` should either fail with a **database/RLS error** or affect **zero rows** because the target rows are invisible under RLS.
+
+This behavior is what PostgreSQL RLS enforces at the database layer for direct SQL queries. In practice, blocked reads usually appear as zero visible rows rather than a literal HTTP `403`.
+
+### Current test results status
+
+| Role | Table | SELECT | INSERT | UPDATE | DELETE | Status |
+|:---|:---|:---|:---|:---|:---|:---|
+| `primary_carer` | `care_givers` | Not run | Not run | Not run | Not run | Pending local execution |
+| `primary_carer` | `care_group` | Not run | Not run | Not run | Not run | Pending local execution |
+| `primary_carer` | `patients` | Not run | Not run | Not run | Not run | Pending local execution |
+| `primary_carer` | `medications` | Not run | Not run | Not run | Not run | Pending local execution |
+| `primary_carer` | `handover_journal_entries` | Not run | Not run | Not run | Not run | Pending local execution |
+| `secondary_carer` | `care_givers` | Not run | Not run | Not run | Not run | Pending local execution |
+| `secondary_carer` | `care_group` | Not run | Not run | Not run | Not run | Pending local execution |
+| `secondary_carer` | `patients` | Not run | Not run | Not run | Not run | Pending local execution |
+| `secondary_carer` | `medications` | Not run | Not run | Not run | Not run | Pending local execution |
+| `secondary_carer` | `handover_journal_entries` | Not run | Not run | Not run | Not run | Pending local execution |
+| `observer` | `care_givers` | Not run | Not run | Not run | Not run | Pending local execution |
+| `observer` | `care_group` | Not run | Not run | Not run | Not run | Pending local execution |
+| `observer` | `patients` | Not run | Not run | Not run | Not run | Pending local execution |
+| `observer` | `medications` | Not run | Not run | Not run | Not run | Pending local execution |
+| `observer` | `handover_journal_entries` | Not run | Not run | Not run | Not run | Pending local execution |
+
+### Execution note
+
+Validation was prepared but not executed in this workspace because `npx supabase db reset` prompted for a one-time install of the Supabase CLI package and that install was declined during this session. Once the CLI is available locally, run:
+
+```bash
+npx supabase db reset
+psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f supabase/verify_cross_circle_rls.sql
+```
+
+The script prints:
+
+- a per-role, per-table pass/fail matrix,
+- a detailed list of any failed checks, and
+- a final total of passed vs failed assertions.
 
 ---
 

@@ -28,6 +28,7 @@ export interface MedicationFormValues {
   route: string;
   instructions: string;
   takeWithFood: boolean;
+  quantityOnHand: string;
   endDate: string;
   courseDurationMode: CourseDurationMode;
   perpetual: boolean;
@@ -55,6 +56,7 @@ export type MedicationFormErrors = Partial<
     | 'daysOfWeek'
     | 'dayOfMonth'
     | 'startDate'
+    | 'quantityOnHand'
     | 'endDate'
     | 'perpetual'
     | 'totalDoses'
@@ -83,6 +85,7 @@ const emptyValues: MedicationFormValues = {
   route: '',
   instructions: '',
   takeWithFood: false,
+  quantityOnHand: '',
   endDate: '',
   courseDurationMode: 'perpetual',
   perpetual: true,
@@ -122,6 +125,10 @@ function buildOptionalFields(values: MedicationFormValues) {
   if (instructions) optional.instructions = instructions;
 
   if (values.takeWithFood) optional.takeWithFood = true;
+
+  if (values.quantityOnHand !== '') {
+    optional.quantityOnHand = Number(values.quantityOnHand);
+  }
 
   if (values.courseDurationMode === 'perpetual') optional.perpetual = true;
   if (values.courseDurationMode === 'end_date' && values.endDate) optional.endDate = values.endDate;
@@ -226,6 +233,13 @@ function validateAll(values: MedicationFormValues): MedicationFormErrors {
     const refills = Number(values.refillsRemaining);
     if (isNaN(refills) || refills < 0 || !Number.isInteger(refills)) {
       errors.refillsRemaining = 'Refills must be a whole number of 0 or more';
+    }
+  }
+
+  if (values.quantityOnHand !== '') {
+    const quantity = Number(values.quantityOnHand);
+    if (isNaN(quantity) || quantity < 0 || !Number.isInteger(quantity)) {
+      errors.quantityOnHand = 'Quantity must be a whole number of 0 or more';
     }
   }
 
@@ -362,6 +376,7 @@ export function useMedicationForm() {
       route: med.route ?? '',
       instructions: med.instructions ?? '',
       takeWithFood: med.takeWithFood === true,
+      quantityOnHand: med.quantityOnHand != null ? String(med.quantityOnHand) : '',
       endDate: med.endDate ?? '',
       courseDurationMode,
       perpetual:
@@ -447,6 +462,7 @@ export function useMedicationForm() {
       route: values.route.trim() || null,
       instructions: values.instructions.trim() || null,
       takeWithFood: values.takeWithFood ? true : null,
+      quantityOnHand: values.quantityOnHand !== '' ? Number(values.quantityOnHand) : null,
       endDate: values.courseDurationMode === 'end_date' ? values.endDate || null : null,
       perpetual: values.courseDurationMode === 'perpetual' ? true : undefined,
       totalDoses:

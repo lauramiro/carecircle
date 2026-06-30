@@ -37,6 +37,7 @@ import axios from 'axios';
 import { supabase } from '../../lib/supabaseClient';
 import {
   addGPContact,
+  getEmergencyContacts,
   getUserGroupDetails,
   getGroups,
   inviteMember,
@@ -291,6 +292,401 @@ describe('groups service', () => {
     await expect(
       addGPContact('group-care-001', { gpName: 'Dr. Test GP' }),
     ).rejects.toThrow('Patient not found for this care group');
+  });
+
+  it('aggregates emergency contacts from GP, specialists, primary carer, and free-form contacts', async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'patients') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'patient-1',
+                  primary_caregiver_id: 'primary-1',
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'gp_contacts') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({
+                  data: [
+                    {
+                      id: 'gp-1',
+                      name: 'Dr GP',
+                      phone: '+441111111111',
+                      address: null,
+                      specialty: 'GP',
+                      email: null,
+                    },
+                  ],
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'appointments') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              neq: vi.fn().mockReturnValue({
+                not: vi.fn().mockReturnValue({
+                  order: vi.fn().mockResolvedValue({
+                    data: [
+                      {
+                        id: 'appt-1',
+                        provider_name: 'Dr Specialist',
+                        provider_phone: '+442222222222',
+                      },
+                    ],
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { full_name: 'Primary Carer', phone: '+443333333333' },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'emergency_contacts') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({
+                  data: [
+                    {
+                      id: 'emergency-1',
+                      label: 'Neighbour',
+                      contact_name: 'Nora Neighbour',
+                      phone: '+444444444444',
+                    },
+                  ],
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+
+    await expect(getEmergencyContacts('group-care-001')).resolves.toEqual([
+      expect.objectContaining({ source: 'gp', phoneNumber: '+441111111111' }),
+      expect.objectContaining({ source: 'specialist', phoneNumber: '+442222222222' }),
+      expect.objectContaining({ source: 'primary_carer', phoneNumber: '+443333333333' }),
+      expect.objectContaining({ source: 'free_form', phoneNumber: '+444444444444' }),
+    ]);
+  });
+
+  it('includes primary carer details even when their phone is missing', async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'patients') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'patient-1',
+                  primary_caregiver_id: 'primary-1',
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'gp_contacts') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'appointments') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              neq: vi.fn().mockReturnValue({
+                not: vi.fn().mockReturnValue({
+                  order: vi.fn().mockResolvedValue({ data: [], error: null }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { full_name: 'Primary Carer', phone: null },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'emergency_contacts') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+
+    await expect(getEmergencyContacts('group-care-001')).resolves.toEqual([
+      expect.objectContaining({
+        name: 'Primary Carer',
+        phoneNumber: undefined,
+        source: 'primary_carer',
+      }),
+    ]);
+  });
+
+  it('resolves primary carer from active care-giver membership when patient fallback is empty', async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'patients') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'patient-1',
+                  primary_caregiver_id: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'care_givers') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockReturnValue({
+                    maybeSingle: vi.fn().mockResolvedValue({
+                      data: { caregiver_id: 'primary-from-membership' },
+                      error: null,
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'gp_contacts') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'appointments') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              neq: vi.fn().mockReturnValue({
+                not: vi.fn().mockReturnValue({
+                  order: vi.fn().mockResolvedValue({ data: [], error: null }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { full_name: 'Membership Primary', phone: '+445555555555' },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'emergency_contacts') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+
+    await expect(getEmergencyContacts('group-care-001')).resolves.toEqual([
+      expect.objectContaining({
+        id: 'primary-carer:primary-from-membership',
+        name: 'Membership Primary',
+        phoneNumber: '+445555555555',
+        source: 'primary_carer',
+      }),
+    ]);
+  });
+
+  it('loads remaining emergency contacts when optional emergency schema is missing', async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'patients') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'patient-1',
+                  primary_caregiver_id: 'primary-1',
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'gp_contacts') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({
+                  data: [
+                    {
+                      id: 'gp-1',
+                      name: 'Dr GP',
+                      phone: '+441111111111',
+                      address: null,
+                      specialty: 'GP',
+                      email: null,
+                    },
+                  ],
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'appointments') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              neq: vi.fn().mockReturnValue({
+                not: vi.fn().mockReturnValue({
+                  order: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: {
+                      code: '42703',
+                      message: 'column appointments.provider_phone does not exist',
+                    },
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { full_name: 'Primary Carer', phone: '+443333333333' },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'emergency_contacts') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({
+                  data: null,
+                  error: {
+                    code: '42P01',
+                    message: 'relation public.emergency_contacts does not exist',
+                  },
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+
+    await expect(getEmergencyContacts('group-care-001')).resolves.toEqual([
+      expect.objectContaining({ source: 'gp', phoneNumber: '+441111111111' }),
+      expect.objectContaining({ source: 'primary_carer', phoneNumber: '+443333333333' }),
+    ]);
   });
 });
 

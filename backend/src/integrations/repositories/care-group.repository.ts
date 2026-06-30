@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 import { Injectable } from '@nestjs/common';
 import { isE164Phone } from '../../common/validation/e164';
 import { SupabaseAdminClient } from '../supabase-admin.client';
@@ -102,6 +103,22 @@ export class CareGroupRepository {
       groupMembersIds: [...new Set(groupMembersIds)],
       groupMembersPhoneNumbers: [...new Set(groupMembersPhoneNumbers)],
     };
+  }
+
+  async listActivePrimaryCarerIds(groupId: string): Promise<string[]> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('care_givers')
+      .select('caregiver_id')
+      .eq('group_id', groupId)
+      .eq('status', 'active')
+      .eq('role_in_care', 'primary_carer');
+
+    if (error) throw new Error(error.message);
+    const ids = (data ?? [])
+      .map((row) => row.caregiver_id)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0);
+    return [...new Set(ids)];
   }
 
   async findAllGroups() {

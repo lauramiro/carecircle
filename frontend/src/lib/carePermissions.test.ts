@@ -3,6 +3,8 @@ import { ROLE } from '@typings/role-enum';
 import {
   canAssignShifts,
   canEditAppointments,
+  canFlagDocumentsForHospitalSummary,
+  canManageEmergencyContacts,
   canManageMembers,
   canRemoveOrSuspendMember,
   isChecklistReadOnly,
@@ -29,10 +31,22 @@ describe('carePermissions', () => {
     expect(canEditAppointments(ROLE.SECONDARY_CAREGIVER, true)).toBe(true);
   });
 
+  it('allows primary and secondary carers to manage emergency contacts', () => {
+    expect(canManageEmergencyContacts(ROLE.PRIMARY_CAREGIVER)).toBe(true);
+    expect(canManageEmergencyContacts(ROLE.SECONDARY_CAREGIVER)).toBe(true);
+    expect(canManageEmergencyContacts(ROLE.OBSERVER)).toBe(false);
+  });
+
   it('treats observers as checklist read-only', () => {
     expect(isChecklistReadOnly(ROLE.OBSERVER)).toBe(true);
     expect(isChecklistReadOnly(ROLE.PRIMARY_CAREGIVER)).toBe(false);
     expect(isChecklistReadOnly(ROLE.SECONDARY_CAREGIVER)).toBe(false);
+  });
+
+  it('allows primary and secondary carers to flag documents for hospital summary', () => {
+    expect(canFlagDocumentsForHospitalSummary(ROLE.PRIMARY_CAREGIVER)).toBe(true);
+    expect(canFlagDocumentsForHospitalSummary(ROLE.SECONDARY_CAREGIVER)).toBe(true);
+    expect(canFlagDocumentsForHospitalSummary(ROLE.OBSERVER)).toBe(false);
   });
 });
 

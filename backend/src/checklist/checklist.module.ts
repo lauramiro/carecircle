@@ -7,6 +7,7 @@ import {
 } from './checklist-materialization.service';
 import { OverdueDetectionService } from './overdue-detection.service';
 import { ChecklistAckAlertSubscriber } from './checklist-ack-alert.subscriber';
+import { MedicationLowStockAlertService } from './medication-low-stock-alert.service';
 
 @Module({
   imports: [AppConfigModule, forwardRef(() => AlertsModule)],
@@ -15,11 +16,13 @@ import { ChecklistAckAlertSubscriber } from './checklist-ack-alert.subscriber';
     ChecklistReconciliationService,
     OverdueDetectionService,
     ChecklistAckAlertSubscriber,
+    MedicationLowStockAlertService,
   ],
   exports: [
     ChecklistMaterializationService,
     ChecklistReconciliationService,
     OverdueDetectionService,
+    MedicationLowStockAlertService,
   ],
 })
 export class ChecklistModule {}

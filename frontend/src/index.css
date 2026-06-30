@@ -134,3 +134,11 @@ select:-webkit-autofill {
     animation: none;
   }
 }
+
+[data-font-size='large'] {
+  font-size: 112.5%;
+}
+
+[data-font-size='extra-large'] {
+  font-size: 125%;
+}

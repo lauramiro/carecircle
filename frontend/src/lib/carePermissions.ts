@@ -18,6 +18,10 @@ export function canManageGPContacts(role: ROLE): boolean {
   return role === ROLE.PRIMARY_CAREGIVER;
 }
 
+export function canManageEmergencyContacts(role: ROLE): boolean {
+  return role === ROLE.PRIMARY_CAREGIVER || role === ROLE.SECONDARY_CAREGIVER;
+}
+
 export function canEditMedicationSchedule(role: ROLE): boolean {
   return role === ROLE.PRIMARY_CAREGIVER;
 }
@@ -32,6 +36,10 @@ export function isChecklistReadOnly(role: ROLE): boolean {
 
 export function isJournalReadOnly(role: ROLE): boolean {
   return role === ROLE.OBSERVER;
+}
+
+export function canFlagDocumentsForHospitalSummary(role: ROLE): boolean {
+  return role === ROLE.PRIMARY_CAREGIVER || role === ROLE.SECONDARY_CAREGIVER;
 }
 
 export function countActivePrimaryCarers(

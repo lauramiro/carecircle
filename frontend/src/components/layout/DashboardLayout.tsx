@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { getCareRoleLabel } from '../../lib/careRole';
 import {
   buildGroupNavPath,
   dashboardNavItems,
@@ -333,7 +334,7 @@ export default function DashboardLayout() {
         )}
       </AnimatePresence>
 
-      <div className="flex min-h-screen w-full p-0 lg:p-4">
+      <div className="flex w-full p-0 lg:p-4">
         <aside
           className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r bg-white transition-transform duration-200 ease-out lg:static lg:w-64 lg:translate-x-0 lg:rounded-l-2xl lg:border ${
             mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -518,7 +519,7 @@ export default function DashboardLayout() {
                       </p>
                       {activeGroup?.role ? (
                         <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                          Your role: {activeGroup.role}
+                          Your role: {getCareRoleLabel(activeGroup.role)}
                         </p>
                       ) : null}
                       <Link

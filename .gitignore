@@ -22,6 +22,9 @@ backend/dist/
 .DS_Store
 Thumbs.db
 
+# Backend lock file — generated per-platform, not committed
+backend/package-lock.json
+
 # Playwright e2e
 e2e/node_modules/
 e2e/.auth/

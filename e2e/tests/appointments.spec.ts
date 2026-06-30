@@ -26,7 +26,7 @@ function tomorrowDate() {
 
 async function goToNewAppointment(page: Page) {
   await page.goto(`/groups/${GROUP_ID}/appointments/new`);
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 10_000 });
   await expect(page).not.toHaveURL(/\/groups\/list/);
 }
 
@@ -76,7 +76,7 @@ test('APPT-02: submitting appointment form with blank title shows validation err
 // ---------------------------------------------------------------------------
 test('APPT-03: editing a single occurrence does not affect other occurrences', async ({ page }) => {
   await page.goto(`/groups/${GROUP_ID}/appointments`);
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 10_000 });
 
   // Find a recurring appointment (one with a "recurring" badge or similar indicator)
   const recurringAppt = page

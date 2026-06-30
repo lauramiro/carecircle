@@ -58,7 +58,7 @@ test('GROUP-02: missing patient email and phone shows validation error', async (
 
   // Should remain on create page
   await expect(page).toHaveURL(/\/groups\/create/);
-  await expect(page.getByText(/email or phone/i)).toBeVisible();
+  await expect(page.getByText(/email or phone/i).first()).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -90,7 +90,7 @@ test('GROUP-05: members page loads and shows at least one member row', async ({ 
   await page.goto(`/groups/${GROUP_ID}/members`);
 
   // Wait for the table to appear (should not show LoadingPanel)
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 10_000 });
 
   // At minimum, the primary caregiver (test user) should appear
   const rows = page.locator('table tbody tr, [role="row"]');

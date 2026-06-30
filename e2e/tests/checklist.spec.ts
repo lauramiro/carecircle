@@ -22,7 +22,7 @@ test.beforeAll(() => {
 
 async function goToChecklist(page: Page) {
   await page.goto(`/groups/${GROUP_ID}/checklist`);
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 15_000 });
 }
 
 // ---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ test('CHK-03: marking a due item as given persists after page reload', async ({ 
 
   // Reload and verify status persisted
   await page.reload();
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 15_000 });
 
   if (itemText) {
     // Find the item again by its text and check it shows "given"
@@ -133,6 +133,6 @@ test('CHK-04: marking a due item as skipped persists after page reload', async (
 
   // Reload and verify persistence
   await page.reload();
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 15_000 });
   await expect(page.getByText(/skipped/i)).toBeVisible({ timeout: 5_000 });
 });

@@ -24,14 +24,14 @@ test.beforeAll(() => {
 // ---------------------------------------------------------------------------
 test('INS-01: insights page loads without error', async ({ page }) => {
   await page.goto(`/groups/${GROUP_ID}/insights`);
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 15_000 });
 
   // Should not show an error panel
   await expect(page.getByText(/something went wrong|error loading insights/i)).not.toBeVisible();
 
   // Should show either insight cards or an empty-state message
   const hasCards = await page.locator('[data-testid="insight-card"], .insight-card').count() > 0;
-  const hasEmptyState = await page.getByText(/no insights|nothing yet|no data/i).isVisible();
+  const hasEmptyState = await page.getByText(/no new insights|no insights|nothing yet|no data/i).isVisible();
   expect(hasCards || hasEmptyState).toBe(true);
 });
 
@@ -40,7 +40,7 @@ test('INS-01: insights page loads without error', async ({ page }) => {
 // ---------------------------------------------------------------------------
 test('INS-02: archived digests are accessible on the insights page', async ({ page }) => {
   await page.goto(`/groups/${GROUP_ID}/insights`);
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 15_000 });
 
   // Look for an "archive" section, tab, or link
   const archiveLink = page

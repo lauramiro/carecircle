@@ -27,7 +27,7 @@ test.beforeAll(() => {
 async function login(page: Page, email = EMAIL, password = PASSWORD) {
   await page.goto('/login');
   await page.getByLabel(/email/i).fill(email);
-  await page.getByLabel(/password/i).fill(password);
+  await page.locator('#password').fill(password);
   await page.getByRole('button', { name: /sign in|log in/i }).click();
 }
 

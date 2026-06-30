@@ -20,7 +20,7 @@ test.beforeAll(() => {
 // ---------------------------------------------------------------------------
 test('AI-01: asking a question in the AI assistant returns a non-empty answer', async ({ page }) => {
   await page.goto(`/groups/${GROUP_ID}/ai-assistant`);
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 10_000 });
 
   // Find the chat input — commonly a textarea or text input
   const input = page

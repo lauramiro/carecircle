@@ -22,6 +22,7 @@ test.beforeAll(() => {
 async function goToMedPage(page: Page) {
   await page.goto(`/groups/${GROUP_ID}/medications/add`);
   await expect(page).not.toHaveURL(/\/groups\/list/); // didn't redirect away
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 15_000 });
 }
 
 // ---------------------------------------------------------------------------
@@ -91,7 +92,7 @@ test('MED-10 & MED-11: pause then reactivate a medication', async ({ page }) => 
   await page.goto(`/groups/${GROUP_ID}/medications`);
 
   // Wait for the medications list to load
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 10_000 });
 
   // Find the first "Pause" button (active medication)
   const pauseBtn = page.getByRole('button', { name: /pause/i }).first();

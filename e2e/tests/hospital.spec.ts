@@ -27,8 +27,8 @@ test('HOSP-01: hospital summary PDF is generated and returned as application/pdf
     data: { groupId: GROUP_ID },
   });
 
-  // Should succeed
-  expect(res.status()).toBe(200);
+  // Should succeed (NestJS POST returns 201 by default)
+  expect(res.status()).toBe(201);
   expect(res.headers()['content-type']).toContain('application/pdf');
 
   // Should have the latency header
@@ -46,7 +46,7 @@ test('HOSP-01: hospital summary PDF is generated and returned as application/pdf
 // ---------------------------------------------------------------------------
 test('HOSP-01 browser: hospital summary page loads and shows generate/download button', async ({ page }) => {
   await page.goto(`/groups/${GROUP_ID}/hospital-summary`);
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 15_000 });
 
   // The page should show a "Generate PDF" or "Download" button
   const generateBtn = page

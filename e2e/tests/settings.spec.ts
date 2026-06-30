@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/settings');
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 10_000 });
 });
 
 // ---------------------------------------------------------------------------
@@ -44,7 +44,7 @@ test('SET-01: switching theme persists across page reload', async ({ page }) => 
 
   // Reload and confirm it was saved
   await page.reload();
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 10_000 });
   const targetBtnAfterReload = page.getByRole('button', { name: new RegExp(targetTheme, 'i') });
   await expect(targetBtnAfterReload).toHaveAttribute('aria-pressed', 'true');
 
@@ -79,7 +79,7 @@ test('SET-02: toggling weekly reminder persists across page reload', async ({ pa
 
   // Reload and verify persistence
   await page.reload();
-  await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 10_000 });
   const toggleAfterReload = page
     .getByRole('switch', { name: /weekly|wellbeing|reminder/i })
     .or(page.getByRole('checkbox', { name: /weekly|wellbeing|reminder/i }));

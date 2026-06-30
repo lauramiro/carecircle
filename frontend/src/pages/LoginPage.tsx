@@ -38,7 +38,7 @@ export default function LoginPage() {
           : undefined;
         const { error } = await supabase.auth.signInWithOtp({
           email,
-          options: { emailRedirectTo },
+          options: { emailRedirectTo, shouldCreateUser: false },
         });
         if (error) throw error;
         setMagicSent(true);
@@ -201,6 +201,7 @@ export default function LoginPage() {
                   </label>
                   <a
                     href="/forgot-password"
+                    tabIndex={-1}
                     style={{
                       fontSize: '12px', color: 'var(--color-primary)',
                       fontFamily: 'Plus Jakarta Sans, sans-serif',

@@ -70,14 +70,10 @@ export default function SignupPage() {
         ? `${window.location.origin}${buildInviteConfirmationPath(pendingInvite!)}`
         : undefined;
       const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
-      if (error) throw error;
+      if (error && !getErrorMessage(error).includes('already registered')) throw error;
       setSubmitted(true);
     } catch (err: unknown) {
-      if (getErrorMessage(err).includes('already registered')) {
-        setEmailError('An account with this email already exists.');
-      } else {
-        setFormError('Something went wrong. Please check your connection and try again.');
-      }
+      setFormError('Something went wrong. Please check your connection and try again.');
     }
     setLoading(false);
   };

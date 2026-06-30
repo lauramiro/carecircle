@@ -444,8 +444,10 @@ export class RemindersService {
           html: `<p>${body}</p><p><a href="${url}">View appointment</a></p>`,
         })
         .then(() => channelsSent.push('email'))
-        .catch(() =>
-          this.logger.warn(`reminder_email_failed user=${profile.id}`),
+        .catch((err: unknown) =>
+          this.logger.warn(
+            `reminder_email_failed user=${profile.id} reason=${err instanceof Error ? err.message : String(err)}`,
+          ),
         );
     }
 

@@ -77,7 +77,7 @@ export class GroupInviteEmailService {
 
   async sendInviteEmail(dto: SendGroupInviteEmailDto): Promise<{ ok: true }> {
     if (!this.mailer.isConfigured()) {
-      throw new ServiceUnavailableException('invite_email_requires_gmail_env');
+      throw new ServiceUnavailableException('invite_email_requires_brevo_env');
     }
 
     const emailNorm = normalizeInviteEmail(dto.email);

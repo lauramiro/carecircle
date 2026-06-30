@@ -47,6 +47,7 @@ export class GmailMailerService {
         Accept: 'application/json',
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
     });
 
     if (!res.ok) {

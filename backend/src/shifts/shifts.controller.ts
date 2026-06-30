@@ -6,14 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ShiftsService } from './shifts.service';
-
-export interface AssignShiftDto {
-  groupId: string;
-  shiftDate: string;
-  slot: string;
-  assignedCaregiverId: string | null;
-  changedBy: string;
-}
+import { AssignShiftDto } from './dto/assign-shift.dto';
 
 @Controller('shifts')
 export class ShiftsController {

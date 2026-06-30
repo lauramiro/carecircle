@@ -7,6 +7,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import { LoadingPanel } from '../../components/ui/ContentPanel';
 import { useAppointments } from '../../hooks/appointments/useAppointments';
 import type { Appointment, EditScope, RecurrenceRule } from '../../api/appointments/appointments.types';
+import { isBeforeLocalDate } from '../../lib/dates';
 
 type ViewMode = 'list' | 'week' | 'month';
 
@@ -154,6 +155,7 @@ function AppointmentCard({
 }: AppointmentCardProps) {
   const { date, time } = formatDateTime(appt.startTime);
   const past = isPast(appt.startTime);
+  const beforeToday = isBeforeLocalDate(new Date(appt.startTime));
 
   return (
     <div
@@ -222,16 +224,28 @@ function AppointmentCard({
             >
               Edit
             </button>
-            <button
-              type="button"
-              disabled={isSubmitting || deletingId === appt.id}
-              onClick={() => onDelete(appt)}
-              className="flex items-center gap-1 text-xs px-2.5 py-1 rounded border"
-              style={{ borderColor: 'var(--color-status-critical)', color: 'var(--color-status-critical)' }}
-            >
-              <Trash2 size={11} />
-              {deletingId === appt.id ? 'Cancelling...' : 'Cancel'}
-            </button>
+            {beforeToday ? (
+              <span
+                className="rounded-full px-2.5 py-1 text-xs font-bold"
+                style={{
+                  backgroundColor: 'var(--color-bg-muted)',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
+                {appt.status === 'completed' ? 'Completed' : 'Passed'}
+              </span>
+            ) : (
+              <button
+                type="button"
+                disabled={isSubmitting || deletingId === appt.id}
+                onClick={() => onDelete(appt)}
+                className="flex items-center gap-1 text-xs px-2.5 py-1 rounded border"
+                style={{ borderColor: 'var(--color-status-critical)', color: 'var(--color-status-critical)' }}
+              >
+                <Trash2 size={11} />
+                {deletingId === appt.id ? 'Cancelling...' : 'Cancel'}
+              </button>
+            )}
           </div>
         )}
       </div>

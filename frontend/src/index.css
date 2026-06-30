@@ -28,10 +28,6 @@
   --color-status-skipped:       #5A6880;
   --color-status-skipped-bg:    #E8EEF5;
   --color-nav-active-text:      #FFFFFF;
-  --color-action-primary-bg:    var(--color-primary);
-  --color-action-primary-text:  #FFFFFF;
-  --color-action-secondary-bg:  var(--color-primary-light);
-  --color-action-secondary-text: var(--color-primary-dark);
   --color-overlay:              rgba(15, 23, 42, 0.4);
   --color-input-bg:             var(--color-card);
   --color-bg-disabled:          #EEF2F7;
@@ -63,10 +59,6 @@
   --color-status-skipped:       #9AA8BC;
   --color-status-skipped-bg:    #1E2633;
   --color-nav-active-text:      #FFFFFF;
-  --color-action-primary-bg:    #B9D9F5;
-  --color-action-primary-text:  #07111C;
-  --color-action-secondary-bg:  #213148;
-  --color-action-secondary-text: #D7EAFF;
   --color-overlay:              rgba(0, 0, 0, 0.55);
   --color-input-bg:             #1F2633;
   --color-bg-disabled:          #1A2230;
@@ -135,22 +127,6 @@ select:-webkit-autofill {
   );
   background-size: 200% 100%;
   animation: carecircle-shimmer 1.4s ease-in-out infinite;
-}
-
-.cc-primary-action {
-  background-color: var(--color-action-primary-bg);
-  color: var(--color-action-primary-text);
-}
-
-.cc-secondary-action {
-  background-color: var(--color-action-secondary-bg);
-  color: var(--color-action-secondary-text);
-}
-
-.cc-outline-action {
-  background-color: var(--color-card);
-  border-color: var(--color-border);
-  color: var(--color-action-secondary-text);
 }
 
 @media (prefers-reduced-motion: reduce) {

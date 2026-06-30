@@ -1,4 +1,3 @@
-import { parseResponseJson } from '../../utils/helper';
 import { parseDosageString } from '@lib/dosage';
 import { normalizeTime } from '@lib/time';
 import { supabase } from '@lib/supabaseClient';
@@ -100,7 +99,7 @@ export async function addMedication(
     }),
   });
 
-  return rowFromApi(await parseResponseJson<MedicationRow>(response));
+  return rowFromApi(await response.json());
 }
 
 export async function editMedication(
@@ -131,7 +130,7 @@ export async function editMedication(
     body: JSON.stringify(body),
   });
 
-  return rowFromApi(await parseResponseJson<MedicationRow>(response));
+  return rowFromApi(await response.json());
 }
 
 export async function pauseMedication(groupId: string, id: string): Promise<Medication> {
@@ -139,7 +138,7 @@ export async function pauseMedication(groupId: string, id: string): Promise<Medi
     method: 'POST',
     body: JSON.stringify({}),
   });
-  return rowFromApi(await parseResponseJson<MedicationRow>(response));
+  return rowFromApi(await response.json());
 }
 
 export async function activateMedication(groupId: string, id: string): Promise<Medication> {
@@ -147,7 +146,7 @@ export async function activateMedication(groupId: string, id: string): Promise<M
     method: 'POST',
     body: JSON.stringify({}),
   });
-  return rowFromApi(await parseResponseJson<MedicationRow>(response));
+  return rowFromApi(await response.json());
 }
 
 export async function archiveMedication(groupId: string, id: string): Promise<Medication> {
@@ -155,7 +154,7 @@ export async function archiveMedication(groupId: string, id: string): Promise<Me
     method: 'POST',
     body: JSON.stringify({}),
   });
-  return rowFromApi(await parseResponseJson<MedicationRow>(response));
+  return rowFromApi(await response.json());
 }
 
 export async function deleteMedication(id: string): Promise<never> {

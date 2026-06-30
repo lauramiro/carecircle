@@ -250,7 +250,8 @@ export default function EmergencyContactsPage() {
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="cc-primary-action inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold"
+            className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-white"
+            style={{ backgroundColor: 'var(--color-primary)' }}
           >
             <Plus size={16} />
             Add emergency contact
@@ -322,7 +323,8 @@ export default function EmergencyContactsPage() {
                         <button
                           type="button"
                           onClick={() => setEditingId(contact.id)}
-                          className="cc-outline-action h-10 rounded-lg border px-4 text-sm font-bold"
+                          className="h-10 rounded-lg border px-4 text-sm font-bold"
+                          style={{ borderColor: 'var(--color-border)' }}
                         >
                           Edit
                         </button>

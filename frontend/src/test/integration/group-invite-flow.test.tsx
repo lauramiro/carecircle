@@ -217,6 +217,10 @@ describe('group invite integration flow', () => {
     inviteMemberHookMock.sendInvite.mockResolvedValue(undefined);
     inviteServiceMock.fetchInviteGroupDetails.mockResolvedValue({
       groupId: 'group-demo',
+      patientId: 'patient-demo',
+      groupName: 'CareCircle Family Group',
+      description: 'A shared care group.',
+      totalCarers: 2,
     });
     inviteServiceMock.isUserInInviteGroup.mockResolvedValue(false);
     inviteServiceMock.isEmailRegistered.mockResolvedValue(false);
@@ -314,11 +318,19 @@ describe('group invite integration flow', () => {
     authMock.value = {
       session: { user: { email: 'new@example.com', id: 'user-confirm-1' } },
     };
+    inviteServiceMock.fetchInviteGroupDetails.mockResolvedValue({
+      groupId: 'group-demo',
+      patientId: 'patient-demo',
+      groupName: 'CareCircle Family Group',
+      description: 'A shared care group.',
+      totalCarers: 8,
+    });
     inviteServiceMock.acceptInvitation.mockRejectedValue(new Error('Group has reached the member limit'));
 
     renderInviteFlow(memberInviteSearch('new@example.com', 'true'));
 
-    await user.click(await screen.findByRole('button', { name: /accept invitation/i }));
+    expect(await screen.findByText(/8 carers already linked/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /accept invitation/i }));
 
     expect(await screen.findByText('Invitation unavailable')).toBeInTheDocument();
     expect(

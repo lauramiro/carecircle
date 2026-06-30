@@ -52,8 +52,8 @@ export default function AdministrationLogFiltersBar({
         <button
           type="button"
           onClick={clearAll}
-          className="cc-outline-action rounded-lg border px-3 py-1.5 text-xs font-bold"
-          style={{ cursor: 'pointer' }}
+          className="text-xs font-bold"
+          style={{ color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer' }}
         >
           Clear filters
         </button>

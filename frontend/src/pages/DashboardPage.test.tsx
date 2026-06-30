@@ -44,7 +44,6 @@ vi.mock('../components/shifts/MyShiftsTodayWidget', () => ({
 }));
 
 const authMock = vi.hoisted(() => ({
-  displayName: 'Sarah Hamilton',
   session: {
     user: {
       email: 'sarah.caregiver@example.com',
@@ -104,16 +103,12 @@ describe('DashboardPage', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/good (morning|afternoon|evening), sarah hamilton/i)).toBeInTheDocument();
+    expect(screen.getByText(/good (morning|afternoon|evening), sarah caregiver/i)).toBeInTheDocument();
     expect(screen.getByText(/overview of your care circles/i)).toBeInTheDocument();
     expect(screen.getByText('Active groups')).toBeInTheDocument();
     expect(screen.getByText('Shift coverage gaps')).toBeInTheDocument();
     expect(screen.getAllByText('Dad Care Circle').length).toBeGreaterThan(0);
     expect(screen.getByText(/3 of 28 sessions need coverage/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /assign shifts/i })).toHaveAttribute(
-      'href',
-      '/groups/group-001/shifts',
-    );
     expect(screen.getByText('Groups you manage')).toBeInTheDocument();
     expect(screen.getByText('Total members')).toBeInTheDocument();
   });

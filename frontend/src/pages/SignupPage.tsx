@@ -68,7 +68,7 @@ export default function SignupPage() {
       const inviteMatches = pendingInvite && pendingInvite.email.toLowerCase() === email.toLowerCase();
       const emailRedirectTo = inviteMatches
         ? `${window.location.origin}${buildInviteConfirmationPath(pendingInvite!)}`
-        : window.location.origin;
+        : undefined;
       const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
       if (error && !getErrorMessage(error).includes('already registered')) throw error;
       setSubmitted(true);

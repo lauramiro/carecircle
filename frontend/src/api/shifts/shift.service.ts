@@ -1,4 +1,3 @@
-import { parseResponseJson } from '../../utils/helper';
 import { getGroups } from '../groups/groups.service';
 import { canAssignShifts } from '../../lib/carePermissions';
 import { supabase } from '../../lib/supabaseClient';
@@ -19,8 +18,6 @@ import {
   mergeWeeklyAssignments,
   toISODate,
 } from './shift.utils';
-
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
 type WeeklyShiftAssignmentRow = Database['public']['Tables']['weekly_shift_assignments']['Row'] & {
   assignee: { full_name: string | null } | null;
@@ -81,32 +78,25 @@ export async function getWeeklyShiftAssignments(
 export async function saveWeeklyShiftAssignment(
   payload: SaveWeeklyShiftAssignmentPayload,
 ): Promise<WeeklyShiftAssignment> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('You must be signed in to save a shift assignment.');
+  const { data, error } = await supabase
+    .from('weekly_shift_assignments')
+    .upsert(
+      {
+        group_id: payload.groupId,
+        shift_date: payload.shiftDate,
+        shift_slot: payload.slot,
+        assigned_caregiver_id: payload.assignedCaregiverId,
+      },
+      { onConflict: 'group_id,shift_date,shift_slot' },
+    )
+    .select(weeklyShiftAssignmentSelect)
+    .single();
+
+  if (error || !data) {
+    console.error('saveWeeklyShiftAssignment:', error);
+    throw new Error('Unable to save the shift assignment');
   }
 
-  const response = await fetch(`${apiBaseUrl}/api/shifts/assignments`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ ...payload, changedBy: user.id }),
-  });
-
-  if (!response.ok) {
-    let message = 'Unable to save the shift assignment';
-    try {
-      const errorData = await parseResponseJson(response) as { message?: string };
-      if (errorData.message) message = errorData.message;
-    } catch {
-      // keep default message
-    }
-    console.error('saveWeeklyShiftAssignment:', message);
-    throw new Error(message);
-  }
-
-  const data = await parseResponseJson(response);
   return mapWeeklyShiftAssignment(data as WeeklyShiftAssignmentRow);
 }
 

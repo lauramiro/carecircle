@@ -36,10 +36,6 @@ export interface SaveWeeklyShiftAssignmentPayload {
   assignedCaregiverId: string | null;
 }
 
-export interface AssignShiftRequestBody extends SaveWeeklyShiftAssignmentPayload {
-  changedBy: string;
-}
-
 export interface ShiftWarningSummary {
   groupId: string;
   groupName: string;

@@ -21,7 +21,6 @@ import { MedicationsModule } from './medications/medications.module';
 import { CronModule } from './cron/cron.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { InsightsModule } from './insights/insights.module';
-import { ShiftsModule } from './shifts/shifts.module';
 import { DocumentStorageModule } from './document-storage/document-storage.module';
 
 @Module({
@@ -41,7 +40,6 @@ import { DocumentStorageModule } from './document-storage/document-storage.modul
     CronModule,
     RemindersModule,
     InsightsModule,
-    ShiftsModule,
     DocumentStorageModule,
   ],
   controllers: [AppController],

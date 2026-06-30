@@ -78,8 +78,6 @@ export type Database = {
           provider_id: string | null
           provider_name: string | null
           provider_phone: string | null
-          recurrence_rule: string | null
-          recurrence_series_id: string | null
           reminder_offsets: number[] | null
           reminder_sent: boolean | null
           reminder_sent_at: string | null
@@ -109,8 +107,6 @@ export type Database = {
           provider_id?: string | null
           provider_name?: string | null
           provider_phone?: string | null
-          recurrence_rule?: string | null
-          recurrence_series_id?: string | null
           reminder_offsets?: number[] | null
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
@@ -140,8 +136,6 @@ export type Database = {
           provider_id?: string | null
           provider_name?: string | null
           provider_phone?: string | null
-          recurrence_rule?: string | null
-          recurrence_series_id?: string | null
           reminder_offsets?: number[] | null
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
@@ -2247,7 +2241,6 @@ export type Database = {
           created_at: string
           group_id: string
           id: string
-          last_changed_by: string | null
           shift_date: string
           shift_slot: string
           updated_at: string
@@ -2257,7 +2250,6 @@ export type Database = {
           created_at?: string
           group_id: string
           id?: string
-          last_changed_by?: string | null
           shift_date: string
           shift_slot: string
           updated_at?: string
@@ -2267,7 +2259,6 @@ export type Database = {
           created_at?: string
           group_id?: string
           id?: string
-          last_changed_by?: string | null
           shift_date?: string
           shift_slot?: string
           updated_at?: string
@@ -2285,13 +2276,6 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_group"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "weekly_shift_assignments_last_changed_by_fkey"
-            columns: ["last_changed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2348,8 +2332,6 @@ export type Database = {
           instructions: string | null
           interval_hours: number | null
           last_refill_date: string | null
-          low_stock_alert_sent_at: string | null
-          low_stock_alert_threshold_days: number
           materialization_cursor_at: string | null
           medication_name: string
           name: string | null
@@ -2361,7 +2343,6 @@ export type Database = {
           prescribed_by: string | null
           prescribed_date: string | null
           prescription_number: string | null
-          quantity_on_hand: number | null
           refills_remaining: number | null
           route: string | null
           schedule_type: string | null
@@ -2403,26 +2384,6 @@ export type Database = {
       is_caregiver_for: { Args: { p_patient_id: string }; Returns: boolean }
       is_email_registered: { Args: { p_email: string }; Returns: boolean }
       is_group_member: { Args: { check_group_id: string }; Returns: boolean }
-      mark_checklist_item_given: {
-        Args: {
-          p_given_at: string
-          p_given_notes?: string
-          p_item_id: string
-          p_overdue_hours?: number
-          p_overdue_minutes?: number
-        }
-        Returns: string
-      }
-      medication_daily_dose_count: {
-        Args: {
-          p_day_of_month: number
-          p_days_of_week: number[]
-          p_interval_hours: number
-          p_schedule_type: string
-          p_specific_times: string[]
-        }
-        Returns: number
-      }
       set_document_include_in_hospital_summary: {
         Args: { p_document_id: string; p_include: boolean }
         Returns: undefined
@@ -2434,15 +2395,6 @@ export type Database = {
           p_new_role: Database["public"]["Enums"]["member_role"]
         }
         Returns: undefined
-      }
-      update_invite_status: {
-        Args: {
-          p_invite_id: string
-          p_status: Database["public"]["Enums"]["invite_status"]
-        }
-        Returns: {
-          group_id: string
-        }[]
       }
       verify_profile_trigger: {
         Args: never

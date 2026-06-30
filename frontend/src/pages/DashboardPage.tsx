@@ -28,7 +28,7 @@ import { getPersonalizedGreeting } from '../utils/greeting';
 import { formatDate, formatMemberCount, truncateText } from '../utils/formatters';
 
 export default function DashboardPage() {
-  const { displayName } = useAuth();
+  const { session } = useAuth();
   const { groups, loading, error } = useGroups();
   const navigate = useNavigate();
   const shouldReduceMotion = useReducedMotion();
@@ -44,7 +44,7 @@ export default function DashboardPage() {
     return (
       <section>
         <PageHeader
-          title={getPersonalizedGreeting(displayName)}
+          title={getPersonalizedGreeting(session?.user?.email)}
           subtitle="Here's an overview of your care circles today."
           showDate
         />
@@ -74,7 +74,7 @@ export default function DashboardPage() {
   return (
     <section className="space-y-6">
       <PageHeader
-        title={getPersonalizedGreeting(displayName)}
+        title={getPersonalizedGreeting(session?.user?.email)}
         subtitle="Here's an overview of your care circles today."
         showDate
         actions={

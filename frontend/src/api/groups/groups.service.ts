@@ -13,7 +13,6 @@ import type {
   EmergencyContact,
   EmergencyContactFormData,
   GroupMember,
-  GroupMemberStatus,
   GPContact,
   Group,
   GroupSummary,
@@ -495,46 +494,6 @@ export async function updateMemberRole(
   if (error) {
     console.error('updateMemberRole:', error);
     throw new Error(error.message || 'Unable to update member role');
-  }
-}
-
-/** Only the primary caregiver may remove another member; enforced by RLS on `care_givers`. */
-export async function removeMember(groupId: string, caregiverId: string): Promise<void> {
-  const { error, count } = await supabase
-    .from('care_givers')
-    .delete({ count: 'exact' })
-    .eq('group_id', groupId)
-    .eq('caregiver_id', caregiverId);
-
-  if (error) {
-    console.error('removeMember:', error);
-    throw new Error(error.message || 'Unable to remove member');
-  }
-
-  if (!count) {
-    throw new Error('Member could not be removed. You may not have permission.');
-  }
-}
-
-/** Only the primary caregiver may suspend/reactivate another member; enforced by RLS on `care_givers`. */
-export async function updateMemberStatus(
-  groupId: string,
-  caregiverId: string,
-  status: GroupMemberStatus,
-): Promise<void> {
-  const { error, count } = await supabase
-    .from('care_givers')
-    .update({ status: status === 'Active' ? 'active' : 'suspended' }, { count: 'exact' })
-    .eq('group_id', groupId)
-    .eq('caregiver_id', caregiverId);
-
-  if (error) {
-    console.error('updateMemberStatus:', error);
-    throw new Error(error.message || 'Unable to update member status');
-  }
-
-  if (!count) {
-    throw new Error('Member status could not be updated. You may not have permission.');
   }
 }
 

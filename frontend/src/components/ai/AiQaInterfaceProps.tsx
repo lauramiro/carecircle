@@ -5,7 +5,6 @@ import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import LoadingIndicator from './LoadingIndicator';
 import type { ConversationMessage } from './types';
-import { parseResponseJson } from '../../utils/helper';
 
 interface AiQaInterfaceProps {
   groupId: string;
@@ -77,9 +76,7 @@ export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
         // ------------------------------
       } else {
         // ---------- REAL BACKEND (currently commented out) ----------
-         const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
-         const url = apiBaseUrl ? `${apiBaseUrl}/api/ai/qa` : '/api/ai/qa';
-         const response = await fetch(url, {
+         const response = await fetch('/api/ai/qa', {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify({
@@ -88,15 +85,10 @@ export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
            }),
          });
          if (!response.ok) {
-           let errorData: { message?: string } = {};
-           try {
-             errorData = await parseResponseJson(response);
-           } catch {
-             errorData = { message: 'Failed to get response from AI' };
-           }
+           const errorData = await response.json();
            throw new Error(errorData.message || 'Failed to get response from AI');
          }
-         const data = await parseResponseJson<{ answer: string; latencyMs: number }>(response);
+         const data = await response.json();
          const aiMessage: ConversationMessage = {
            id: `ai-${Date.now()}`,
            type: 'answer',

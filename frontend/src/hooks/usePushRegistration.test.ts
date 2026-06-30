@@ -61,14 +61,9 @@ describe('usePushRegistration', () => {
     fetchMock
       .mockResolvedValueOnce({
         ok: true,
-        text: async () => JSON.stringify({ publicKey: 'test-vapid-key' }),
         json: async () => ({ publicKey: 'test-vapid-key' }),
       })
-      .mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify({ id: 'sub-1' }),
-        json: async () => ({ id: 'sub-1' }),
-      });
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'sub-1' }) });
   });
 
   it('registers when permission is already granted on mount', async () => {
@@ -86,7 +81,7 @@ describe('usePushRegistration', () => {
       expect(result.current.status).toBe('registered');
     });
 
-    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/push/subscriptions'), expect.any(Object));
+    expect(fetchMock).toHaveBeenCalledWith('/api/push/subscriptions', expect.any(Object));
   });
 
   it('register() syncs subscription when called explicitly', async () => {
@@ -98,7 +93,7 @@ describe('usePushRegistration', () => {
       expect(result.current.status).toBe('registered');
     });
 
-    expect(registerMock).toHaveBeenCalledWith(expect.stringContaining('/sw.js'), { scope: '/' });
+    expect(registerMock).toHaveBeenCalledWith('/sw.js', { scope: '/' });
     expect(subscribeMock).toHaveBeenCalledOnce();
   });
 
@@ -171,21 +166,16 @@ describe('registerWebPushForUser', () => {
     fetchMock
       .mockResolvedValueOnce({
         ok: true,
-        text: async () => JSON.stringify({ publicKey: 'test-vapid-key' }),
         json: async () => ({ publicKey: 'test-vapid-key' }),
       })
-      .mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify({ id: 'sub-1' }),
-        json: async () => ({ id: 'sub-1' }),
-      });
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'sub-1' }) });
 
     await registerWebPushForUser('user-123');
 
     expect(unsubscribeMock).toHaveBeenCalledOnce();
     expect(subscribeMock).toHaveBeenCalledOnce();
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining('/api/push/subscriptions'),
+      '/api/push/subscriptions',
       expect.objectContaining({
         method: 'POST',
         body: expect.stringContaining('https://push.example/new'),

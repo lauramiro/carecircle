@@ -24,7 +24,8 @@ export default function AiQaPage() {
         actions={
           <Link
             to={`/groups/${groupId}`}
-            className="cc-outline-action inline-flex h-10 items-center rounded-lg border px-4 text-sm font-bold no-underline"
+            className="inline-flex h-10 items-center rounded-lg border bg-white px-4 text-sm font-bold no-underline"
+            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
           >
             Back to group
           </Link>

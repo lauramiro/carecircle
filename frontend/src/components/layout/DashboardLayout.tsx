@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getInitialsFromLabel } from '../../utils/greeting';
+import { getCareRoleLabel } from '../../lib/careRole';
 import {
   buildGroupNavPath,
   dashboardNavItems,
@@ -32,6 +32,10 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { usePushRegistration } from '../../hooks/usePushRegistration';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 
+function getInitials(email?: string): string {
+  if (!email) return 'CC';
+  return email.slice(0, 2).toUpperCase();
+}
 
 function getNavLinkStyle(isActive: boolean): CSSProperties {
   return {
@@ -250,7 +254,7 @@ function useDashboardNavigationHistory(location: DashboardLocationSnapshot) {
 }
 
 export default function DashboardLayout() {
-  const { session, displayName, signOut } = useAuth();
+  const { session, signOut } = useAuth();
   const pushRegistration = usePushRegistration();
   const location = useLocation();
   const navigate = useNavigate();
@@ -515,7 +519,7 @@ export default function DashboardLayout() {
                       </p>
                       {activeGroup?.role ? (
                         <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                          Your role: {activeGroup.role}
+                          Your role: {getCareRoleLabel(activeGroup.role)}
                         </p>
                       ) : null}
                       <Link
@@ -576,14 +580,14 @@ export default function DashboardLayout() {
                     color: 'var(--color-primary)',
                   }}
                 >
-                  {getInitialsFromLabel(displayName)}
+                  {getInitials(email)}
                 </div>
                 <div className="min-w-0">
                   <p
                     className="truncate text-sm font-semibold"
                     style={{ color: 'var(--color-text-primary)' }}
                   >
-                    {displayName}
+                    {activeGroup?.name ?? 'Caregiver'}
                   </p>
                   <p
                     className="truncate text-xs"
@@ -723,7 +727,7 @@ export default function DashboardLayout() {
                   </button>
                 </div>
               )}
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
                 variants={shouldReduceMotion ? STATIC_PAGE_VARIANTS : PAGE_VARIANTS}

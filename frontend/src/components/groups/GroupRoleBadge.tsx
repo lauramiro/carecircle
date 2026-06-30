@@ -10,7 +10,7 @@ export default function GroupRoleBadge({ role }: GroupRoleBadgeProps) {
 
   return (
     <span
-      className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold"
+      className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold"
       style={{
         backgroundColor: isPrimary ? 'var(--color-primary-light)' : '#EEF6F2',
         color: isPrimary ? 'var(--color-primary)' : '#2F8F6B',

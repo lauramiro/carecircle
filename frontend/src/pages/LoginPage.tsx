@@ -35,7 +35,7 @@ export default function LoginPage() {
           pendingInvite.email.toLowerCase() === email.toLowerCase();
         const emailRedirectTo = inviteMatches
           ? `${window.location.origin}${buildInviteConfirmationPath(pendingInvite)}`
-          : window.location.origin;
+          : undefined;
         const { error } = await supabase.auth.signInWithOtp({
           email,
           options: { emailRedirectTo, shouldCreateUser: false },

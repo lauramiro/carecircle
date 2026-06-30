@@ -16,21 +16,10 @@ backend/.env.production
 # Build output
 frontend/dist/
 backend/dist/
-./playwright-mcp/
 
 # OS files
 .DS_Store
 Thumbs.db
-
-# Backend lock file generated on Windows — omit to avoid breaking Linux CI
-# (rolldown optional deps, npm/cli#4828)
-backend/package-lock.json
-
-# Playwright e2e
-e2e/node_modules/
-e2e/.auth/
-e2e/playwright-report/
-e2e/test-results/
 
 # Local agent configuration
 .cursor/.env

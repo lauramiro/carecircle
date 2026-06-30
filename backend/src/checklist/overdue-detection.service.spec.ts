@@ -25,8 +25,6 @@ function makeItem(
     skip_reason: null,
     overdue_at: null,
     archived_at: null,
-    window_start: null,
-    window_end: null,
     ...overrides,
   };
 }

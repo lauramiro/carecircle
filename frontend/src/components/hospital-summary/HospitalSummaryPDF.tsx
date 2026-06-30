@@ -101,8 +101,9 @@ export function HospitalSummaryPDF() {
         <button
           onClick={generatePDF}
           disabled={isGenerating}
-          className="cc-primary-action"
           style={{
+            backgroundColor: 'var(--color-primary)',
+            color: '#ffffff',
             border: 'none',
             padding: '12px 24px',
             borderRadius: '8px',
@@ -133,8 +134,9 @@ export function HospitalSummaryPDF() {
           <div style={{ display: 'flex', gap: '12px' }}>
             <button
               onClick={downloadPDF}
-              className="cc-primary-action"
               style={{
+                backgroundColor: 'var(--color-primary)',
+                color: '#ffffff',
                 border: 'none',
                 padding: '12px 24px',
                 borderRadius: '8px',
@@ -152,8 +154,9 @@ export function HospitalSummaryPDF() {
  
             <button
               onClick={sharePDF}
-              className="cc-primary-action"
               style={{
+                backgroundColor: 'var(--color-primary)',
+                color: '#ffffff',
                 border: 'none',
                 padding: '12px 24px',
                 borderRadius: '8px',

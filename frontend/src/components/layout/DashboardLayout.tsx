@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { getCareRoleLabel } from '../../lib/careRole';
 import {
   buildGroupNavPath,
   dashboardNavItems,
@@ -518,7 +519,7 @@ export default function DashboardLayout() {
                       </p>
                       {activeGroup?.role ? (
                         <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                          Your role: {activeGroup.role}
+                          Your role: {getCareRoleLabel(activeGroup.role)}
                         </p>
                       ) : null}
                       <Link

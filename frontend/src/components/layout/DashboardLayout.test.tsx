@@ -205,6 +205,8 @@ describe('DashboardLayout', () => {
 
     expect(screen.getByText('Current care circle')).toBeInTheDocument();
     expect(screen.getAllByText('Dad Care Circle').length).toBeGreaterThan(0);
+    expect(screen.getByText('Your role: Primary carer')).toBeInTheDocument();
+    expect(screen.queryByText(/primary_carer/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /today's medications/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /view profile/i })).toHaveAttribute(
       'href',

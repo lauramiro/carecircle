@@ -75,6 +75,31 @@ describe('GroupsListPage', () => {
     expect(screen.getByText(/Daily support and medication coordination for Dad\./)).toBeInTheDocument();
   });
 
+  it('lets longer group names wrap instead of truncating them', () => {
+    groupsHookMock.value = {
+      loading: false,
+      error: null,
+      groups: [
+        {
+          id: 'group-care-long-name',
+          name: "Laura's Care group for weekend respite planning",
+          description: 'Shared rota and medication support.',
+          role: 'primary_carer' as ROLE,
+          createdAt: '2025-05-12T09:00:00.000Z',
+          memberCount: 3,
+        },
+      ],
+    };
+
+    renderPage();
+
+    const heading = screen.getByRole('heading', {
+      name: /laura's care group for weekend respite planning/i,
+    });
+    expect(heading).toHaveClass('break-words');
+    expect(heading).not.toHaveClass('truncate');
+  });
+
   it('navigates to group detail when a card is clicked', async () => {
     const user = userEvent.setup();
     renderPage();

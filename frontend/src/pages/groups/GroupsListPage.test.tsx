@@ -71,6 +71,7 @@ describe('GroupsListPage', () => {
     expect(screen.getByText('Dad Care Circle')).toBeInTheDocument();
     // expect(screen.getByText('group-care-001')).toBeInTheDocument(); // Flaky/removed from UI
     expect(screen.getByText('Primary carer')).toBeInTheDocument();
+    expect(screen.getByText('Primary carer')).toHaveClass('whitespace-nowrap');
     expect(screen.getByText('12 May 2025')).toBeInTheDocument();
     expect(screen.getByText(/Daily support and medication coordination for Dad\./)).toBeInTheDocument();
   });

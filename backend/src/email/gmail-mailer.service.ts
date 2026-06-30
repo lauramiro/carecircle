@@ -31,7 +31,7 @@ export class GmailMailerService {
       throw new Error('mail_from_missing');
     }
 
-    this.logger.debug(`brevo_key_prefix=${apiKey.slice(0, 8)}... length=${apiKey.length}`);
+    this.logger.warn(`brevo_key_check prefix=${apiKey.slice(0, 8)} length=${apiKey.length}`);
 
     const body = {
       sender: { name: fromName ?? fromAddress, email: fromAddress },

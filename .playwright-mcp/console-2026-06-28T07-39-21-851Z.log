@@ -1,8 +1,0 @@
-[   11367ms] [ERROR] TypeError: Failed to fetch
-    at https://carecircle-frontend.onrender.com/assets/index-tydnTvzz.js:39:2884
-    at ny (https://carecircle-frontend.onrender.com/assets/index-tydnTvzz.js:39:8980)
-    at G (https://carecircle-frontend.onrender.com/assets/index-tydnTvzz.js:39:8722)
-    at https://carecircle-frontend.onrender.com/assets/index-tydnTvzz.js:42:9183
-    at ub._useSession (https://carecircle-frontend.onrender.com/assets/index-tydnTvzz.js:42:7442)
-    at async ub._getUser (https://carecircle-frontend.onrender.com/assets/index-tydnTvzz.js:42:9010)
-    at async https://carecircle-frontend.onrender.com/assets/index-tydnTvzz.js:42:8815 @ https://carecircle-frontend.onrender.com/assets/index-tydnTvzz.js:38

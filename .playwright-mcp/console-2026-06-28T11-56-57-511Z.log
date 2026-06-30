@@ -1,2 +1,0 @@
-[  142376ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/invites/group/send-email:0
-[  142377ms] [ERROR] sendGroupInviteEmail: {statusCode: 400, message: mail_transport_failed, path: /api/invites/group/send-email, traceId: null, timestamp: 2026-06-28T11:59:19.164Z} @ https://carecircle-frontend.onrender.com/assets/index-D8GyREjS.js:74

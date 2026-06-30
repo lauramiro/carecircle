@@ -1,9 +1,0 @@
-[   67025ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://fxkwepyjqfwjznsetkcf.supabase.co/auth/v1/token?grant_type=password:0
-[   85625ms] [ERROR] TypeError: Failed to fetch
-    at https://carecircle-frontend.onrender.com/assets/index-DRaT0IUp.js:39:2884
-    at ry (https://carecircle-frontend.onrender.com/assets/index-DRaT0IUp.js:39:8980)
-    at G (https://carecircle-frontend.onrender.com/assets/index-DRaT0IUp.js:39:8722)
-    at https://carecircle-frontend.onrender.com/assets/index-DRaT0IUp.js:42:9183
-    at db._useSession (https://carecircle-frontend.onrender.com/assets/index-DRaT0IUp.js:42:7442)
-    at async db._getUser (https://carecircle-frontend.onrender.com/assets/index-DRaT0IUp.js:42:9010)
-    at async https://carecircle-frontend.onrender.com/assets/index-DRaT0IUp.js:42:8815 @ https://carecircle-frontend.onrender.com/assets/index-DRaT0IUp.js:38

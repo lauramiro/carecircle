@@ -1,7 +1,0 @@
-- generic [ref=e2]:
-  - generic [ref=e5]:
-    - img [ref=e7]
-    - heading "Invitation unavailable" [level=1] [ref=e9]
-    - paragraph [ref=e10]: The active session is signed in as ta******ah@outlook.com, but this invite was sent to ta******s2@outlook.com. Please log out first, then open the invite again with the invited email.
-    - button "Go home" [ref=e11] [cursor=pointer]
-  - region "Notifications Alt+T"

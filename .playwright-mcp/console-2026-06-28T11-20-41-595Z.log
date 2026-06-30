@@ -1,6 +1,0 @@
-[  136639ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/invites/group/send-email:0
-[  136640ms] [ERROR] sendGroupInviteEmail: {statusCode: 400, message: mail_transport_failed, path: /api/invites/group/send-email, traceId: null, timestamp: 2026-06-28T11:22:57.175Z} @ https://carecircle-frontend.onrender.com/assets/index-D8GyREjS.js:74
-[ 1554203ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/invites/group/send-email:0
-[ 1554204ms] [ERROR] sendGroupInviteEmail: {statusCode: 400, message: mail_transport_failed, path: /api/invites/group/send-email, traceId: null, timestamp: 2026-06-28T11:46:34.903Z} @ https://carecircle-frontend.onrender.com/assets/index-D8GyREjS.js:74
-[ 2027315ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://carecircle-backend-v3j7.onrender.com/api/invites/group/send-email:0
-[ 2027315ms] [ERROR] sendGroupInviteEmail: {statusCode: 400, message: mail_transport_failed, path: /api/invites/group/send-email, traceId: null, timestamp: 2026-06-28T11:54:28.138Z} @ https://carecircle-frontend.onrender.com/assets/index-D8GyREjS.js:74

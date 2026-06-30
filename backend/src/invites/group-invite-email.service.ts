@@ -96,11 +96,9 @@ export class GroupInviteEmailService {
       html: bodies.html,
       text: bodies.text,
     };
-    console.log('sendInviteEmail params:', params);
     try {
       await this.mailer.sendMail(params);
-    } catch (err) {
-      console.error('sendInviteEmail error:', err);
+    } catch {
       throw new BadRequestException('mail_transport_failed');
     }
 

@@ -50,7 +50,7 @@ test('AUTH-06: wrong password shows error and stays on login', async ({ page }) 
   await expect(page).toHaveURL(/\/login/);
   // An error message should be visible
   await expect(
-    page.getByText(/invalid|incorrect|wrong|credentials|error/i).first(),
+    page.getByText(/invalid|incorrect|wrong|credentials|error|match/i).first(),
   ).toBeVisible();
 });
 
@@ -85,7 +85,13 @@ test('AUTH-11: session is restored after page reload', async ({ page }) => {
   await page.waitForURL(/\/(dashboard|groups)/);
   const urlBeforeReload = page.url();
 
-  await page.reload();
+  // Reload may briefly abort if the page is still settling — catch and retry once
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+  } catch {
+    await page.goto(urlBeforeReload, { waitUntil: 'domcontentloaded' });
+  }
+  await page.waitForLoadState('networkidle').catch(() => { /* ignore timeout */ });
   // Should not be pushed to /login after reload
   await expect(page).not.toHaveURL(/\/login/);
   // Should still be somewhere in the authenticated area

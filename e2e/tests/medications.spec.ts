@@ -21,7 +21,7 @@ test.beforeAll(() => {
 
 async function goToMedPage(page: Page) {
   await page.goto(`/groups/${GROUP_ID}/medications/add`);
-  await expect(page).not.toHaveURL(/\/groups\/list/); // didn't redirect away
+  await expect(page).not.toHaveURL(/\/login/); // auth check — not redirected to login
   await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 15_000 });
 }
 

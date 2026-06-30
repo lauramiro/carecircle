@@ -30,7 +30,8 @@ test('INS-01: insights page loads without error', async ({ page }) => {
   await expect(page.getByText(/something went wrong|error loading insights/i)).not.toBeVisible();
 
   // Should show either insight cards or an empty-state message
-  const hasCards = await page.locator('[data-testid="insight-card"], .insight-card').count() > 0;
+  // InsightCardComponent renders a div.rounded-xl.border.bg-white — no data-testid
+  const hasCards = await page.locator('.rounded-xl.border.bg-white h4').count() > 0;
   const hasEmptyState = await page.getByText(/no new insights|no insights|nothing yet|no data/i).isVisible();
   expect(hasCards || hasEmptyState).toBe(true);
 });

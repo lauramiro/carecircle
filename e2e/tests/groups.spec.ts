@@ -32,13 +32,14 @@ test('GROUP-01: create care circle navigates to groups list', async ({ page }) =
   await page.locator('#dateOfBirth').fill('1960-01-15');
   // Select the first non-empty relationship option
   await page.locator('#relationship').selectOption({ index: 1 });
-  await page.locator('#patientEmail').fill('e2e-patient@example.com');
+  await page.locator('#patientEmail').fill(`e2e-patient-${ts()}@example.com`);
 
   await page.getByRole('button', { name: /create circle/i }).click();
 
-  // Should navigate to groups list after creation
-  await page.waitForURL(/\/groups\/list/, { timeout: 15_000 });
-  await expect(page).toHaveURL(/\/groups\/list/);
+  // Should navigate to groups list (or the new group detail) after creation
+  await page.waitForURL(/\/groups\//, { timeout: 15_000 });
+  await expect(page).not.toHaveURL(/\/groups\/create/);
+  await expect(page).not.toHaveURL(/\/login/);
   // Toast should confirm success
   await expect(page.getByText(new RegExp(name))).toBeVisible();
 });

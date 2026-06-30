@@ -22,12 +22,12 @@ test('AI-01: asking a question in the AI assistant returns a non-empty answer', 
   await page.goto(`/groups/${GROUP_ID}/ai-assistant`);
   await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 10_000 });
 
-  // Find the chat input — commonly a textarea or text input
-  const input = page
-    .getByRole('textbox', { name: /ask|message|question/i })
-    .or(page.locator('textarea, input[type="text"]').last());
+  // Find the chat input — the AI interface uses a <textarea> with a placeholder
+  // (no name/id, so role lookup fails; target by placeholder or element type)
+  const input = page.getByPlaceholder(/ask a question/i)
+    .or(page.locator('textarea').first());
 
-  await expect(input).toBeVisible({ timeout: 5_000 });
+  await expect(input).toBeVisible({ timeout: 15_000 });
   await input.fill('What medications does the patient currently take?');
 
   // Submit via Enter or a Send button

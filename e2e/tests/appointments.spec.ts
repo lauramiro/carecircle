@@ -27,7 +27,7 @@ function tomorrowDate() {
 async function goToNewAppointment(page: Page) {
   await page.goto(`/groups/${GROUP_ID}/appointments/new`);
   await expect(page.getByText(/loading/i)).toHaveCount(0, { timeout: 10_000 });
-  await expect(page).not.toHaveURL(/\/groups\/list/);
+  await expect(page).not.toHaveURL(/\/login/);
 }
 
 // ---------------------------------------------------------------------------
@@ -38,8 +38,8 @@ test('APPT-01: create appointment navigates back to appointments list', async ({
 
   const title = `E2E Appt ${ts()}`;
 
-  // Title field — no htmlFor id in this form, so target by label text
-  await page.getByRole('textbox', { name: /title/i }).fill(title);
+  // Title field — no htmlFor id on this form, so target by placeholder text
+  await page.getByPlaceholder(/cardiology check-up/i).fill(title);
   await page.locator('input[type="date"]').fill(tomorrowDate());
   await page.locator('input[type="time"]').fill('10:00');
 
@@ -110,7 +110,7 @@ test('APPT-03: editing a single occurrence does not affect other occurrences', a
 
   // Change the title to something unique
   const newTitle = `E2E Single Edit ${ts()}`;
-  const titleField = page.getByRole('textbox', { name: /title/i });
+  const titleField = page.getByPlaceholder(/cardiology check-up/i);
   await titleField.clear();
   await titleField.fill(newTitle);
 

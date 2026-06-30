@@ -35,7 +35,8 @@ test('CHK-01: checklist page loads for today', async ({ page }) => {
   await expect(page.getByText(/something went wrong|error loading/i)).not.toBeVisible();
 
   // Should show either medication items OR an "all clear" / empty-state message
-  const hasItems = await page.locator('[data-testid="checklist-item"], table tbody tr').count() > 0;
+  // Items render with id="checklist-item-<uuid>" on their wrapper div
+  const hasItems = await page.locator('[id^="checklist-item"]').count() > 0;
   const hasEmptyState = await page.getByText(/no medications|all done|nothing due/i).isVisible();
   expect(hasItems || hasEmptyState).toBe(true);
 });

@@ -6,7 +6,7 @@ on:
       - main
       - develop
       - CC-18-EPIC-4-CI-CD-Security-Documentation
-      - CC-116-GA-Pipelines
+      - CC-97-Notifications
   pull_request:
   workflow_dispatch:
 

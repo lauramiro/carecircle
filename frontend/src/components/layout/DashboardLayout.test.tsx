@@ -241,4 +241,14 @@ describe('DashboardLayout', () => {
     const outerShell = container.firstElementChild;
     expect(outerShell?.className).toMatch(/\bmin-h-screen\b/);
   });
+
+  it('renders the routed page content at full opacity on initial mount, with no fade-in dependent on interaction', () => {
+    renderLayout();
+
+    const outlet = screen.getByText('Dashboard content').closest('div[style*="opacity"]');
+
+    expect(outlet).not.toBeNull();
+    expect(outlet).toHaveStyle({ opacity: 1 });
+    expect(outlet?.getAttribute('style')).not.toContain('opacity: 0');
+  });
 });

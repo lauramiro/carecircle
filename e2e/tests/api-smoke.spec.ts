@@ -14,7 +14,10 @@
  *   MED-02    POST /groups/:invalid/medications     → 404 (group not found)
  *   MED-03    POST /groups/:any/medications         → 400 (dose < 0.01)
  *   MED-04    POST /groups/:any/medications         → 400 (bad scheduleType)
+ *   INS-04    GET  /insights/group/:groupId         → 200 with insights array
  *   INS-05    GET  /insights/group/:invalid         → 404 (group not found — fixed bug)
+ *   HOSP-01   POST /hospital-summary/generate-pdf  → 201 application/pdf
+ *   HOSP-02   POST /hospital-summary/generate-pdf  → 201 even with incomplete data
  *   HOSP-03   POST /hospital-summary/generate-pdf  → 404 (group not found — fixed bug)
  */
 
@@ -23,6 +26,7 @@ import { test, expect, APIRequestContext } from '@playwright/test';
 const API_URL = (process.env.E2E_API_URL ?? 'http://localhost:3000/api').replace(/\/$/, '');
 
 const FAKE_UUID = '00000000-0000-4000-a000-000000000000';
+const GROUP_ID = process.env.E2E_TEST_GROUP_ID ?? '';
 
 function api(ctx: APIRequestContext, path: string) {
   return `${API_URL}${path}`;
@@ -186,4 +190,45 @@ test('HOSP-03: POST /hospital-summary/generate-pdf for invalid group returns 404
   expect(res.status()).toBe(404);
   const body = await res.json() as { message?: string };
   expect(body.message).toContain('not found');
+});
+
+// ---------------------------------------------------------------------------
+// HOSP-01 — Generate PDF for real group returns 201 application/pdf
+// ---------------------------------------------------------------------------
+test('HOSP-01: POST /hospital-summary/generate-pdf returns application/pdf', async ({ request }) => {
+  if (!GROUP_ID) { test.skip(true, 'E2E_TEST_GROUP_ID not set'); return; }
+  const res = await request.post(api(request, '/hospital-summary/generate-pdf'), {
+    data: { groupId: GROUP_ID },
+  });
+  expect(res.status()).toBe(201);
+  expect(res.headers()['content-type']).toContain('application/pdf');
+  expect(res.headers()['x-generation-latency-ms']).toBeTruthy();
+  const body = await res.body();
+  expect(body.length).toBeGreaterThan(1000);
+  expect(body.slice(0, 4).toString()).toBe('%PDF');
+}, { timeout: 60_000 });
+
+// ---------------------------------------------------------------------------
+// HOSP-02 — PDF returned even with incomplete optional group fields
+// ---------------------------------------------------------------------------
+test('HOSP-02: POST /hospital-summary/generate-pdf succeeds even with incomplete data', async ({ request }) => {
+  if (!GROUP_ID) { test.skip(true, 'E2E_TEST_GROUP_ID not set'); return; }
+  const res = await request.post(api(request, '/hospital-summary/generate-pdf'), {
+    data: { groupId: GROUP_ID },
+  });
+  expect(res.status()).toBeGreaterThanOrEqual(200);
+  expect(res.status()).toBeLessThan(400);
+  expect(res.headers()['content-type']).toContain('application/pdf');
+}, { timeout: 60_000 });
+
+// ---------------------------------------------------------------------------
+// INS-04 — GET /insights/group/:groupId returns 200 with insights array
+// ---------------------------------------------------------------------------
+test('INS-04: GET /insights/group/:groupId returns 200 with an insights array', async ({ request }) => {
+  if (!GROUP_ID) { test.skip(true, 'E2E_TEST_GROUP_ID not set'); return; }
+  const res = await request.get(api(request, `/insights/group/${GROUP_ID}`));
+  expect(res.status()).toBe(200);
+  const body = await res.json() as { insights?: unknown[] };
+  expect(body).toHaveProperty('insights');
+  expect(Array.isArray(body.insights)).toBe(true);
 });

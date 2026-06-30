@@ -118,6 +118,10 @@ export class HospitalSummaryController {
       // Send PDF
       res.send(pdfBuffer);
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       this.logger.error(`Failed to generate hospital summary PDF:`, error);
 
       // Return error response
@@ -162,6 +166,10 @@ export class HospitalSummaryController {
 
       return summaryData;
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       this.logger.error(`Failed to assemble hospital summary:`, error);
 
       throw new HttpException(

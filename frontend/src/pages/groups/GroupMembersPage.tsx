@@ -4,7 +4,7 @@ import { Navigate, useParams } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { GroupMember } from '../../api/groups/groups.types';
-import { updateMemberRole } from '../../api/groups/groups.service';
+import { removeMember, updateMemberRole, updateMemberStatus } from '../../api/groups/groups.service';
 import { useAuth } from '../../contexts/AuthContext';
 import { canManageMembers, canRemoveOrSuspendMember, validateMemberRoleChange } from '../../lib/carePermissions';
 import { getCareRoleLabel } from '../../lib/careRole';
@@ -191,27 +191,51 @@ export default function GroupMembersPage() {
     }
 
     if (pendingAction.type === 'remove') {
-      setManagedMembers({
-        groupId: activeGroup.id,
-        members: activeMembers.filter((member) => member.id !== pendingAction.member.id),
-      });
-      toast.success(`${pendingAction.member.name} removed from group`);
+      setIsSubmittingAction(true);
+      try {
+        await removeMember(activeGroup.id, pendingAction.member.id);
+        setManagedMembers({
+          groupId: activeGroup.id,
+          members: activeMembers.filter((member) => member.id !== pendingAction.member.id),
+        });
+        await refetch();
+        toast.success(`${pendingAction.member.name} removed from group`);
+        setPendingAction(null);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Unable to remove member.');
+      } finally {
+        setIsSubmittingAction(false);
+      }
+
+      return;
     }
 
     if (pendingAction.type === 'status') {
-      setManagedMembers({
-        groupId: activeGroup.id,
-        members: activeMembers.map((member) =>
-          member.id === pendingAction.member.id
-            ? { ...member, status: pendingAction.status }
-            : member,
-        ),
-      });
-      toast.success(
-        pendingAction.status === 'Suspended'
-          ? `${pendingAction.member.name} suspended`
-          : `${pendingAction.member.name} reactivated`,
-      );
+      setIsSubmittingAction(true);
+      try {
+        await updateMemberStatus(activeGroup.id, pendingAction.member.id, pendingAction.status);
+        setManagedMembers({
+          groupId: activeGroup.id,
+          members: activeMembers.map((member) =>
+            member.id === pendingAction.member.id
+              ? { ...member, status: pendingAction.status }
+              : member,
+          ),
+        });
+        await refetch();
+        toast.success(
+          pendingAction.status === 'Suspended'
+            ? `${pendingAction.member.name} suspended`
+            : `${pendingAction.member.name} reactivated`,
+        );
+        setPendingAction(null);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Unable to update member status.');
+      } finally {
+        setIsSubmittingAction(false);
+      }
+
+      return;
     }
 
     setPendingAction(null);

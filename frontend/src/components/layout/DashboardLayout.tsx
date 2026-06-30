@@ -726,7 +726,7 @@ export default function DashboardLayout() {
                   </button>
                 </div>
               )}
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={location.pathname}
                 variants={shouldReduceMotion ? STATIC_PAGE_VARIANTS : PAGE_VARIANTS}

@@ -10,3 +10,8 @@ export function toLocalDateString(date: Date = new Date()): string {
 export function parseLocalDateString(dateStr: string): Date {
   return new Date(`${dateStr}T12:00:00`);
 }
+
+/** True when `date` falls on a local calendar day before `comparisonDate`. */
+export function isBeforeLocalDate(date: Date, comparisonDate: Date = new Date()): boolean {
+  return toLocalDateString(date) < toLocalDateString(comparisonDate);
+}

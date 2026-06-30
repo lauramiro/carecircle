@@ -176,7 +176,7 @@ describe('LoginPage', () => {
 
     expect(supabaseMock.auth.signInWithOtp).toHaveBeenCalledWith({
       email: 'magic@example.com',
-      options: { emailRedirectTo: undefined },
+      options: { emailRedirectTo: undefined, shouldCreateUser: false },
     });
     expect(await screen.findByText('Check your email')).toBeInTheDocument();
     expect(screen.getByText('magic@example.com')).toBeInTheDocument();
@@ -219,6 +219,7 @@ describe('LoginPage', () => {
       options: {
         emailRedirectTo:
           'http://localhost:3000/group-invite?inviteId=550e8400-e29b-41d4-a716-446655440000&email=magic%40example.com&confirmation=true',
+        shouldCreateUser: false,
       },
     });
   });

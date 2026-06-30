@@ -8,6 +8,7 @@ import DashboardLayout from './DashboardLayout';
 
 const authMock = vi.hoisted(() => ({
   signOut: vi.fn(),
+  displayName: 'Laura Miro',
   session: {
     user: {
       email: 'caregiver@example.com',
@@ -26,6 +27,7 @@ const groupDetailHookMock = vi.hoisted(() => ({
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     session: authMock.session,
+    displayName: authMock.displayName,
     signOut: authMock.signOut,
   }),
 }));
@@ -89,6 +91,7 @@ describe('DashboardLayout', () => {
     expect(screen.getByRole('link', { name: /^groups$/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument();
     expect(screen.getByText('Dashboard content')).toBeInTheDocument();
+    expect(screen.getByText('Laura Miro')).toBeInTheDocument();
     expect(screen.getByText('caregiver@example.com')).toBeInTheDocument();
   });
 
@@ -205,6 +208,7 @@ describe('DashboardLayout', () => {
 
     expect(screen.getByText('Current care circle')).toBeInTheDocument();
     expect(screen.getAllByText('Dad Care Circle').length).toBeGreaterThan(0);
+    expect(screen.getByText('Laura Miro')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /today's medications/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /view profile/i })).toHaveAttribute(
       'href',

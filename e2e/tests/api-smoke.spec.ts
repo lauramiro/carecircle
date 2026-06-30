@@ -34,9 +34,9 @@ function api(ctx: APIRequestContext, path: string) {
 test('NOTIF-04: GET /push/vapid-public-key returns 200', async ({ request }) => {
   const res = await request.get(api(request, '/push/vapid-public-key'));
   expect(res.status()).toBe(200);
-  const body = await res.json() as { vapidPublicKey?: string | null };
+  const body = await res.json() as { publicKey?: string | null };
   // May be null if VAPID is not configured, but must be a valid JSON response
-  expect(body).toHaveProperty('vapidPublicKey');
+  expect(body).toHaveProperty('publicKey');
 });
 
 // ---------------------------------------------------------------------------
@@ -121,6 +121,7 @@ test('AI-03: POST /ai/qa without groupId returns 400', async ({ request }) => {
 test('MED-02: POST medications for invalid groupId returns 404', async ({ request }) => {
   const res = await request.post(api(request, `/groups/${FAKE_UUID}/medications`), {
     data: {
+      patientId: FAKE_UUID,
       medicationName: 'Aspirin',
       dose: 100,
       unit: 'mg',

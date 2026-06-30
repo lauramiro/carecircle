@@ -22,8 +22,13 @@ export default function ActionButton({
         width: '100%',
         height: '44px',
         backgroundColor:
-          variant === 'primary' ? 'var(--color-primary)' : 'var(--color-primary-light)',
-        color: variant === 'primary' ? '#ffffff' : 'var(--color-primary-dark)',
+          variant === 'primary'
+            ? 'var(--color-action-primary-bg)'
+            : 'var(--color-action-secondary-bg)',
+        color:
+          variant === 'primary'
+            ? 'var(--color-action-primary-text)'
+            : 'var(--color-action-secondary-text)',
         border: 'none',
         borderRadius: '8px',
         fontSize: '13px',

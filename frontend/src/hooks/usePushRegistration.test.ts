@@ -81,7 +81,10 @@ describe('usePushRegistration', () => {
       expect(result.current.status).toBe('registered');
     });
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/push/subscriptions', expect.any(Object));
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/push/subscriptions'),
+      expect.any(Object),
+    );
   });
 
   it('register() syncs subscription when called explicitly', async () => {
@@ -175,7 +178,7 @@ describe('registerWebPushForUser', () => {
     expect(unsubscribeMock).toHaveBeenCalledOnce();
     expect(subscribeMock).toHaveBeenCalledOnce();
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/push/subscriptions',
+      expect.stringContaining('/api/push/subscriptions'),
       expect.objectContaining({
         method: 'POST',
         body: expect.stringContaining('https://push.example/new'),

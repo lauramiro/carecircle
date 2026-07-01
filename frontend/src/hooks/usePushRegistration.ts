@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+
+function apiUrl(path: string): string {
+  return apiBaseUrl ? `${apiBaseUrl}${path}` : path;
+}
+
 export type PushRegistrationStatus =
   | 'idle'
   | 'unsupported'
@@ -39,7 +45,7 @@ async function syncSubscriptionToBackend(
   subscription: PushSubscription,
 ): Promise<void> {
   const json = subscription.toJSON();
-  const response = await fetch('/api/push/subscriptions', {
+  const response = await fetch(apiUrl('/api/push/subscriptions'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -81,7 +87,7 @@ export async function registerWebPushForUser(userId: string): Promise<void> {
   const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
   await navigator.serviceWorker.ready;
 
-  const keyResponse = await fetch('/api/push/vapid-public-key');
+  const keyResponse = await fetch(apiUrl('/api/push/vapid-public-key'));
   if (!keyResponse.ok) {
     throw new Error(
       keyResponse.status === 404

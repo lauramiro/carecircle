@@ -105,13 +105,14 @@ export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
 
         // Validate response body is not empty and is valid JSON
         let data: { answer?: string; latencyMs?: number };
-        try {
+        try{
           data = await response.json();
         } catch (parseErr) {
-          throw new Error('Invalid response from AI service. Please try again.');
-        }
-
-        // Validate that response contains required fields
+          throw new Error ('Invalid response from AI service. Please try again.', {
+            cause: parseErr
+          });
+        }    
+            // Validate that response contains required fields
         if (!data || typeof data.answer !== 'string' || !data.answer.trim()) {
           throw new Error('Generated response is empty or invalid. Please try again.');
         }

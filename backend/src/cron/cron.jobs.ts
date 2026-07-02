@@ -117,7 +117,7 @@ export class WeeklyDigestCron {
   ) {}
 
   /** Every Monday at 8 AM. */
-  @Cron('0 8 * * 1')
+  @Cron('0 8 * * 1') // At 08:00 on Monday.
   async runEveryMonday(): Promise<void> {
     this.logger.log('Weekly digest cron triggered (Every Monday 8AM)');
     if (!this.appConfig.cronsEnabled) return;

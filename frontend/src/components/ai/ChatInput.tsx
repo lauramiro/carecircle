@@ -1,10 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { Send } from 'lucide-react';
 
-type TextareaStyle = CSSProperties & {
-  '--tw-ring-color': string;
-};
-
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
@@ -56,7 +52,7 @@ export default function ChatInput({
             fontFamily: 'Plus Jakarta Sans, sans-serif',
             fontSize: '14px',
             '--tw-ring-color': 'var(--color-primary)',
-          } as TextareaStyle}
+          } as CSSProperties}
         />
       </div>
 

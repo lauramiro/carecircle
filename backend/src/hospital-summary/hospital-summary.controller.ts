@@ -47,17 +47,23 @@ export class HospitalSummaryController {
   }
 
   /**
-   * Single endpoint: Generate complete PDF from the group-owned patient profile
-   * POST /api/hospital-summary/generate-pdf
+   * Generates a downloadable hospital summary PDF for the patient in a group.
    *
-   * Request body: { groupId: string }
-   * Response: PDF file (application/pdf)
+   * Request body: `{ groupId: string }`
+   * Response: `application/pdf`
    *
-   * This endpoint:
-   * 1. Fetches fresh patient profile from Supabase
-   * 2. Assembles all sections (medications, conditions, allergies, etc.)
-   * 3. Generates professional PDF with watermark and disclaimer
-   * 4. Returns PDF as downloadable file
+   * The handler resolves the patient server-side from the group ID so clients
+   * cannot request arbitrary patient records by raw ID. It then assembles fresh
+   * clinical/care-team data and returns validation warnings in headers while
+   * still producing the PDF, because a partial but clearly marked summary is
+   * more useful during handover than a hard failure for non-critical gaps.
+   *
+   * @param dto Request body containing `groupId`; the patient ID is resolved
+   * server-side from this group.
+   * @param res Express response used to stream the generated PDF and headers.
+   * @returns Sends an `application/pdf` response; does not return a JSON body.
+   * @throws HttpException when patient resolution, summary assembly, or PDF
+   * rendering fails.
    */
   @Post('generate-pdf')
   async generateHospitalSummaryPDF(
@@ -136,9 +142,17 @@ export class HospitalSummaryController {
   }
 
   /**
-   * (Optional) Endpoint to get just the summary data without PDF
-   * Useful for debugging and testing
-   * POST /api/hospital-summary/assemble
+   * Assembles the hospital summary payload without rendering a PDF.
+   *
+   * This diagnostic route supports tests and frontend previews that need to
+   * inspect the normalized summary data directly. It uses the same group-to-
+   * patient resolution and validation path as PDF generation, so differences
+   * between JSON preview and PDF output stay limited to rendering.
+   *
+   * @param dto Request body containing `groupId`; the patient ID is resolved
+   * server-side from this group.
+   * @returns Normalized `HospitalSummaryData` payload used by PDF generation.
+   * @throws HttpException when patient resolution or summary assembly fails.
    */
   @Post('assemble')
   async assembleSummaryData(

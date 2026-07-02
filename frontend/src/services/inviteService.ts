@@ -103,8 +103,12 @@ export async function fetchInviteGroupDetails(inviteId: string): Promise<InviteG
     throw new Error(patientError.message);
   }
 
-  if (!group?.name || !patient?.id) {
+  if (!group?.name) {
     throw new Error('Care group not found.');
+  }
+
+  if (!patient?.id) {
+    throw new Error('Linked patient record not found.');
   }
 
   const { count, error: countError } = await supabase

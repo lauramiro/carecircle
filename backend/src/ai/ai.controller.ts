@@ -1,7 +1,6 @@
 import { Body, Controller, Post, Logger } from '@nestjs/common';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { AiService } from './ai.service';
-import { AppConfigService } from '../config/app-config.service';
 
 export class AskQuestionDto {
   @IsString()
@@ -16,12 +15,20 @@ export class AskQuestionDto {
 @Controller('ai')
 export class AiController {
   private readonly logger = new Logger(AiController.name);
-  constructor(
-    private readonly aiService: AiService,
-    private readonly appConfigService: AppConfigService,
-  ) {}
+  constructor(private readonly aiService: AiService) {}
 
-  // CC-109: Production endpoint (when I have real patient IDs)
+  /**
+   * Answers a care-team question using the live care profile for a group.
+   *
+   * The controller only validates the public request shape and logs the group
+   * boundary; the service owns profile loading, prompt construction, and AI
+   * provider interaction so model-specific concerns stay out of HTTP routing.
+   *
+   * @param dto Request body containing `question` and `groupId`.
+   * @returns AI answer payload with patient name and latency metadata.
+   * @throws NotFoundException when no patient profile is linked to the group.
+   * @throws Error Propagates AI provider, configuration, or profile-loading errors.
+   */
   @Post('qa')
   async ask(@Body() dto: AskQuestionDto) {
     this.logger.log(`askQuestion request received for groupId=${dto.groupId}`);

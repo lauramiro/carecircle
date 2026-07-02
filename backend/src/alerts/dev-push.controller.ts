@@ -21,7 +21,17 @@ class DevPushTestBodyDto {
 export class DevPushController {
   constructor(private readonly pushDispatch: PushDispatchService) {}
 
-  /** Sends a test Web Push to every subscription for the given user (development only). */
+  /**
+   * Sends a generic Web Push test to every subscription for one user.
+   *
+   * Guarded by DevOnlyGuard and intentionally free of patient data so developers
+   * can verify push wiring without sending protected health details through a
+   * diagnostic endpoint.
+   *
+   * @param body Request body containing the target `userId`.
+   * @returns `{ ok: true }` when dispatch is attempted successfully.
+   * @throws Error Propagates validation, guard, or push-dispatch failures.
+   */
   @Post('test')
   @HttpCode(200)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))

@@ -97,6 +97,7 @@ export class InsightsController {
 
       return { insights: data ?? [] };
     } catch (err) {
+      if (err instanceof HttpException) throw err;
       this.logger.error('Failed to get insights for patient', err);
       throw new HttpException(
         'Failed to get insights',

@@ -10,6 +10,12 @@ interface AiQaInterfaceProps {
   groupId: string;
 }
 
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+
+function apiUrl(path: string): string {
+  return apiBaseUrl ? `${apiBaseUrl}${path}` : path;
+}
+
 // ========== MOCK RESPONSE FUNCTION ==========
 async function mockAiResponse(question: string, _patientId: string): Promise<{ answer: string; latencyMs: number }> {
   // Simulate network delay (300–800ms)
@@ -76,7 +82,7 @@ export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
         // ------------------------------
       } else {
         // ---------- REAL BACKEND (currently commented out) ----------
-         const response = await fetch('/api/ai/qa', {
+         const response = await fetch(apiUrl('/api/ai/qa'), {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify({

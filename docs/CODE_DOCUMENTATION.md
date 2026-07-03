@@ -17,14 +17,14 @@ NestJS features live under `backend/src/` as one module per domain:
 
 | Module | Route prefix | Responsibility |
 |--------|--------------|----------------|
-| `medications/` | `/api/medications` | Add, edit, pause, archive medications |
+| `medications/` | `/api/groups/:groupId/medications` | Add, edit, pause, archive medications |
 | `checklist/` | — (cron services) | Materialize checklist rows, overdue detection |
 | `alerts/` | `/api/push` | Web Push subscriptions and VAPID |
 | `insights/` | `/api/insights` | Weekly AI insight cards |
 | `ai/` | `/api/ai` | AI Q&A chat |
 | `hospital-summary/` | `/api/hospital-summary` | PDF hospital summary generation |
 | `shifts/` | `/api/shifts` | Weekly shift assignments |
-| `invites/` | `/api/invites` | Group invite emails |
+| `invites/` | `/api/invites/group` | Group invite emails |
 | `cron/` | — | Scheduled jobs (materialization, overdue, SMS) |
 
 Cross-cutting wiring is in `AppModule`: global validation pipe, CORS, logging, rate limiting.

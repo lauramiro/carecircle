@@ -33,7 +33,7 @@ Each domain keeps its own folder:
 
 | Folder | Responsibility |
 |--------|----------------|
-| `medications/` | Medication CRUD via backend `/api/medications` |
+| `medications/` | Medication CRUD via backend `/api/groups/:groupId/medications` |
 | `checklist/` | Checklist reads (Supabase) and mark-given/skip mutations |
 | `groups/` | Care groups, members, GP contacts, emergency contacts |
 | `appointments/` | Appointment scheduling |
@@ -76,11 +76,16 @@ Defined in `vite.config.ts` — prefer these over deep relative imports:
 |-------|------|
 | `@api` | `src/api` |
 | `@components` | `src/components` |
+| `@config` | `src/config` |
+| `@constants` | `src/constants` |
+| `@contexts` | `src/contexts` |
 | `@hooks` | `src/hooks` |
 | `@lib` | `src/lib` |
 | `@pages` | `src/pages` |
+| `@services` | `src/services` |
+| `@test` | `src/test` |
 | `@utils` | `src/utils` |
-| `@typings` | `src/typings` |
+| `@typings` | `src/types` |
 
 ## Environment variables
 

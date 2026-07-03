@@ -9,26 +9,46 @@ export function HospitalSummaryPDF() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedPdf, setGeneratedPdf] = useState<Blob | null>(null);
+
+  // Construct API base URL following the same pattern as hospitalSummary.service.ts
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
  
   const generatePDF = async () => {
     setIsGenerating(true);
     setError(null);
  
     try {
+      // Build the full API URL
+      const url = apiBaseUrl ? `${apiBaseUrl}/api/hospital-summary/generate-pdf` : '/api/hospital-summary/generate-pdf';
+
       // Call backend endpoint to generate PDF
       const response = await axios.post(
-        `/api/hospital-summary/generate-pdf`,
+        url,
         { groupId },
         {
           responseType: 'blob',
         },
       );
+
+      // Validate response: check that PDF is non-empty and has correct content-type
+      const pdfBlob = response.data;
+      const contentType = String(response.headers['content-type'] || '');
+
+      if (!pdfBlob || pdfBlob.size === 0) {
+        throw new Error('Generated PDF is empty or invalid. Please try again.');
+      }
+
+      if (!contentType.includes('application/pdf')) {
+        throw new Error('Generated PDF is empty or invalid. Please try again.');
+      }
  
-      setGeneratedPdf(response.data);
+      setGeneratedPdf(pdfBlob);
     } catch (err: unknown) {
       const errorResponse = err as { response?: { data?: { message?: string } } };
       const errorMessage =
-        errorResponse.response?.data?.message || 'Failed to generate PDF. Please try again.';
+        (err instanceof Error ? err.message : null) ||
+        errorResponse.response?.data?.message ||
+        'Failed to generate PDF. Please try again.';
       setError(errorMessage);
     } finally {
       setIsGenerating(false);

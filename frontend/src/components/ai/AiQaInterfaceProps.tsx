@@ -35,7 +35,9 @@ export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
+  // Construct API base URL following the same pattern as medications.service.ts
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -75,31 +77,55 @@ export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
         setMessages((prev) => [...prev, aiMessage]);
         // ------------------------------
       } else {
-        // ---------- REAL BACKEND (currently commented out) ----------
-         const response = await fetch('/api/ai/qa', {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({
-             question: question.trim(),
-             groupId,
-           }),
-         });
-         if (!response.ok) {
-           const errorData = await response.json();
-           throw new Error(errorData.message || 'Failed to get response from AI');
-         }
-         const data = await response.json();
-         const aiMessage: ConversationMessage = {
-           id: `ai-${Date.now()}`,
-           type: 'answer',
-           content: data.answer,
-           latencyMs: data.latencyMs,
-           timestamp: new Date(),
-         };
-         setMessages((prev) => [...prev, aiMessage]);
-         //-------------------------------------------------------------
+        // ---------- REAL BACKEND ----------
+        // Build the full API URL using the base (same pattern as Hospital Summary)
+        const url = apiBaseUrl ? `${apiBaseUrl}/api/ai/qa` : '/api/ai/qa';
 
-        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question: question.trim(),
+            groupId,
+          }),
+        });
+
+        // Validate response status
+        if (!response.ok) {
+          let errorMessage = 'Failed to get response from AI';
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch {
+            // If response is not JSON, use status message
+            errorMessage = `AI service error (${response.status})`;
+          }
+          throw new Error(errorMessage);
+        }
+
+        // Validate response body is not empty and is valid JSON
+        let data: { answer?: string; latencyMs?: number };
+        try{
+          data = await response.json();
+        } catch (parseErr) {
+          throw new Error ('Invalid response from AI service. Please try again.', {
+            cause: parseErr
+          });
+        }    
+            // Validate that response contains required fields
+        if (!data || typeof data.answer !== 'string' || !data.answer.trim()) {
+          throw new Error('Generated response is empty or invalid. Please try again.');
+        }
+
+        const aiMessage: ConversationMessage = {
+          id: `ai-${Date.now()}`,
+          type: 'answer',
+          content: data.answer,
+          latencyMs: data.latencyMs,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, aiMessage]);
+        // --------------------------------
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';

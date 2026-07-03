@@ -87,7 +87,7 @@ describe('DashboardLayout', () => {
     expect(screen.getByText('CareCircle')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /^groups$/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /settings|open settings/i }).length).toBeGreaterThan(0);
     expect(screen.getByText('Dashboard content')).toBeInTheDocument();
     expect(screen.getByText('caregiver@example.com')).toBeInTheDocument();
   });
@@ -221,7 +221,7 @@ describe('DashboardLayout', () => {
 
     await user.click(screen.getByRole('button', { name: /open navigation/i }));
 
-    expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /settings|open settings/i }).length).toBeGreaterThan(0);
   });
 
   it('does not force the sidebar/content row to a fixed viewport height', () => {
@@ -242,5 +242,12 @@ describe('DashboardLayout', () => {
 
     const outerShell = container.firstElementChild;
     expect(outerShell?.className).toMatch(/\bmin-h-screen\b/);
+  });
+
+  it('makes the top-right profile icon navigate to settings', () => {
+    renderLayout(['/dashboard']);
+
+    const profileLink = screen.getByRole('link', { name: /open settings/i });
+    expect(profileLink).toHaveAttribute('href', '/settings');
   });
 });

@@ -697,7 +697,19 @@ export default function DashboardLayout() {
                 />
               )}
             </button>
-            <CircleUserRound size={34} strokeWidth={1.5} color="var(--color-primary)" />
+            <Link
+              to="/settings"
+              aria-label="Open settings"
+              title="Open settings"
+              className="flex h-10 w-10 items-center justify-center rounded-full border bg-white"
+              style={{
+                borderColor: 'var(--color-border)',
+                color: 'var(--color-primary)',
+                textDecoration: 'none',
+              }}
+            >
+              <CircleUserRound size={22} strokeWidth={1.7} />
+            </Link>
           </header>
 
           <main className="flex-1 overflow-auto p-4 lg:p-8">

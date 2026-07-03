@@ -1,6 +1,9 @@
 import type { KeyboardEvent } from 'react';
 import type { AdministrationLogEvent } from '../../api/administrationLog/administrationLog.types';
-import { administrationLogStatusLabel } from '../../utils/administrationLog.utils';
+import {
+  administrationLogDisplayStatusLabel,
+  formatAdministrationLogScheduledTime,
+} from '../../utils/administrationLog.utils';
 import { ImageIcon } from 'lucide-react';
 
 const STATUS_STYLES: Record<
@@ -38,7 +41,7 @@ export default function AdministrationLogRow({ event, localTimestampLabel, onOpe
         borderColor: 'var(--color-border)',
         outlineColor: 'var(--color-primary)',
       }}
-      aria-label={`${event.medicationName}, ${administrationLogStatusLabel(event.status)}, ${localTimestampLabel}`}
+      aria-label={`${event.medicationName}, ${administrationLogDisplayStatusLabel(event)}, ${localTimestampLabel}`}
     >
       <td className="w-12 px-3 py-2">
         <div
@@ -62,6 +65,9 @@ export default function AdministrationLogRow({ event, localTimestampLabel, onOpe
         {event.carerName}
       </td>
       <td className="whitespace-nowrap px-3 py-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+        {formatAdministrationLogScheduledTime(event.scheduledTimeLabel)}
+      </td>
+      <td className="whitespace-nowrap px-3 py-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
         {localTimestampLabel}
       </td>
       <td className="px-3 py-2 text-right">
@@ -69,7 +75,7 @@ export default function AdministrationLogRow({ event, localTimestampLabel, onOpe
           className="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold"
           style={{ backgroundColor: badge.bg, color: badge.color }}
         >
-          {administrationLogStatusLabel(event.status)}
+          {administrationLogDisplayStatusLabel(event)}
         </span>
       </td>
     </tr>

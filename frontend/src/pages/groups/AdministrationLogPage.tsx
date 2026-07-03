@@ -96,7 +96,7 @@ export default function AdministrationLogPage() {
               style={{ borderColor: 'var(--color-border)' }}
             >
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                <table className="w-full min-w-[720px] border-collapse text-left text-sm">
                   <thead>
                     <tr
                       className="border-b text-[11px] uppercase tracking-wide"
@@ -118,7 +118,10 @@ export default function AdministrationLogPage() {
                         Carer
                       </th>
                       <th className="px-3 py-2 font-bold" scope="col">
-                        Time
+                        Scheduled
+                      </th>
+                      <th className="px-3 py-2 font-bold" scope="col">
+                        Recorded
                       </th>
                       <th className="px-3 py-2 text-right font-bold" scope="col">
                         Status

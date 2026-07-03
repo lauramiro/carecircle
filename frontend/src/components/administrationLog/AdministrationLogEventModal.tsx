@@ -1,6 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type { AdministrationLogEvent } from '../../api/administrationLog/administrationLog.types';
-import { administrationLogStatusLabel } from '../../utils/administrationLog.utils';
+import {
+  administrationLogDisplayStatusLabel,
+  formatAdministrationLogScheduledTime,
+} from '../../utils/administrationLog.utils';
 import {
   MODAL_BACKDROP_VARIANTS,
   MODAL_PANEL_VARIANTS,
@@ -83,15 +86,17 @@ export default function AdministrationLogEventModal({
                 {event.medicationName} · {event.doseDisplay}
               </p>
               <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                {administrationLogStatusLabel(event.status)} · {localTimestampLabel}
+                {administrationLogDisplayStatusLabel(event)} · {localTimestampLabel}
               </p>
               <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                 Carer: {event.carerName}
               </p>
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                Scheduled: {formatAdministrationLogScheduledTime(event.scheduledTimeLabel)}
+              </p>
               {event.checklistDate && (
                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                   Checklist day: {event.checklistDate}
-                  {event.scheduledTimeLabel ? ` · ${event.scheduledTimeLabel}` : ''}
                 </p>
               )}
               {event.notes ? (

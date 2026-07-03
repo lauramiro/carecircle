@@ -51,6 +51,28 @@ export function administrationLogStatusLabel(status: AdministrationLogStatus): s
   }
 }
 
+export function formatAdministrationLogScheduledTime(label?: string): string {
+  return label?.trim() ? label.trim() : '—';
+}
+
+function wasGivenLate(event: AdministrationLogEvent): boolean {
+  return (
+    event.status === 'given' &&
+    (event.overdueHours != null || event.overdueMinutes != null)
+  );
+}
+
+/** Status label shown in the log table, including on-time vs late for given doses. */
+export function administrationLogDisplayStatusLabel(event: AdministrationLogEvent): string {
+  if (event.status === 'given') {
+    if (wasGivenLate(event)) {
+      return `Given (${event.overdueHours ?? 0}h ${event.overdueMinutes ?? 0}m late)`;
+    }
+    return 'Given (on time)';
+  }
+  return administrationLogStatusLabel(event.status);
+}
+
 /** Reverse-chronological (newest first). */
 export function sortAdministrationLogEvents(events: AdministrationLogEvent[]): AdministrationLogEvent[] {
   return [...events].sort(

@@ -4,17 +4,15 @@ import { normalizeTime } from '@lib/time';
 import { supabase } from '@lib/supabaseClient';
 import type { MedicationRow } from '@lib/supabaseTables';
 import { medicationFromRow } from './medication.mapper';
+import { apiUrl } from '@lib/apiBaseUrl';
 import type {
   AddMedicationPayload,
   EditMedicationPayload,
   Medication,
 } from './medications.types';
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
-
 async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
-  const url = apiBaseUrl ? `${apiBaseUrl}${path}` : path;
-  const response = await fetch(url, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     headers: {
       'Content-Type': 'application/json',

@@ -17,7 +17,7 @@ export default function MedicationsSchedulePage() {
   const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
   const [detailsMed, setDetailsMed] = useState<Medication | null>(null);
   const patientId = group?.patientId ?? '';
-  const { medications, loading: medsLoading, isSubmitting, pauseMedication, activateMedication, archiveMedication } =
+  const { medications, loading: medsLoading, submittingMedicationId, pauseMedication, activateMedication, archiveMedication } =
     useMedications(patientId, groupId ?? '');
 
   if (!groupId) return <Navigate to="/groups/list" replace />;
@@ -225,7 +225,7 @@ export default function MedicationsSchedulePage() {
                       {canManageSchedule && med.status === 'active' && (
                         <button
                           type="button"
-                          disabled={isSubmitting}
+                          disabled={submittingMedicationId === med.id}
                           onClick={() => handleEdit(med)}
                           className="rounded border px-2 py-1 text-xs font-bold"
                           style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
@@ -236,7 +236,7 @@ export default function MedicationsSchedulePage() {
                       {canManageSchedule && med.status === 'active' && (
                         <button
                           type="button"
-                          disabled={isSubmitting}
+                          disabled={submittingMedicationId === med.id}
                           onClick={() => void pauseMedication(med.id)}
                           className="rounded border px-2 py-1 text-xs"
                           style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
@@ -247,7 +247,7 @@ export default function MedicationsSchedulePage() {
                       {canManageSchedule && med.status === 'paused' && (
                         <button
                           type="button"
-                          disabled={isSubmitting}
+                          disabled={submittingMedicationId === med.id}
                           onClick={() => void activateMedication(med.id)}
                           className="rounded border px-2 py-1 text-xs"
                           style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
@@ -260,7 +260,7 @@ export default function MedicationsSchedulePage() {
                           <>
                             <button
                               type="button"
-                              disabled={isSubmitting}
+                              disabled={submittingMedicationId === med.id}
                               onClick={() => {
                                 void archiveMedication(med.id);
                                 setConfirmArchiveId(null);
@@ -285,7 +285,7 @@ export default function MedicationsSchedulePage() {
                         ) : (
                           <button
                             type="button"
-                            disabled={isSubmitting}
+                            disabled={submittingMedicationId === med.id}
                             onClick={() => setConfirmArchiveId(med.id)}
                             className="rounded border px-2 py-1 text-xs"
                             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}

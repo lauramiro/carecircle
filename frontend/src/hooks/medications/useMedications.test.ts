@@ -152,6 +152,54 @@ describe('useMedications', () => {
     expect(result.current.medications[1].id).toBe('med-2');
   });
 
+  it('sets isFormSubmitting only during addMedication', async () => {
+    let resolveAdd!: (m: Medication) => void;
+    mockAdd.mockReturnValue(new Promise<Medication>((res) => { resolveAdd = res; }));
+    mockGetMedications.mockResolvedValue([]);
+
+    const { result } = renderHook(() => useMedications('patient-1', 'group-1'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => {
+      void result.current.addMedication(BASE_PAYLOAD);
+    });
+
+    expect(result.current.isFormSubmitting).toBe(true);
+    expect(result.current.isSubmitting).toBe(true);
+    expect(result.current.submittingMedicationId).toBeNull();
+
+    await act(async () => {
+      resolveAdd(makeMed({ id: 'med-new' }));
+    });
+
+    expect(result.current.isFormSubmitting).toBe(false);
+    expect(result.current.isSubmitting).toBe(false);
+  });
+
+  it('does not set isFormSubmitting during pauseMedication', async () => {
+    let resolvePause!: (m: Medication) => void;
+    mockPause.mockReturnValue(new Promise<Medication>((res) => { resolvePause = res; }));
+    mockGetMedications.mockResolvedValue([makeMed({ id: 'med-1', status: 'active' })]);
+
+    const { result } = renderHook(() => useMedications('patient-1', 'group-1'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => {
+      void result.current.pauseMedication('med-1');
+    });
+
+    expect(result.current.isFormSubmitting).toBe(false);
+    expect(result.current.isSubmitting).toBe(true);
+    expect(result.current.submittingMedicationId).toBe('med-1');
+
+    await act(async () => {
+      resolvePause(makeMed({ id: 'med-1', status: 'paused' }));
+    });
+
+    expect(result.current.isSubmitting).toBe(false);
+    expect(result.current.submittingMedicationId).toBeNull();
+  });
+
   it('sets isSubmitting to true during addMedication and resets it after', async () => {
     let resolveAdd!: (m: Medication) => void;
     mockAdd.mockReturnValue(new Promise<Medication>((res) => { resolveAdd = res; }));

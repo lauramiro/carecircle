@@ -15,7 +15,7 @@ export default function AddMedicationPage() {
   const navigate = useNavigate();
   const { group, loading: groupLoading, error: groupError } = useGroupDetail(groupId);
   const patientId = group?.patientId ?? '';
-  const { medications, loading: medsLoading, isSubmitting, addMedication, editMedication, pauseMedication, activateMedication, archiveMedication } =
+  const { medications, loading: medsLoading, isFormSubmitting, submittingMedicationId, addMedication, editMedication, pauseMedication, activateMedication, archiveMedication } =
     useMedications(patientId, groupId ?? '');
   const location = useLocation();
   const [editingMed, setEditingMed] = useState<Medication | null>(null);
@@ -121,7 +121,7 @@ export default function AddMedicationPage() {
                 </h2>
                 <EditMedicationForm
                   initialValues={editingMed}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={isFormSubmitting}
                   onSubmit={handleEdit}
                   onCancel={() => setEditingMed(null)}
                 />
@@ -129,7 +129,7 @@ export default function AddMedicationPage() {
             ) : (
               <AddMedicationForm
                 patientId={patientId}
-                isSubmitting={isSubmitting}
+                isSubmitting={isFormSubmitting}
                 onSubmit={handleAdd}
                 onCancel={handleCancel}
               />
@@ -193,7 +193,7 @@ export default function AddMedicationPage() {
                         {med.status === 'active' && (
                           <button
                             type="button"
-                            disabled={isSubmitting}
+                            disabled={submittingMedicationId === med.id}
                             onClick={() => setEditingMed(med)}
                             className="text-xs px-2 py-0.5 rounded border"
                             style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
@@ -204,7 +204,7 @@ export default function AddMedicationPage() {
                         {med.status === 'active' && (
                           <button
                             type="button"
-                            disabled={isSubmitting}
+                            disabled={submittingMedicationId === med.id}
                             onClick={() => void pauseMedication(med.id)}
                             className="text-xs px-2 py-0.5 rounded border"
                             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
@@ -215,7 +215,7 @@ export default function AddMedicationPage() {
                         {med.status === 'paused' && (
                           <button
                             type="button"
-                            disabled={isSubmitting}
+                            disabled={submittingMedicationId === med.id}
                             onClick={() => void activateMedication(med.id)}
                             className="text-xs px-2 py-0.5 rounded border"
                             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
@@ -227,7 +227,7 @@ export default function AddMedicationPage() {
                           <>
                             <button
                               type="button"
-                              disabled={isSubmitting}
+                              disabled={submittingMedicationId === med.id}
                               onClick={() => { void archiveMedication(med.id); setConfirmArchiveId(null); }}
                               className="text-xs px-2 py-0.5 rounded border font-bold"
                               style={{ borderColor: 'var(--color-status-critical)', color: 'var(--color-status-critical)' }}
@@ -246,7 +246,7 @@ export default function AddMedicationPage() {
                         ) : (
                           <button
                             type="button"
-                            disabled={isSubmitting}
+                            disabled={submittingMedicationId === med.id}
                             onClick={() => setConfirmArchiveId(med.id)}
                             className="text-xs px-2 py-0.5 rounded border"
                             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}

@@ -179,6 +179,40 @@ describe('SettingsPage', () => {
     expect(updateEq).toHaveBeenCalledWith('id', 'user-1');
   });
 
+  it('loads phone number and saves it to the profile', async () => {
+    const user = userEvent.setup();
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: { preferences: null, phone: null },
+      error: null,
+    });
+    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const updateEq = vi.fn().mockResolvedValue({ error: null });
+    const update = vi.fn().mockReturnValue({ eq: updateEq });
+
+    fromMock.mockImplementation((tableName: string) => {
+      if (tableName === 'profiles') {
+        return {
+          select: vi.fn().mockReturnValue({ eq }),
+          update,
+        };
+      }
+
+      throw new Error(`Unexpected table ${tableName}`);
+    });
+
+    renderPage();
+
+    const phoneInput = await screen.findByLabelText(/phone number/i);
+    expect(phoneInput).toHaveValue('');
+
+    await user.type(phoneInput, '+351912345678');
+    await user.click(screen.getByRole('button', { name: /save phone number/i }));
+
+    expect(update).toHaveBeenCalledWith({ phone: '+351912345678' });
+    expect(updateEq).toHaveBeenCalledWith('id', 'user-1');
+    expect(await screen.findByText(/phone number saved/i)).toBeInTheDocument();
+  });
+
   it('loads and updates the weekly wellbeing reminder preference for primary carers', async () => {
     const user = userEvent.setup();
     const maybeSingle = vi.fn().mockResolvedValue({

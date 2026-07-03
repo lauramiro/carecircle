@@ -24,6 +24,8 @@ export interface EmergencyContact {
   phoneNumber?: string;
   source: EmergencyContactSource;
   editable: boolean;
+  /** Set for `primary_carer` rows — the profile user id shown on Emergency Contacts. */
+  ownerUserId?: string;
 }
 
 export interface EmergencyContactFormData {

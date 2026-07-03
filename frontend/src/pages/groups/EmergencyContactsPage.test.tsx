@@ -27,8 +27,20 @@ const toastMock = vi.hoisted(() => ({
   error: vi.fn(),
 }));
 
+const authMock = vi.hoisted(() => ({
+  session: {
+    user: { id: 'primary-carer-1' },
+  } as { user: { id: string } } | null,
+  loading: false,
+  signOut: vi.fn(),
+}));
+
 vi.mock('../../hooks/groups/useGroupDetail', () => ({
   useGroupDetail: () => groupDetailMock.value,
+}));
+
+vi.mock('../../contexts/AuthContext', () => ({
+  useAuth: () => authMock,
 }));
 
 vi.mock('../../api/groups/groups.service', () => serviceMock);
@@ -57,6 +69,7 @@ describe('EmergencyContactsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    authMock.session = { user: { id: 'primary-carer-1' } };
     groupDetailMock.value = {
       group: {
         id: 'group-1',
@@ -126,6 +139,7 @@ describe('EmergencyContactsPage', () => {
         role: 'Primary carer',
         source: 'primary_carer',
         editable: false,
+        ownerUserId: 'primary-carer-1',
       },
     ]);
 
@@ -133,7 +147,30 @@ describe('EmergencyContactsPage', () => {
 
     expect(await screen.findByText('Primary Carer')).toBeInTheDocument();
     expect(screen.getByText('Phone number missing')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /add your phone number in settings/i })).toHaveAttribute(
+      'href',
+      '/settings',
+    );
     expect(screen.queryByRole('link', { name: /call/i })).not.toBeInTheDocument();
+  });
+
+  it('does not show settings link when another user views a missing primary carer phone', async () => {
+    authMock.session = { user: { id: 'other-user' } };
+    serviceMock.getEmergencyContacts.mockResolvedValue([
+      {
+        id: 'primary-carer-1',
+        name: 'Primary Carer',
+        role: 'Primary carer',
+        source: 'primary_carer',
+        editable: false,
+        ownerUserId: 'primary-carer-1',
+      },
+    ]);
+
+    renderPage();
+
+    expect(await screen.findByText('Phone number missing')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /add your phone number in settings/i })).not.toBeInTheDocument();
   });
 
   it('shows cached contacts when refresh fails', async () => {

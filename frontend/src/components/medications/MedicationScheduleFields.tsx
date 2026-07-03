@@ -326,6 +326,9 @@ export default function MedicationScheduleFields({
                 {errors.dayOfMonth}
               </p>
             )}
+            <p className="mt-1 text-xs" style={{ color: 'var(--color-text-hint)' }}>
+              If this day does not exist in a month, the dose will be scheduled on that month&apos;s last day.
+            </p>
           </div>
 
           <TimeList

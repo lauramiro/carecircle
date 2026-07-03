@@ -54,8 +54,15 @@ export function isMedicationScheduledOnDate(med: Medication, date: Date): boolea
       const diffDays = Math.floor((dateOnly(date).getTime() - start.getTime()) / 86400000);
       return diffDays >= 0 && diffDays % 14 === 0;
     }
-    case 'monthly':
-      return dateOnly(date).getDate() === med.dayOfMonth;
+    case 'monthly': {
+      if (!med.dayOfMonth) return false;
+      const day = dateOnly(date).getDate();
+      const year = dateOnly(date).getFullYear();
+      const month = dateOnly(date).getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const effectiveDay = Math.min(med.dayOfMonth, daysInMonth);
+      return day === effectiveDay;
+    }
     default:
       return false;
   }

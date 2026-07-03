@@ -41,6 +41,28 @@ describe('useMedicationForm — Scenario 1: adding a medication (all required fi
     expect(result.current.errors).toEqual({});
   });
 
+  it('shows a validation error for monthly day above 31', () => {
+    const { result } = renderHook(() => useMedicationForm());
+
+    act(() => {
+      result.current.updateField('name', 'Metformin');
+      result.current.updateField('dose', '500');
+      result.current.updateField('unit', 'mg');
+      result.current.updateField('startDate', '2025-01-01');
+      result.current.setScheduleType('monthly');
+      result.current.updateField('dayOfMonth', 32);
+      result.current.addSpecificTime('08:00');
+    });
+
+    let valid: boolean;
+    act(() => {
+      valid = result.current.validateForm();
+    });
+
+    expect(valid!).toBe(false);
+    expect(result.current.errors.dayOfMonth).toBe('Enter a valid day of month (1-31)');
+  });
+
   it('rejects a dose of zero', () => {
     const { result } = renderHook(() => useMedicationForm());
 

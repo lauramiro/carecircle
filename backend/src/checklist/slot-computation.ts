@@ -152,13 +152,21 @@ export function isMedicationScheduledOnDate(
       );
       return diffDays >= 0 && diffDays % 14 === 0;
     }
-    case 'monthly':
-      return (
-        toZonedTime(
-          parseLocalDateInTimezone(localDate, timezone),
-          timezone,
-        ).getDate() === med.dayOfMonth
+    case 'monthly': {
+      if (med.dayOfMonth == null) return false;
+      const currentDate = toZonedTime(
+        parseLocalDateInTimezone(localDate, timezone),
+        timezone,
       );
+      const day = currentDate.getDate();
+      const daysInMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0,
+      ).getDate();
+      const effectiveDay = Math.min(med.dayOfMonth, daysInMonth);
+      return day === effectiveDay;
+    }
     default:
       return false;
   }

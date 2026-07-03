@@ -118,13 +118,20 @@ export default function SettingsPage() {
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [notificationError, setNotificationError] = useState<string | null>(null);
+  const [phone, setPhone] = useState('');
+  const [isLoadingPhone, setIsLoadingPhone] = useState(true);
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [phoneSaved, setPhoneSaved] = useState(false);
 
   useEffect(() => {
     const userId = session?.user?.id;
     if (!userId) {
       setIsLoadingNotifications(false);
+      setIsLoadingPhone(false);
       setIsPrimaryCarer(false);
       setPreferences(null);
+      setPhone('');
       return;
     }
 
@@ -134,12 +141,14 @@ export default function SettingsPage() {
 
     async function loadNotificationPreferences() {
       setIsLoadingNotifications(true);
+      setIsLoadingPhone(true);
       setNotificationError(null);
+      setPhoneError(null);
 
       try {
         const [primaryCarer, profileResult] = await Promise.all([
           isCurrentUserPrimaryCarer(),
-          supabase.from('profiles').select('preferences').eq('id', currentUserId).maybeSingle(),
+          supabase.from('profiles').select('preferences, phone').eq('id', currentUserId).maybeSingle(),
         ]);
 
         if (!isActive) return;
@@ -150,6 +159,7 @@ export default function SettingsPage() {
         setIsPrimaryCarer(primaryCarer);
         const loadedPreferences = (profileResult.data?.preferences as ProfilePreferences | null) ?? null;
         setPreferences(loadedPreferences);
+        setPhone(profileResult.data?.phone ?? '');
 
         const dbFontSize = loadedPreferences?.accessibility?.fontSize;
         if (dbFontSize && VALID_FONT_SIZES.includes(dbFontSize)) {
@@ -157,14 +167,16 @@ export default function SettingsPage() {
         }
       } catch (error) {
         if (!isActive) return;
-        setNotificationError(
+        const message =
           error instanceof Error
             ? error.message
-            : 'Unable to load notification preferences.',
-        );
+            : 'Unable to load account preferences.';
+        setNotificationError(message);
+        setPhoneError(message);
       } finally {
         if (isActive) {
           setIsLoadingNotifications(false);
+          setIsLoadingPhone(false);
         }
       }
     }
@@ -195,6 +207,37 @@ export default function SettingsPage() {
     if (!error) {
       setPreferences(nextPreferences);
     }
+  }
+
+  async function handlePhoneSave() {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    const trimmed = phone.trim();
+    if (trimmed.length > 0 && trimmed.length < 7) {
+      setPhoneError('Enter a valid phone number with at least 7 digits.');
+      setPhoneSaved(false);
+      return;
+    }
+
+    setIsSavingPhone(true);
+    setPhoneError(null);
+    setPhoneSaved(false);
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ phone: trimmed.length > 0 ? trimmed : null })
+      .eq('id', userId);
+
+    if (error) {
+      setPhoneError(error.message || 'Unable to save phone number.');
+      setIsSavingPhone(false);
+      return;
+    }
+
+    setPhone(trimmed);
+    setPhoneSaved(true);
+    setIsSavingPhone(false);
   }
 
   async function handleWeeklyWellbeingReminderToggle(enabled: boolean) {
@@ -332,9 +375,59 @@ export default function SettingsPage() {
                 Account
               </h2>
               <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                Profile details, email, and sign-in preferences will be configurable here.
+                Your phone number appears on the Emergency Contacts page for care circles you lead.
               </p>
             </div>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            <label htmlFor="account-phone" className="block text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
+              Phone number
+            </label>
+            {isLoadingPhone ? (
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                Loading account details...
+              </p>
+            ) : (
+              <>
+                <input
+                  id="account-phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(event) => {
+                    setPhone(event.target.value);
+                    setPhoneSaved(false);
+                    setPhoneError(null);
+                  }}
+                  placeholder="e.g. +351 912 345 678"
+                  className="h-10 w-full rounded-lg border px-3 text-sm"
+                  style={{
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                    backgroundColor: 'var(--color-card)',
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={isSavingPhone}
+                  onClick={() => void handlePhoneSave()}
+                  className="h-10 rounded-lg px-4 text-sm font-bold text-white disabled:opacity-60"
+                  style={{ backgroundColor: 'var(--color-primary)' }}
+                >
+                  {isSavingPhone ? 'Saving...' : 'Save phone number'}
+                </button>
+                {phoneSaved ? (
+                  <p className="text-xs" style={{ color: 'var(--color-status-given)' }}>
+                    Phone number saved.
+                  </p>
+                ) : null}
+                {phoneError ? (
+                  <p className="text-xs" style={{ color: 'var(--color-status-critical)' }}>
+                    {phoneError}
+                  </p>
+                ) : null}
+              </>
+            )}
           </div>
         </article>
 

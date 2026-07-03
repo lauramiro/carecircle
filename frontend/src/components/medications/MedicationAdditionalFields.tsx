@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { MedicationFormErrors, MedicationFormValues } from '../../hooks/medications/useMedicationForm';
+import { medicationFieldClassName, medicationFieldStyle, medicationTextareaClassName } from './medicationFieldStyles';
 
 interface MedicationAdditionalFieldsProps {
   formId: string;
@@ -23,12 +24,6 @@ export default function MedicationAdditionalFields({
   defaultExpanded = false,
 }: MedicationAdditionalFieldsProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
-
-  const fieldStyle = (hasError: boolean) => ({
-    borderColor: hasError ? 'var(--color-status-critical)' : 'var(--color-border)',
-    color: 'var(--color-text-primary)',
-    backgroundColor: 'white',
-  });
 
   return (
     <div className="md:col-span-2 rounded-xl border" style={{ borderColor: 'var(--color-border)' }}>
@@ -69,8 +64,8 @@ export default function MedicationAdditionalFields({
               value={values.form}
               onChange={(e) => updateField('form', e.target.value)}
               placeholder="e.g. Tablet"
-              className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-              style={fieldStyle(false)}
+              className={medicationFieldClassName}
+              style={medicationFieldStyle(false)}
             />
             <datalist id={`${formId}-form-suggestions`}>
               {FORM_SUGGESTIONS.map((option) => (
@@ -90,8 +85,8 @@ export default function MedicationAdditionalFields({
               value={values.route}
               onChange={(e) => updateField('route', e.target.value)}
               placeholder="e.g. Oral"
-              className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-              style={fieldStyle(false)}
+              className={medicationFieldClassName}
+              style={medicationFieldStyle(false)}
             />
             <datalist id={`${formId}-route-suggestions`}>
               {ROUTE_SUGGESTIONS.map((option) => (
@@ -110,8 +105,8 @@ export default function MedicationAdditionalFields({
               onChange={(e) => updateField('instructions', e.target.value)}
               placeholder="How this medication should be taken..."
               rows={2}
-              className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
-              style={fieldStyle(false)}
+              className={medicationTextareaClassName}
+              style={medicationFieldStyle(false)}
             />
           </div>
 
@@ -128,8 +123,8 @@ export default function MedicationAdditionalFields({
               onChange={(e) => updateField('quantityOnHand', e.target.value)}
               onBlur={() => touchField('quantityOnHand')}
               placeholder="e.g. 28"
-              className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-              style={fieldStyle(Boolean(errors.quantityOnHand))}
+              className={medicationFieldClassName}
+              style={medicationFieldStyle(Boolean(errors.quantityOnHand))}
             />
             {errors.quantityOnHand && (
               <p className="mt-1 text-xs" style={{ color: 'var(--color-status-critical)' }}>
@@ -147,8 +142,8 @@ export default function MedicationAdditionalFields({
               type="date"
               value={values.prescribedDate}
               onChange={(e) => updateField('prescribedDate', e.target.value)}
-              className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-              style={fieldStyle(false)}
+              className={medicationFieldClassName}
+              style={medicationFieldStyle(false)}
             />
           </div>
 
@@ -162,8 +157,8 @@ export default function MedicationAdditionalFields({
               value={values.prescriptionNumber}
               onChange={(e) => updateField('prescriptionNumber', e.target.value)}
               placeholder="Rx number"
-              className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-              style={fieldStyle(false)}
+              className={medicationFieldClassName}
+              style={medicationFieldStyle(false)}
             />
           </div>
 
@@ -180,8 +175,8 @@ export default function MedicationAdditionalFields({
               onChange={(e) => updateField('refillsRemaining', e.target.value)}
               onBlur={() => touchField('refillsRemaining')}
               placeholder="e.g. 3"
-              className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-              style={fieldStyle(Boolean(errors.refillsRemaining))}
+              className={medicationFieldClassName}
+              style={medicationFieldStyle(Boolean(errors.refillsRemaining))}
             />
             {errors.refillsRemaining && (
               <p className="mt-1 text-xs" style={{ color: 'var(--color-status-critical)' }}>
@@ -199,8 +194,8 @@ export default function MedicationAdditionalFields({
               type="date"
               value={values.lastRefillDate}
               onChange={(e) => updateField('lastRefillDate', e.target.value)}
-              className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-              style={fieldStyle(false)}
+              className={medicationFieldClassName}
+              style={medicationFieldStyle(false)}
             />
           </div>
 
@@ -214,8 +209,8 @@ export default function MedicationAdditionalFields({
               value={values.pharmacy}
               onChange={(e) => updateField('pharmacy', e.target.value)}
               placeholder="Pharmacy name"
-              className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-              style={fieldStyle(false)}
+              className={medicationFieldClassName}
+              style={medicationFieldStyle(false)}
             />
           </div>
 
@@ -229,8 +224,8 @@ export default function MedicationAdditionalFields({
               value={values.pharmacyPhone}
               onChange={(e) => updateField('pharmacyPhone', e.target.value)}
               placeholder="+44 ..."
-              className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-              style={fieldStyle(false)}
+              className={medicationFieldClassName}
+              style={medicationFieldStyle(false)}
             />
           </div>
 
@@ -244,8 +239,8 @@ export default function MedicationAdditionalFields({
               value={values.sideEffectsText}
               onChange={(e) => updateField('sideEffectsText', e.target.value)}
               placeholder="Comma-separated, e.g. nausea, dizziness"
-              className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-              style={fieldStyle(false)}
+              className={medicationFieldClassName}
+              style={medicationFieldStyle(false)}
             />
           </div>
 
@@ -259,8 +254,8 @@ export default function MedicationAdditionalFields({
               onChange={(e) => updateField('notes', e.target.value)}
               placeholder="Any other notes about this medication..."
               rows={2}
-              className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
-              style={fieldStyle(false)}
+              className={medicationTextareaClassName}
+              style={medicationFieldStyle(false)}
             />
           </div>
 

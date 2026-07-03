@@ -35,10 +35,12 @@ export default function AddMedicationPage() {
 
   if (!groupId) return <Navigate to="/groups/list" replace />;
 
+  const pageTitle = editingMed ? 'Edit Medication' : 'Add Medication';
+
   if (groupLoading) {
     return (
       <section>
-        <h1 className="text-2xl font-extrabold">Add Medication</h1>
+        <h1 className="text-2xl font-extrabold">{pageTitle}</h1>
         <div
           className="mt-6 rounded-xl border bg-white p-6 text-sm"
           style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
@@ -56,7 +58,7 @@ export default function AddMedicationPage() {
   if (groupError) {
     return (
       <section>
-        <h1 className="text-2xl font-extrabold">Add Medication</h1>
+        <h1 className="text-2xl font-extrabold">{pageTitle}</h1>
         <div
           className="mt-6 rounded-xl border p-6 text-sm"
           style={{
@@ -101,7 +103,7 @@ export default function AddMedicationPage() {
             margin: 0,
           }}
         >
-          Add Medication
+          {pageTitle}
         </h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           {group.name}

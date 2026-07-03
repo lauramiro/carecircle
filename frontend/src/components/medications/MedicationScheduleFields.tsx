@@ -8,6 +8,7 @@ import {
 } from '../../api/medications/medications.types';
 import type { ScheduleType } from '../../api/medications/medications.types';
 import type { CourseDurationMode, DailyMode, MedicationFormErrors, MedicationFormValues } from '../../hooks/medications/useMedicationForm';
+import { medicationFieldClassName, medicationFieldStyle } from './medicationFieldStyles';
 
 interface Props {
   formId: string;
@@ -47,11 +48,7 @@ export default function MedicationScheduleFields({
   toggleDayOfWeek,
   touchField,
 }: Props) {
-  const fieldStyle = (hasError: boolean): React.CSSProperties => ({
-    borderColor: hasError ? 'var(--color-status-critical)' : 'var(--color-border)',
-    color: 'var(--color-text-primary)',
-    backgroundColor: 'white',
-  });
+  const fieldStyle = medicationFieldStyle;
 
   const activePill: React.CSSProperties = {
     borderColor: 'var(--color-primary)',
@@ -61,8 +58,8 @@ export default function MedicationScheduleFields({
 
   const inactivePill = (hasError: boolean): React.CSSProperties => ({
     borderColor: hasError ? 'var(--color-status-critical)' : 'var(--color-border)',
-    backgroundColor: 'white',
-    color: 'var(--color-text-secondary)',
+    backgroundColor: 'var(--color-input-bg)',
+    color: 'var(--color-text-primary)',
   });
 
   return (
@@ -181,7 +178,7 @@ export default function MedicationScheduleFields({
                   }
                   onBlur={() => touchField('intervalHours')}
                   aria-invalid={Boolean(errors.intervalHours)}
-                  className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
+                  className={`${medicationFieldClassName}`}
                   style={fieldStyle(Boolean(errors.intervalHours))}
                 >
                   <option value="">Select interval</option>
@@ -213,7 +210,7 @@ export default function MedicationScheduleFields({
                   onChange={(e) => updateField('intervalStartTime', e.target.value)}
                   onBlur={() => touchField('intervalStartTime')}
                   aria-invalid={Boolean(errors.intervalStartTime)}
-                  className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
+                  className={`${medicationFieldClassName}`}
                   style={fieldStyle(Boolean(errors.intervalStartTime))}
                 />
                 {errors.intervalStartTime && (
@@ -318,7 +315,7 @@ export default function MedicationScheduleFields({
               onBlur={() => touchField('dayOfMonth')}
               placeholder="e.g. 15"
               aria-invalid={Boolean(errors.dayOfMonth)}
-              className="mt-2 h-10 w-32 rounded-lg border px-3 text-sm outline-none"
+              className={`${medicationFieldClassName} w-32`}
               style={fieldStyle(Boolean(errors.dayOfMonth))}
             />
             {errors.dayOfMonth && (
@@ -366,7 +363,7 @@ export default function MedicationScheduleFields({
             onBlur={() => touchField('startDate')}
             aria-invalid={Boolean(errors.startDate)}
             aria-describedby={errors.startDate ? `${formId}-start-date-error` : undefined}
-            className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
+            className={medicationFieldClassName}
             style={fieldStyle(Boolean(errors.startDate))}
           />
           {errors.startDate && (
@@ -425,7 +422,7 @@ export default function MedicationScheduleFields({
                   onChange={(e) => updateField('endDate', e.target.value)}
                   onBlur={() => touchField('endDate')}
                   aria-invalid={Boolean(errors.endDate)}
-                  className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
+                  className={`${medicationFieldClassName}`}
                   style={fieldStyle(Boolean(errors.endDate))}
                 />
                 {errors.endDate && (
@@ -458,7 +455,7 @@ export default function MedicationScheduleFields({
                   onBlur={() => touchField('totalDoses')}
                   placeholder="e.g. 30"
                   aria-invalid={Boolean(errors.totalDoses)}
-                  className="mt-2 h-10 w-32 rounded-lg border px-3 text-sm outline-none"
+                  className={`${medicationFieldClassName} w-32`}
                   style={fieldStyle(Boolean(errors.totalDoses))}
                 />
                 {errors.totalDoses && (
@@ -518,8 +515,8 @@ function TimeList({ formId, times, error, addTime, removeTime }: TimeListProps) 
   };
   const inactivePill: React.CSSProperties = {
     borderColor: 'var(--color-border)',
-    backgroundColor: 'white',
-    color: 'var(--color-text-secondary)',
+    backgroundColor: 'var(--color-input-bg)',
+    color: 'var(--color-text-primary)',
   };
 
   return (
@@ -547,7 +544,7 @@ function TimeList({ formId, times, error, addTime, removeTime }: TimeListProps) 
               aria-pressed={active}
             >
               {label}
-              <span className="ml-1.5 font-normal opacity-60">{time}</span>
+              <span className="ml-1.5 font-normal" style={{ color: 'var(--color-text-secondary)' }}>{time}</span>
             </button>
           );
         })}
@@ -586,15 +583,15 @@ function TimeList({ formId, times, error, addTime, removeTime }: TimeListProps) 
             onChange={(e) => setCustomTime(e.target.value)}
             autoFocus
             aria-label="Custom time"
-            className="h-10 rounded-lg border px-3 text-sm outline-none"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', backgroundColor: 'white' }}
+            className={`${medicationFieldClassName} mt-2 h-10 w-auto`}
+            style={medicationFieldStyle(false)}
           />
           <button
             type="button"
             onClick={handleAddCustom}
             disabled={!customTime}
             className="h-10 rounded-lg border px-3 text-xs font-bold"
-            style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', backgroundColor: 'white' }}
+            style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', backgroundColor: 'var(--color-input-bg)' }}
           >
             Add
           </button>
@@ -602,7 +599,7 @@ function TimeList({ formId, times, error, addTime, removeTime }: TimeListProps) 
             type="button"
             onClick={() => { setShowCustomInput(false); setCustomTime(''); }}
             className="h-10 rounded-lg border px-3 text-xs"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)', backgroundColor: 'white' }}
+            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', backgroundColor: 'var(--color-input-bg)' }}
           >
             Cancel
           </button>

@@ -142,3 +142,31 @@ select:-webkit-autofill {
 [data-font-size='extra-large'] {
   font-size: 125%;
 }
+
+.medication-form-field {
+  color: var(--color-text-primary);
+}
+
+.medication-form-field::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 1;
+}
+
+.medication-form-field option {
+  color: var(--color-text-primary);
+}
+
+.medication-form-field:invalid {
+  color: var(--color-text-secondary);
+}
+
+.medication-form-field:valid,
+.medication-form-field[type='date']:not([value='']),
+.medication-form-field[type='time']:not([value='']) {
+  color: var(--color-text-primary);
+}
+
+.medication-form-field[type='date']::-webkit-datetime-edit,
+.medication-form-field[type='time']::-webkit-datetime-edit {
+  color: var(--color-text-primary);
+}

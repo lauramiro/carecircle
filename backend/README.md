@@ -40,7 +40,7 @@ Never commit real `.env`, `.env.development`, or `.env.production` files.
 | `SUPABASE_URL` | Yes | URL | Supabase project URL (Dashboard → Settings → API). |
 | `SUPABASE_ANON_KEY` | Yes | string | Supabase **anon** (public) key — safe for the browser. |
 | `SUPABASE_SERVICE_ROLE_KEY` | No* | string | **Server-only.** Required for checklist materialization, overdue detection, and alert crons (bypasses RLS). **Never expose to clients or commit.** |
-| `FRONTEND_PUBLIC_URL` | No | URL | Base URL for push/SMS deep links (e.g. `http://localhost:5173`). |
+| `FRONTEND_PUBLIC_URL` | Yes in production | URL | Public frontend origin for CORS and push/SMS deep links (e.g. `http://localhost:5173` locally, `https://carecircle-frontend.onrender.com` on Render). Required when `NODE_ENV=production` — startup fails without it. |
 | `VAPID_PUBLIC_KEY` | No | string | Web Push public key. Generate: `npx web-push generate-vapid-keys` (from `backend/`). |
 | `VAPID_PRIVATE_KEY` | No | string | Web Push private key — **server only, never commit.** |
 | `VAPID_SUBJECT` | No | string | `mailto:…` or `https://…` contact for push services. |
@@ -134,10 +134,12 @@ For example, a controller route declared as `@Get()` is served at `/api`.
 
 ### CORS
 
-CORS is configured during bootstrap:
+CORS is configured during bootstrap (`backend/src/config/cors.config.ts`):
 
 - `development`: allows `http://localhost:*`
-- `production`: allows `https://carecircle.com`
+- `production`: allows only the exact origin from `FRONTEND_PUBLIC_URL` (trailing slash is stripped before comparison)
+
+Set `FRONTEND_PUBLIC_URL=https://carecircle-frontend.onrender.com` on the Render backend service. Without it, production startup throws and cross-origin browser requests from the deployed frontend are rejected.
 
 ### Rate Limiting
 

@@ -4,7 +4,8 @@ import type { AdministrationLogEvent, AdministrationLogStatus } from './administ
 import {
   formatMedicationDoseLine,
   medicationDisplayName,
-  sortAdministrationLogEvents,
+  deduplicateAdministrationLogEvents,
+  normalizeAdministrationLogStatus,
 } from '../../utils/administrationLog.utils';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -211,7 +212,7 @@ export async function fetchAdministrationLogEvents(
       `,
       )
       .eq('patient_id', patientId)
-      .in('status', ['overdue', 'given', 'skipped']);
+      .in('status', ['overdue', 'given', 'skipped', 'taken', 'missed']);
 
     if (logError) {
       if (logError.code !== 'PGRST116' && logError.code !== '42P01') {
@@ -225,8 +226,8 @@ export async function fetchAdministrationLogEvents(
       const logProfileMap = await loadProfileNames(logCarerIds);
 
       for (const row of logRows) {
-        const st = row.status as string;
-        if (st !== 'given' && st !== 'skipped' && st !== 'overdue') continue;
+        const st = normalizeAdministrationLogStatus(row.status as string);
+        if (!st) continue;
         const med = parseMedication(row.medications);
         const loggedBy = row.logged_by as string | null;
         const medName = med ? medicationDisplayName(med) : 'Medication';
@@ -242,7 +243,7 @@ export async function fetchAdministrationLogEvents(
           id: `log:${String(row.id)}`,
           source: 'medication_log',
           occurredAtIso: (row.created_at as string) || new Date().toISOString(),
-          status: st as AdministrationLogStatus,
+          status: st,
           medicationName: medName,
           doseDisplay,
           carerName,
@@ -255,5 +256,5 @@ export async function fetchAdministrationLogEvents(
     }
   }
 
-  return sortAdministrationLogEvents(out);
+  return deduplicateAdministrationLogEvents(out);
 }

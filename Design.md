@@ -123,7 +123,7 @@ HTTP Request → Controller (DTO + class-validator)
 
 **Pattern:** Row Level Security (RLS) on all sensitive tables. Helper functions (`is_group_member()`, `is_caregiver_for()`) enforce **cross-circle isolation** — a caregiver in Circle A cannot read or write Circle B data.
 
-**Role model** (`group_members.role_in_care`):
+**Role model** (`care_givers.role_in_care`):
 
 | Role | Scope |
 |------|-------|

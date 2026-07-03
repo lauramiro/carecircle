@@ -72,9 +72,22 @@ describe('SMS cancellation on acknowledgement (CC-102)', () => {
       getClient: () => client as never,
     };
 
+    const mockAlertRepo = {
+      ...alertRepo,
+      findCancelledAlertByItemId: vi.fn().mockResolvedValue(null),
+    };
+    const mockPushDispatch = {
+      sendDismissToUsers: vi.fn().mockResolvedValue(undefined),
+    };
+    const mockLowStockAlerts = {
+      maybeSendLowStockAlert: vi.fn().mockResolvedValue(undefined),
+    };
+
     const subscriber = new ChecklistAckAlertSubscriber(
       supabase as never,
-      alertRepo as never,
+      mockAlertRepo as never,
+      mockPushDispatch as never,
+      mockLowStockAlerts as never,
     );
     subscriber.onModuleInit();
 
@@ -95,7 +108,7 @@ describe('SMS cancellation on acknowledgement (CC-102)', () => {
     await vi.waitFor(() =>
       expect(alertRepo.cancelOpenAlert).toHaveBeenCalledWith(
         'item-1',
-        'acknowledged',
+        'marked_given',
       ),
     );
 

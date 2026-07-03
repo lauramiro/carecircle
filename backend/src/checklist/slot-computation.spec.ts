@@ -52,6 +52,9 @@ function makeRecord(
     status: 'active',
     perpetual: true,
     total_doses: null,
+    quantity_on_hand: null,
+    low_stock_alert_threshold_days: 7,
+    low_stock_alert_sent_at: null,
     materialization_cursor_at: null,
     ...overrides,
   };
@@ -164,12 +167,42 @@ describe('slot-computation', () => {
     );
   });
 
-  it('enumerateFutureDoseSlots skips past slots', () => {
-    const med = makeMed({ specificTimes: ['08:00', '20:00'] });
+  it("enumerateFutureDoseSlots still includes today's already-passed slot, so it can surface as overdue", () => {
+    const med = makeMed({
+      specificTimes: ['08:00', '20:00'],
+      perpetual: false,
+      endDate: '2025-05-21',
+    });
     const now = new Date('2025-05-21T12:00:00Z');
     const slots = enumerateFutureDoseSlots(med, TZ, now, null);
-    expect(slots.every((s) => s.scheduledAt > now)).toBe(true);
-    expect(slots[0]?.scheduledTime).toBe('20:00');
+    expect(slots.map((s) => s.scheduledTime)).toEqual(['08:00', '20:00']);
+  });
+
+  it("enumerateFutureDoseSlots includes a medication's first dose even when created after that dose's time today", () => {
+    const med = makeMed({
+      startDate: '2025-05-21',
+      endDate: '2025-05-21',
+      perpetual: false,
+      specificTimes: ['08:00'],
+    });
+    const createdAt = new Date('2025-05-21T15:00:00Z');
+    const slots = enumerateFutureDoseSlots(med, TZ, createdAt, null);
+    expect(slots).toHaveLength(1);
+    expect(slots[0].localDate).toBe('2025-05-21');
+    expect(slots[0].scheduledTime).toBe('08:00');
+    expect(slots[0].scheduledAt < createdAt).toBe(true);
+  });
+
+  it('enumerateFutureDoseSlots does not regenerate a slot already materialized (cursorAt)', () => {
+    const med = makeMed({
+      specificTimes: ['08:00', '20:00'],
+      perpetual: false,
+      endDate: '2025-05-21',
+    });
+    const now = new Date('2025-05-21T12:00:00Z');
+    const cursorAt = new Date('2025-05-21T08:00:00Z');
+    const slots = enumerateFutureDoseSlots(med, TZ, now, cursorAt);
+    expect(slots.map((s) => s.scheduledTime)).toEqual(['20:00']);
   });
 
   it('medicationRecordToSlotMed maps fields', () => {

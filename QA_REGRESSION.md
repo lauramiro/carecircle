@@ -26,7 +26,7 @@ Derived from `backend/src/**/*.controller.ts`, `backend/src/**/*.dto.ts`, `front
 ### AUTH-04 — Sign up with already-registered email
 **Preconditions:** Email already has an account.
 **Steps:** Submit signup form with that email.
-**Expected:** Supabase "already registered" error mapped to an account-exists message in UI.
+**Expected:** `SignupPage.tsx:73` deliberately swallows the Supabase "already registered" error and shows the same "check your email" success screen as a genuinely new signup — this is an intentional anti-enumeration measure, not a bug. The UI must not reveal whether an email is already registered.
 **Severity:** Major
 
 ### AUTH-05 — Login with valid password
@@ -349,8 +349,7 @@ Derived from `backend/src/**/*.controller.ts`, `backend/src/**/*.dto.ts`, `front
 **Severity:** Major
 
 ### APPT-05 — Edit entire recurring series
-**Steps:** Edit with `scope=all`.
-**Expected:** All occurrences in the series updated.
+**Status:** Not implemented — `EditScope` (`frontend/src/api/appointments/appointments.types.ts:5`) only supports `'this' | 'future'`. There is no `scope=all`/"edit entire series" option anywhere in the codebase; the "Edit recurring appointment" dialog only ever offers "This appointment only" and "This and all future appointments". Appointments have no backend module at all — they're implemented entirely via direct-Supabase calls (RLS-governed), unlike medications/shifts which go through the backend. This entry should be removed or replaced once/if `scope=all` is actually built.
 **Severity:** Major
 
 ### APPT-06 — Reminder sent at configured offsets
@@ -381,8 +380,8 @@ Derived from `backend/src/**/*.controller.ts`, `backend/src/**/*.dto.ts`, `front
 **Severity:** Major
 
 ### SHIFT-04 — Shift assignment service error
-**Steps:** Trigger a failure path in `ShiftsService.assignShift` (e.g. invalid groupId).
-**Expected:** `HttpException('Unable to save shift assignment', 500)`.
+**Steps:** Trigger a failure path in `ShiftsService.assignShift` (e.g. invalid/non-member groupId).
+**Expected:** `ShiftsService.assignShift` (`backend/src/shifts/shifts.service.ts`) runs an `isMember(dto.groupId, dto.changedBy)` guard before any other logic and rejects any invalid or non-member `groupId` with `ForbiddenException('not_a_group_member')` (403) — this fires first and is the actual, safer behavior (it avoids leaking whether a group exists), not the `500` originally documented here.
 **Severity:** Minor
 
 ### SHIFT-05 — Shift change is recorded in history

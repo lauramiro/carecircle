@@ -61,6 +61,7 @@ describe('PushDispatchService', () => {
       pushSubRepo as never,
       appConfig as never,
     );
+    service.onModuleInit();
 
     const result = await service.dispatch(makeAlert());
 
@@ -93,6 +94,7 @@ describe('PushDispatchService', () => {
       pushSubRepo as never,
       appConfig as never,
     );
+    service.onModuleInit();
     const alert = makeAlert();
     const result = await service.dispatch(alert);
 
@@ -105,6 +107,7 @@ describe('PushDispatchService', () => {
       JSON.stringify({
         title: 'Missed medication',
         body: alert.push_body,
+        tag: alert.checklist_item_id,
         data: { url: alert.deep_link_url },
       }),
     );
@@ -138,6 +141,7 @@ describe('PushDispatchService', () => {
       pushSubRepo as never,
       appConfig as never,
     );
+    service.onModuleInit();
     const result = await service.dispatch(makeAlert());
 
     expect(result.allFailed).toBe(true);
@@ -168,6 +172,7 @@ describe('PushDispatchService', () => {
       pushSubRepo as never,
       appConfig as never,
     );
+    service.onModuleInit();
     const result = await service.sendToUsers(['user-1'], {
       title: 'Medication stock low',
       body: 'Metformin has 10 doses remaining',
@@ -215,6 +220,7 @@ describe('PushDispatchService', () => {
       pushSubRepo as never,
       appConfig as never,
     );
+    service.onModuleInit();
     const result = await service.sendToUsers(['user-1'], {
       title: 'Medication stock low',
       body: 'Metformin has 10 doses remaining',

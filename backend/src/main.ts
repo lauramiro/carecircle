@@ -6,6 +6,12 @@ import { AppConfigService } from './config/app-config.service';
 import { buildCorsOptions } from './config/cors.config';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { setDefaultResultOrder } from 'node:dns';
+
+// Render's outbound network doesn't route IPv6, but Node's default DNS
+// resolution can still return an IPv6 address first for hosts like
+// smtp.gmail.com, causing ENETUNREACH. Prefer IPv4 results app-wide.
+setDefaultResultOrder('ipv4first');
 
 async function bootstrap() {
   // Load env before ConfigModule.forRoot resolves — its envFilePath can silently

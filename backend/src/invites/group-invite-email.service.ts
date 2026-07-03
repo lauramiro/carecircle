@@ -77,7 +77,7 @@ export class GroupInviteEmailService {
 
   async sendInviteEmail(dto: SendGroupInviteEmailDto): Promise<{ ok: true }> {
     if (!this.mailer.isConfigured()) {
-      throw new ServiceUnavailableException('invite_email_requires_gmail_env');
+      throw new ServiceUnavailableException('invite_email_requires_brevo_env');
     }
 
     const emailNorm = normalizeInviteEmail(dto.email);
@@ -96,12 +96,11 @@ export class GroupInviteEmailService {
       html: bodies.html,
       text: bodies.text,
     };
-    console.log('sendInviteEmail params:', params);
     try {
       await this.mailer.sendMail(params);
     } catch (err) {
-      console.error('sendInviteEmail error:', err);
-      throw new BadRequestException('mail_transport_failed');
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new BadRequestException(`mail_transport_failed: ${msg}`);
     }
 
     return { ok: true };

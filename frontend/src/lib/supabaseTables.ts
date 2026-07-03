@@ -26,9 +26,3 @@ export type GPContactUpdate = TablesUpdate<'gp_contacts'>;
 export type EmergencyContactRow = Tables<'emergency_contacts'>;
 export type EmergencyContactInsert = TablesInsert<'emergency_contacts'>;
 export type EmergencyContactUpdate = TablesUpdate<'emergency_contacts'>;
-
-/** Appointment columns used by CC-106; may be absent until migration is applied on remote. */
-export type AppointmentInsert = TablesInsert<'appointments'> & {
-  recurrence_rule?: string | null;
-  recurrence_series_id?: string | null;
-};

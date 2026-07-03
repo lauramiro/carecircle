@@ -95,11 +95,7 @@ export default function InvitePage() {
         return;
       }
       const group = await fetchInviteGroupDetails(invite.inviteId);
-      const alreadyMember = await isUserInInviteGroup(
-        group.groupId,
-        group.patientId,
-        session?.user?.id,
-      );
+      const alreadyMember = await isUserInInviteGroup(group.groupId, session?.user?.id);
 
       if (signal.aborted) return;
       if (alreadyMember) clearPendingInvite();
@@ -189,7 +185,7 @@ export default function InvitePage() {
               lineHeight: 1.7,
             }}
           >
-            {state.invite.email} already belongs to <strong>{state.group.groupName}</strong>.
+            {state.invite.email} already belongs to this care circle.
           </p>
           <ActionButton onClick={() => navigate(`/groups/${state.group.groupId}`)}>
             Go to group
@@ -202,9 +198,6 @@ export default function InvitePage() {
   return (
     <InviteLayout>
       <InviteAcceptPanel
-        groupName={state.group.groupName}
-        description={state.group.description}
-        totalCarers={state.group.totalCarers}
         inviteEmail={state.invite.email}
         submitting={submitting}
         onAccept={() => void handleAccept()}

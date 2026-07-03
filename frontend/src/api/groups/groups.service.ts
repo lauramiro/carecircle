@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { apiUrl } from '@lib/apiBaseUrl';
 import { INVITE_TYPES } from '../../services/inviteService';
 import { supabase } from '../../lib/supabaseClient';
 import type {
@@ -348,15 +349,10 @@ function parseCreateGroupInviteRow(data: unknown): InviteResult | null {
   };
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001').replace(
-  /\/$/,
-  '',
-);
-
 async function sendGroupInviteEmail(invite: InviteResult, groupName: string): Promise<void> {
   try {
     await axios.post(
-      `${apiBaseUrl}/api/invites/group/send-email`,
+      apiUrl('/api/invites/group/send-email'),
       {
         inviteId: invite.inviteId,
         groupId: invite.groupId,

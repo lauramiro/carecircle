@@ -80,7 +80,7 @@ const emptyValues: MedicationFormValues = {
   intervalStartTime: '',
   daysOfWeek: [],
   dayOfMonth: '',
-  startDate: todayStr(),
+  startDate: '',
   form: '',
   route: '',
   instructions: '',
@@ -261,6 +261,7 @@ export function useMedicationForm() {
     setValues((current) => ({
       ...current,
       scheduleType: type,
+      startDate: current.startDate || todayStr(),
       dailyMode: type === 'daily' ? (current.dailyMode || 'specific_times') : '',
       ...(type !== 'as_needed' && current.scheduleType === 'as_needed'
         ? {

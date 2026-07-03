@@ -8,6 +8,7 @@ import {
 } from '../../api/medications/medications.types';
 import type { ScheduleType } from '../../api/medications/medications.types';
 import type { CourseDurationMode, DailyMode, MedicationFormErrors, MedicationFormValues } from '../../hooks/medications/useMedicationForm';
+import { toLocalDateString } from '../../lib/dates';
 import { medicationFieldClassName, medicationFieldStyle } from './medicationFieldStyles';
 
 interface Props {
@@ -346,37 +347,55 @@ export default function MedicationScheduleFields({
       )}
 
       {/* Start date */}
-      {values.scheduleType && (
-        <div>
-          <label
-            htmlFor={`${formId}-start-date`}
-            className="text-xs font-bold"
+      <div>
+        <label
+          htmlFor={`${formId}-start-date`}
+          className="text-xs font-bold"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          Start date <span style={{ color: 'var(--color-status-critical)' }}>*</span>
+        </label>
+        <input
+          id={`${formId}-start-date`}
+          type="date"
+          value={values.startDate}
+          onChange={(e) => updateField('startDate', e.target.value)}
+          onBlur={() => touchField('startDate')}
+          aria-invalid={Boolean(errors.startDate)}
+          aria-describedby={
+            errors.startDate
+              ? `${formId}-start-date-error`
+              : `${formId}-start-date-hint`
+          }
+          className={medicationFieldClassName}
+          style={{
+            ...fieldStyle(Boolean(errors.startDate)),
+            color: values.startDate ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+          }}
+        />
+        {!errors.startDate && (
+          <p
+            id={`${formId}-start-date-hint`}
+            className="mt-1 text-xs"
             style={{ color: 'var(--color-text-secondary)' }}
           >
-            Start date <span style={{ color: 'var(--color-status-critical)' }}>*</span>
-          </label>
-          <input
-            id={`${formId}-start-date`}
-            type="date"
-            value={values.startDate}
-            onChange={(e) => updateField('startDate', e.target.value)}
-            onBlur={() => touchField('startDate')}
-            aria-invalid={Boolean(errors.startDate)}
-            aria-describedby={errors.startDate ? `${formId}-start-date-error` : undefined}
-            className={medicationFieldClassName}
-            style={fieldStyle(Boolean(errors.startDate))}
-          />
-          {errors.startDate && (
-            <p
-              id={`${formId}-start-date-error`}
-              className="mt-1 text-xs"
-              style={{ color: 'var(--color-status-critical)' }}
-            >
-              {errors.startDate}
-            </p>
-          )}
-        </div>
-      )}
+            {values.startDate
+              ? `Medication schedule begins on ${values.startDate}.`
+              : values.scheduleType
+                ? `Defaults to today (${toLocalDateString()}). Pick a date or leave as shown.`
+                : 'Choose a schedule above — start date will default to today.'}
+          </p>
+        )}
+        {errors.startDate && (
+          <p
+            id={`${formId}-start-date-error`}
+            className="mt-1 text-xs"
+            style={{ color: 'var(--color-status-critical)' }}
+          >
+            {errors.startDate}
+          </p>
+        )}
+      </div>
 
       {/* Course duration (non as-needed) */}
       {values.scheduleType && values.scheduleType !== 'as_needed' && (

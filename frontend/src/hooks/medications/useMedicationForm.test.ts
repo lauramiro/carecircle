@@ -17,6 +17,19 @@ describe('useMedicationForm — Scenario 1: adding a medication (all required fi
     expect(result.current.errors.dose).toBe('Dose is required');
     expect(result.current.errors.unit).toBe('Unit is required');
     expect(result.current.errors.scheduleType).toBe('Schedule is required');
+    expect(result.current.errors.startDate).toBe('Start date is required');
+  });
+
+  it('setScheduleType defaults startDate to today when empty', () => {
+    const { result } = renderHook(() => useMedicationForm());
+
+    expect(result.current.values.startDate).toBe('');
+
+    act(() => {
+      result.current.setScheduleType('daily');
+    });
+
+    expect(result.current.values.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
   it('validateForm returns true when all required fields are filled (daily specific times)', () => {

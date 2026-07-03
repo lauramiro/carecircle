@@ -120,6 +120,17 @@ describe('slot-computation', () => {
     expect(computeDoseTimesForDate(med, '2025-05-16', TZ)).toEqual([]);
   });
 
+  it('monthly schedule falls back to month end when day_of_month exceeds month length', () => {
+    const med = makeMed({
+      scheduleType: 'monthly',
+      dayOfMonth: 31,
+      specificTimes: ['09:00'],
+    });
+    expect(computeDoseTimesForDate(med, '2025-04-30', TZ)).toEqual(['09:00']);
+    expect(computeDoseTimesForDate(med, '2025-04-29', TZ)).toEqual([]);
+    expect(computeDoseTimesForDate(med, '2025-03-31', TZ)).toEqual(['09:00']);
+  });
+
   it('excludes paused and as_needed medications', () => {
     expect(
       isMedicationScheduledOnDate(

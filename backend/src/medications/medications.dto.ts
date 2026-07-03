@@ -4,6 +4,7 @@ import {
   IsBoolean,
   IsIn,
   IsInt,
+  Max,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -49,6 +50,8 @@ export class CreateMedicationDto {
 
   @IsOptional()
   @IsInt()
+  @Min(1)
+  @Max(31)
   dayOfMonth?: number;
 
   @ValidateIf((o) => o.scheduleType !== 'as_needed')
@@ -125,6 +128,8 @@ export class UpdateMedicationDto {
 
   @IsOptional()
   @IsInt()
+  @Min(1)
+  @Max(31)
   dayOfMonth?: number | null;
 
   @IsOptional()

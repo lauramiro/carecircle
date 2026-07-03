@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  administrationLogDisplayStatusLabel,
   administrationLogStatusLabel,
   buildAdministrationLogDedupKey,
   deduplicateAdministrationLogEvents,
+  formatAdministrationLogScheduledTime,
   formatMedicationDoseLine,
   medicationDisplayName,
   normalizeAdministrationLogStatus,
@@ -33,6 +35,36 @@ describe('administrationLog.utils', () => {
     expect(administrationLogStatusLabel('given')).toBe('Given');
     expect(administrationLogStatusLabel('skipped')).toBe('Skipped');
     expect(administrationLogStatusLabel('overdue')).toBe('Overdue');
+  });
+
+  it('formatAdministrationLogScheduledTime shows dash when missing', () => {
+    expect(formatAdministrationLogScheduledTime()).toBe('—');
+    expect(formatAdministrationLogScheduledTime('08:00')).toBe('08:00');
+  });
+
+  it('administrationLogDisplayStatusLabel distinguishes on-time and late given doses', () => {
+    const onTime: AdministrationLogEvent = {
+      id: '1',
+      source: 'checklist_item',
+      occurredAtIso: '2025-06-01T08:05:00.000Z',
+      status: 'given',
+      medicationName: 'Amlodipine',
+      doseDisplay: '5 mg',
+      carerName: 'Alex',
+      scheduledTimeLabel: '08:00',
+      photoThumbnailUrl: null,
+      photoFullUrl: null,
+    };
+    const late: AdministrationLogEvent = {
+      ...onTime,
+      id: '2',
+      overdueHours: 1,
+      overdueMinutes: 15,
+    };
+
+    expect(administrationLogDisplayStatusLabel(onTime)).toBe('Given (on time)');
+    expect(administrationLogDisplayStatusLabel(late)).toBe('Given (1h 15m late)');
+    expect(administrationLogDisplayStatusLabel({ ...onTime, status: 'overdue' })).toBe('Overdue');
   });
 
   it('normalizeAdministrationLogStatus maps legacy medication_logs statuses', () => {

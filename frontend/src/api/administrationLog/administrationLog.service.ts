@@ -127,6 +127,8 @@ export async function fetchAdministrationLogEvents(
         dosage_unit,
         scheduled_time,
         time_of_day,
+        overdue_hours,
+        overdue_minutes,
         medications ( ${MEDICATION_EMBED_SELECT} ),
         daily_medication_checklists ( checklist_date )
       `,
@@ -187,6 +189,8 @@ export async function fetchAdministrationLogEvents(
           scheduledTimeLabel:
             (row.scheduled_time as string | undefined) ??
             (row.time_of_day as string | undefined),
+          overdueHours: (row.overdue_hours as number | null | undefined) ?? null,
+          overdueMinutes: (row.overdue_minutes as number | null | undefined) ?? null,
           notes: (row.skip_notes as string | null) ?? null,
           photoThumbnailUrl: photoFullUrl,
           photoFullUrl,

@@ -14,6 +14,8 @@ export interface AdministrationLogEvent {
   carerName: string;
   checklistDate?: string;
   scheduledTimeLabel?: string;
+  overdueHours?: number | null;
+  overdueMinutes?: number | null;
   notes?: string | null;
   photoThumbnailUrl: string | null;
   photoFullUrl: string | null;

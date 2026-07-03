@@ -51,6 +51,56 @@ export function administrationLogStatusLabel(status: AdministrationLogStatus): s
   }
 }
 
+/** Map legacy medication_logs statuses to administration log statuses. */
+export function normalizeAdministrationLogStatus(status: string): AdministrationLogStatus | null {
+  switch (status) {
+    case 'given':
+    case 'taken':
+      return 'given';
+    case 'skipped':
+      return 'skipped';
+    case 'overdue':
+    case 'missed':
+      return 'overdue';
+    default:
+      return null;
+  }
+}
+
+function eventCalendarDay(event: AdministrationLogEvent): string {
+  return event.checklistDate ?? event.occurredAtIso.slice(0, 10);
+}
+
+/** Key for collapsing checklist_items and medication_logs rows for the same dose. */
+export function buildAdministrationLogDedupKey(event: AdministrationLogEvent): string {
+  const med = event.medicationName.trim().toLowerCase();
+  const scheduled = (event.scheduledTimeLabel ?? '').trim().toLowerCase();
+  return `${eventCalendarDay(event)}|${med}|${scheduled}|${event.status}`;
+}
+
+/**
+ * Prefer checklist-backed rows when the same dose also appears in medication_logs.
+ */
+export function deduplicateAdministrationLogEvents(
+  events: AdministrationLogEvent[],
+): AdministrationLogEvent[] {
+  const byKey = new Map<string, AdministrationLogEvent>();
+
+  for (const event of events) {
+    const key = buildAdministrationLogDedupKey(event);
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, event);
+      continue;
+    }
+    if (existing.source === 'medication_log' && event.source === 'checklist_item') {
+      byKey.set(key, event);
+    }
+  }
+
+  return sortAdministrationLogEvents([...byKey.values()]);
+}
+
 /** Reverse-chronological (newest first). */
 export function sortAdministrationLogEvents(events: AdministrationLogEvent[]): AdministrationLogEvent[] {
   return [...events].sort(

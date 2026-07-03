@@ -133,4 +133,28 @@ export class AlertRepository {
 
     if (error) throw new Error(error.message);
   }
+
+  /**
+   * Returns the most recent alert row for a given checklist item — used after
+   * cancellation to retrieve the group_id and push_recipient_user_ids needed
+   * to fire a silent dismiss push to all other group devices.
+   */
+  async findCancelledAlertByItemId(
+    checklistItemId: string,
+  ): Promise<Pick<
+    MissedMedicationAlertRecord,
+    'id' | 'group_id' | 'push_recipient_user_ids' | 'checklist_item_id'
+  > | null> {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('missed_medications_alert')
+      .select('id, group_id, push_recipient_user_ids, checklist_item_id')
+      .eq('checklist_item_id', checklistItemId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    return data ?? null;
+  }
 }

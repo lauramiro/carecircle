@@ -252,7 +252,6 @@ export function enumerateFutureDoseSlots(
       const normalizedTime = normalizeTime(scheduledTime);
       const scheduledAt = zonedDateTimeToUtc(cursor, normalizedTime, timezone);
       if (cursorAt && scheduledAt <= cursorAt) continue;
-      if (scheduledAt <= now) continue;
 
       if (med.totalDoses != null) {
         totalEnumerated++;

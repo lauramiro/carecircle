@@ -2,17 +2,11 @@ import { Users } from 'lucide-react';
 import ActionButton from '../ui/ActionButton';
 
 export default function InviteAcceptPanel({
-  groupName,
-  description,
-  totalCarers,
   inviteEmail,
   submitting,
   onAccept,
   onReject,
 }: {
-  groupName: string;
-  description: string;
-  totalCarers: number;
   inviteEmail: string;
   submitting: boolean;
   onAccept: () => void;
@@ -37,29 +31,8 @@ export default function InviteAcceptPanel({
             margin: 0,
           }}
         >
-          Join {groupName}
+          Join this care circle
         </h1>
-        <p
-          className="mt-2"
-          style={{
-            fontSize: '15px',
-            color: 'var(--color-text-secondary)',
-            lineHeight: 1.7,
-          }}
-        >
-          {description}
-        </p>
-        <p
-          className="mt-2 mb-0"
-          style={{
-            fontSize: '14px',
-            color: 'var(--color-text-secondary)',
-            lineHeight: 1.6,
-          }}
-        >
-          {totalCarers === 1 ? '1 carer' : `${totalCarers} carers`} already linked for this patient in
-          this group.
-        </p>
       </div>
 
       <div

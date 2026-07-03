@@ -487,7 +487,7 @@ export default function WellbeingCheckinPanel({
                 id="appetite-label"
                 options={APPETITE_OPTIONS}
                 value={appetite}
-                onChange={setAppetite}
+                onChange={(v) => setAppetite(v)}
               />
             </div>
 
@@ -504,7 +504,7 @@ export default function WellbeingCheckinPanel({
                 id="mobility-label"
                 options={MOBILITY_OPTIONS}
                 value={mobility}
-                onChange={setMobility}
+                onChange={(v) => setMobility(v)}
               />
             </div>
 

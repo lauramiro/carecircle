@@ -23,10 +23,7 @@ export class AppConfigService {
       FRONTEND_PUBLIC_URL: this.configService.get('FRONTEND_PUBLIC_URL', {
         infer: true,
       }),
-      GMAIL_USER: this.configService.get('GMAIL_USER', { infer: true }),
-      GMAIL_APP_PASSWORD: this.configService.get('GMAIL_APP_PASSWORD', {
-        infer: true,
-      }),
+      BREVO_API_KEY: this.configService.get('BREVO_API_KEY', { infer: true }),
       MAIL_FROM: this.configService.get('MAIL_FROM', { infer: true }),
       MAIL_FROM_NAME: this.configService.get('MAIL_FROM_NAME', { infer: true }),
       SUPABASE_SERVICE_ROLE_KEY: this.configService.get(

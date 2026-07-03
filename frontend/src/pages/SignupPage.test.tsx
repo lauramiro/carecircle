@@ -40,7 +40,7 @@ async function fillSignupForm(email: string, password: string, confirmPassword?:
 describe('SignupPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    supabaseMock.auth.signUp.mockResolvedValue({ error: null });
+    supabaseMock.auth.signUp.mockResolvedValue({ data: { user: { identities: [{}] } }, error: null });
   });
 
   it('renders the signup form and navigation options', () => {
@@ -136,21 +136,21 @@ describe('SignupPage', () => {
     expect(supabaseMock.auth.signUp).toHaveBeenCalledWith({
       email: 'user@example.com',
       password: 'password1!',
-      options: { emailRedirectTo: undefined },
+      options: { emailRedirectTo: window.location.origin },
     });
     expect(await screen.findByText('Check your email')).toBeInTheDocument();
     expect(screen.getByText('user@example.com')).toBeInTheDocument();
   });
 
   it('disables the submit button while signup is pending', async () => {
-    const pendingSignup = deferred<{ error: null }>();
+    const pendingSignup = deferred<{ data: { user: { identities: object[] } }; error: null }>();
     supabaseMock.auth.signUp.mockReturnValue(pendingSignup.promise);
     const user = await fillSignupForm('user@example.com', 'password1!');
 
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
     expect(screen.getByRole('button', { name: /creating account/i })).toBeDisabled();
-    pendingSignup.resolve({ error: null });
+    pendingSignup.resolve({ data: { user: { identities: [{}] } }, error: null });
     expect(await screen.findByText('Check your email')).toBeInTheDocument();
   });
 

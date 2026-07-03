@@ -14,8 +14,7 @@ export const appConfigSchema = z.object({
   SUPABASE_ANON_KEY: z.string().min(1),
   GROQ_API_KEY: z.string().min(1),
   FRONTEND_PUBLIC_URL: z.url().optional(),
-  GMAIL_USER: z.email().optional(),
-  GMAIL_APP_PASSWORD: z.string().min(1).optional(),
+  BREVO_API_KEY: z.string().min(1).optional(),
   MAIL_FROM: z.string().min(1).optional(),
   MAIL_FROM_NAME: z.string().min(1).optional(),
   /**
@@ -64,8 +63,7 @@ export function validateEnv(config: Record<string, unknown>): AppConfig {
   const normalized = { ...config };
   for (const key of [
     'FRONTEND_PUBLIC_URL',
-    'GMAIL_USER',
-    'GMAIL_APP_PASSWORD',
+    'BREVO_API_KEY',
     'MAIL_FROM',
     'MAIL_FROM_NAME',
     'SUPABASE_SERVICE_ROLE_KEY',

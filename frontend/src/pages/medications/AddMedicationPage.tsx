@@ -159,7 +159,11 @@ export default function AddMedicationPage() {
               </p>
             ) : (
               <ul className="space-y-3">
-                {visibleMeds.map((med) => (
+                {visibleMeds.map((med) => {
+                  const sidebarActionDisabled =
+                    submittingMedicationId === med.id || isFormSubmitting;
+
+                  return (
                   <li key={med.id} className="text-sm">
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -193,7 +197,7 @@ export default function AddMedicationPage() {
                         {med.status === 'active' && (
                           <button
                             type="button"
-                            disabled={submittingMedicationId === med.id}
+                            disabled={sidebarActionDisabled}
                             onClick={() => setEditingMed(med)}
                             className="text-xs px-2 py-0.5 rounded border"
                             style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
@@ -204,7 +208,7 @@ export default function AddMedicationPage() {
                         {med.status === 'active' && (
                           <button
                             type="button"
-                            disabled={submittingMedicationId === med.id}
+                            disabled={sidebarActionDisabled}
                             onClick={() => void pauseMedication(med.id)}
                             className="text-xs px-2 py-0.5 rounded border"
                             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
@@ -215,7 +219,7 @@ export default function AddMedicationPage() {
                         {med.status === 'paused' && (
                           <button
                             type="button"
-                            disabled={submittingMedicationId === med.id}
+                            disabled={sidebarActionDisabled}
                             onClick={() => void activateMedication(med.id)}
                             className="text-xs px-2 py-0.5 rounded border"
                             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
@@ -227,7 +231,7 @@ export default function AddMedicationPage() {
                           <>
                             <button
                               type="button"
-                              disabled={submittingMedicationId === med.id}
+                              disabled={sidebarActionDisabled}
                               onClick={() => { void archiveMedication(med.id); setConfirmArchiveId(null); }}
                               className="text-xs px-2 py-0.5 rounded border font-bold"
                               style={{ borderColor: 'var(--color-status-critical)', color: 'var(--color-status-critical)' }}
@@ -246,7 +250,7 @@ export default function AddMedicationPage() {
                         ) : (
                           <button
                             type="button"
-                            disabled={submittingMedicationId === med.id}
+                            disabled={sidebarActionDisabled}
                             onClick={() => setConfirmArchiveId(med.id)}
                             className="text-xs px-2 py-0.5 rounded border"
                             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
@@ -257,7 +261,8 @@ export default function AddMedicationPage() {
                       </div>
                     </div>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )}
           </div>

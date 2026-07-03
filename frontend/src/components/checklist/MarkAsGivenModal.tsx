@@ -43,6 +43,7 @@ export default function MarkAsGivenModal({
   const [cameraStarting, setCameraStarting] = useState(false);
 
   const autoOverdue = overdueDurationSince(item.overdue_at);
+  const isOverdueDose = item.status === 'overdue' || Boolean(item.overdue_at);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -343,35 +344,69 @@ export default function MarkAsGivenModal({
             )}
 
             <div className="mt-6 flex flex-col gap-2">
-              <button
-                type="button"
-                disabled={submitting}
-                onClick={() => void submit(false)}
-                className="h-10 rounded-lg px-4 text-sm font-bold text-white disabled:opacity-60"
-                style={{ backgroundColor: 'var(--color-primary)' }}
-              >
-                {submitting ? 'Saving...' : 'Mark as given (on time)'}
-              </button>
-              {!showLateFields ? (
-                <button
-                  type="button"
-                  disabled={submitting}
-                  onClick={handleOpenLateFields}
-                  className="h-10 rounded-lg border px-4 text-sm font-bold disabled:opacity-60"
-                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-status-overdue)' }}
-                >
-                  Mark as given (late / overdue)
-                </button>
+              {showLateFields ? (
+                <>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void submit(true)}
+                    className="h-10 rounded-lg px-4 text-sm font-bold text-white disabled:opacity-60"
+                    style={{ backgroundColor: 'var(--color-status-overdue)' }}
+                  >
+                    {submitting ? 'Saving...' : 'Confirm given late'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void submit(false)}
+                    className="h-10 rounded-lg border px-4 text-sm font-bold disabled:opacity-60"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                  >
+                    {submitting ? 'Saving...' : 'Mark as given (on time)'}
+                  </button>
+                </>
+              ) : isOverdueDose ? (
+                <>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={handleOpenLateFields}
+                    className="h-10 rounded-lg px-4 text-sm font-bold text-white disabled:opacity-60"
+                    style={{ backgroundColor: 'var(--color-status-overdue)' }}
+                  >
+                    Mark as given (late / overdue)
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void submit(false)}
+                    className="h-10 rounded-lg border px-4 text-sm font-bold disabled:opacity-60"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+                  >
+                    {submitting ? 'Saving...' : 'Mark as given (on time)'}
+                  </button>
+                </>
               ) : (
-                <button
-                  type="button"
-                  disabled={submitting}
-                  onClick={() => void submit(true)}
-                  className="h-10 rounded-lg px-4 text-sm font-bold text-white disabled:opacity-60"
-                  style={{ backgroundColor: 'var(--color-status-overdue)' }}
-                >
-                  {submitting ? 'Saving...' : 'Confirm given late'}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void submit(false)}
+                    className="h-10 rounded-lg px-4 text-sm font-bold text-white disabled:opacity-60"
+                    style={{ backgroundColor: 'var(--color-primary)' }}
+                  >
+                    {submitting ? 'Saving...' : 'Mark as given (on time)'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={handleOpenLateFields}
+                    className="h-10 rounded-lg border px-4 text-sm font-bold disabled:opacity-60"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-status-overdue)' }}
+                  >
+                    Mark as given (late / overdue)
+                  </button>
+                </>
               )}
               <button
                 type="button"

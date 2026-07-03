@@ -7,6 +7,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { getSchedulePreview } from '../../utils/formatMedicationSchedule';
 import MedicationScheduleFields from './MedicationScheduleFields';
 import MedicationAdditionalFields from './MedicationAdditionalFields';
+import { medicationFieldClassName, medicationFieldStyle } from './medicationFieldStyles';
 
 interface AddMedicationFormProps {
   patientId: string;
@@ -67,12 +68,6 @@ export default function AddMedicationForm({
     setDuplicateWarning(null);
     setAwaitingDuplicateConfirm(false);
   }
-
-  const fieldStyle = (hasError: boolean) => ({
-    borderColor: hasError ? 'var(--color-status-critical)' : 'var(--color-border)',
-    color: 'var(--color-text-primary)',
-    backgroundColor: 'white',
-  });
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} noValidate className="space-y-5">
@@ -137,8 +132,8 @@ export default function AddMedicationForm({
             placeholder="e.g. Amlodipine"
             aria-invalid={Boolean(errors.name)}
             aria-describedby={errors.name ? `${formId}-name-error` : undefined}
-            className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-            style={fieldStyle(Boolean(errors.name))}
+            className={medicationFieldClassName}
+            style={medicationFieldStyle(Boolean(errors.name))}
           />
           {errors.name && (
             <p
@@ -170,8 +165,8 @@ export default function AddMedicationForm({
             placeholder="e.g. 500"
             aria-invalid={Boolean(errors.dose)}
             aria-describedby={errors.dose ? `${formId}-dose-error` : undefined}
-            className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-            style={fieldStyle(Boolean(errors.dose))}
+            className={medicationFieldClassName}
+            style={medicationFieldStyle(Boolean(errors.dose))}
           />
           {errors.dose && (
             <p
@@ -199,8 +194,8 @@ export default function AddMedicationForm({
             onBlur={() => touchField('unit')}
             aria-invalid={Boolean(errors.unit)}
             aria-describedby={errors.unit ? `${formId}-unit-error` : undefined}
-            className="mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-            style={fieldStyle(Boolean(errors.unit))}
+            className={medicationFieldClassName}
+            style={medicationFieldStyle(Boolean(errors.unit))}
           >
             <option value="">Select unit</option>
             {UNIT_OPTIONS.map((unit) => (

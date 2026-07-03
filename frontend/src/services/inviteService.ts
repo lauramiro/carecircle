@@ -125,7 +125,7 @@ export async function acceptInvitation(inviteId: string, email: string): Promise
   void email;
   assertValidInviteUuid(inviteId);
 
-  const { data, error } = await callRpc<{ group_id?: string }>('update_invite_status', {
+  const { data, error } = await callRpc<{ group_id?: string }[]>('update_invite_status', {
     p_invite_id: inviteId,
     p_status: INVITE_STATUS.ACCEPTED,
   });
@@ -134,7 +134,9 @@ export async function acceptInvitation(inviteId: string, email: string): Promise
     throw new Error(error.message);
   }
 
-  const groupId = data && typeof data === 'object' ? (data as { group_id?: unknown }).group_id : undefined;
+  // `update_invite_status` is declared RETURNS TABLE(group_id uuid), so PostgREST
+  // returns a one-row array here, not a bare object.
+  const groupId = Array.isArray(data) ? data[0]?.group_id : undefined;
   if (typeof groupId !== 'string') {
     throw new Error('Unexpected response from server.');
   }

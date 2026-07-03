@@ -1,8 +1,6 @@
 # CareCircle — Design & Testing Document
 
-MSSE Capstone 2026 · Quantic School of Business and Technology
-
-This document satisfies the capstone requirement for a design and testing write-up: architecture decisions, patterns used, deployment options, and the testing strategy implemented in the repository.
+Architecture, patterns, deployment, and testing strategy for the CareCircle caregiving coordination platform.
 
 ---
 
@@ -167,14 +165,14 @@ A direct RLS verification harness exists at `supabase/verify_cross_circle_rls.sq
 | SMS (Twilio) | SaaS | Pay-as-you-go | ~$0.01/SMS (dev/test only) |
 | AI (Groq) | SaaS | Free tier | $0/month (rate-limited) |
 
-**Total estimated cost for capstone/demo usage: $0/month** on free tiers.
+**Total estimated cost for demo-scale usage: $0/month** on free tiers.
 
 ### 4.2 Alternatives considered
 
 | Option | Pros | Cons | Cost |
 |--------|------|------|------|
 | **On-premises** | Full control, no vendor lock-in | Requires server provisioning, TLS, backups, ops overhead | Hardware + ops time |
-| **AWS (ECS/Lambda + RDS)** | Scalable, production-grade | Complex setup, IAM, VPC; overkill for capstone | ~$30–80/month minimum |
+| **AWS (ECS/Lambda + RDS)** | Scalable, production-grade | Complex setup, IAM, VPC; higher ops overhead than needed at current scale | ~$30–80/month minimum |
 | **Vercel + Neon** | Excellent DX for frontend | Backend crons need separate worker; NestJS not native to Vercel | ~$0–20/month |
 | **Render + Supabase (chosen)** | Simple deploy, free tiers, fits monorepo split | Free tier cold starts; cron reliability uncertain when process sleeps | $0/month |
 
@@ -268,7 +266,7 @@ Node 22. Separate Playwright API smoke workflow (`.github/workflows/e2e.yml`) te
 Tested 2026-05-23 against localhost stack:
 
 - 20 questions, 100% pass rate
-- Average latency 1,245 ms (requirement: < 8,000 ms)
+- Average latency 1,245 ms (target: < 8,000 ms)
 - Grounding: accurate profile-based answers, no hallucinations
 - Refusal: absent-data questions refused with authorised phrasing
 
@@ -294,7 +292,7 @@ Full per-table RLS policy definitions are in `supabase/migrations/` and can be i
 ## 8. Agile process
 
 - **Task board:** [Care Circle Jira board](https://obinnaezedei.atlassian.net/jira/software/projects/CC/boards/2)
-- **Sprints:** Minimum 3 sprints completed during capstone journey
+- **Sprints:** Work tracked in sprints on the Jira board below
 - **Branch naming:** `CC-<id>-<slug>` (e.g. `CC-205-editing-medication-still-shows-add-medication-heading`)
 - **Commit convention:** `feat(CC-205): description` / `fix(CC-202): description`
 - **PR workflow:** feature branch → PR to `main` → CI must pass → review → merge

@@ -626,6 +626,7 @@ export async function getEmergencyContacts(groupId: string): Promise<EmergencyCo
         phoneNumber: primaryCarerProfile.phone?.trim() || undefined,
         source: 'primary_carer',
         editable: false,
+        ownerUserId: resolvedPrimaryCaregiverId,
       });
     }
   }

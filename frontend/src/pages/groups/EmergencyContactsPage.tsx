@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { PhoneCall, Plus, ShieldAlert } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type {
@@ -14,6 +14,7 @@ import {
 } from '../../api/groups/groups.service';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import { canManageEmergencyContacts } from '../../lib/carePermissions';
+import { useAuth } from '../../contexts/AuthContext';
 
 const emptyForm: EmergencyContactFormData = {
   name: '',
@@ -132,6 +133,8 @@ function EmergencyContactForm({
 
 export default function EmergencyContactsPage() {
   const { groupId } = useParams();
+  const { session } = useAuth();
+  const currentUserId = session?.user?.id ?? null;
   const { group, loading: groupLoading, error: groupError } = useGroupDetail(groupId);
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -305,6 +308,18 @@ export default function EmergencyContactsPage() {
                       <p className="mt-1 text-sm font-semibold">
                         {contact.phoneNumber ?? 'Phone number missing'}
                       </p>
+                      {!contact.phoneNumber &&
+                        contact.source === 'primary_carer' &&
+                        contact.ownerUserId &&
+                        currentUserId === contact.ownerUserId && (
+                          <Link
+                            to="/settings"
+                            className="mt-2 inline-block text-sm font-bold no-underline"
+                            style={{ color: 'var(--color-primary)' }}
+                          >
+                            Add your phone number in Settings
+                          </Link>
+                        )}
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">

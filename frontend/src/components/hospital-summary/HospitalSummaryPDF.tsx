@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { Download, Share2, Loader2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
  
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+
 export function HospitalSummaryPDF() {
   const { groupId } = useParams<{ groupId: string }>();
   const groupName = groupId || 'group';
@@ -17,7 +19,7 @@ export function HospitalSummaryPDF() {
     try {
       // Call backend endpoint to generate PDF
       const response = await axios.post(
-        `/api/hospital-summary/generate-pdf`,
+        `${apiBaseUrl}/api/hospital-summary/generate-pdf`,
         { groupId },
         {
           responseType: 'blob',

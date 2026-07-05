@@ -123,16 +123,6 @@ export default function GroupJournalPage() {
   if (groupLoading) {
     return (
       <section>
-        <h1 className="text-2xl font-extrabold">Handover Journal</h1>
-        <div
-          className="mt-6 rounded-xl border bg-white p-6 text-sm"
-          style={{
-            borderColor: 'var(--color-border)',
-            color: 'var(--color-text-secondary)',
-          }}
-        >
-          Loading journal...
-        </div>
         <PageHeader title="Handover journal" subtitle="Write and review shift handover notes." />
         <LoadingPanel message="Loading journal..." />
       </section>
@@ -142,17 +132,6 @@ export default function GroupJournalPage() {
   if (groupError || !group) {
     return (
       <section>
-        <h1 className="text-2xl font-extrabold">Handover Journal</h1>
-        <div
-          className="mt-6 rounded-xl border p-6 text-sm"
-          style={{
-            borderColor: 'var(--color-status-critical)',
-            backgroundColor: 'var(--color-status-critical-bg)',
-            color: 'var(--color-status-critical)',
-          }}
-        >
-          {groupError ?? 'Group not found.'}
-        </div>
         <PageHeader title="Handover journal" subtitle="Write and review shift handover notes." />
         <ErrorPanel message={groupError ?? 'Group not found.'} />
       </section>
@@ -198,24 +177,6 @@ export default function GroupJournalPage() {
 
   return (
     <section>
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1
-            style={{
-              color: 'var(--color-text-primary)',
-              fontSize: '26px',
-              fontWeight: 800,
-              letterSpacing: '-0.03em',
-              margin: 0,
-            }}
-          >
-            Handover Journal
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Record shift handovers for {group.name} so the next carer can pick up quickly.
-          </p>
-        </div>
-      </div>
       <PageHeader
         eyebrow="Care group"
         title="Handover journal"

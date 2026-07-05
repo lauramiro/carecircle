@@ -19,8 +19,7 @@ import {
   mergeWeeklyAssignments,
   toISODate,
 } from './shift.utils';
-
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+import { apiUrl } from '@lib/apiBaseUrl';
 
 type WeeklyShiftAssignmentRow = Database['public']['Tables']['weekly_shift_assignments']['Row'] & {
   assignee: { full_name: string | null } | null;
@@ -86,7 +85,7 @@ export async function saveWeeklyShiftAssignment(
     throw new Error('You must be signed in to save a shift assignment.');
   }
 
-  const response = await fetch(`${apiBaseUrl}/api/shifts/assignments`, {
+  const response = await fetch(apiUrl('/api/shifts/assignments'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

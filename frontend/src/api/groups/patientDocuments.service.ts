@@ -1,11 +1,11 @@
 import { parseResponseJson } from '../../utils/helper';
 import { supabase } from '../../lib/supabaseClient';
+import { apiUrl } from '@lib/apiBaseUrl';
 
 const DOCUMENT_BUCKET = 'care-documents';
 const UUID_PATH_SEGMENT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ACCEPTED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
 const ACCEPTED_EXTENSIONS = new Set(['pdf', 'jpg', 'jpeg', 'png']);
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 
 export const PATIENT_DOCUMENT_MAX_BYTES = 10 * 1024 * 1024;
 export const DOCUMENT_FILE_TYPES_LABEL = 'PDF, JPEG, or PNG';
@@ -110,7 +110,7 @@ async function getAccessToken(): Promise<string> {
 
 async function authenticatedApiFetch(path: string, init?: RequestInit): Promise<Response> {
   const accessToken = await getAccessToken();
-  const url = apiBaseUrl ? `${apiBaseUrl}${path}` : path;
+  const url = apiUrl(path);
   const response = await fetch(url, {
     ...init,
     headers: {

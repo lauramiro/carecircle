@@ -5,15 +5,10 @@ import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import LoadingIndicator from './LoadingIndicator';
 import type { ConversationMessage } from './types';
+import { apiUrl } from '@lib/apiBaseUrl';
 
 interface AiQaInterfaceProps {
   groupId: string;
-}
-
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
-
-function apiUrl(path: string): string {
-  return apiBaseUrl ? `${apiBaseUrl}${path}` : path;
 }
 
 // ========== MOCK RESPONSE FUNCTION ==========

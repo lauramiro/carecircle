@@ -47,6 +47,31 @@ describe('AddMedicationForm', () => {
     expect(screen.queryByText(/already exists/i)).not.toBeInTheDocument();
   });
 
+  it('keeps entered values when submit fails', async () => {
+    mockCheckDuplicateName.mockResolvedValue(false);
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
+
+    render(
+      <AddMedicationForm
+        patientId="patient-1"
+        isSubmitting={false}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    await fillValidForm(user);
+    await user.click(screen.getByRole('button', { name: /add medication/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledOnce();
+    });
+    expect(screen.getByLabelText(/medication name/i)).toHaveValue('Metformin');
+    expect(screen.getByPlaceholderText('e.g. 500')).toHaveValue(500);
+    expect(screen.getByLabelText(/unit/i)).toHaveValue('mg');
+  });
+
   it('shows duplicate warning and does not call onSubmit when name is a duplicate', async () => {
     mockCheckDuplicateName.mockResolvedValue(true);
     const user = userEvent.setup();

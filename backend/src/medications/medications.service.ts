@@ -1,6 +1,5 @@
 import {
   Injectable,
-  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -76,19 +75,11 @@ export class MedicationsService {
     });
 
     if (med.schedule_type !== 'as_needed') {
-      try {
-        await this.materialization.materializeForMedication(
-          med.id,
-          'medication_create',
-        );
-      } catch (err) {
-        this.logger.error(`materialize_failed medicationId=${med.id}`, err);
-        throw new InternalServerErrorException(
-          err instanceof Error
-            ? `Medication saved but checklist materialization failed: ${err.message}`
-            : 'Medication saved but checklist materialization failed',
-        );
-      }
+      void this.materialization
+        .materializeForMedication(med.id, 'medication_create')
+        .catch((err) => {
+          this.logger.error(`materialize_failed medicationId=${med.id}`, err);
+        });
     }
 
     return med;
@@ -126,7 +117,14 @@ export class MedicationsService {
     const newMed = await this.medicationRepo.update(medicationId, changes);
 
     if (scheduleAffectingChange(oldMed, changes)) {
-      await this.reconciliation.reconcileAfterMedicationEdit(oldMed, newMed);
+      try {
+        await this.reconciliation.reconcileAfterMedicationEdit(oldMed, newMed);
+      } catch (err) {
+        this.logger.error(
+          `reconcile_failed medicationId=${newMed.id}`,
+          err as Error,
+        );
+      }
     }
 
     return newMed;

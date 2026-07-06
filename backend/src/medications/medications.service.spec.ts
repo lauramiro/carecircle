@@ -140,6 +140,37 @@ describe('MedicationsService', () => {
     expect(materialization.materializeForMedication).not.toHaveBeenCalled();
   });
 
+  it('create returns saved medication even when materialization fails', async () => {
+    careGroupRepo.getGroupContext.mockResolvedValue({
+      groupId: 'group-1',
+      patientId: 'patient-1',
+      preferredTimezone: 'UTC',
+      patientFirstName: 'Alex',
+    });
+    const saved = makeMed();
+    medicationRepo.insert.mockResolvedValue(saved);
+    materialization.materializeForMedication.mockRejectedValue(
+      new Error('checklist insert failed'),
+    );
+
+    const result = await service.create('group-1', {
+      patientId: 'patient-1',
+      medicationName: 'Metformin',
+      dose: 500,
+      unit: 'mg',
+      startDate: '2025-01-01',
+      scheduleType: 'daily',
+      specificTimes: ['08:00'],
+      perpetual: true,
+    });
+
+    expect(result).toEqual(saved);
+    expect(materialization.materializeForMedication).toHaveBeenCalledWith(
+      'med-1',
+      'medication_create',
+    );
+  });
+
   it('create throws NotFoundException when group is missing', async () => {
     careGroupRepo.getGroupContext.mockResolvedValue(null);
 
@@ -187,6 +218,26 @@ describe('MedicationsService', () => {
     });
 
     expect(reconciliation.reconcileAfterMedicationEdit).not.toHaveBeenCalled();
+  });
+
+  it('update returns updated medication even when reconciliation fails', async () => {
+    const oldMed = makeMed();
+    const newMed = makeMed({ specific_times: ['08:00', '20:00'] });
+    medicationRepo.findById.mockResolvedValueOnce(oldMed);
+    medicationRepo.update.mockResolvedValue(newMed);
+    reconciliation.reconcileAfterMedicationEdit.mockRejectedValue(
+      new Error('reconcile failed'),
+    );
+
+    const result = await service.update('group-1', 'med-1', {
+      specificTimes: ['08:00', '20:00'],
+    });
+
+    expect(result).toEqual(newMed);
+    expect(reconciliation.reconcileAfterMedicationEdit).toHaveBeenCalledWith(
+      oldMed,
+      newMed,
+    );
   });
 
   it('updates quantity on hand without checklist reconciliation', async () => {

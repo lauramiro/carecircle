@@ -57,10 +57,14 @@ export default function AddMedicationForm({
       }
     }
 
-    await onSubmit(toPayload(patientId));
-    reset();
-    setDuplicateWarning(null);
-    setAwaitingDuplicateConfirm(false);
+    try {
+      await onSubmit(toPayload(patientId));
+      reset();
+      setDuplicateWarning(null);
+      setAwaitingDuplicateConfirm(false);
+    } catch {
+      return;
+    }
   }
 
   function handleCancelDuplicate() {

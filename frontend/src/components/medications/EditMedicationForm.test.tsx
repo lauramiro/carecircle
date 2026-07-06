@@ -128,6 +128,33 @@ describe('EditMedicationForm', () => {
     expect(mockCheckDuplicateName).not.toHaveBeenCalled();
   });
 
+  it('keeps entered values when submit fails', async () => {
+    mockCheckDuplicateName.mockResolvedValue(false);
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
+
+    render(
+      <EditMedicationForm
+        initialValues={makeMed()}
+        isSubmitting={false}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    const nameInput = screen.getByLabelText(/medication name/i);
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Metformin XR');
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledOnce();
+    });
+    expect(screen.getByLabelText(/medication name/i)).toHaveValue('Metformin XR');
+    expect(screen.getByPlaceholderText('e.g. 500')).toHaveValue(500);
+    expect(screen.getByLabelText(/unit/i)).toHaveValue('mg');
+  });
+
   it('payload contains the new schedule fields on submit', async () => {
     mockCheckDuplicateName.mockResolvedValue(false);
     const user = userEvent.setup();

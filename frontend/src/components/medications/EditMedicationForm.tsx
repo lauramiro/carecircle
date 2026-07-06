@@ -67,9 +67,13 @@ export default function EditMedicationForm({
       }
     }
 
-    await onSubmit(toEditPayload());
-    setDuplicateWarning(null);
-    setAwaitingDuplicateConfirm(false);
+    try {
+      await onSubmit(toEditPayload());
+      setDuplicateWarning(null);
+      setAwaitingDuplicateConfirm(false);
+    } catch {
+      return;
+    }
   }
 
   function handleCancelDuplicate() {

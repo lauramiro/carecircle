@@ -9,6 +9,9 @@ import { useMedications } from '../../hooks/medications/useMedications';
 import { useGroupDetail } from '../../hooks/groups/useGroupDetail';
 import type { AddMedicationPayload, EditMedicationPayload, Medication } from '../../api/medications/medications.types';
 import { formatMedicationSchedule } from '../../utils/formatMedicationSchedule';
+import { getErrorMessage } from '../../utils/helper';
+
+const MEDICATION_SAVE_ERROR_MESSAGE = 'Medication was not saved. Check your connection and try again.';
 
 export default function AddMedicationPage() {
   const { groupId } = useParams();
@@ -72,15 +75,25 @@ export default function AddMedicationPage() {
   }
 
   async function handleAdd(payload: AddMedicationPayload) {
-    await addMedication(payload);
-    toast.success('Medication added to schedule');
+    try {
+      await addMedication(payload);
+      toast.success('Medication added to schedule');
+    } catch (error) {
+      toast.error(getErrorMessage(error) || MEDICATION_SAVE_ERROR_MESSAGE);
+      throw error;
+    }
   }
 
   async function handleEdit(changes: EditMedicationPayload) {
     if (!editingMed) return;
-    await editMedication(editingMed.id, changes);
-    setEditingMed(null);
-    toast.success('Medication updated');
+    try {
+      await editMedication(editingMed.id, changes);
+      setEditingMed(null);
+      toast.success('Medication updated');
+    } catch (error) {
+      toast.error(getErrorMessage(error) || MEDICATION_SAVE_ERROR_MESSAGE);
+      throw error;
+    }
   }
 
   function handleCancel() {

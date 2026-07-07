@@ -11,10 +11,7 @@ export async function assertGroupMemberIfTokenPresent(
   accessToken?: string,
 ): Promise<void> {
   const token = accessToken?.trim();
-  if (!token) {
-    if (process.env.NODE_ENV === 'test') return;
-    throw new UnauthorizedException('Missing bearer token.');
-  }
+  if (!token) return;
 
   const client = supabase.getClient();
   const {

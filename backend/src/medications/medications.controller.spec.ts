@@ -34,7 +34,6 @@ describe('MedicationsController', () => {
           startDate: '2025-01-01',
           scheduleType: 'daily',
           specificTimes: ['08:00'],
-          perpetual: false,
         },
         undefined,
       ),

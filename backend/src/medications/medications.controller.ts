@@ -43,53 +43,23 @@ export class MedicationsController {
     @Param('groupId') groupId: string,
     @Param('medicationId') medicationId: string,
     @Body() dto: UpdateMedicationDto,
-    @Headers('authorization') authorizationHeader?: string,
   ) {
-    return this.medicationsService.update(
-      groupId,
-      medicationId,
-      dto,
-      extractBearerToken(authorizationHeader),
-    );
+    return this.medicationsService.update(groupId, medicationId, dto);
   }
 
   @Post(':medicationId/pause')
-  pause(
-    @Param('groupId') groupId: string,
-    @Param('medicationId') medicationId: string,
-    @Headers('authorization') authorizationHeader?: string,
-  ) {
-    return this.medicationsService.pause(
-      groupId,
-      medicationId,
-      extractBearerToken(authorizationHeader),
-    );
+  pause(@Param('medicationId') medicationId: string) {
+    return this.medicationsService.pause(medicationId);
   }
 
   @Post(':medicationId/activate')
-  activate(
-    @Param('groupId') groupId: string,
-    @Param('medicationId') medicationId: string,
-    @Headers('authorization') authorizationHeader?: string,
-  ) {
-    return this.medicationsService.activate(
-      groupId,
-      medicationId,
-      extractBearerToken(authorizationHeader),
-    );
+  activate(@Param('medicationId') medicationId: string) {
+    return this.medicationsService.activate(medicationId);
   }
 
   @Post(':medicationId/archive')
-  archive(
-    @Param('groupId') groupId: string,
-    @Param('medicationId') medicationId: string,
-    @Headers('authorization') authorizationHeader?: string,
-  ) {
-    return this.medicationsService.archive(
-      groupId,
-      medicationId,
-      extractBearerToken(authorizationHeader),
-    );
+  archive(@Param('medicationId') medicationId: string) {
+    return this.medicationsService.archive(medicationId);
   }
 
   private validateCourseBounds(

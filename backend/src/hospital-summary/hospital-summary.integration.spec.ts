@@ -6,13 +6,27 @@ import { AppModule } from '../../src/app.module';
 import { HospitalSummaryService } from '../../src/hospital-summary/hospital-summary.service';
 import { PDFGenerationService } from '../../src/hospital-summary/pdf-generation.service';
 
+const TEST_GROUP_ID = '11111111-1111-4111-8111-111111111111';
+
 // Mock SupabaseAdminClient with a proper class constructor
 vi.mock('../../src/integrations/supabase-admin.client', () => {
-  // Build the query chain to return a patient ID
+  const patientRow = {
+    id: 'patient-123',
+    full_name: 'Test Patient',
+    date_of_birth: '1980-01-01',
+    chronic_conditions: [],
+    allergies: [],
+  };
+  const maybeSingleFn = vi
+    .fn()
+    .mockResolvedValue({ data: patientRow, error: null });
   const singleFn = vi
     .fn()
     .mockResolvedValue({ data: { id: 'patient-123' }, error: null });
-  const eqFn = vi.fn().mockReturnValue({ single: singleFn });
+  const eqFn = vi.fn().mockReturnValue({
+    single: singleFn,
+    maybeSingle: maybeSingleFn,
+  });
   const selectFn = vi.fn().mockReturnValue({ eq: eqFn });
   const fromFn = vi.fn().mockReturnValue({ select: selectFn });
 
@@ -78,7 +92,7 @@ describe('Hospital Summary Integration', () => {
   it('should generate a PDF with correct headers and content', async () => {
     const response = await request(app.getHttpServer() as never)
       .post('/hospital-summary/generate-pdf')
-      .send({ groupId: 'test-group-id' })
+      .send({ groupId: TEST_GROUP_ID })
       .expect(201)
       .expect('Content-Type', /pdf/);
 
@@ -99,7 +113,7 @@ describe('Hospital Summary Integration', () => {
 
     await request(app.getHttpServer() as never)
       .post('/hospital-summary/generate-pdf')
-      .send({ groupId: 'test-group-id' })
+      .send({ groupId: TEST_GROUP_ID })
       .expect(500);
   });
 });

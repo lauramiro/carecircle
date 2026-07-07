@@ -2,26 +2,40 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Headers,
   Param,
   Patch,
   Post,
 } from '@nestjs/common';
+import { extractBearerToken } from '../common/auth/group-membership.util';
+import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
 import { CreateMedicationDto, UpdateMedicationDto } from './medications.dto';
 import { MedicationsService } from './medications.service';
 
 @Controller('groups/:groupId/medications')
 export class MedicationsController {
-  constructor(private readonly medicationsService: MedicationsService) {}
+  constructor(
+    private readonly medicationsService: MedicationsService,
+    private readonly supabase: SupabaseAdminClient,
+  ) {}
 
   @Post()
-  create(@Param('groupId') groupId: string, @Body() dto: CreateMedicationDto) {
+  create(
+    @Param('groupId') groupId: string,
+    @Body() dto: CreateMedicationDto,
+    @Headers('authorization') authorizationHeader?: string,
+  ) {
     this.validateCourseBounds(
       dto.scheduleType,
       dto.perpetual,
       dto.endDate,
       dto.totalDoses,
     );
-    return this.medicationsService.create(groupId, dto);
+    return this.medicationsService.create(
+      groupId,
+      dto,
+      extractBearerToken(authorizationHeader),
+    );
   }
 
   @Patch(':medicationId')

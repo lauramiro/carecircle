@@ -1,3 +1,7 @@
+# CI — lint, typecheck, unit/integration tests, and build for frontend and backend.
+# Playwright API smoke tests run separately in `.github/workflows/e2e.yml`.
+# Render deploy hooks run from `.github/workflows/deploy.yml` after CI + E2E on main.
+
 name: CI
 
 on:
@@ -5,8 +9,6 @@ on:
     branches:
       - main
       - develop
-      - CC-18-EPIC-4-CI-CD-Security-Documentation
-      - CC-116-GA-Pipelines
   pull_request:
 
 jobs:
@@ -35,6 +37,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc -b --noEmit
 
       - name: Unit Tests
         run: npm run test
@@ -67,6 +72,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc -p tsconfig.json --noEmit
 
       - name: Unit Tests
         env:

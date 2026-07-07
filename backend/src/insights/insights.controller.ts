@@ -1,30 +1,32 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Param,
-  Query,
-  Body,
-  Logger,
+  Headers,
   HttpException,
   HttpStatus,
+  Logger,
+  Param,
+  Post,
+  Query,
 } from '@nestjs/common';
-import { InsightsService } from './insights.service';
+import { Throttle } from '@nestjs/throttler';
+import {
+  assertGroupMemberIfTokenPresent,
+  extractBearerToken,
+} from '../common/auth/group-membership.util';
+import { DismissInsightDto } from '../common/dto/group-id.dto';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
-import { WeeklyInsightGenerationService } from './weekly-insight-generation.service';
+import { InsightsService } from './insights.service';
 
 @Controller('insights')
 export class InsightsController {
   private readonly logger = new Logger(InsightsController.name);
-  private readonly weeklyInsightGenerationService: WeeklyInsightGenerationService;
 
   constructor(
     private readonly supabase: SupabaseAdminClient,
-    weeklyInsightGenerationService: WeeklyInsightGenerationService,
     private readonly insightsService: InsightsService,
-  ) {
-    this.weeklyInsightGenerationService = weeklyInsightGenerationService;
-  }
+  ) {}
 
   @Get(':groupId/latest')
   async getLatest(
@@ -42,60 +44,42 @@ export class InsightsController {
   @Post('cards/:cardId/dismiss')
   async dismiss(
     @Param('cardId') cardId: string,
-    @Body('userId') userId: string,
+    @Body() dto: DismissInsightDto,
   ) {
-    await this.insightsService.dismissInsight(userId, cardId);
+    await this.insightsService.dismissInsight(dto.userId, cardId);
     return { success: true };
   }
 
-  @Post('debug/generate/:groupId')
-  async debugGenerate(@Param('groupId') groupId: string) {
+  @Post(['generate/:groupId', 'debug/generate/:groupId'])
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  async generateWeeklyDigest(@Param('groupId') groupId: string) {
     await this.insightsService.generateWeeklyDigest(groupId);
     return { success: true };
   }
 
-  private async resolvePatientId(groupId: string): Promise<string> {
-    const { data, error } = await this.supabase
-      .getClient()
-      .from('patients')
-      .select('id')
-      .eq('group_id', groupId)
-      .single();
-
-    if (error || !data?.id) {
-      throw new HttpException(
-        'Group not found or patient id not resolved',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    return data.id as string;
-  }
-
   @Get('group/:groupId')
-  async getInsightsForGroup(@Param('groupId') groupId: string) {
+  async getInsightsForGroup(
+    @Param('groupId') groupId: string,
+    @Headers('authorization') authorizationHeader?: string,
+  ) {
     try {
-      const patientId = await this.resolvePatientId(groupId);
-      const { data, error } = await this.supabase
-        .getClient()
-        .from('ai_insights')
-        .select(
-          'insight_type, observation, suggested_action, severity, generated_at',
-        )
-        .eq('patient_id', patientId)
-        .eq('is_active', true)
-        .order('generated_at', { ascending: false })
-        .limit(50);
+      await assertGroupMemberIfTokenPresent(
+        this.supabase,
+        groupId,
+        extractBearerToken(authorizationHeader),
+      );
 
-      if (error) {
-        this.logger.error('Supabase query failed:', error);
+      const result =
+        await this.insightsService.getActiveAiInsightsForGroup(groupId);
+
+      if (result === null) {
         throw new HttpException(
-          'Failed to fetch insights',
-          HttpStatus.INTERNAL_SERVER_ERROR,
+          'Group not found or patient id not resolved',
+          HttpStatus.NOT_FOUND,
         );
       }
 
-      return { insights: data ?? [] };
+      return result;
     } catch (err) {
       if (err instanceof HttpException) throw err;
       this.logger.error('Failed to get insights for patient', err);

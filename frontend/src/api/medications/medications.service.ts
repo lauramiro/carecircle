@@ -4,7 +4,7 @@ import { normalizeTime } from '@lib/time';
 import { supabase } from '@lib/supabaseClient';
 import type { MedicationRow } from '@lib/supabaseTables';
 import { medicationFromRow } from './medication.mapper';
-import { apiUrl } from '@lib/apiBaseUrl';
+import { authenticatedFetch } from '@lib/authenticatedFetch';
 import type {
   AddMedicationPayload,
   EditMedicationPayload,
@@ -12,13 +12,7 @@ import type {
 } from './medications.types';
 
 async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
-  const response = await fetch(apiUrl(path), {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
-  });
+  const response = await authenticatedFetch(path, init);
   if (!response.ok) {
     const text = await response.text();
     throw new Error(text || `Request failed (${response.status})`);

@@ -13,6 +13,14 @@ export interface AiQaResponse {
   latencyMs: number;
 }
 
+export interface InsightCardPayload {
+  type: string;
+  title: string;
+  description: string;
+  trend_direction?: string;
+  data_link?: string;
+}
+
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
@@ -68,7 +76,7 @@ export class AiService {
     };
   }
 
-  async generateInsights(prompt: string): Promise<any[]> {
+  async generateInsights(prompt: string): Promise<InsightCardPayload[]> {
     const groq = new Groq({
       apiKey: this.appConfigService.config.GROQ_API_KEY,
     });
@@ -90,13 +98,13 @@ export class AiService {
     const content = message.choices[0].message.content || '[]';
     try {
       const parsed = JSON.parse(content) as unknown;
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed)) return parsed as InsightCardPayload[];
       if (
         typeof parsed === 'object' &&
         parsed !== null &&
         Array.isArray((parsed as { insights?: unknown[] }).insights)
       ) {
-        return (parsed as { insights?: unknown[] }).insights || [];
+        return (parsed as { insights?: InsightCardPayload[] }).insights ?? [];
       }
       return [];
     } catch {

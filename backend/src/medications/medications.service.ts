@@ -4,10 +4,12 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { assertGroupMemberIfTokenPresent } from '../common/auth/group-membership.util';
 import { ChecklistMaterializationService } from '../checklist/checklist-materialization.service';
 import { ChecklistReconciliationService } from '../checklist/checklist-materialization.service';
 import { CareGroupRepository } from '../integrations/repositories/care-group.repository';
 import { MedicationRepository } from '../integrations/repositories/medication.repository';
+import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
 import type { MedicationRecord } from '../integrations/types';
 import type {
   CreateMedicationDto,
@@ -45,11 +47,18 @@ export class MedicationsService {
   constructor(
     private readonly medicationRepo: MedicationRepository,
     private readonly careGroupRepo: CareGroupRepository,
+    private readonly supabase: SupabaseAdminClient,
     private readonly materialization: ChecklistMaterializationService,
     private readonly reconciliation: ChecklistReconciliationService,
   ) {}
 
-  async create(groupId: string, dto: CreateMedicationDto) {
+  async create(
+    groupId: string,
+    dto: CreateMedicationDto,
+    accessToken?: string,
+  ) {
+    await assertGroupMemberIfTokenPresent(this.supabase, groupId, accessToken);
+
     const groupCtx = await this.careGroupRepo.getGroupContext(groupId);
     if (!groupCtx) throw new NotFoundException('Group not found');
 

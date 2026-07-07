@@ -105,6 +105,8 @@ npx supabase gen types typescript --local --schema public > frontend/src/lib/dat
 
 ## Testing
 
+Run `npm ci` in both `frontend/` and `backend/` before tests to ensure lockfile dependencies (e.g. `firebase-admin`) are installed.
+
 ```bash
 # Frontend unit tests
 cd frontend && npm test
@@ -119,6 +121,14 @@ cd backend && npm run test:e2e
 cd frontend && npm run lint
 cd backend && npm run lint
 ```
+
+### CI/CD pipelines
+
+| Pipeline | Workflow | Purpose |
+|----------|----------|---------|
+| CI | [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) | Lint, typecheck, unit/integration tests, build (frontend + backend) on every PR |
+| E2E | [`.github/workflows/e2e.yml`](./.github/workflows/e2e.yml) | Playwright API smoke tests against deployed backend |
+| Deploy | [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) | Render deploy hooks after CI + E2E succeed on `main` |
 
 CI runs lint, typecheck, and tests on every pull request via GitHub Actions.
 

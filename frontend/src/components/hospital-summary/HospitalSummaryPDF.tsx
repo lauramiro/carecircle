@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Download, Share2, Loader2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
- 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+import { apiUrl } from '@lib/apiBaseUrl';
+import { getAccessToken } from '@lib/authenticatedFetch';
 
 export function HospitalSummaryPDF() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -17,12 +17,13 @@ export function HospitalSummaryPDF() {
     setError(null);
  
     try {
-      // Call backend endpoint to generate PDF
+      const token = await getAccessToken();
       const response = await axios.post(
-        `${apiBaseUrl}/api/hospital-summary/generate-pdf`,
+        apiUrl('/api/hospital-summary/generate-pdf'),
         { groupId },
         {
           responseType: 'blob',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         },
       );
  
@@ -67,7 +68,6 @@ export function HospitalSummaryPDF() {
     } catch (err: unknown) {
       const error = err as Error;
       if (error.name !== 'AbortError') {
-        console.error('Share error:', error);
         alert('Sharing failed. You can download the PDF instead.');
         downloadPDF();
       }

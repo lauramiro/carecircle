@@ -37,6 +37,9 @@ describe('MedicationsService', () => {
   const careGroupRepo = {
     getGroupContext: vi.fn(),
   };
+  const supabase = {
+    getClient: vi.fn(),
+  };
   const materialization = {
     materializeForMedication: vi.fn(),
   };
@@ -54,6 +57,7 @@ describe('MedicationsService', () => {
     service = new MedicationsService(
       medicationRepo as never,
       careGroupRepo as never,
+      supabase as never,
       materialization as never,
       reconciliation as never,
     );

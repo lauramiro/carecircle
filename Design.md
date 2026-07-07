@@ -1,5 +1,47 @@
 # Design & Testing
 
+## System architecture
+
+### Overview
+
+CareCircle is a monorepo with a React 19 SPA (`frontend/`), NestJS 11 API (`backend/`), and Supabase PostgreSQL (`supabase/migrations/`). The frontend talks to Supabase directly for RLS-governed reads and realtime subscriptions, and to the backend for business-logic writes (medications, PDF generation, AI Q&A, alerts, crons).
+
+### Architectural patterns
+
+| Pattern | Where | Why |
+| :--- | :--- | :--- |
+| Layered / feature modules | `backend/src/*` | NestJS module-per-domain; Controller → Service → Repository |
+| Repository | `backend/src/integrations/repositories/` | Single place for Supabase service-role access |
+| BFF-style API | `/api/*` routes | Complex workflows (PDF, AI, crons) stay server-side |
+| RLS + dual data path | Frontend `supabase-js` + backend admin client | Reads via RLS; writes centralized in API |
+| Cron / subscriber workers | `backend/src/cron/`, `checklist-ack-alert.subscriber` | Scheduled materialization, alerts, insights |
+
+### Deployment
+
+| Component | Host | Cost tier |
+| :--- | :--- | :--- |
+| Frontend SPA | Render (static) | Free tier |
+| Backend API | Render (web service) | Free tier |
+| Database / Auth / Storage | Supabase Cloud | Free tier |
+
+### CI/CD pipelines
+
+| Workflow | File | Purpose |
+| :--- | :--- | :--- |
+| CI | `.github/workflows/ci.yml` | Lint, unit/integration tests, build (frontend + backend) |
+| E2E | `.github/workflows/e2e.yml` | Playwright API smoke tests against deployed backend |
+| Deploy | `.github/workflows/deploy.yml` | Render deploy hooks after CI + E2E succeed on `main` |
+| RLS verify (manual) | `.github/workflows/rls-verify.yml` | Optional cross-circle RLS SQL harness |
+
+### Testing strategy summary
+
+Automated testing spans four layers: **backend Vitest** unit and integration specs (`backend/src/**/*.spec.ts`, `npm run test:e2e` for integration config), **frontend Vitest** unit and integration tests (`frontend/src/**/*.test.ts(x)`, `npm run test:integration`), **Playwright API smoke** regression against production-like endpoints (`e2e/tests/api-smoke.spec.ts`), and a **direct PostgreSQL RLS harness** (`supabase/verify_cross_circle_rls.sql` with seed data). CI runs lint and tests on every pull request; E2E runs on `main`/`develop` pushes and gates deployment.
+
+### Known security trade-off (documented)
+
+Backend routes use the Supabase **service-role** key and do not yet require a caller JWT on most endpoints. RLS protects frontend direct queries only. Mitigation in progress: the frontend sends `Authorization: Bearer <token>` when a session exists; the backend validates group membership when a token is present (see `security_and_compliance.md`). Insight generation is intentionally user-triggered from the Insights page (`POST /api/insights/generate/:groupId`, alias `/debug/generate/:groupId`), rate-limited to 3 requests per minute per client.
+
+---
 
 ## CC-129 Magic-Link Onboarding Test Notes
 
@@ -28,6 +70,15 @@ Manual sprint-review evidence should include one non-technical user attempting t
 | Push notification delivery | `backend/src/alerts/vapid-delivery.integration.spec.ts` | Sends a real VAPID/Web Push notification to a configured test subscription when `VAPID_TEST_*` secrets are present; skips explicitly otherwise. | Backend Vitest job |
 | AI hospital summary completeness | `backend/src/hospital-summary/hospital-summary.spec.ts` | Verifies required generated payload sections are present before hospital summary output is used. | Backend Vitest job |
 | Medication confirmation concurrency | `frontend/src/api/checklist/checklistMutations.service.test.ts` | Verifies simultaneous medication confirmations result in one successful update and exactly one confirmation record insert. | Frontend Vitest job |
+| Frontend auth session | `frontend/src/contexts/AuthContext.test.tsx` | Session handling and auth context wiring. | Frontend Vitest job |
+| Group invite flow | `frontend/src/test/integration/group-invite-flow.test.tsx` | Multi-step invite onboarding path. | Frontend Vitest job |
+| API smoke regression | `e2e/tests/api-smoke.spec.ts` | Production API DTO validation and error-shape checks. | E2E workflow |
+| Cron scheduler wiring | `backend/src/cron/cron.jobs.spec.ts` | Scheduled job registration and handlers. | Backend Vitest job |
+| Overdue medication alerts | `backend/src/checklist/overdue-detection.service.spec.ts` | Alert pipeline when doses are missed. | Backend Vitest job |
+| AI Q&A integration | `backend/src/test/integration/ai-qa.integration.spec.ts` | Groq-backed Q&A with mocked provider. | Backend Vitest job |
+| Medications service | `backend/src/medications/medications.service.spec.ts` | Create/update/pause medication flows. | Backend Vitest job |
+| Insights controller | `backend/src/insights/insights.controller.spec.ts` | HTTP-level insights endpoints. | Backend Vitest job |
+| Medications controller | `backend/src/medications/medications.controller.spec.ts` | DTO validation at HTTP boundary. | Backend Vitest job |
 
 The CI workflow runs deterministic backend and frontend build/test jobs on pull requests. The VAPID delivery check is intentionally opt-in because it requires a live browser push subscription and VAPID test secrets.
 
@@ -751,6 +802,8 @@ This behavior is what PostgreSQL RLS enforces at the database layer for direct S
 
 ### Current test results status
 
+Cross-circle RLS assertions are executed via `supabase/verify_cross_circle_rls.sql` after `npx supabase db reset`. Results can be refreshed locally or through the manual GitHub Actions workflow `.github/workflows/rls-verify.yml` (requires Docker). Until a run completes in your environment, treat the matrix below as the **verification scope** — re-run the script and update Pass/Fail cells before capstone submission.
+
 | Role | Table | SELECT | INSERT | UPDATE | DELETE | Status |
 |:---|:---|:---|:---|:---|:---|:---|
 | `primary_carer` | `care_givers` | Not run | Not run | Not run | Not run | Pending local execution |
@@ -814,5 +867,5 @@ The script prints:
 - Refusal behaviour: All absent-data questions were refused correctly and consistently using the authorised phrasing.
 - Latency: Performance is well within the 8,000 ms requirement.
 
-For full test details see `QA.md` or the linked PR/issue for this feature branch.
+For full test details see [QA_REGRESSION.md](./QA_REGRESSION.md) and [AI-Approach-Testing.md](./AI-Approach-Testing.md).
 

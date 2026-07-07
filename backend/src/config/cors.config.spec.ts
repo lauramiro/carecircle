@@ -11,7 +11,7 @@ function baseConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     GROQ_API_KEY: 'groq-key',
     CRON_ENABLED: 'true',
     ...overrides,
-  } as AppConfig;
+  };
 }
 
 async function isOriginAllowed(
@@ -37,14 +37,18 @@ async function isOriginAllowed(
 
 describe('buildCorsOptions', () => {
   it('throws in production when FRONTEND_PUBLIC_URL is unset', () => {
-    expect(() => buildCorsOptions(baseConfig({ NODE_ENV: 'production' }))).toThrow(
-      /FRONTEND_PUBLIC_URL must be set in production/,
-    );
+    expect(() =>
+      buildCorsOptions(baseConfig({ NODE_ENV: 'production' })),
+    ).toThrow(/FRONTEND_PUBLIC_URL must be set in production/);
   });
 
   it('allows localhost origins in development', async () => {
-    await expect(isOriginAllowed(baseConfig(), 'http://localhost:5173')).resolves.toBe(true);
-    await expect(isOriginAllowed(baseConfig(), 'http://localhost:3000')).resolves.toBe(true);
+    await expect(
+      isOriginAllowed(baseConfig(), 'http://localhost:5173'),
+    ).resolves.toBe(true);
+    await expect(
+      isOriginAllowed(baseConfig(), 'http://localhost:3000'),
+    ).resolves.toBe(true);
   });
 
   it('rejects non-localhost origins in development', async () => {
@@ -62,7 +66,9 @@ describe('buildCorsOptions', () => {
     await expect(
       isOriginAllowed(config, 'https://carecircle-frontend.onrender.com'),
     ).resolves.toBe(true);
-    await expect(isOriginAllowed(config, 'https://carecircle.com')).resolves.toBe(false);
+    await expect(
+      isOriginAllowed(config, 'https://carecircle.com'),
+    ).resolves.toBe(false);
   });
 
   it('allows requests with no Origin header', async () => {

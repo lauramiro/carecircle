@@ -26,6 +26,7 @@ import {
 } from '../lib/animation.constants';
 import { getPersonalizedGreeting } from '../utils/greeting';
 import { formatDate, formatMemberCount, truncateText } from '../utils/formatters';
+import { MedicalDisclaimerBanner } from '../components/ui/MedicalDisclaimerBanner';
 
 export default function DashboardPage() {
   const { session } = useAuth();
@@ -253,6 +254,10 @@ export default function DashboardPage() {
           error={warningsError}
         />
       )}
+
+      <div className="pt-4">
+        <MedicalDisclaimerBanner />
+      </div>
     </section>
   );
 }

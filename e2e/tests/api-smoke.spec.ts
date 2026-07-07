@@ -38,7 +38,7 @@ function api(ctx: APIRequestContext, path: string) {
 test('NOTIF-04: GET /push/vapid-public-key returns 200', async ({ request }) => {
   const res = await request.get(api(request, '/push/vapid-public-key'));
   expect(res.status()).toBe(200);
-  const body = (await res.json()) as Record<string, unknown>;
+  const body = await res.json() as { publicKey?: string | null };
   // May be null if VAPID is not configured, but must be a valid JSON response
   expect(body).toHaveProperty('publicKey');
 });
@@ -103,18 +103,18 @@ test('INVITE-03: send-email with groupName > 200 chars returns 400', async ({ re
 // ---------------------------------------------------------------------------
 // AI DTO validation (AI-02, AI-03)
 // ---------------------------------------------------------------------------
-test('AI-02: POST /ai/qa with empty question without token returns 401', async ({ request }) => {
+test('AI-02: POST /ai/qa with empty question returns 400', async ({ request }) => {
   const res = await request.post(api(request, '/ai/qa'), {
     data: { question: '', groupId: FAKE_UUID },
   });
-  expect(res.status()).toBe(401);
+  expect(res.status()).toBe(400);
 });
 
-test('AI-03: POST /ai/qa without groupId without token returns 401', async ({ request }) => {
+test('AI-03: POST /ai/qa without groupId returns 400', async ({ request }) => {
   const res = await request.post(api(request, '/ai/qa'), {
     data: { question: 'What medications does the patient take?' },
   });
-  expect(res.status()).toBe(401);
+  expect(res.status()).toBe(400);
 });
 
 // ---------------------------------------------------------------------------
@@ -122,7 +122,7 @@ test('AI-03: POST /ai/qa without groupId without token returns 401', async ({ re
 // DTO validation fires before service calls, so a fake groupId is fine for
 // MED-03/04 — the 400 comes from the ValidationPipe, not the service.
 // ---------------------------------------------------------------------------
-test('MED-02: POST medications for invalid groupId without token returns 401', async ({ request }) => {
+test('MED-02: POST medications for invalid groupId returns 404', async ({ request }) => {
   const res = await request.post(api(request, `/groups/${FAKE_UUID}/medications`), {
     data: {
       patientId: FAKE_UUID,
@@ -135,10 +135,10 @@ test('MED-02: POST medications for invalid groupId without token returns 401', a
       perpetual: true,
     },
   });
-  expect(res.status()).toBe(401);
+  expect(res.status()).toBe(404);
 });
 
-test('MED-03: POST medications with dose 0 without token returns 401', async ({ request }) => {
+test('MED-03: POST medications with dose 0 returns 400', async ({ request }) => {
   const res = await request.post(api(request, `/groups/${FAKE_UUID}/medications`), {
     data: {
       medicationName: 'Aspirin',
@@ -150,10 +150,10 @@ test('MED-03: POST medications with dose 0 without token returns 401', async ({ 
       perpetual: true,
     },
   });
-  expect(res.status()).toBe(401);
+  expect(res.status()).toBe(400);
 });
 
-test('MED-04: POST medications with invalid scheduleType without token returns 401', async ({ request }) => {
+test('MED-04: POST medications with invalid scheduleType returns 400', async ({ request }) => {
   const res = await request.post(api(request, `/groups/${FAKE_UUID}/medications`), {
     data: {
       medicationName: 'Aspirin',
@@ -165,60 +165,70 @@ test('MED-04: POST medications with invalid scheduleType without token returns 4
       perpetual: true,
     },
   });
-  expect(res.status()).toBe(401);
+  expect(res.status()).toBe(400);
 });
 
 // ---------------------------------------------------------------------------
 // INS-05 — GET insights for non-existent group must return 404, not 500
 // This was a confirmed bug (catch block swallowing HttpException) — fixed.
 // ---------------------------------------------------------------------------
-test('INS-05: GET /insights/group/:invalid without token returns 401', async ({ request }) => {
+test('INS-05: GET /insights/group/:invalid returns 404 not 500', async ({ request }) => {
   const res = await request.get(api(request, `/insights/group/${FAKE_UUID}`));
-  expect(res.status()).toBe(401);
-  const body = (await res.json()) as Record<string, unknown>;
-  expect(body.message).toContain('token');
+  expect(res.status()).toBe(404);
+  const body = await res.json() as { statusCode?: number; message?: string };
+  expect(body.message).toContain('not found');
 });
 
 // ---------------------------------------------------------------------------
 // HOSP-03 — POST generate-pdf for non-existent group must return 404, not 500
 // Same root cause as INS-05 — fixed in the same session.
 // ---------------------------------------------------------------------------
-test('HOSP-03: POST /hospital-summary/generate-pdf without token returns 401', async ({ request }) => {
+test('HOSP-03: POST /hospital-summary/generate-pdf for invalid group returns 404', async ({ request }) => {
   const res = await request.post(api(request, '/hospital-summary/generate-pdf'), {
     data: { groupId: FAKE_UUID },
   });
-  expect(res.status()).toBe(401);
-  const body = (await res.json()) as Record<string, unknown>;
-  expect(body.message).toContain('token');
+  expect(res.status()).toBe(404);
+  const body = await res.json() as { message?: string };
+  expect(body.message).toContain('not found');
 });
 
 // ---------------------------------------------------------------------------
 // HOSP-01 — Generate PDF for real group returns 201 application/pdf
 // ---------------------------------------------------------------------------
-test('HOSP-01: POST /hospital-summary/generate-pdf without token returns 401', async ({ request }) => {
+test('HOSP-01: POST /hospital-summary/generate-pdf returns application/pdf', async ({ request }) => {
   if (!GROUP_ID) { test.skip(true, 'E2E_TEST_GROUP_ID not set'); return; }
   const res = await request.post(api(request, '/hospital-summary/generate-pdf'), {
     data: { groupId: GROUP_ID },
   });
-  expect(res.status()).toBe(401);
+  expect(res.status()).toBe(201);
+  expect(res.headers()['content-type']).toContain('application/pdf');
+  expect(res.headers()['x-generation-latency-ms']).toBeTruthy();
+  const body = await res.body();
+  expect(body.length).toBeGreaterThan(1000);
+  expect(body.slice(0, 4).toString()).toBe('%PDF');
 }, { timeout: 60_000 });
 
 // ---------------------------------------------------------------------------
 // HOSP-02 — PDF returned even with incomplete optional group fields
 // ---------------------------------------------------------------------------
-test('HOSP-02: POST /hospital-summary/generate-pdf without token returns 401', async ({ request }) => {
+test('HOSP-02: POST /hospital-summary/generate-pdf succeeds even with incomplete data', async ({ request }) => {
   if (!GROUP_ID) { test.skip(true, 'E2E_TEST_GROUP_ID not set'); return; }
   const res = await request.post(api(request, '/hospital-summary/generate-pdf'), {
     data: { groupId: GROUP_ID },
   });
-  expect(res.status()).toBe(401);
+  expect(res.status()).toBeGreaterThanOrEqual(200);
+  expect(res.status()).toBeLessThan(400);
+  expect(res.headers()['content-type']).toContain('application/pdf');
 }, { timeout: 60_000 });
 
 // ---------------------------------------------------------------------------
 // INS-04 — GET /insights/group/:groupId returns 200 with insights array
 // ---------------------------------------------------------------------------
-test('INS-04: GET /insights/group/:groupId without token returns 401', async ({ request }) => {
+test('INS-04: GET /insights/group/:groupId returns 200 with an insights array', async ({ request }) => {
   if (!GROUP_ID) { test.skip(true, 'E2E_TEST_GROUP_ID not set'); return; }
   const res = await request.get(api(request, `/insights/group/${GROUP_ID}`));
-  expect(res.status()).toBe(401);
+  expect(res.status()).toBe(200);
+  const body = await res.json() as { insights?: unknown[] };
+  expect(body).toHaveProperty('insights');
+  expect(Array.isArray(body.insights)).toBe(true);
 });

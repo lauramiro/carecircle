@@ -107,8 +107,9 @@ export class MedicationsService {
     groupId: string,
     medicationId: string,
     dto: UpdateMedicationDto,
+    accessToken?: string,
   ) {
-    void groupId;
+    await assertGroupMemberIfTokenPresent(this.supabase, groupId, accessToken);
     const oldMed = await this.medicationRepo.findById(medicationId);
     if (!oldMed) throw new NotFoundException('Medication not found');
 
@@ -141,17 +142,20 @@ export class MedicationsService {
     return newMed;
   }
 
-  async pause(medicationId: string) {
+  async pause(groupId: string, medicationId: string, accessToken?: string) {
+    await assertGroupMemberIfTokenPresent(this.supabase, groupId, accessToken);
     await this.reconciliation.pauseMedication(medicationId);
     return this.medicationRepo.findById(medicationId);
   }
 
-  async activate(medicationId: string) {
+  async activate(groupId: string, medicationId: string, accessToken?: string) {
+    await assertGroupMemberIfTokenPresent(this.supabase, groupId, accessToken);
     await this.reconciliation.activateMedication(medicationId);
     return this.medicationRepo.findById(medicationId);
   }
 
-  async archive(medicationId: string) {
+  async archive(groupId: string, medicationId: string, accessToken?: string) {
+    await assertGroupMemberIfTokenPresent(this.supabase, groupId, accessToken);
     await this.reconciliation.archiveMedication(medicationId);
     return this.medicationRepo.findById(medicationId);
   }

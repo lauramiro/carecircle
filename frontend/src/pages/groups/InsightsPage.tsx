@@ -7,6 +7,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import { ContentPanel, ErrorPanel, LoadingPanel } from '@components/ui/ContentPanel.tsx';
 import { ChevronDown, ChevronUp, ExternalLink, X, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { MedicalDisclaimerBanner } from '@components/ui/MedicalDisclaimerBanner';
 
 export default function InsightsPage() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -92,6 +93,8 @@ export default function InsightsPage() {
           </button>
         }
       />
+
+      <MedicalDisclaimerBanner compact />
 
       <div className="space-y-4">
         <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>

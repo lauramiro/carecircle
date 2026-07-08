@@ -39,7 +39,7 @@ flowchart TB
     end
 
     subgraph DataPaths["Two data paths"]
-        API["apiFetch → /api/..."]
+        API["authenticatedFetch → /api/..."]
         SB["supabase-js (anon key)"]
     end
 
@@ -110,7 +110,7 @@ HTTP Request → Controller (DTO + class-validator)
 
 | Path | Used for | Auth model |
 |------|----------|------------|
-| `apiFetch` / axios → backend `/api/...` | Medication mutations, AI chat, hospital summary PDF, insights, push registration | No JWT validation on backend (see §5) |
+| `authenticatedFetch` / axios → backend `/api/...` | Medication mutations, AI chat, hospital summary PDF, insights | Session bearer token sent when logged in; backend validates group membership when token present (see §5.3) |
 | Direct `supabase-js` (anon key) | Group list, appointments, checklist confirmations, journal, wellbeing, invite RPCs | Supabase session; RLS enforced |
 
 **Development:** Vite dev server (`localhost:5173`) proxies `/api` → `localhost:3000`.
@@ -184,6 +184,15 @@ A direct RLS verification harness exists at `supabase/verify_cross_circle_rls.sq
 
 **CORS** (`backend/src/config/cors.config.ts`): development allows `http://localhost:*`; production requires exact match to `FRONTEND_PUBLIC_URL` (startup fails if unset).
 
+### 4.4 CI/CD pipelines
+
+| Workflow | File | Purpose |
+|----------|------|---------|
+| CI | `.github/workflows/ci.yml` | Lint, typecheck, unit/integration tests, build (frontend + backend) on every PR |
+| E2E | `.github/workflows/e2e.yml` | Playwright API smoke tests against deployed backend |
+| Deploy | `.github/workflows/deploy.yml` | Render deploy hooks after CI + E2E succeed on `main` |
+| RLS verify (manual) | `.github/workflows/rls-verify.yml` | Optional cross-circle RLS SQL harness (`workflow_dispatch`) |
+
 ---
 
 ## 5. Security model
@@ -201,11 +210,12 @@ A direct RLS verification harness exists at `supabase/verify_cross_circle_rls.sq
 - Cross-circle isolation verified via `supabase/verify_cross_circle_rls.sql`
 - Profiles SELECT restricted to self + group-mates (migration `20260630000000_fix_profiles_rls_restrict_to_group_mates.sql`)
 
-### 5.3 Known limitations (accepted)
+### 5.3 Known limitations and mitigations
 
-1. **Backend uses service-role key** — bypasses RLS for all `/api/...` routes. RLS protects direct Supabase client access only.
-2. **No JWT auth guard on backend routes** — backend does not validate the caller's session token. Agreed project limitation documented in `CLAUDE.md`.
-3. **Render free tier** — process may sleep; cron jobs may miss intervals during sleep.
+1. **Backend uses service-role key** — bypasses RLS for all `/api/...` routes. RLS protects direct Supabase client access only. See also `security_and_compliance.md`.
+2. **Soft API auth (not mandatory JWT guard)** — the frontend sends `Authorization: Bearer <session.access_token>` on backend calls when logged in. Services call `assertGroupMemberIfTokenPresent` to reject cross-group access when a token is present. Unauthenticated callers (CI smoke tests, DTO validation probes) are not rejected, preserving backward compatibility.
+3. **Document storage is an exception** — `GET /api/document-storage/groups/:groupId/usage` requires a bearer token and active group membership.
+4. **Render free tier** — process may sleep; cron jobs may miss intervals during sleep.
 
 ---
 
@@ -271,10 +281,10 @@ Both packages use **Vitest 4**. CI (`.github/workflows/ci.yml`) runs on every PR
 
 | Job | Steps |
 |-----|-------|
-| Frontend | lint → unit tests → integration tests → build (`tsc -b && vite build`) |
-| Backend | lint → unit tests → integration tests (`test:e2e`) → build |
+| Frontend | lint → typecheck (`tsc -b --noEmit`) → unit tests → integration tests → build (`tsc -b && vite build`) |
+| Backend | lint → typecheck (`tsc --noEmit`) → unit tests → integration tests (`test:e2e`) → build |
 
-Node 22. Separate Playwright API smoke workflow (`.github/workflows/e2e.yml`) tests deployed backend endpoints.
+Node 22. Separate Playwright API smoke workflow (`.github/workflows/e2e.yml`) tests deployed backend endpoints. Deploy workflow (`.github/workflows/deploy.yml`) promotes to Render after CI + E2E pass on `main`. Optional RLS verification: `.github/workflows/rls-verify.yml` (manual trigger; requires local Supabase + Docker).
 
 ### 7.2 Test coverage by layer
 
@@ -289,6 +299,10 @@ Node 22. Separate Playwright API smoke workflow (`.github/workflows/e2e.yml`) te
 | Hospital summary | `backend/src/hospital-summary/hospital-summary.spec.ts` | Required PDF sections present |
 | AI Q&A | `backend/src/test/integration/ai-qa.integration.spec.ts` | Profile-grounded answers, refusal behaviour |
 | Invite emails | `backend/src/invites/group-invite-email.service.spec.ts` | Magic-link format and redirect URL |
+| Medications service | `backend/src/medications/medications.service.spec.ts` | Create/update/pause medication flows |
+| Medications controller | `backend/src/medications/medications.controller.spec.ts` | DTO validation at HTTP boundary |
+| Insights controller | `backend/src/insights/insights.controller.spec.ts` | HTTP-level insights endpoints |
+| AI controller | `backend/src/ai/ai.controller.spec.ts` | Q&A endpoint delegation |
 | Cron registration | `backend/src/cron/cron.jobs.spec.ts` | All scheduled jobs registered |
 
 **Frontend (~70 test files):**
@@ -302,6 +316,11 @@ Node 22. Separate Playwright API smoke workflow (`.github/workflows/e2e.yml`) te
 | Login + invite resume | `frontend/src/pages/LoginPage.test.tsx` | Magic link preserves pending invite redirect |
 | Settings preferences | `frontend/src/pages/SettingsPage.test.tsx` | Theme, font size, notification toggles |
 | Emergency contacts | `frontend/src/pages/groups/EmergencyContactsPage.test.tsx` | Missing-phone warning behaviour |
+| Auth session | `frontend/src/contexts/AuthContext.test.tsx` | Session handling and auth context wiring |
+| Group invite flow | `frontend/src/test/integration/group-invite-flow.test.tsx` | Multi-step invite onboarding path |
+| AI assistant page | `frontend/src/pages/ai/AiQaPage.test.tsx` | AI page render and missing-group handling |
+| Insights page | `frontend/src/pages/groups/InsightsPage.test.tsx` | Weekly insights UI and medical disclaimer |
+| Authenticated API helper | `frontend/src/lib/authenticatedFetch.test.ts` | Bearer token attached when session exists |
 
 **E2E (Playwright, HTTP-only):**
 
@@ -312,8 +331,25 @@ Node 22. Separate Playwright API smoke workflow (`.github/workflows/e2e.yml`) te
 - **Unit tests** for pure logic (slot computation, permissions, form validation)
 - **Integration tests** for service-layer flows with mocked Supabase
 - **Opt-in live tests** for push delivery (requires VAPID test secrets)
-- **API smoke tests** for deployed environment health
+- **API smoke tests** for deployed environment health (400/404/PDF regression checks preserved)
 - **Manual sprint-review evidence** for invite onboarding (non-technical user walkthrough)
+
+Additional regression documentation: [QA_REGRESSION.md](./QA_REGRESSION.md), [AI-Approach-Testing.md](./AI-Approach-Testing.md).
+
+### 7.3.1 Magic-link onboarding test notes (CC-129)
+
+The invite flow is a four-step path from email to the group dashboard:
+
+1. Open the secure invitation magic link.
+2. Review the care circle details.
+3. Accept the invitation.
+4. Continue to the group dashboard.
+
+| Area | Test | Purpose |
+| :--- | :--- | :--- |
+| Invite email magic link | `backend/src/invites/group-invite-email.service.spec.ts` | Invitation links are Supabase magic links redirecting to `/group-invite` confirmation mode |
+| Pending invite login resume | `frontend/src/pages/LoginPage.test.tsx` | Login magic links preserve matching pending invite redirects |
+| Invite onboarding progress | `frontend/src/pages/InvitePage.test.tsx` | Explicit accept screen shows numbered onboarding steps |
 
 ### 7.4 AI integration tests
 

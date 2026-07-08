@@ -5,7 +5,8 @@ import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import LoadingIndicator from './LoadingIndicator';
 import type { ConversationMessage } from './types';
-import { apiUrl } from '@lib/apiBaseUrl';
+import { authenticatedFetch } from '@lib/authenticatedFetch';
+import { MedicalDisclaimerBanner } from '@components/ui/MedicalDisclaimerBanner';
 
 interface AiQaInterfaceProps {
   groupId: string;
@@ -59,9 +60,7 @@ export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
 
     try {
       // Decide whether to use mock or real backend
-      const useMock =  import.meta.env.VITE_USE_AI_MOCK === 'true';
-      console.log('useMock value:', useMock);
-      console.log('env var:', import.meta.env.VITE_USE_AI_MOCK); 
+      const useMock = import.meta.env.VITE_USE_AI_MOCK === 'true';
 
       if (useMock) {
         // ---------- MOCK MODE ----------
@@ -77,9 +76,8 @@ export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
         // ------------------------------
       } else {
         // ---------- REAL BACKEND (currently commented out) ----------
-         const response = await fetch(apiUrl('/api/ai/qa'), {
+         const response = await authenticatedFetch('/api/ai/qa', {
            method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify({
              question: question.trim(),
              groupId,
@@ -149,6 +147,9 @@ export default function AiQaInterface({ groupId }: AiQaInterfaceProps) {
         >
           Ask questions about medications, appointments, and care
         </p>
+        <div className="mt-2">
+          <MedicalDisclaimerBanner compact />
+        </div>
       </div>
 
       {/* Chat History - Scrollable */}

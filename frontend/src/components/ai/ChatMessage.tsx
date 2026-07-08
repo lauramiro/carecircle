@@ -1,5 +1,6 @@
 import { AlertCircle, Clock } from 'lucide-react';
 import MarkdownContent from './MarkdownContent';
+import { MedicalDisclaimerBanner } from '@components/ui/MedicalDisclaimerBanner';
 import type { ConversationMessage } from './types';
 
 interface ChatMessageProps {
@@ -90,6 +91,9 @@ export default function ChatMessage({ message }: ChatMessageProps) {
             </span>
           </div>
         )}
+        <div className="mt-2">
+          <MedicalDisclaimerBanner compact />
+        </div>
       </div>
     </div>
   );

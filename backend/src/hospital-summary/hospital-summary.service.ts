@@ -1,7 +1,7 @@
 // CC-134: AI Summary Content Assembly
 // Backend service to assemble complete care profile for PDF rendering
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
 
 // ============================================================================
@@ -89,6 +89,8 @@ export interface HospitalSummaryData {
 
 @Injectable()
 export class HospitalSummaryService {
+  private readonly logger = new Logger(HospitalSummaryService.name);
+
   constructor(private readonly supabase: SupabaseAdminClient) {}
   /**
    * Main method: Assemble complete care profile for hospital summary PDF
@@ -140,9 +142,8 @@ export class HospitalSummaryService {
 
       // Step 6: Get AI flagged patterns (if any exist)
       const flaggedPatterns = await this.getFlaggedPatterns(patientId);
-      console.log(
-        '[assembleHospitalSummary] flaggedPatterns length:',
-        flaggedPatterns.length,
+      this.logger.debug(
+        `[assembleHospitalSummary] flaggedPatterns length: ${flaggedPatterns.length}`,
       );
 
       // Step 7: Fetch documents flagged for hospital summary inclusion
@@ -204,7 +205,7 @@ export class HospitalSummaryService {
       .single();
 
     if (error) {
-      console.error('Error fetching patient details:', error);
+      this.logger.error('Error fetching patient details:', error);
       return null;
     }
 
@@ -233,7 +234,7 @@ export class HospitalSummaryService {
       .eq('status', 'active');
 
     if (medError || !medications) {
-      console.error('Error fetching medications:', medError);
+      this.logger.error('Error fetching medications:', medError);
       return [];
     }
 
@@ -297,7 +298,10 @@ export class HospitalSummaryService {
       .single();
 
     if (error) {
-      console.error('Error fetching conditions from patient record:', error);
+      this.logger.error(
+        'Error fetching conditions from patient record:',
+        error,
+      );
       return [];
     }
 
@@ -318,7 +322,7 @@ export class HospitalSummaryService {
       .single();
 
     if (error) {
-      console.error('Error fetching allergies from patient record:', error);
+      this.logger.error('Error fetching allergies from patient record:', error);
       return [];
     }
 
@@ -337,7 +341,7 @@ export class HospitalSummaryService {
       .eq('is_active', true);
 
     if (error) {
-      console.error('Error fetching GP contacts:', error);
+      this.logger.error('Error fetching GP contacts:', error);
       return [];
     }
 
@@ -372,7 +376,7 @@ export class HospitalSummaryService {
       .order('sort_order', { ascending: true });
 
     if (error) {
-      console.error('Error fetching emergency contacts:', error);
+      this.logger.error('Error fetching emergency contacts:', error);
       return [];
     }
 
@@ -405,7 +409,7 @@ export class HospitalSummaryService {
 
     const patientData = patient as { group_id?: string } | null;
     if (patientError || !patientData?.group_id) {
-      console.error('Could not find group_id for patient:', patientError);
+      this.logger.error('Could not find group_id for patient:', patientError);
       return [];
     }
 
@@ -421,7 +425,7 @@ export class HospitalSummaryService {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching care notes:', error);
+      this.logger.error('Error fetching care notes:', error);
       return [];
     }
 
@@ -448,7 +452,7 @@ export class HospitalSummaryService {
       .limit(5); // Limit to 5 most recent patterns
 
     if (error) {
-      console.error('Error fetching flagged patterns:', error);
+      this.logger.error('Error fetching flagged patterns:', error);
       return [];
     }
 
@@ -480,7 +484,7 @@ export class HospitalSummaryService {
       .order('created_at', { ascending: false });
 
     if (error || !data) {
-      console.error('Error fetching flagged documents:', error);
+      this.logger.error('Error fetching flagged documents:', error);
       return [];
     }
 

@@ -4,10 +4,12 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { assertGroupMemberIfTokenPresent } from '../common/auth/group-membership.util';
 import { ChecklistMaterializationService } from '../checklist/checklist-materialization.service';
 import { ChecklistReconciliationService } from '../checklist/checklist-materialization.service';
 import { CareGroupRepository } from '../integrations/repositories/care-group.repository';
 import { MedicationRepository } from '../integrations/repositories/medication.repository';
+import { SupabaseAdminClient } from '../integrations/supabase-admin.client';
 import type { MedicationRecord } from '../integrations/types';
 import type {
   CreateMedicationDto,
@@ -45,11 +47,18 @@ export class MedicationsService {
   constructor(
     private readonly medicationRepo: MedicationRepository,
     private readonly careGroupRepo: CareGroupRepository,
+    private readonly supabase: SupabaseAdminClient,
     private readonly materialization: ChecklistMaterializationService,
     private readonly reconciliation: ChecklistReconciliationService,
   ) {}
 
-  async create(groupId: string, dto: CreateMedicationDto) {
+  async create(
+    groupId: string,
+    dto: CreateMedicationDto,
+    accessToken?: string,
+  ) {
+    await assertGroupMemberIfTokenPresent(this.supabase, groupId, accessToken);
+
     const groupCtx = await this.careGroupRepo.getGroupContext(groupId);
     if (!groupCtx) throw new NotFoundException('Group not found');
 
@@ -98,8 +107,9 @@ export class MedicationsService {
     groupId: string,
     medicationId: string,
     dto: UpdateMedicationDto,
+    accessToken?: string,
   ) {
-    void groupId;
+    await assertGroupMemberIfTokenPresent(this.supabase, groupId, accessToken);
     const oldMed = await this.medicationRepo.findById(medicationId);
     if (!oldMed) throw new NotFoundException('Medication not found');
 
@@ -132,17 +142,20 @@ export class MedicationsService {
     return newMed;
   }
 
-  async pause(medicationId: string) {
+  async pause(groupId: string, medicationId: string, accessToken?: string) {
+    await assertGroupMemberIfTokenPresent(this.supabase, groupId, accessToken);
     await this.reconciliation.pauseMedication(medicationId);
     return this.medicationRepo.findById(medicationId);
   }
 
-  async activate(medicationId: string) {
+  async activate(groupId: string, medicationId: string, accessToken?: string) {
+    await assertGroupMemberIfTokenPresent(this.supabase, groupId, accessToken);
     await this.reconciliation.activateMedication(medicationId);
     return this.medicationRepo.findById(medicationId);
   }
 
-  async archive(medicationId: string) {
+  async archive(groupId: string, medicationId: string, accessToken?: string) {
+    await assertGroupMemberIfTokenPresent(this.supabase, groupId, accessToken);
     await this.reconciliation.archiveMedication(medicationId);
     return this.medicationRepo.findById(medicationId);
   }

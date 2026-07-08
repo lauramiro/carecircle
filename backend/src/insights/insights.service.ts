@@ -255,4 +255,25 @@ export class InsightsService {
     });
     if (error && error.code !== '23505') throw new Error(error.message);
   }
+
+  async getActiveAiInsightsForGroup(groupId: string) {
+    const patientId = await this.patientRepo.findIdByGroupId(groupId);
+    if (!patientId) {
+      return null;
+    }
+
+    const db = this.supabase.getClient();
+    const { data, error } = await db
+      .from('ai_insights')
+      .select(
+        'insight_type, observation, suggested_action, severity, generated_at',
+      )
+      .eq('patient_id', patientId)
+      .eq('is_active', true)
+      .order('generated_at', { ascending: false })
+      .limit(50);
+
+    if (error) throw new Error(error.message);
+    return { insights: data ?? [] };
+  }
 }

@@ -1,6 +1,7 @@
 import { Bot, X, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLatestInsight } from '@hooks/dashboard/useLatestInsight';
+import { MedicalDisclaimerBanner } from '@components/ui/MedicalDisclaimerBanner';
 
 interface AiInsightWidgetProps {
   patientId: string;
@@ -96,6 +97,9 @@ export default function AiInsightWidget({ patientId, groupId, groupName }: AiIns
               {insight.suggestedAction}
             </p>
           )}
+          <div className="mt-3">
+            <MedicalDisclaimerBanner compact />
+          </div>
         </div>
       )}
     </article>

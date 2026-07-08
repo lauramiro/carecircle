@@ -17,6 +17,12 @@ export class PatientRepository {
     return data;
   }
 
+  /** Resolve patient primary key for a care group, or null if none exists. */
+  async findIdByGroupId(groupId: string): Promise<string | null> {
+    const patient = await this.findByGroupId(groupId);
+    return patient?.id ? (patient.id as string) : null;
+  }
+
   async findActiveMedications(patientId: string) {
     const { data, error } = await this.supabase
       .getClient()

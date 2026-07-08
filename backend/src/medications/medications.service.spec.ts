@@ -3,6 +3,10 @@ import { NotFoundException } from '@nestjs/common';
 import { MedicationsService } from './medications.service';
 import type { MedicationRecord } from '../integrations/types';
 
+vi.mock('../common/auth/group-membership.util', () => ({
+  assertGroupMemberIfTokenPresent: vi.fn().mockResolvedValue(undefined),
+}));
+
 function makeMed(overrides: Partial<MedicationRecord> = {}): MedicationRecord {
   return {
     id: 'med-1',
@@ -37,6 +41,9 @@ describe('MedicationsService', () => {
   const careGroupRepo = {
     getGroupContext: vi.fn(),
   };
+  const supabase = {
+    getClient: vi.fn(),
+  };
   const materialization = {
     materializeForMedication: vi.fn(),
   };
@@ -54,6 +61,7 @@ describe('MedicationsService', () => {
     service = new MedicationsService(
       medicationRepo as never,
       careGroupRepo as never,
+      supabase as never,
       materialization as never,
       reconciliation as never,
     );
@@ -208,7 +216,7 @@ describe('MedicationsService', () => {
   it('pause delegates to reconciliation service', async () => {
     medicationRepo.findById.mockResolvedValue(makeMed({ status: 'paused' }));
 
-    await service.pause('med-1');
+    await service.pause('group-1', 'med-1');
 
     expect(reconciliation.pauseMedication).toHaveBeenCalledWith('med-1');
   });

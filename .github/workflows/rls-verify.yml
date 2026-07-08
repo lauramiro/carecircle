@@ -1,0 +1,32 @@
+# Manual RLS cross-circle verification
+#
+# Runs the SQL harness in supabase/verify_cross_circle_rls.sql against a local
+# Supabase stack. Trigger from GitHub Actions → Run workflow when Docker is
+# available. Does not block PR CI.
+
+name: RLS Verify
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rls-verify:
+    name: Cross-circle RLS SQL harness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Start Supabase and reset database
+        run: |
+          npx supabase start
+          npx supabase db reset
+
+      - name: Run RLS verification script
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -f supabase/verify_cross_circle_rls.sql

@@ -4,7 +4,19 @@ This chapter outlines the security architectures, compliance boundaries, and pri
 
 ## 1. Row-Level Security (RLS) Policy Table
 
-CareCircle relies on Supabase's PostgreSQL implementation for deep, database-layer access control. Row-Level Security (RLS) guarantees that even in the event of an API bypass, users can only query or mutate records strictly associated with their authenticated identity and authorized `care_group`.
+CareCircle relies on Supabase's PostgreSQL implementation for deep, database-layer access control. Row-Level Security (RLS) governs **direct frontend queries** made with the Supabase anon key and the user's JWT. When the frontend reads or writes through `supabase-js`, PostgreSQL policies restrict rows to the authenticated user's authorized care groups.
+
+### Backend API boundary
+
+The NestJS backend (`/api/*`) uses the Supabase **service-role** key via `SupabaseAdminClient`. Service-role access **bypasses RLS**. RLS policies in the table below therefore protect the frontend data path, not backend-mediated API calls.
+
+| Endpoint area | Bearer token validation | Notes |
+| :--- | :--- | :--- |
+| `GET /api/document-storage/groups/:groupId/usage` | **Required** | Validates JWT and active `care_givers` membership |
+| Medications, hospital summary, insights, AI Q&A, invites, push | Optional (soft) | When `Authorization: Bearer <token>` is sent, the backend validates group membership; when absent, behavior matches legacy clients (CI smoke tests, anonymous DTO validation) |
+| `/api/dev/*` | N/A | Gated by `DevOnlyGuard` (404 outside development) |
+
+**Mitigation in progress:** the frontend sends the session access token on backend calls when logged in; services call `assertGroupMemberIfTokenPresent` so authenticated misuse is rejected without breaking unauthenticated smoke tests.
 
 | Database Table | Target Role(s) | Permitted Operations | Policy Enforcement Rules & Test Results |
 | :--- | :--- | :--- | :--- |

@@ -375,18 +375,22 @@ export class PDFGenerationService {
     for (let i = 0; i < pages; i++) {
       doc.switchToPage(i);
 
-      // Watermark
+      // Watermark — measure the string first so it renders on a single line;
+      // at 60pt the full sentence is wider than a naive fixed box, and
+      // wrapping it mid-word is what produced the garbled diagonal text.
+      doc.fontSize(60).font('Helvetica-Bold');
+      const watermarkWidth = doc.widthOfString(this.WATERMARK_TEXT);
       doc
         .opacity(0.1)
-        .fontSize(60)
-        .font('Helvetica-Bold')
         .rotate(45, {
           origin: [this.PAGE_WIDTH / 2, this.PAGE_HEIGHT / 2],
         })
-        .text(this.WATERMARK_TEXT, 0, this.PAGE_HEIGHT / 2 - 100, {
-          align: 'center',
-          width: this.PAGE_WIDTH * 1.5,
-        })
+        .text(
+          this.WATERMARK_TEXT,
+          (this.PAGE_WIDTH - watermarkWidth) / 2,
+          this.PAGE_HEIGHT / 2 - 30,
+          { lineBreak: false },
+        )
         .rotate(-45, {
           origin: [this.PAGE_WIDTH / 2, this.PAGE_HEIGHT / 2],
         });
@@ -400,7 +404,12 @@ export class PDFGenerationService {
         .lineTo(this.PAGE_WIDTH - this.MARGIN, footerY - 10)
         .stroke();
 
-      // Disclaimer text
+      // Disclaimer and page number sit inside pdfkit's reserved bottom
+      // margin, so writing them would otherwise trigger an automatic page
+      // break (and a stray blank page). Lift the margin for this page only.
+      const originalBottomMargin = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
+
       doc
         .fontSize(8)
         .font('Helvetica')
@@ -410,13 +419,14 @@ export class PDFGenerationService {
           align: 'left',
         });
 
-      // Page number
       doc
         .fontSize(9)
         .text(`Page ${i + 1} of ${pages}`, this.MARGIN, this.PAGE_HEIGHT - 20, {
           align: 'center',
           width: this.PAGE_WIDTH - 2 * this.MARGIN,
         });
+
+      doc.page.margins.bottom = originalBottomMargin;
     }
   }
 

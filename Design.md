@@ -469,6 +469,7 @@ Full per-table RLS policy definitions are in `supabase/migrations/` and can be i
 ## 9. Agile process
 
 - **Task board:** [Care Circle Jira board](https://obinnaezedei.atlassian.net/jira/software/projects/CC/boards/2)
+- **Note:** We tried to make the jira board space public, but got error trying to do so. Hence we have add a directory containing screenshots of our jira agile board here: `jira-agile-board-screenshots`
 - **Sprints:** Work tracked in sprints on the Jira board below
 - **Branch naming:** `CC-<id>-<slug>` (e.g. `CC-205-editing-medication-still-shows-add-medication-heading`)
 - **Commit convention:** `feat(CC-205): description` / `fix(CC-202): description`

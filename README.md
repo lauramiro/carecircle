@@ -141,6 +141,24 @@ CI runs lint, typecheck, and tests on every pull request via GitHub Actions.
 | [frontend/README.md](./frontend/README.md) | Frontend structure, path aliases, and dev workflow |
 | [CLAUDE.md](./CLAUDE.md) | Engineering conventions and definition of done |
 
+## Team and contributions
+
+Built by a five-person capstone team: [@specialobyno](https://github.com/specialobyno), [@lauramiro](https://github.com/lauramiro), [@tech-broker](https://github.com/tech-broker), [@Wendyshiro](https://github.com/Wendyshiro), [@Peter5793](https://github.com/Peter5793) and [@emmaserunjogi-debug](https://github.com/emmaserunjogi-debug). Teammates are welcome to add their own areas below.
+
+### Areas owned by @lauramiro
+
+Repository owner. Work spans the React frontend, NestJS backend, Supabase migrations and CI.
+
+- **Project bootstrap:** initialised the monorepo (React frontend, NestJS backend) and the first CI pipeline.
+- **Auth and accounts:** signup and login with Supabase email and magic-link auth, session persistence and logout across devices, auth unit tests, and a later security pass that hardened the auth flow and closed a `profiles` RLS gap.
+- **Medications (end to end):** add-medication form, pause/activate/archive actions, immutable versioning of medication records, duplicate-name warning, active schedule view for group members, stock-level tracking with checklist-driven decrement and low-supply alerts, medication status widget, and unit tests.
+- **Appointments (end to end):** create and manage appointments, calendar views, recurring appointments, push reminders, and cancel rules for past appointments.
+- **Hospital summary PDF and documents:** emergency-contacts section in the PDF, document download, share and flag-for-summary flow, parallelised flagged-document image downloads, and watermark and footer layout fixes.
+- **Dashboard:** next-appointment, journal-snippet and AI-insight widgets; weekly insight fixes; a dev reminders controller for testing scheduled jobs.
+- **Row-level security:** closed RLS gaps that blocked group and medication-log visibility and medication writes.
+- **CI/CD and delivery:** fixed TypeScript build failures blocking CI, the Render build configuration, `tsconfig.build.json` scoping, and the Epic 4 CI/CD, security and documentation work.
+- **Accessibility and UI polish:** font-size toggle, primary-action contrast fix, and sidebar and role-badge layout fixes.
+
 ## License
 
 Academic capstone project — not licensed for commercial use.

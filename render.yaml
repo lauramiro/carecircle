@@ -2,6 +2,17 @@ services:
   - type: web
     name: carecircle-backend
     runtime: node
+    plan: free
     rootDir: backend
-    buildCommand: npm install && npm run build
+    # --include=dev: NODE_ENV=production below would otherwise skip devDependencies,
+    # and `nest build` needs @nestjs/cli.
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start:prod
+    # Secrets (Supabase keys, Groq, Brevo, Twilio, VAPID) are set in the Render dashboard.
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_PUBLIC_URL
+        value: https://carecircle-tau.vercel.app
+      - key: SUPABASE_URL
+        value: https://nvvbepnoglgyemjwubyo.supabase.co

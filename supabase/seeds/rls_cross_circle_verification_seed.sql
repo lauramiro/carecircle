@@ -102,7 +102,6 @@ insert into public.care_group (
   id,
   name,
   description,
-  patient_id,
   primary_caregiver_id,
   preferred_timezone
 )
@@ -111,7 +110,6 @@ values
     'aaaaaaaa-0000-4000-8000-aaaaaaaaaaa1'::uuid,
     'RLS Verification Circle A',
     'Cross-circle RLS verification fixture for Circle A.',
-    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1'::uuid,
     '11111111-1111-4111-8111-111111111111'::uuid,
     'UTC'
   ),
@@ -119,7 +117,6 @@ values
     'bbbbbbbb-0000-4000-8000-bbbbbbbbbbb1'::uuid,
     'RLS Verification Circle B',
     'Cross-circle RLS verification fixture for Circle B.',
-    'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1'::uuid,
     '44444444-4444-4444-8444-444444444444'::uuid,
     'UTC'
   )

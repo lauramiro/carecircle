@@ -46,8 +46,6 @@ revoke truncate on table "public"."medication_schedules" from "service_role";
 
 revoke update on table "public"."medication_schedules" from "service_role";
 
-alter table "public"."appointments" drop constraint "appointments_recurrence_rule_check";
-
 alter table "public"."care_group" drop constraint "care_circle_members_patient_id_caregiver_id_key";
 
 alter table "public"."care_group" drop constraint "care_circle_members_patient_id_fkey";
@@ -70,8 +68,6 @@ alter table "public"."medication_schedules" drop constraint "medication_schedule
 
 drop index if exists "public"."care_circle_members_patient_id_caregiver_id_key";
 
-drop index if exists "public"."idx_appointments_series";
-
 drop index if exists "public"."idx_care_circle_patient";
 
 drop index if exists "public"."idx_medication_schedules_active";
@@ -84,55 +80,20 @@ drop index if exists "public"."idx_med_confirmations_carer";
 
 drop table "public"."medication_schedules";
 
-
-  create table "public"."insight_cards" (
-    "id" uuid not null default gen_random_uuid(),
-    "digest_id" uuid not null,
-    "type" text not null,
-    "title" text not null,
-    "description" text not null,
-    "trend_direction" text,
-    "data_link" text,
-    "created_at" timestamp with time zone not null default timezone('utc'::text, now())
-      );
-
-
-alter table "public"."insight_cards" enable row level security;
-
-
-  create table "public"."user_insight_dismissals" (
-    "id" uuid not null default gen_random_uuid(),
-    "user_id" uuid not null,
-    "insight_card_id" uuid not null,
-    "dismissed_at" timestamp with time zone not null default timezone('utc'::text, now())
-      );
-
-
-alter table "public"."user_insight_dismissals" enable row level security;
-
-
-  create table "public"."weekly_digests" (
-    "id" uuid not null default gen_random_uuid(),
-    "group_id" uuid not null,
-    "start_date" date not null,
-    "end_date" date not null,
-    "created_at" timestamp with time zone not null default timezone('utc'::text, now())
-      );
-
-
-alter table "public"."weekly_digests" enable row level security;
+-- weekly_digests, insight_cards and user_insight_dismissals (tables, keys,
+-- indexes, policies) are created by the earlier weekly_insights migrations.
 
 alter table "public"."ai_insights" add column "generated_at" timestamp with time zone default now();
 
 alter table "public"."ai_insights" add column "suggested_action" text;
 
-alter table "public"."appointments" drop column "recurrence_rule";
-
-alter table "public"."appointments" drop column "recurrence_series_id";
-
 alter table "public"."appointments" drop column "reminders_sent_offsets";
 
-alter table "public"."appointments" add column "reminder_offsets" integer[] default '{1440,60}'::integer[];
+alter table "public"."appointments" add column if not exists "reminder_offsets" integer[] default '{1440,60}'::integer[];
+
+alter table "public"."appointments" alter column "reminder_offsets" set default '{1440,60}'::integer[];
+
+alter table "public"."appointments" alter column "reminder_offsets" drop not null;
 
 alter table "public"."care_group" drop column "patient_id";
 
@@ -158,51 +119,15 @@ alter table "public"."medication_confirmations" add column "caregiver_id" uuid n
 
 CREATE UNIQUE INDEX checklist_items_checklist_med_time_unique ON public.checklist_items USING btree (checklist_id, medication_id, scheduled_time) WHERE (scheduled_time IS NOT NULL);
 
-CREATE UNIQUE INDEX insight_cards_pkey ON public.insight_cards USING btree (id);
-
-CREATE UNIQUE INDEX user_insight_dismissals_pkey ON public.user_insight_dismissals USING btree (id);
-
-CREATE UNIQUE INDEX user_insight_dismissals_user_id_insight_card_id_key ON public.user_insight_dismissals USING btree (user_id, insight_card_id);
-
-CREATE UNIQUE INDEX weekly_digests_group_id_start_date_key ON public.weekly_digests USING btree (group_id, start_date);
-
-CREATE UNIQUE INDEX weekly_digests_pkey ON public.weekly_digests USING btree (id);
-
 CREATE INDEX idx_med_confirmations_carer ON public.medication_confirmations USING btree (caregiver_id);
-
-alter table "public"."insight_cards" add constraint "insight_cards_pkey" PRIMARY KEY using index "insight_cards_pkey";
-
-alter table "public"."user_insight_dismissals" add constraint "user_insight_dismissals_pkey" PRIMARY KEY using index "user_insight_dismissals_pkey";
-
-alter table "public"."weekly_digests" add constraint "weekly_digests_pkey" PRIMARY KEY using index "weekly_digests_pkey";
 
 alter table "public"."checklist_items" add constraint "checklist_items_given_by_carer_id_fkey" FOREIGN KEY (given_by_carer_id) REFERENCES public.profiles(id) not valid;
 
 alter table "public"."checklist_items" validate constraint "checklist_items_given_by_carer_id_fkey";
 
-alter table "public"."insight_cards" add constraint "insight_cards_digest_id_fkey" FOREIGN KEY (digest_id) REFERENCES public.weekly_digests(id) ON DELETE CASCADE not valid;
-
-alter table "public"."insight_cards" validate constraint "insight_cards_digest_id_fkey";
-
 alter table "public"."medication_confirmations" add constraint "medication_confirmations_caregiver_id_fkey" FOREIGN KEY (caregiver_id) REFERENCES public.profiles(id) ON DELETE RESTRICT not valid;
 
 alter table "public"."medication_confirmations" validate constraint "medication_confirmations_caregiver_id_fkey";
-
-alter table "public"."user_insight_dismissals" add constraint "user_insight_dismissals_insight_card_id_fkey" FOREIGN KEY (insight_card_id) REFERENCES public.insight_cards(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_insight_dismissals" validate constraint "user_insight_dismissals_insight_card_id_fkey";
-
-alter table "public"."user_insight_dismissals" add constraint "user_insight_dismissals_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_insight_dismissals" validate constraint "user_insight_dismissals_user_id_fkey";
-
-alter table "public"."user_insight_dismissals" add constraint "user_insight_dismissals_user_id_insight_card_id_key" UNIQUE using index "user_insight_dismissals_user_id_insight_card_id_key";
-
-alter table "public"."weekly_digests" add constraint "weekly_digests_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.care_group(id) ON DELETE CASCADE not valid;
-
-alter table "public"."weekly_digests" validate constraint "weekly_digests_group_id_fkey";
-
-alter table "public"."weekly_digests" add constraint "weekly_digests_group_id_start_date_key" UNIQUE using index "weekly_digests_group_id_start_date_key";
 
 alter table "public"."daily_medication_checklists" add constraint "daily_medication_checklists_status_check" CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'archived'::character varying])::text[]))) not valid;
 
@@ -693,18 +618,6 @@ using ((EXISTS ( SELECT 1
 
 
 
-  create policy "Group members can view insight cards"
-  on "public"."insight_cards"
-  as permissive
-  for select
-  to public
-using ((EXISTS ( SELECT 1
-   FROM (public.weekly_digests wd
-     JOIN public.care_givers cg ON ((cg.group_id = wd.group_id)))
-  WHERE ((wd.id = insight_cards.digest_id) AND (cg.caregiver_id = auth.uid()) AND (cg.status = 'active'::text)))));
-
-
-
   create policy "caregivers can insert medications for their patients"
   on "public"."medications"
   as permissive
@@ -723,35 +636,6 @@ with check ((EXISTS ( SELECT 1
   for insert
   to public
 with check ((auth.uid() = id));
-
-
-
-  create policy "Users can dismiss their own insights"
-  on "public"."user_insight_dismissals"
-  as permissive
-  for insert
-  to public
-with check ((auth.uid() = user_id));
-
-
-
-  create policy "Users can view their own dismissals"
-  on "public"."user_insight_dismissals"
-  as permissive
-  for select
-  to public
-using ((auth.uid() = user_id));
-
-
-
-  create policy "Group members can view weekly digests"
-  on "public"."weekly_digests"
-  as permissive
-  for select
-  to public
-using ((EXISTS ( SELECT 1
-   FROM public.care_givers cg
-  WHERE ((cg.group_id = weekly_digests.group_id) AND (cg.caregiver_id = auth.uid()) AND (cg.status = 'active'::text)))));
 
 
 
